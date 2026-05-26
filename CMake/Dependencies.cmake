@@ -49,25 +49,6 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
 
-# fastgltf
-CPMAddPackage( 
-    NAME fastgltf
-    GITHUB_REPOSITORY spnda/fastgltf
-    GIT_TAG v0.9.0
-)
-
-# Zlib
-CPMADDPACKAGE(
-    NAME zlib
-    GITHUB_REPOSITORY madler/zlib
-    GIT_TAG v1.3.2
-
-    OPTIONS
-    "ZLIB_BUILD_SHARED OFF"
-    "ZLIB_BUILD_TESTING OFF"
-)
-
-
 # TODO: Replace with DirectXTex
 
 # SPNG
