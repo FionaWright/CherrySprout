@@ -1,19 +1,11 @@
-# Source files
-set(PROJECT_SOURCES
 
-)
+file(GLOB_RECURSE PROJECT_SOURCES "Source/Client/*.cpp")
 
-# Header files
-set(PROJECT_HEADERS
-        Headers/client/Helper.h
-        Headers/client/MathUtils.h
-)
+file(GLOB_RECURSE PROJECT_HEADERS "Headers/Client/*.h")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
-    set(PROJECT_SOURCES
-            ${PROJECT_SOURCES}
-    )
-    set(PROJECT_HEADERS
-            ${PROJECT_HEADERS}
-    )
+set(IS_DEBUG CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
+
+if(NOT IS_DEBUG)
+    list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*/Source/Client/Debug/.*")
+    list(FILTER PROJECT_HEADERS EXCLUDE REGEX ".*/Headers/Client/Debug/.*")
 endif()

@@ -51,6 +51,17 @@ target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
 
 # TODO: Replace with DirectXTex
 
+# Zlib
+CPMADDPACKAGE(
+        NAME zlib
+        GITHUB_REPOSITORY madler/zlib
+        GIT_TAG v1.3.2
+
+        OPTIONS
+        "ZLIB_BUILD_SHARED OFF"
+        "ZLIB_BUILD_TESTING OFF"
+)
+
 # SPNG
 add_library(spng STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spng/spng.c

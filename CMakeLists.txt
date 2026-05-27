@@ -22,7 +22,7 @@ target_link_libraries(client
         dxgi
         dxguid
         imgui
-        usd_m
+        zlib
 
         spng
         tinyddsloader
@@ -31,9 +31,11 @@ target_link_libraries(client
 )
 target_include_directories(client PUBLIC
         "${CMAKE_SOURCE_DIR}/Headers"
-        "${CMAKE_SOURCE_DIR}/Headers/client"
+        "${CMAKE_SOURCE_DIR}/Headers/Client"
         "${CMAKE_SOURCE_DIR}/Assets/Shaders"
         "${CMAKE_SOURCE_DIR}/Assets/Resources"
+
+        "${dxc_SOURCE_DIR}/inc"
 )
 target_compile_definitions(client PUBLIC NOMINMAX)
 set_target_properties(client PROPERTIES

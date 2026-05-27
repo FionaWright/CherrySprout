@@ -11,3 +11,5 @@ CherryPip: https://github.com/FionaWright/CherryPip
 - Took MathUtils.h
 - Took Assets/Resources
 - Took ThirdParty/*
+- Took D3D.cpp/h
+- Took App.cpp/h
