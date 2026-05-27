@@ -22,7 +22,7 @@ target_link_libraries(client
         dxgi
         dxguid
         imgui
-        zlib
+        zlibstatic
 
         spng
         tinyddsloader

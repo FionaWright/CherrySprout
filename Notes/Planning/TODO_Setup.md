@@ -2,9 +2,10 @@
 
 Setting up the project to be able to begin new work
 
-- [ ] CMAKE successfully running
-- [ ] Get a main file running
-- [ ] Set up the app system
+- [x] CMAKE successfully running
+- [x] Get a main file running
+- [x] Set up the app system
+- [ ] Do a once over for all the files, refactoring stuff that it is bad
 - [ ] Render a triangle
 - [ ] Design and implement the new buffer abstractions
 - [ ] Path-Trace a cube

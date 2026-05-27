@@ -30,6 +30,16 @@ inline std::string wstringToString(const std::wstring& wstr)
     return result;
 }
 
+inline std::wstring stringToWString(const std::string& str)
+{
+    const int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+    std::wstring wstr(size_needed, 0);
+
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wstr[0], size_needed);
+
+    wstr.pop_back(); // Remove null terminator added by MultiByteToWideChar
+    return wstr;
+}
 
 inline std::string HrToString(HRESULT hr)
 {

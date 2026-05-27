@@ -2,8 +2,8 @@
 // Created by fiona on 21/01/2026.
 //
 
-#ifndef CHERRYPIP_IMGUIUTILS_H
-#define CHERRYPIP_IMGUIUTILS_H
+#ifndef H_IMGUIUTILS_H
+#define H_IMGUIUTILS_H
 #include "imgui.h"
 
 class ImGuiUtils
@@ -31,4 +31,4 @@ public:
 };
 
 
-#endif //CHERRYPIP_IMGUIUTILS_H
+#endif

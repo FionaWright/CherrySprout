@@ -11,14 +11,10 @@
 
 #include "imgui_impl_win32.h"
 #include "System/Config.h"
-#include "System/TextureLoader.h"
 #include "System/Engine.h"
 
-#ifdef _DEBUG
-#include "../../../Headers/client/Debug/HotReloader.h"
-#endif
-
 #include "Resources.h"
+#include "Utils/Helper.h"
 
 HWND Win32App::ms_hwnd = nullptr;
 std::unique_ptr<Engine> Win32App::ms_engine = nullptr;
@@ -60,7 +56,7 @@ int Win32App::Run(const std::vector<App*>& apps, const HINSTANCE hInstance, cons
     // Create the window and store a handle to it.
     ms_hwnd = CreateWindow(
         windowClass.lpszClassName,
-        "CherryPip",
+        "CherrySprout",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -86,7 +82,7 @@ int Win32App::Run(const std::vector<App*>& apps, const HINSTANCE hInstance, cons
     while (msg.message != WM_QUIT)
     {
         // Process any messages in the queue.
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -123,8 +119,8 @@ LRESULT CALLBACK Win32App::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
     case WM_MOUSEMOVE:
         {
-            const float x = static_cast<float>(static_cast<int>(static_cast<short>(LOWORD(lParam))));
-            const float y = static_cast<float>(static_cast<int>(static_cast<short>(HIWORD(lParam))));
+            const auto x = static_cast<float>(static_cast<int>(static_cast<short>(LOWORD(lParam))));
+            const auto y = static_cast<float>(static_cast<int>(static_cast<short>(HIWORD(lParam))));
 
             Input::SetMousePos(XMFLOAT2(x, y));
 
@@ -133,7 +129,7 @@ LRESULT CALLBACK Win32App::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LP
             clientToScreenPoint.y = static_cast<LONG>(y);
             ScreenToClient(hWnd, &clientToScreenPoint);
 
-            XMFLOAT2 client;
+            XMFLOAT2 client{};
             client.x = static_cast<float>(clientToScreenPoint.x);
             client.y = static_cast<float>(clientToScreenPoint.y);
             Input::SetMousePosClient(client);

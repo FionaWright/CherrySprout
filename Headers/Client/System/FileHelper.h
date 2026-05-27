@@ -10,19 +10,19 @@ class FileHelper
 {
 public:
     static void Init();
-    static std::wstring GetAssetsPath() { return m_assetsPath; }
-    static std::wstring GetShadersPath() { return m_shadersPath; }
-    static std::wstring GetAssetFullPath(LPCWSTR assetName);
-    static std::wstring GetAssetTextureFullPath(LPCWSTR assetName);
-    static std::wstring GetAssetShaderFullPath(LPCWSTR assetName);
-    static std::wstring GetAssetModelFullPath(LPCWSTR assetName);
+    static std::string GetAssetsPath() { return m_assetsPath; }
+    static std::string GetShadersPath() { return m_shadersPath; }
+    static std::string GetAssetFullPath(const char* assetName);
+    static std::string GetAssetTextureFullPath(const char* assetName);
+    static std::string GetAssetShaderFullPath(const char* assetName);
+    static std::string GetAssetModelFullPath(const char* assetName);
 
-    static std::vector<uint8_t> ReadFileToByteVector(const std::wstring& filename);
-    static HRESULT ReadDataFromFile(LPCWSTR filename, byte** data, UINT* size);
-    static HRESULT ReadDataFromDDSFile(LPCWSTR filename, byte** data, UINT* offset, UINT* size);
+    static std::vector<uint8_t> ReadFileToByteVector(const std::string& filename);
+    static HRESULT ReadDataFromFile(const char* filename, byte** data, UINT* size);
+    static HRESULT ReadDataFromDDSFile(const char* filename, byte** data, UINT* offset, UINT* size);
 
 private:
-    static std::wstring m_assetsPath, m_shadersPath;
+    static std::string m_assetsPath, m_shadersPath;
 };
 
 #endif //PT_FILEHELPER_H

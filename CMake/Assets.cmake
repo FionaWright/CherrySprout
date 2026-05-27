@@ -105,18 +105,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES MATCHES "Rel
     )
     add_dependencies(client CopyShaders)
 
-    target_compile_definitions(client PUBLIC
-            SHADERS_SOURCE_DIR=L"${CMAKE_SOURCE_DIR}/Assets/Shaders"
-    )
-    set(CHERRYPIP_SHADERS_DIR "${CMAKE_SOURCE_DIR}/Assets/Shaders" CACHE INTERNAL "")
+    set(CHERRYSPROUT_SHADERS_DIR "${CMAKE_BINARY_DIR}/Assets/Shaders" CACHE INTERNAL "")
 else()
-    target_compile_definitions(client PUBLIC
-        SHADERS_SOURCE_DIR=L"${CMAKE_SOURCE_DIR}/Assets/Shaders"
-    )
-    set(CHERRYPIP_SHADERS_DIR "${CMAKE_SOURCE_DIR}/Assets/Shaders" CACHE INTERNAL "")
+    set(CHERRYSPROUT_SHADERS_DIR "${CMAKE_SOURCE_DIR}/Assets/Shaders" CACHE INTERNAL "")
 endif()
 
 target_compile_definitions(client PUBLIC
-        ASSETS_SOURCE_DIR=L"${CMAKE_BINARY_DIR}/Assets"
+    CHERRYSPROUT_SHADERS_DIR="${CHERRYSPROUT_SHADERS_DIR}"
 )
-set(CHERRYPIP_ASSETS_DIR "${CMAKE_BINARY_DIR}/Assets" CACHE INTERNAL "")
+
+set(CHERRYSPROUT_ASSETS_DIR "${CMAKE_BINARY_DIR}/Assets" CACHE INTERNAL "")
+target_compile_definitions(client PUBLIC
+    CHERRYSPROUT_ASSETS_DIR="${CHERRYSPROUT_ASSETS_DIR}"
+)

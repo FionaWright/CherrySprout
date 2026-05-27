@@ -74,7 +74,7 @@ target_include_directories(spng
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty
 )
 target_compile_definitions(spng PUBLIC SPNG_STATIC)
-target_link_libraries(spng PUBLIC ZLIB::ZLIBSTATIC)
+target_link_libraries(spng PUBLIC zlibstatic)
 
 # tinyddsloader
 add_library(tinyddsloader STATIC)

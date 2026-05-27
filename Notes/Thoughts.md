@@ -15,3 +15,5 @@ Use unique_ptr always unless you can't
 Try to come up with a better polymorphic system for HLSL, templates maybe?
 
 Let's try and make most of the shaders C++ compilable, so I can run unit tests on them. Google test? 
+
+No more wide strings anywhere. Make everything strings and they can be converted to wstrings for APIs that want them that way

@@ -6,46 +6,48 @@
 #include "System/FileHelper.h"
 #include <wrl/wrappers/corewrappers.h>
 
-std::wstring FileHelper::m_assetsPath, FileHelper::m_shadersPath;
+#include "Utils/Helper.h"
+
+std::string FileHelper::m_assetsPath, FileHelper::m_shadersPath;
 
 void FileHelper::Init()
 {
-    m_assetsPath = std::wstring(ASSETS_SOURCE_DIR) + L"/";
-    m_shadersPath = std::wstring(SHADERS_SOURCE_DIR) + L"/";
+    m_assetsPath = std::string(CHERRYSPROUT_ASSETS_DIR) + "/";
+    m_shadersPath = std::string(CHERRYSPROUT_SHADERS_DIR) + "/";
 }
 
-std::wstring FileHelper::GetAssetFullPath(LPCWSTR assetName)
+std::string FileHelper::GetAssetFullPath(const char* assetName)
 {
     return m_assetsPath + assetName;
 }
 
-std::wstring FileHelper::GetAssetTextureFullPath(LPCWSTR assetName)
+std::string FileHelper::GetAssetTextureFullPath(const char* assetName)
 {
-    return m_assetsPath + L"Textures/" + assetName;
+    return m_assetsPath + "Textures/" + assetName;
 }
 
-std::wstring FileHelper::GetAssetShaderFullPath(const LPCWSTR assetName)
+std::string FileHelper::GetAssetShaderFullPath(const char* assetName)
 {
     return m_shadersPath + assetName;
 }
 
-std::wstring FileHelper::GetAssetModelFullPath(const LPCWSTR assetName)
+std::string FileHelper::GetAssetModelFullPath(const char* assetName)
 {
-    return m_assetsPath + L"Models/" + assetName;
+    return m_assetsPath + "Models/" + assetName;
 }
 
-std::vector<uint8_t> FileHelper::ReadFileToByteVector(const std::wstring& filename)
+std::vector<uint8_t> FileHelper::ReadFileToByteVector(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file) throw std::runtime_error("Failed to open file");
-    auto size = static_cast<size_t>(file.tellg());
+    const auto size = static_cast<size_t>(file.tellg());
     std::vector<uint8_t> data(size);
     file.seekg(0);
     file.read(reinterpret_cast<char*>(data.data()), size);
     return data;
 }
 
-inline HRESULT FileHelper::ReadDataFromFile(LPCWSTR filename, byte** data, UINT* size)
+inline HRESULT FileHelper::ReadDataFromFile(const char* filename, byte** data, UINT* size)
 {
 #if WINVER >= _WIN32_WINNT_WIN8
     CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
@@ -56,7 +58,8 @@ inline HRESULT FileHelper::ReadDataFromFile(LPCWSTR filename, byte** data, UINT*
     extendedParams.lpSecurityAttributes = nullptr;
     extendedParams.hTemplateFile = nullptr;
 
-    Microsoft::WRL::Wrappers::FileHandle file(CreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+    std::wstring filenameW = stringToWString(filename);
+    Microsoft::WRL::Wrappers::FileHandle file(CreateFile2(filenameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
 #else
     Wrappers::FileHandle file(CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | SECURITY_SQOS_PRESENT | SECURITY_ANONYMOUS, nullptr));
 #endif
@@ -87,7 +90,7 @@ inline HRESULT FileHelper::ReadDataFromFile(LPCWSTR filename, byte** data, UINT*
     return S_OK;
 }
 
-inline HRESULT FileHelper::ReadDataFromDDSFile(LPCWSTR filename, byte** data, UINT* offset, UINT* size)
+inline HRESULT FileHelper::ReadDataFromDDSFile(const char* filename, byte** data, UINT* offset, UINT* size)
 {
     if (FAILED(ReadDataFromFile(filename, data, size)))
     {

@@ -5,7 +5,7 @@
 #include "System/pch.h"
 #include "HWI/D12Resource.h"
 
-#include "../../../Headers/client/Helper.h"
+#include "Utils/Helper.h"
 
 D12Resource::~D12Resource()
 {
