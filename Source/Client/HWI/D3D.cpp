@@ -10,7 +10,7 @@
 #include "System/Win32App.h"
 
 #ifdef _DEBUG
-#include "Debug/DebugOutputRedirector.h"
+#   include "Debug/DebugOutputRedirector.h"
 #endif
 
 
@@ -155,25 +155,17 @@ void D3D::Init(const size_t width, const size_t height)
         V(m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, FALSE));
 
         DWORD cookie = 0;
-        HRESULT hr = m_infoQueue->RegisterMessageCallback(
+        V(m_infoQueue->RegisterMessageCallback(
             DebugMessageCallback,
             D3D12_MESSAGE_CALLBACK_FLAG_NONE,
             &std::cout, // passed to callback as `context`
-            &cookie);
-        if (FAILED(hr))
-        {
-            CherryPrint("Failed to register debug callback to window. HRESULT = " << std::hex << hr);
-        }
+            &cookie));
 
-        hr = m_infoQueue->RegisterMessageCallback(
+        V(m_infoQueue->RegisterMessageCallback(
             DebugMessageCallback,
             D3D12_MESSAGE_CALLBACK_FLAG_NONE,
             &m_logFile, // passed to callback as `context`
-            &cookie);
-        if (FAILED(hr))
-        {
-            CherryPrint("Failed to register debug callback to log file. HRESULT = " << std::hex << hr);
-        }
+            &cookie));
 
         // You can also filter messages if it's too noisy
     }
@@ -249,7 +241,7 @@ void D3D::Init(const size_t width, const size_t height)
                                                             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
-        // Create a RTV/DSV for each frame.
+        // Create a RTV for each frame.
         for (UINT n = 0; n < NUM_FRAMES_IN_FLIGHT; n++)
         {
             ComPtr<ID3D12Resource> rtvResource;
@@ -260,16 +252,17 @@ void D3D::Init(const size_t width, const size_t height)
             m_rtvs[n].Fill(rtvResource, D3D12_RESOURCE_STATE_PRESENT);
             std::wstring name = std::wstring(L"Swapchain Backbuffer #") + std::to_wstring(n);
             V(rtvResource->SetName(name.c_str()));
-
-            V(m_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc,
-                                                D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue,
-                                                IID_PPV_ARGS(&m_depthStencilBuffer[n])));
-            D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-            dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-            m_device->CreateDepthStencilView(m_depthStencilBuffer[n].Get(), &dsvDesc, dsvHandle);
-            dsvHandle.Offset(1, m_dsvDescriptorSize);
         }
+
+        // Create a single DSV, raster backends will be force flushed each frame as they are for debugging
+        V(m_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc,
+                                                D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue,
+                                                IID_PPV_ARGS(&m_depthStencilBuffer)));
+        D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+        dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc, dsvHandle);
+        dsvHandle.Offset(1, m_dsvDescriptorSize);
     }
 
     // Create synchronization objects and wait until assets have been uploaded to the GPU.
@@ -291,7 +284,8 @@ void D3D::Init(const size_t width, const size_t height)
     CherryPrint("D3D Initialized");
 }
 
-ComPtr<ID3D12GraphicsCommandList> D3D::CreateCmdList(ID3D12CommandAllocator* allocator, const D3D12_COMMAND_LIST_TYPE type) const
+ComPtr<ID3D12GraphicsCommandList> D3D::CreateCmdList(ID3D12CommandAllocator* allocator,
+                                                     const D3D12_COMMAND_LIST_TYPE type) const
 {
     ComPtr<ID3D12GraphicsCommandList> cmdList = nullptr;
     V(m_device->CreateCommandList(0, type, allocator, nullptr, IID_PPV_ARGS(&cmdList)));
@@ -344,10 +338,10 @@ ComPtr<ID3D12GraphicsCommandList> D3D::GetAvailableCmdList(const D3D12_COMMAND_L
 void D3D::DestroyAllCmdListsAndAllocators()
 {
     std::queue<CommandAllocatorEntry> emptyAlloc;
-    std::swap( m_commandAllocatorQueue, emptyAlloc );
+    std::swap(m_commandAllocatorQueue, emptyAlloc);
 
     std::queue<ComPtr<ID3D12GraphicsCommandList>> emptyList;
-    std::swap( m_commandListQueue, emptyList );
+    std::swap(m_commandListQueue, emptyList);
 }
 
 void D3D::ExecuteCommandList(ID3D12GraphicsCommandList* cmdList)
@@ -364,7 +358,7 @@ void D3D::ExecuteCommandList(ID3D12GraphicsCommandList* cmdList)
     V(m_commandQueue->Signal(m_fence.Get(), fence));
     m_fenceValue++;
     m_commandAllocatorQueue.push({fence, commandAllocator});
-    m_commandListQueue.push(cmdList);
+    m_commandListQueue.emplace(cmdList);
     commandAllocator->Release();
 }
 
@@ -387,24 +381,22 @@ void D3D::Present()
         Flush();
 }
 
-void D3D::Flush()
+UINT64 D3D::Signal()
 {
-    // Signal and increment the fence value.
-    const UINT64 fence = m_fenceValue;
-    V(m_commandQueue->Signal(m_fence.Get(), fence));
-    m_fenceValue++;
-
-    // Wait until the previous frame is finished.
-    if (m_fence->GetCompletedValue() < fence)
-    {
-        V(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
-        WaitForSingleObject(m_fenceEvent, INFINITE);
-    }
+    const UINT64 value = ++m_fenceValue;
+    V(m_commandQueue->Signal(m_fence.Get(), value));
+    return value;
 }
 
-void D3D::WaitForSignal(UINT64 fence) const
+void D3D::Flush()
 {
-    if (m_fence->GetCompletedValue() < fence)
+    const UINT64 fence = Signal();
+    WaitForSignal(fence);
+}
+
+void D3D::WaitForSignal(const UINT64 fence) const
+{
+    if (!IsFenceComplete(fence))
     {
         V(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
         WaitForSingleObject(m_fenceEvent, INFINITE);

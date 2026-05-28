@@ -8,10 +8,9 @@
 class D12Resource
 {
 public:
-    ~D12Resource();
-    void InitBuffer(LPCWSTR name, ID3D12Device* device, size_t size, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false);
-    void InitRTAS(LPCWSTR name, ID3D12Device* device, size_t size, D3D12_RESOURCE_FLAGS flags);
-    void Init(LPCWSTR name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc, const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr);
+    void InitBuffer(const char* name, ID3D12Device* device, size_t size, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false);
+    void InitRTAS(const char* name, ID3D12Device* device, size_t size, D3D12_RESOURCE_FLAGS flags);
+    void Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc, const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr);
     void Fill(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState);
 
     void CreateHeap(ID3D12Device* device);
@@ -27,7 +26,7 @@ public:
     ID3D12Resource* GetUploadResource() const { return m_uploadResource.Get(); }
     D3D12_RESOURCE_STATES GetCurrentState() const { return m_currentState; }
     D3D12_RESOURCE_DESC GetDesc() const { return m_desc; }
-    [[nodiscard]] const std::wstring& GetName() const { return m_name; }
+    [[nodiscard]] const std::string& GetName() const { return m_name; }
 
 private:
     ComPtr<ID3D12Resource> m_uploadResource;
@@ -35,7 +34,7 @@ private:
     D3D12_RESOURCE_DESC m_desc = {};
     D3D12_RESOURCE_STATES m_currentState = {};
 
-    std::wstring m_name;
+    std::string m_name;
 };
 
 #endif //PT_D12RESOURCE_H

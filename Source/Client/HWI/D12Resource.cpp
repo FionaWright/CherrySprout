@@ -7,17 +7,13 @@
 
 #include "Utils/Helper.h"
 
-D12Resource::~D12Resource()
-{
-}
-
-void D12Resource::Init(const LPCWSTR name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
+void D12Resource::Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
                        const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue)
 {
     const auto defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     V(device->CreateCommittedResource(&defaultHeapProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, initialState, clearValue,
                                       IID_PPV_ARGS(&m_resource)));
-    V(m_resource->SetName(name));
+    V(m_resource->SetName(stringToWString(name).c_str()));
     m_currentState = initialState;
     m_desc = resourceDesc;
 
@@ -32,14 +28,14 @@ void D12Resource::Fill(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOU
     m_currentState = initialState;
 }
 
-void D12Resource::InitBuffer(const LPCWSTR name, ID3D12Device* device, const size_t size,
+void D12Resource::InitBuffer(const char* name, ID3D12Device* device, const size_t size,
                              const D3D12_RESOURCE_FLAGS flags, const bool readbackHeap)
 {
     m_desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
     const auto heapProp = readbackHeap ? CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK) : CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     V(device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &m_desc, D3D12_RESOURCE_STATE_COMMON, nullptr,
                                       IID_PPV_ARGS(&m_resource)));
-    V(m_resource->SetName(name));
+    V(m_resource->SetName(stringToWString(name).c_str()));
     m_currentState = D3D12_RESOURCE_STATE_COMMON;
 
 #ifdef _DEBUG
@@ -47,14 +43,14 @@ void D12Resource::InitBuffer(const LPCWSTR name, ID3D12Device* device, const siz
 #endif
 }
 
-void D12Resource::InitRTAS(const LPCWSTR name, ID3D12Device* device, const size_t size,
+void D12Resource::InitRTAS(const char* name, ID3D12Device* device, const size_t size,
                              const D3D12_RESOURCE_FLAGS flags)
 {
     m_desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
     const auto defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     V(device->CreateCommittedResource(&defaultHeapProp, D3D12_HEAP_FLAG_NONE, &m_desc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr,
                                       IID_PPV_ARGS(&m_resource)));
-    V(m_resource->SetName(name));
+    V(m_resource->SetName(stringToWString(name).c_str()));
     m_currentState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
 #ifdef _DEBUG

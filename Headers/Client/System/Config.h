@@ -19,7 +19,7 @@ struct SettingsSystem
     uint32_t DefaultSceneIdx = 0;
 
     bool VSyncEnabled = false;
-    bool ForceSyncCpuGpu = true;
+    bool ForceSyncCpuGpu = false;
     bool AppGuiEnabled = true;
 
     bool ProfilingEnabled = true;
@@ -29,7 +29,7 @@ struct SettingsSystem
 struct SettingsRender
 {
     DXGI_FORMAT RtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    FLOAT RtvClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    float RtvClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
     float FoV = 60.0f;
     float NearPlane = 0.1f;

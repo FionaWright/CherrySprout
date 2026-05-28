@@ -7,8 +7,6 @@
 
 #ifdef _DEBUG
 
-#include "../System/App.h"
-
 #define GPU_SCOPE(cmdList, label) GPUEventScoped CONCAT(scope_, __COUNTER__)(cmdList, label)
 #define CONCAT(a, b) a##b
 
