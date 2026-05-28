@@ -1,26 +1,6 @@
 #ifndef H_MATH_UTILS_H
 #define H_MATH_UTILS_H
 
-#ifndef NAN
-#    define NAN 0.0f/0.0f;
-#endif
-
-#ifndef IOR_AIR
-#    define IOR_AIR CreateComplex(1.0f, 0.0f)
-#endif
-
-#ifndef CONSTANT_BOLTZMANN
-#    define CONSTANT_BOLTZMANN 1.38064852e-23f
-#endif
-
-#ifndef CONSTANT_PLANK
-#    define CONSTANT_PLANK 6.62607015e-34f
-#endif
-
-#ifndef CONSTANT_SPEED_OF_LIGHT
-#    define CONSTANT_SPEED_OF_LIGHT 299792458.0f
-#endif
-
 // https://sakibsaikia.github.io/graphics/2022/01/04/Nan-Checks-In-HLSL.html
 bool IsNaN(float x) // WARNING: This may be giving false positives? See mul(cMatXyzToRgb, float3(0.04491435,4.6650298,2.231335))
 {
