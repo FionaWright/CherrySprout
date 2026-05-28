@@ -17,3 +17,7 @@ Try to come up with a better polymorphic system for HLSL, templates maybe?
 Let's try and make most of the shaders C++ compilable, so I can run unit tests on them. Google test? 
 
 No more wide strings anywhere. Make everything strings and they can be converted to wstrings for APIs that want them that way
+
+Path tracer should be a CS instead of a PS
+
+Try to avoid GPU sync if I can? There must be some clever way to do it
