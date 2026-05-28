@@ -2,7 +2,7 @@
 // Created by fiona on 21/01/2026.
 //
 
-#include "System/ImGuiUtils.h"
+#include "System/GuiUtils.h"
 
 #define BONUS_WIDGET_WIDTH 20
 
@@ -54,14 +54,14 @@ std::string RemoveIDCodes(std::string str)
     return str;
 }
 
-void ImGuiUtils::FixWidthOnNext(const char* label)
+void GuiUtils::FixWidthOnNext(const char* label)
 {
     const float labelWidth = ImGui::CalcTextSize(label).x;
     const float innerSpacingWidth = ImGui::GetStyle().ItemInnerSpacing.x;
     ImGui::SetNextItemWidth(-(labelWidth + innerSpacingWidth));
 }
 
-void ImGuiUtils::FixWidthOnNext(const char* label, const char* field, bool& needTooltip)
+void GuiUtils::FixWidthOnNext(const char* label, const char* field, bool& needTooltip)
 {
     const float contentWidth = ImGui::GetContentRegionAvail().x;
 
@@ -81,7 +81,7 @@ void ImGuiUtils::FixWidthOnNext(const char* label, const char* field, bool& need
 
 static bool s_needTooltip = false;
 
-bool ImGuiUtils::FwInputFloat(const char* label, float* value, const float step, const float stepFast, const char* format, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwInputFloat(const char* label, float* value, const float step, const float stepFast, const char* format, const ImGuiInputTextFlags flags)
 {
     FixWidthOnNext(label, Format(format, *value), s_needTooltip);
     const bool result = ImGui::InputFloat(label, value, step, stepFast, format, flags);
@@ -92,7 +92,7 @@ bool ImGuiUtils::FwInputFloat(const char* label, float* value, const float step,
     return result;
 }
 
-bool ImGuiUtils::FwInputInt(const char* label, int* value, const int step, const int stepFast, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwInputInt(const char* label, int* value, const int step, const int stepFast, const ImGuiInputTextFlags flags)
 {
     FixWidthOnNext(label, Format("%i", *value), s_needTooltip);
     const bool result = ImGui::InputInt(label, value, step, stepFast, flags);
@@ -103,7 +103,7 @@ bool ImGuiUtils::FwInputInt(const char* label, int* value, const int step, const
     return result;
 }
 
-bool ImGuiUtils::FwInputUInt(const char* label, uint32_t* value, const int step, const int stepFast, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwInputUInt(const char* label, uint32_t* value, const int step, const int stepFast, const ImGuiInputTextFlags flags)
 {
     FixWidthOnNext(label, Format("%i", *value), s_needTooltip);
     int sInt = static_cast<int>(*value);
@@ -116,7 +116,7 @@ bool ImGuiUtils::FwInputUInt(const char* label, uint32_t* value, const int step,
     return result;
 }
 
-bool ImGuiUtils::FwDragFloat(const char* label, float* value, const float speed, const float min, const float max, const char* format, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwDragFloat(const char* label, float* value, const float speed, const float min, const float max, const char* format, const ImGuiInputTextFlags flags)
 {
     FixWidthOnNext(label, Format(format, *value), s_needTooltip);
     const bool result = ImGui::DragFloat(label, value, speed, min, max, format, flags);
@@ -127,7 +127,7 @@ bool ImGuiUtils::FwDragFloat(const char* label, float* value, const float speed,
     return result;
 }
 
-bool ImGuiUtils::FwDragInt(const char* label, int* value, const float speed, const int min, const int max, const char* format, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwDragInt(const char* label, int* value, const float speed, const int min, const int max, const char* format, const ImGuiInputTextFlags flags)
 {
     FixWidthOnNext(label, Format(format, *value), s_needTooltip);
     const bool result = ImGui::DragInt(label, value, speed, min, max, format, flags);
@@ -138,7 +138,7 @@ bool ImGuiUtils::FwDragInt(const char* label, int* value, const float speed, con
     return result;
 }
 
-bool ImGuiUtils::FwInputFloat3(const char* label, float* value, const char* format, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwInputFloat3(const char* label, float* value, const char* format, const ImGuiInputTextFlags flags)
 {
     FixWidthOnNext(label, FormatN(format, value, 3), s_needTooltip);
     const bool result = ImGui::InputFloat3(label, value, format, flags);
@@ -149,17 +149,17 @@ bool ImGuiUtils::FwInputFloat3(const char* label, float* value, const char* form
     return result;
 }
 
-bool ImGuiUtils::FwColorEdit3(const char* label, float* value, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwColorEdit3(const char* label, float* value, const ImGuiInputTextFlags flags)
 {
     return ImGui::ColorEdit3(label, value, flags);
 }
 
-bool ImGuiUtils::FwColorEdit4(const char* label, float* value, const ImGuiInputTextFlags flags)
+bool GuiUtils::FwColorEdit4(const char* label, float* value, const ImGuiInputTextFlags flags)
 {
     return ImGui::ColorEdit4(label, value, flags);
 }
 
-bool ImGuiUtils::BeginComboWithTooltip(const char* label, const char* preview, ImGuiComboFlags flags)
+bool GuiUtils::BeginComboWithTooltip(const char* label, const char* preview, ImGuiComboFlags flags)
 {
     const bool result = ImGui::BeginCombo(label, preview, flags);
 

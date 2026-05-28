@@ -36,14 +36,13 @@ inline void Config::SetUIntFromArg(uint32_t* variable, const char* key)
         *variable = std::stoi(ms_argsMap.at(key));
 }
 
-void Config::ParseCommandLineArgs(const LPSTR args)
+void Config::ParseCommandLineArgs(const char* args)
 {
     const std::vector<std::string> splitArgs = split(args, ' ');
 
-    for (int i = 0; i < splitArgs.size(); i++)
+    for (const auto& arg : splitArgs)
     {
-        std::string arg = splitArgs[i];
-        const int eqIdx = arg.find('=');
+        const auto eqIdx = arg.find('=');
         if (eqIdx == std::string::npos)
         {
             ms_argsMap.insert({arg, ""});
@@ -57,7 +56,6 @@ void Config::ParseCommandLineArgs(const LPSTR args)
 
     SetUIntFromArg(&ms_settingsSystem.RtvWidth, "--window_width");
     SetUIntFromArg(&ms_settingsSystem.RtvHeight, "--window_height");
-    SetUIntFromArg(&ms_settingsSystem.DefaultAppIdx, "--app");
     SetUIntFromArg(&ms_settingsSystem.DefaultSceneIdx, "--scene");
     SetBoolFromArg(&ms_settingsSystem.VSyncEnabled, "--vsync");
     SetBoolFromArg(&ms_settingsSystem.DebugHeapEnabled, "--debugHeap");

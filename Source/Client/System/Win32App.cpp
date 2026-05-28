@@ -19,10 +19,8 @@
 HWND Win32App::ms_hwnd = nullptr;
 std::unique_ptr<Engine> Win32App::ms_engine = nullptr;
 
-int Win32App::Run(const std::vector<App*>& apps, const HINSTANCE hInstance, const int nCmdShow)
+int Win32App::Run(App* app, const HINSTANCE hInstance, const int nCmdShow)
 {
-    FileHelper::Init();
-
     const int screenW = GetSystemMetrics(SM_CXSCREEN);
 
     uint32_t totalWindowWidth = Config::GetSystem().RtvWidth + Config::GetSystem().WindowAppGuiWidth +
@@ -45,8 +43,8 @@ int Win32App::Run(const std::vector<App*>& apps, const HINSTANCE hInstance, cons
     windowClass.hInstance = hInstance;
     windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
     windowClass.lpszClassName = "WindowClass";
-    windowClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP_ICON)); // <-- your main icon
-    windowClass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP_ICON)); // small icon for title bar
+    windowClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
+    windowClass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
     RegisterClassEx(&windowClass);
 
     const uint32_t totalWindowHeight = Config::GetSystem().RtvHeight;
@@ -73,7 +71,7 @@ int Win32App::Run(const std::vector<App*>& apps, const HINSTANCE hInstance, cons
     }
     CherryPrint("HWND = " << ms_hwnd);
 
-    ms_engine = std::make_unique<Engine>(apps, ms_hwnd, totalWindowWidth, totalWindowHeight);
+    ms_engine = std::make_unique<Engine>(app, ms_hwnd, totalWindowWidth, totalWindowHeight);
 
     ShowWindow(ms_hwnd, nCmdShow);
 

@@ -6,17 +6,20 @@
 #include "System/Win32App.h"
 #include "Utils/Helper.h"
 
-int CherrySprout::Run(App& app, HINSTANCE hInstance, const LPSTR args, const int nCmdShow)
+void InitializeDebugOutput()
 {
-    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    if (FAILED(hr))
-        return -1;
-
-#ifdef _DEBUG
     AllocConsole();
     FILE* fp;
     freopen_s(&fp, "CONOUT$", "w", stdout);
     CherryPrint("Console Window Initialised");
+}
+
+int CherrySprout::Run(App& app, const HINSTANCE hInstance, const LPSTR args, const int nCmdShow)
+{
+    V(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
+
+#ifdef _DEBUG
+    InitializeDebugOutput();
 #endif
 
     Config::ParseCommandLineArgs(args);

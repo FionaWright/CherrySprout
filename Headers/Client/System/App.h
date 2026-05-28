@@ -5,21 +5,24 @@
 #ifndef PT_APP_H
 #define PT_APP_H
 
+struct TimeArgs;
 class D3D;
 
 class App
 {
-protected:
-    ~App() = default;
-
 public:
-    virtual void OnInit(D3D* d3d);
-    virtual void OnUpdate(D3D* d3d, ID3D12GraphicsCommandList* cmdList, double deltaTime) = 0;
-    virtual void OnPostUpdate(D3D* d3d) = 0;
+    [[nodiscard]] virtual const char* GetName() const = 0;
+
+    virtual void Init(D3D* d3d) { m_initialized = true; }
+    virtual void Update(D3D* d3d, TimeArgs timeArgs) = 0;
+    virtual void PostUpdate(D3D* d3d) = 0;
+    virtual void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList) = 0;
     virtual void RenderGUI() = 0;
 
-    virtual const char* GetName() const = 0;
-    bool GetIsInitialized() const { return m_initialized; }
+    [[nodiscard]] bool GetIsInitialized() const { return m_initialized; }
+
+protected:
+    ~App() = default;
 
 private:
     bool m_initialized = false;

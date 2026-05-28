@@ -15,7 +15,6 @@ struct SettingsSystem
     uint32_t WindowAppGuiWidth = 340;
     uint32_t WindowEngineGuiWidth = 340;
 
-    uint32_t DefaultAppIdx = 0;
     uint32_t DefaultSceneIdx = 0;
 
     bool VSyncEnabled = false;
@@ -42,7 +41,7 @@ public:
     static void SetBoolFromArg(bool* variable, const char* key);
     static void SetUIntFromArg(uint32_t* variable, const char* key);
 
-    static void ParseCommandLineArgs(LPSTR args);
+    static void ParseCommandLineArgs(const char* args);
     static SettingsSystem& GetSystem() { return ms_settingsSystem; }
     static SettingsRender& GetRender() { return ms_settingsRender; }
 

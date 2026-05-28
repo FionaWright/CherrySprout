@@ -7,8 +7,10 @@
 
 #ifdef _DEBUG
 
+#define CONCAT_INNER(a, b) a##b
+#define CONCAT(a, b) CONCAT_INNER(a, b)
+
 #define GPU_SCOPE(cmdList, label) GPUEventScoped CONCAT(scope_, __COUNTER__)(cmdList, label)
-#define CONCAT(a, b) a##b
 
 class GPUEventScoped
 {
@@ -16,6 +18,11 @@ public:
     GPUEventScoped(ID3D12GraphicsCommandList* cmdList, LPCWSTR label);
     GPUEventScoped(ID3D12GraphicsCommandList* cmdList, LPCSTR label);
     ~GPUEventScoped();
+
+    GPUEventScoped(const GPUEventScoped&) = delete;
+    GPUEventScoped& operator=(const GPUEventScoped&) = delete;
+    GPUEventScoped(GPUEventScoped&&) = delete;
+    GPUEventScoped& operator=(GPUEventScoped&&) = delete;
 
 private:
     ID3D12GraphicsCommandList* m_heldCmdList;

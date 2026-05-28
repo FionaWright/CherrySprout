@@ -19,44 +19,42 @@
 //#include "Debug/HotReloader.h"
 #endif
 
-Engine::Engine(const std::vector<App*>& apps, const HWND hWnd, const UINT windowWidth, const UINT windowHeight)
+Engine::Engine(App* app, const HWND hWnd, const UINT windowWidth, const UINT windowHeight)
 {
-    assert(apps.size() > 0);
-
     m_d3d = std::make_unique<D3D>();
     m_d3d->Init(windowWidth, windowHeight);
     //TextureLoader::Init(m_d3d.get(), FileHelper::GetAssetsPath() + L"/Shaders");
 
-    m_selectedAppIdx = Config::GetSystem().DefaultAppIdx;
-
-    m_apps = apps;
+    m_app = app;
 
     //Gui::Init(hWnd, m_d3d->GetDevice(), 3);
 }
 
 void Engine::Frame()
 {
-    if (!m_apps.at(m_selectedAppIdx)->GetIsInitialized())
+    if (!m_app->GetIsInitialized())
     {
         m_d3d->Flush();
-        if (!m_apps.at(m_selectedAppIdx)->GetIsInitialized())
-        {
-            CherryPrint("Initializing App: " << m_apps.at(m_selectedAppIdx)->GetName() << "...");
-            m_apps.at(m_selectedAppIdx)->OnInit(m_d3d.get());
-            CherryPrint("Initialized App: " << m_apps.at(m_selectedAppIdx)->GetName());
-        }
+        CherryPrint("Initializing App: " << m_app->GetName() << "...");
+        m_app->Init(m_d3d.get());
+        CherryPrint("Initialized App: " << m_app->GetName());
+    }
+
+    // Update
+    {
+        const TimeArgs timeArgs = m_clock.GetTimeArgs();
+        CalculateFPS(timeArgs.ElapsedTime_ms);
+
+        m_app->Update(m_d3d.get(), timeArgs);
+
+        m_clock.Tick();
     }
 
     //Gui::BeginFrame();
 
-    const TimeArgs timeArgs = m_clock.GetTimeArgs();
-    CalculateFPS(timeArgs.ElapsedTime);
-
     Render();
 
     Input::ProgressFrame();
-
-    m_clock.Tick();
 
 #ifdef _DEBUG
     //HotReloader::CheckFiles(m_d3d.get());
@@ -68,14 +66,25 @@ void Engine::Render()
     const ComPtr<ID3D12GraphicsCommandList> cmdList = m_d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     D12Resource* rtv = m_d3d->GetRtv();
-    rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-    m_apps.at(m_selectedAppIdx)->OnUpdate(m_d3d.get(), cmdList.Get(), m_clock.GetDeltaMilliseconds());
-    m_apps.at(m_selectedAppIdx)->RenderGUI();
+    {
+        GPU_SCOPE(cmdList.Get(), L"Setup");
+
+        rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
+
+    {
+        GPU_SCOPE(cmdList.Get(), L"App Render");
+
+        m_app->Render(m_d3d.get(), cmdList.Get());
+    }
 
     {
         GPU_SCOPE(cmdList.Get(), L"GUI");
+
         //RenderGUI();
+
+        m_app->RenderGUI();
 
         const D3D12_CPU_DESCRIPTOR_HANDLE handle = m_d3d->GetRtvHandle();
         cmdList->OMSetRenderTargets(1, &handle, FALSE, nullptr);
@@ -83,13 +92,19 @@ void Engine::Render()
         //Gui::RenderAllWindows(cmdList.Get());
     }
 
-    rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_PRESENT);
+    // Present
+    {
+        rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_PRESENT);
 
-    V(cmdList->Close());
-    m_d3d->ExecuteCommandList(cmdList.Get());
-    m_d3d->Present();
+        V(cmdList->Close());
+        m_d3d->ExecuteCommandList(cmdList.Get());
+        m_d3d->Present();
+    }
 
-    m_apps.at(m_selectedAppIdx)->OnPostUpdate(m_d3d.get());
+    // PostUpdate
+    {
+        m_app->PostUpdate(m_d3d.get());
+    }
 }
 
 void Engine::CalculateFPS(const double deltaTime)

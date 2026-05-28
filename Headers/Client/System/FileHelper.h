@@ -9,7 +9,6 @@
 class FileHelper
 {
 public:
-    static void Init();
     static std::string GetAssetsPath() { return m_assetsPath; }
     static std::string GetShadersPath() { return m_shadersPath; }
     static std::string GetAssetFullPath(const char* assetName);

@@ -5,11 +5,13 @@
 class Greenhouse final : public App
 {
 public:
-    void OnInit(D3D* d3d) override;
-    void OnUpdate(D3D* d3d, ID3D12GraphicsCommandList* cmdList, double deltaTime) override;
-    void OnPostUpdate(D3D* d3d) override;
+    [[nodiscard]] const char* GetName() const override { return "Greenhouse"; };
+
+    void Init(D3D* d3d) override;
+    void Update(D3D* d3d, TimeArgs timeArgs) override;
+    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList) override;
+    void PostUpdate(D3D* d3d) override;
     void RenderGUI() override;
-    [[nodiscard]] const char* GetName() const override;
 };
 
 #endif

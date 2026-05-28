@@ -4,9 +4,10 @@
 
 #ifndef H_IMGUIUTILS_H
 #define H_IMGUIUTILS_H
+
 #include "imgui.h"
 
-class ImGuiUtils
+class GuiUtils
 {
 public:
     static void FixWidthOnNext(const char* label);

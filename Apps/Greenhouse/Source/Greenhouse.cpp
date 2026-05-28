@@ -3,24 +3,25 @@
 
 #include "Greenhouse.h"
 
-void Greenhouse::OnInit(D3D* d3d)
+#include "System/HighResolutionClock.h"
+
+void Greenhouse::Init(D3D* d3d)
 {
-    App::OnInit(d3d);
+    App::Init(d3d);
 }
 
-void Greenhouse::OnUpdate(D3D* d3d, ID3D12GraphicsCommandList* cmdList, double deltaTime)
+void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
 }
 
-void Greenhouse::OnPostUpdate(D3D* d3d)
+void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
+{
+}
+
+void Greenhouse::PostUpdate(D3D* d3d)
 {
 }
 
 void Greenhouse::RenderGUI()
 {
-}
-
-const char* Greenhouse::GetName() const
-{
-    return "Greenhouse";
 }

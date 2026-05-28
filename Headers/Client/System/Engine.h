@@ -14,15 +14,14 @@ class D3D;
 class Engine
 {
 public:
-    Engine(const std::vector<App*>& apps, HWND hWnd, UINT windowWidth, UINT windowHeight);
+    Engine(App* app, HWND hWnd, UINT windowWidth, UINT windowHeight);
     void Frame();
     void Render();
     //void RenderGUI();
     void CalculateFPS(double deltaTime);
 
 private:
-    std::vector<App*> m_apps;
-    int m_selectedAppIdx = 0;
+    App* m_app;
 
     std::unique_ptr<D3D> m_d3d;
     HighResolutionClock m_clock;

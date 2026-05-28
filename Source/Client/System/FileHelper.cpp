@@ -8,13 +8,8 @@
 
 #include "Utils/Helper.h"
 
-std::string FileHelper::m_assetsPath, FileHelper::m_shadersPath;
-
-void FileHelper::Init()
-{
-    m_assetsPath = std::string(CHERRYSPROUT_ASSETS_DIR) + "/";
-    m_shadersPath = std::string(CHERRYSPROUT_SHADERS_DIR) + "/";
-}
+std::string FileHelper::m_assetsPath = std::string(CHERRYSPROUT_ASSETS_DIR) + "/";
+std::string FileHelper::m_shadersPath = std::string(CHERRYSPROUT_SHADERS_DIR) + "/";
 
 std::string FileHelper::GetAssetFullPath(const char* assetName)
 {
@@ -58,8 +53,8 @@ inline HRESULT FileHelper::ReadDataFromFile(const char* filename, byte** data, U
     extendedParams.lpSecurityAttributes = nullptr;
     extendedParams.hTemplateFile = nullptr;
 
-    std::wstring filenameW = stringToWString(filename);
-    Microsoft::WRL::Wrappers::FileHandle file(CreateFile2(filenameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+    const std::wstring filenameW = stringToWString(filename);
+    const Microsoft::WRL::Wrappers::FileHandle file(CreateFile2(filenameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
 #else
     Wrappers::FileHandle file(CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | SECURITY_SQOS_PRESENT | SECURITY_ANONYMOUS, nullptr));
 #endif
@@ -98,7 +93,7 @@ inline HRESULT FileHelper::ReadDataFromDDSFile(const char* filename, byte** data
     }
 
     // DDS files always start with the same magic number.
-    static const UINT DDS_MAGIC = 0x20534444;
+    static constexpr UINT DDS_MAGIC = 0x20534444;
     UINT magicNumber = *reinterpret_cast<const UINT*>(*data);
     if (magicNumber != DDS_MAGIC)
     {

@@ -5,8 +5,8 @@
 
 _Use_decl_annotations_
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR args, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd)
 {
     Greenhouse greenhouseApp;
-    return CherrySprout::Run(greenhouseApp, hInstance, args, nCmdShow);
+    return CherrySprout::Run(greenhouseApp, hInstance, lpCmdLine, nShowCmd);
 }

@@ -9,8 +9,8 @@ using std::chrono::high_resolution_clock;
 
 struct TimeArgs
 {
-    double ElapsedTime;
-    double TotalTime;
+    double ElapsedTime_ms;
+    double TotalTime_s;
 };
 
 class HighResolutionClock
@@ -22,17 +22,17 @@ public:
 
     void Reset();
 
-    double GetDeltaNanoseconds() const;
-    double GetDeltaMicroseconds() const;
-    double GetDeltaMilliseconds() const;
-    double GetDeltaSeconds() const;
+    [[nodiscard]] double GetDeltaNanoseconds() const;
+    [[nodiscard]] double GetDeltaMicroseconds() const;
+    [[nodiscard]] double GetDeltaMilliseconds() const;
+    [[nodiscard]] double GetDeltaSeconds() const;
 
-    double GetTotalNanoseconds() const;
-    double GetTotalMicroseconds() const;
-    double GetTotalMilliSeconds() const;
-    double GetTotalSeconds() const;
+    [[nodiscard]] double GetTotalNanoseconds() const;
+    [[nodiscard]] double GetTotalMicroseconds() const;
+    [[nodiscard]] double GetTotalMilliSeconds() const;
+    [[nodiscard]] double GetTotalSeconds() const;
 
-    TimeArgs GetTimeArgs() const;
+    [[nodiscard]] TimeArgs GetTimeArgs() const;
 
 private:
     high_resolution_clock::time_point m_t0;

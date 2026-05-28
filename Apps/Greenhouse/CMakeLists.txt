@@ -17,6 +17,10 @@ add_executable(Greenhouse WIN32
         ${CHERRYSPROUT_ASSETS_DIR}/Resources/Resources.h
 )
 
+target_compile_options(Greenhouse PRIVATE
+        $<$<CONFIG:Debug>:/Zi /Od /RTC1>
+)
+
 target_link_libraries(Greenhouse PRIVATE client)
 set_target_properties(Greenhouse PROPERTIES
         CXX_STANDARD 20
