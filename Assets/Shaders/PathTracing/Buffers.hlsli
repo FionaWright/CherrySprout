@@ -11,7 +11,7 @@
 
 // =================== U Registers ===============================
 
-RWTexture2D<float4>                   gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
+RWTexture2D<float4>                 gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
 
 // =================== T Registers (Default) =====================
 

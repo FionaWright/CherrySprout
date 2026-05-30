@@ -1,0 +1,37 @@
+//
+// Created by fionaw on 29/05/2026.
+//
+
+#ifndef CHERRYSPROUT_SCENE_H
+#define CHERRYSPROUT_SCENE_H
+
+#include <string>
+#include <vector>
+
+#include "Scene/Vertex.h"
+#include "Scene/InstanceData.h"
+#include "Scene/Material.h"
+
+struct Object
+{
+#ifdef _DEBUG
+    std::string DebugName = "Unnamed Object";
+#endif
+
+    float M[16];
+    uint32_t MaterialIndex;
+};
+
+struct SceneCPU
+{
+    std::vector<Object> Objects;
+    std::vector<std::string> TextureFilepaths;
+
+    std::vector<Vertex> MegaBufferVertex;
+    std::vector<uint32_t> MegaBufferIndex;
+    std::vector<InstanceData> MegaBufferInstanceData;
+    std::vector<Material> MegaBufferMaterials;
+    // TODO: MegaBufferPunctualLights
+};
+
+#endif //CHERRYSPROUT_SCENE_H

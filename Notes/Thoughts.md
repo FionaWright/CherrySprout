@@ -26,3 +26,4 @@ Assume static meshes for everything, don't need to care about updating M, MTI
 Path tracer should be a CS instead of a PS
 
 Abstraction Idea: Buffer<T>, contains std::vector<T> and D12Resource. Has Load(T*) and Upload(D3D*) functions 
+    Nah bad abstraction, saves little effort and hides a lot

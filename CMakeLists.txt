@@ -50,4 +50,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug
     target_compile_definitions(client PUBLIC SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 endif()
 
+include(SceneLoaderUSD.cmake)
+
 add_subdirectory(Apps)

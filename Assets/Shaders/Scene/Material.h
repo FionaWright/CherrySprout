@@ -8,10 +8,10 @@ struct Material
     hlsl::float4 BaseColor;
     hlsl::float4 EmissiveColor;
 
-    hlsl::float Roughness;
-    hlsl::float Metallic;
-    hlsl::float TransmissionFactor;
-    hlsl::float IOR_N;
+    float Roughness;
+    float Metallic;
+    float TransmissionFactor;
+    float IOR_N;
 
     hlsl::uint TexIdxAlbedo;
     hlsl::uint TexIdxNormal;
