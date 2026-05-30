@@ -198,14 +198,14 @@ namespace SceneLoaderUSD
 
         obj.Name = prim.GetName().GetString();
 
-        pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(prim);
+        pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
 
         // TODO: Guessing
         for (int r = 0; r < 4; r++)
             for (int c = 0; c < 4; c++)
             {
                 const int i = r * 4 + c;
-                obj.M[i] = xform[r][c];
+                obj.M[i] = static_cast<float>(xform[r][c]);
             }
 
         const pxr::UsdShadeMaterial boundMat = pxr::UsdShadeMaterialBindingAPI(prim).ComputeBoundMaterial(pxr::UsdShadeTokens->full);

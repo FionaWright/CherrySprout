@@ -125,13 +125,13 @@ namespace SceneLoaderUSD
     }
 
     template<typename T>
-    void RecurseMtlXValue(const pxr::UsdShadeInput& input, T& value)
+    bool RecurseMtlXValue(const pxr::UsdShadeInput& input, T& value)
     {
         if (!input)
-            return;
+            return false;
 
         if (input.Get(&value))
-            return;
+            return true;
 
         pxr::UsdShadeConnectableAPI source;
         pxr::TfToken sourceName;
@@ -142,11 +142,12 @@ namespace SceneLoaderUSD
                 &sourceName,
                 &sourceType))
         {
-            return;
+            return false;
         }
 
         if (const auto srcInput = source.GetInput(sourceName))
-            RecurseMtlXValue(srcInput, value);
+            return RecurseMtlXValue(srcInput, value);
+        return false;
     }
 
     inline Material ExtractMaterial_MaterialX(const pxr::UsdShadeShader& surface, const pxr::UsdShadeMaterial& mat)
@@ -170,8 +171,8 @@ namespace SceneLoaderUSD
                 memcpy(&dest, &vec3, sizeof(float) * 3);
                 return;
             }
-            RecurseMtlXValue(input, vec3);
-            memcpy(&dest, &vec3, sizeof(float) * 3);
+            if (RecurseMtlXValue(input, vec3))
+                memcpy(&dest, &vec3, sizeof(float) * 3);
 
         };
         auto readFloat3to4 = [&](const char* name, hlsl::float4& dest)
@@ -183,18 +184,18 @@ namespace SceneLoaderUSD
                 memcpy(&dest, &vec3, sizeof(float) * 3);
                 return;
             }
-            RecurseMtlXValue(input, vec3);
-            memcpy(&dest, &vec3, sizeof(float) * 3);
+            if (RecurseMtlXValue(input, vec3))
+                memcpy(&dest, &vec3, sizeof(float) * 3);
         };
 
         // TODO: Textures
 
         Material material{};
 
-        readFloat3to4("diffuseColor", material.BaseColor);
-        readFloat3("emissiveColor", material.EmissiveColor);
-        readFloat("roughness", material.Roughness);
-        readFloat("metallic", material.Metallic);
+        readFloat3to4("base_color", material.BaseColor);
+        readFloat3("emission", material.EmissiveColor);
+        readFloat("specular_roughness", material.Roughness);
+        readFloat("metalness", material.Metallic);
 
         return material;
     }
