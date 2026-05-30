@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 4.0)
 project(CherrySprout)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(MSVC)
     include(cmake/MsvcFlags.cmake)
 endif()
@@ -80,7 +83,11 @@ set_target_properties(tbb_malloc PROPERTIES
 
 # -------------- SCENE LOADER TARGET ------------------
 
-add_library(SceneLoaderUSD SHARED Source/SceneLoaderUSD/SceneLoaderUSD.cpp)
+add_library(SceneLoaderUSD SHARED
+        Source/SceneLoaderUSD/SceneLoaderUSD.cpp
+        Source/SceneLoaderUSD/Importer.cpp
+        Source/SceneLoaderUSD/Processor.cpp
+)
 
 target_include_directories(SceneLoaderUSD PUBLIC
         $<BUILD_INTERFACE:${OPEN_USD_DIR_BUILD}/include>
@@ -107,6 +114,20 @@ file(MAKE_DIRECTORY "${USD_BIN_DIR}")
 add_custom_command(TARGET SceneLoaderUSD POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${OPEN_USD_DIR_BUILD}/lib/usd_ms.dll"
+        "${USD_BIN_DIR}"
+)
+
+# Copy tbb.lib to bin dir
+add_custom_command(TARGET SceneLoaderUSD POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${OPEN_USD_DIR_BUILD}/lib/tbb.lib"
+        "${USD_BIN_DIR}"
+)
+
+# Copy tbb_debug.lib to bin dir
+add_custom_command(TARGET SceneLoaderUSD POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${OPEN_USD_DIR_BUILD}/lib/tbb_debug.lib"
         "${USD_BIN_DIR}"
 )
 

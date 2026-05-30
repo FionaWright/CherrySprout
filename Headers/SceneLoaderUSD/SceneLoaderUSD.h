@@ -5,7 +5,7 @@
 
 namespace SceneLoaderUSD
 {
-    __declspec(dllexport) void LoadUSD(const char* filepath, SceneCPU* scene);
+    __declspec(dllexport) void LoadUSD(const char* usdPath, SceneCPU* scene);
 }
 
 #endif

@@ -5,16 +5,19 @@
 
 struct Material
 {
-    hlsl::float4 BaseColor;
-    hlsl::float4 EmissiveColor;
+    hlsl::float4 BaseColor = { 1, 1, 1, 1 };
+    hlsl::float3 EmissiveColor = { 1, 1, 1 };
 
-    float Roughness;
-    float Metallic;
-    float TransmissionFactor;
-    float IOR_N;
+    float Roughness = 1.0f;
+    float Metallic = 0.0f;
+    float SpecularFactor = 0.0f;
+    float EmissiveStrength = 0.0f;
+    float AnisoStrength = 0.0f;
+    float TransmissionFactor = 0.0f;
+    float IOR_N = 1.5f;
 
-    hlsl::uint TexIdxAlbedo;
-    hlsl::uint TexIdxNormal;
+    int TexIdxAlbedo = -1;
+    int TexIdxNormal = -1;
 };
 
 #endif

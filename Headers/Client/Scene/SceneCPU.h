@@ -20,18 +20,25 @@ struct Object
 
     float M[16];
     uint32_t MaterialIndex;
+
+    uint32_t MegaBufferVertexOffset;
+    uint32_t MegaBufferIndexOffset;
+    uint32_t MegaBufferIndexCount;
 };
 
 struct SceneCPU
 {
+    // Filled by Scene Loader:
     std::vector<Object> Objects;
     std::vector<std::string> TextureFilepaths;
 
     std::vector<Vertex> MegaBufferVertex;
     std::vector<uint32_t> MegaBufferIndex;
-    std::vector<InstanceData> MegaBufferInstanceData;
     std::vector<Material> MegaBufferMaterials;
     // TODO: MegaBufferPunctualLights
+
+    // Filled by RTAS Builder:
+    std::vector<InstanceData> MegaBufferInstanceData;
 };
 
 #endif //CHERRYSPROUT_SCENE_H
