@@ -5,13 +5,13 @@ Setting up the project to be able to begin new work
 - [x] CMAKE successfully running
 - [x] Get a main file running
 - [x] Set up the app system
-- [ ] Do a once over for all the files, refactoring stuff that it is bad
+- [x] Do a once over for all the files, refactoring stuff that it is bad
 - [ ] Render a triangle
-- [ ] Design and implement the new buffer abstractions
+- [x] Design and implement the new buffer abstractions
 - [ ] Path-Trace a cube
 - [ ] Camera controls (Do it better than last time)
 - [ ] Design and implement new GUI
-- [ ] OpenUSD linked (Make separate project/repo?)
+- [x] OpenUSD linked (Make separate project/repo?)
 - [ ] Load and render a cube
 - [ ] Load and render cornell box
 - [ ] Load and render ABeautifulGame

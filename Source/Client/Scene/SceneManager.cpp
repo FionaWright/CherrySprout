@@ -4,6 +4,8 @@
 
 #include "System/pch.h"
 #include "Scene/SceneManager.h"
+#include "HWI/D3D.h"
+#include "Utils/Helper.h"
 
 typedef void (*LoadUSDFunc)(const char* usdPath, SceneCPU* scene);
 
@@ -34,4 +36,32 @@ void SceneManager::LoadScene(const char* filepath)
     LoadUSD(filepath, &m_scene.CPU);
 
     FreeLibrary(dll);
+
+    m_gpuDataDirty = true;
+}
+
+void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdList)
+{
+    assert(m_gpuDataDirty);
+
+    const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertex.size() * sizeof(Vertex);
+    const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndex.size() * sizeof(uint32_t);
+    const size_t megaBufferMaterialsBytes = m_scene.CPU.MegaBufferMaterials.size() * sizeof(Material);
+
+    m_scene.GPU.MegaBufferVertex.InitBuffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
+    m_scene.GPU.MegaBufferIndex.InitBuffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
+    m_scene.GPU.MegaBufferMaterials.InitBuffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
+
+    size_t uploadHeapRequiredSize = 0;
+    uploadHeapRequiredSize += m_scene.GPU.MegaBufferVertex.GetIntermediateSize();
+    uploadHeapRequiredSize += m_scene.GPU.MegaBufferIndex.GetIntermediateSize();
+    uploadHeapRequiredSize += m_scene.GPU.MegaBufferMaterials.GetIntermediateSize();
+    uploadHeapRequiredSize += 512 * 3; // For safety
+    m_uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
+
+    m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex.data(), megaBufferIndexBytes);
+    m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials.data(), megaBufferMaterialsBytes);
+    m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex.data(), megaBufferVertexBytes);
+
+    m_gpuDataDirty = false;
 }

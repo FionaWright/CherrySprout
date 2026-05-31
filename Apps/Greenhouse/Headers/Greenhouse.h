@@ -1,5 +1,7 @@
 #ifndef H_GREENHOUSE_H
 #define H_GREENHOUSE_H
+
+#include "Scene/SceneManager.h"
 #include "System/App.h"
 
 class Greenhouse final : public App
@@ -12,6 +14,9 @@ public:
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList) override;
     void PostUpdate(D3D* d3d) override;
     void RenderGUI() override;
+
+private:
+    SceneManager m_sceneManager;
 };
 
 #endif
