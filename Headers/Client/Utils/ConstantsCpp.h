@@ -1,0 +1,6 @@
+#ifndef H_CONSTANTS_CPP_H
+#define H_CONSTANTS_CPP_H
+
+#define IM_GUI_INDENTATION 20
+
+#endif

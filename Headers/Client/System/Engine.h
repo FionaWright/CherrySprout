@@ -17,8 +17,8 @@ public:
     Engine(App* app, HWND hWnd, UINT windowWidth, UINT windowHeight);
     void Frame();
     void Render();
-    //void RenderGUI();
-    void CalculateFPS(double deltaTime);
+    void RenderGUI();
+    void CalculateFPS(double deltaTime_s);
 
 private:
     App* m_app;

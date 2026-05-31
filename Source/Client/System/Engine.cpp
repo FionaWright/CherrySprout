@@ -11,9 +11,8 @@
 #include "HWI/D3D.h"
 #include "System/Config.h"
 #include "System/FileHelper.h"
-//#include "System/Gui.h"
+#include "System/Gui.h"
 #include "System/Input.h"
-//#include "System/TextureLoader.h"
 
 #ifdef _DEBUG
 //#include "Debug/HotReloader.h"
@@ -23,15 +22,8 @@ Engine::Engine(App* app, const HWND hWnd, const UINT windowWidth, const UINT win
 {
     m_d3d = std::make_unique<D3D>();
     m_d3d->Init(windowWidth, windowHeight);
-    //TextureLoader::Init(m_d3d.get(), FileHelper::GetAssetsPath() + L"/Shaders");
 
     m_app = app;
-
-    //Gui::Init(hWnd, m_d3d->GetDevice(), 3);
-}
-
-void Engine::Frame()
-{
     if (!m_app->GetIsInitialized())
     {
         m_d3d->Flush();
@@ -40,17 +32,20 @@ void Engine::Frame()
         CherryPrint("Initialized App: " << m_app->GetName());
     }
 
+    Gui::Init(hWnd, m_d3d->GetDevice(), 3);
+}
+
+void Engine::Frame()
+{
     // Update
     {
         const TimeArgs timeArgs = m_clock.GetTimeArgs();
-        CalculateFPS(timeArgs.ElapsedTime_ms);
+        CalculateFPS(timeArgs.ElapsedTime_ms / 1000);
 
         m_app->Update(m_d3d.get(), timeArgs);
 
         m_clock.Tick();
     }
-
-    //Gui::BeginFrame();
 
     Render();
 
@@ -82,14 +77,16 @@ void Engine::Render()
     {
         GPU_SCOPE(cmdList.Get(), L"GUI");
 
-        //RenderGUI();
+        Gui::BeginFrame();
+
+        RenderGUI();
 
         m_app->RenderGUI();
 
         const D3D12_CPU_DESCRIPTOR_HANDLE handle = m_d3d->GetRtvHandle();
         cmdList->OMSetRenderTargets(1, &handle, FALSE, nullptr);
         rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-        //Gui::RenderAllWindows(cmdList.Get());
+        Gui::RenderAllWindows(cmdList.Get());
     }
 
     // Present
@@ -107,13 +104,13 @@ void Engine::Render()
     }
 }
 
-void Engine::CalculateFPS(const double deltaTime)
+void Engine::CalculateFPS(const double deltaTime_s)
 {
-    m_frameTime = deltaTime;
+    m_frameTime = deltaTime_s;
 
-    m_fpsTimeSinceUpdate10ms += deltaTime;
-    m_fpsTimeSinceUpdate50ms += deltaTime;
-    m_fpsTimeSinceUpdate100ms += deltaTime;
+    m_fpsTimeSinceUpdate10ms += deltaTime_s;
+    m_fpsTimeSinceUpdate50ms += deltaTime_s;
+    m_fpsTimeSinceUpdate100ms += deltaTime_s;
     m_fpsFramesSinceUpdate10ms++;
     m_fpsFramesSinceUpdate50ms++;
     m_fpsFramesSinceUpdate100ms++;
