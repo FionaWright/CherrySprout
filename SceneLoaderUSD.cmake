@@ -107,9 +107,6 @@ target_link_libraries(SceneLoaderUSD PUBLIC
 
 # -------------- SCENE LOADER COPY FILES  -------------
 
-set(USD_BIN_DIR ${CMAKE_BINARY_DIR}/SceneLoaderUSD/bin)
-file(MAKE_DIRECTORY "${USD_BIN_DIR}")
-
 # Copy usd_ms.dll to bin dir
 add_custom_command(TARGET SceneLoaderUSD POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

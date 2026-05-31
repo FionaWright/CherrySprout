@@ -3,9 +3,7 @@
 
 #include "Scene/SceneCPU.h"
 
-namespace SceneLoaderUSD
-{
-    __declspec(dllexport) void LoadUSD(const char* usdPath, SceneCPU* scene);
-}
+extern "C" __declspec(dllexport)
+void LoadUSD(const char* usdPath, SceneCPU* scene);
 
 #endif

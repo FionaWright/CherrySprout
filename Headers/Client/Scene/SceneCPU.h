@@ -2,8 +2,8 @@
 // Created by fionaw on 29/05/2026.
 //
 
-#ifndef CHERRYSPROUT_SCENE_H
-#define CHERRYSPROUT_SCENE_H
+#ifndef CHERRYSPROUT_SCENE_CPU_H
+#define CHERRYSPROUT_SCENE_CPU_H
 
 #include <string>
 #include <vector>
@@ -41,4 +41,4 @@ struct SceneCPU
     std::vector<InstanceData> MegaBufferInstanceData;
 };
 
-#endif //CHERRYSPROUT_SCENE_H
+#endif //CHERRYSPROUT_SCENE_CPU_H

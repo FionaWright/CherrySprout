@@ -2,8 +2,8 @@
 // Created by fionaw on 29/05/2026.
 //
 
-#ifndef CHERRYSPROUT_SCENE_H
-#define CHERRYSPROUT_SCENE_H
+#ifndef CHERRYSPROUT_SCENE_GPU_H
+#define CHERRYSPROUT_SCENE_GPU_H
 
 #include "HWI/D12Resource.h"
 
@@ -20,4 +20,4 @@ struct SceneGPU
     // TODO: Textures
 };
 
-#endif //CHERRYSPROUT_SCENE_H
+#endif //CHERRYSPROUT_SCENE_GPU_H
