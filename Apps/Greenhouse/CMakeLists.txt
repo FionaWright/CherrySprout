@@ -1,13 +1,5 @@
-file(GLOB_RECURSE PROJECT_SOURCES "Source/*.cpp")
-
-file(GLOB_RECURSE PROJECT_HEADERS "Headers/*.h")
-
-set(IS_DEBUG CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
-
-if(NOT IS_DEBUG)
-    list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*/Source/Client/Debug/.*")
-    list(FILTER PROJECT_HEADERS EXCLUDE REGEX ".*/Headers/Client/Debug/.*")
-endif()
+file(GLOB_RECURSE PROJECT_SOURCES "${CMAKE_SOURCE_DIR}/Apps/Greenhouse/Source/*.cpp")
+file(GLOB_RECURSE PROJECT_HEADERS "${CMAKE_SOURCE_DIR}/Apps/Greenhouse/Headers/*.h")
 
 add_executable(Greenhouse WIN32
         Source/main.cpp

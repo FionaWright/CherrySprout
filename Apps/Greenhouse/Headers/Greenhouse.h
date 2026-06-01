@@ -1,6 +1,7 @@
 #ifndef H_GREENHOUSE_H
 #define H_GREENHOUSE_H
 
+#include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
 #include "HWI/RootSig.h"
@@ -21,11 +22,7 @@ public:
 
 private:
     SceneManager m_sceneManager;
-
-    Shader m_shaderPT;
-    RootSig m_rootSigPT;
-    DescriptorSet m_descriptorSet;
-    D12Resource m_output, m_accum;
+    PathTracer m_pathTracer;
 
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;
