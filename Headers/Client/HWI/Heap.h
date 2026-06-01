@@ -17,11 +17,11 @@ public:
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorHandleAtIndex(uint32_t idx) const;
     uint32_t GetNextDescriptorIdx(const char* debugName = nullptr);
 
-    uint32_t GetNextDescriptorTex2DIdx(const char* debugName = nullptr);
+    uint32_t GetNextDescriptorIdx_Bindless(const char* debugName = nullptr);
     uint32_t AddBindlessTexture2D(ID3D12Device* device, D12Resource* resource, DXGI_FORMAT format);
     [[nodiscard]] uint32_t GetBindlessTexBase() const { return m_baseBindlessTex; }
 
-    void BindHeap(ID3D12GraphicsCommandList* cmdList) const;
+    void Bind(ID3D12GraphicsCommandList* cmdList) const;
     void PrintHeapInfo() const;
 
     [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const { return m_heapResource->GetCPUDescriptorHandleForHeapStart(); }

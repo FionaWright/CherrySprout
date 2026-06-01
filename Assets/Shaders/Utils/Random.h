@@ -2,7 +2,7 @@
 #define H_RAND01_H
 
 #include "HlslGlue.h"
-#include "Halton.h"
+//#include "Halton.h"
 #include "Path-Tracing/MacroConstants.hlsli"
 
 uint wang_hash(uint a) {

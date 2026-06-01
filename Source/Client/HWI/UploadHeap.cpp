@@ -7,11 +7,7 @@
 #include <cassert>
 
 #include "Utils/Helper.h"
-
-size_t Align(const size_t value, const size_t alignment)
-{
-    return (value + alignment - 1) & ~(alignment - 1);
-}
+#include "Utils/D3DUtils.h"
 
 void UploadHeap::Init(ID3D12Device* device, const size_t maxUploadSize)
 {

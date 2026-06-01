@@ -61,7 +61,7 @@ uint32_t Heap::GetNextDescriptorIdx(const char* debugName)
     return idx;
 }
 
-uint32_t Heap::GetNextDescriptorTex2DIdx(const char* debugName)
+uint32_t Heap::GetNextDescriptorIdx_Bindless(const char* debugName)
 {
     if (m_currentHeapIndexBindlessTex >= m_heapSize)
         throw std::exception("Heap is too smol :(");
@@ -89,7 +89,7 @@ uint32_t Heap::AddBindlessTexture2D(ID3D12Device* device, D12Resource* resource,
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.Format = format;
 
-    uint32_t idx = GetNextDescriptorTex2DIdx(resource->GetName().c_str());
+    uint32_t idx = GetNextDescriptorIdx_Bindless(resource->GetName().c_str());
     const auto handle = GetDescriptorHandleAtIndex(idx);
 
     device->CreateShaderResourceView(resource->GetResource(), &srvDesc, handle);
@@ -98,7 +98,7 @@ uint32_t Heap::AddBindlessTexture2D(ID3D12Device* device, D12Resource* resource,
     return normalizedIdx;
 }
 
-void Heap::BindHeap(ID3D12GraphicsCommandList* cmdList) const
+void Heap::Bind(ID3D12GraphicsCommandList* cmdList) const
 {
     ID3D12DescriptorHeap* heap = m_heapResource.Get();
     cmdList->SetDescriptorHeaps(1, &heap);

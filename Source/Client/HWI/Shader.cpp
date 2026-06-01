@@ -27,17 +27,17 @@ void Shader::InitVsPs(const char* vs, const char* ps, D3D12_INPUT_LAYOUT_DESC il
 
     m_pso = nullptr;
 
-    std::string vsPath = FileHelper::GetAssetShaderFullPath(vs);
-    std::string psPath = FileHelper::GetAssetShaderFullPath(ps);
+    const std::string vsPath = FileHelper::GetAssetShaderFullPath(vs);
+    const std::string psPath = FileHelper::GetAssetShaderFullPath(ps);
 
-    ComPtr<IDxcBlob> vertexShader = CompileShaderDXC(vsPath.c_str(), "VSMain", "vs_6_6", compileFlags, args);
-    ComPtr<IDxcBlob> pixelShader = CompileShaderDXC(psPath.c_str(), "PSMain", "ps_6_6", compileFlags, args);
+    ComPtr<IDxcBlob> blobV = CompileShaderDXC(vsPath, "VSMain", "vs_6_6", compileFlags, args);
+    ComPtr<IDxcBlob> blobP = CompileShaderDXC(psPath, "PSMain", "ps_6_6", compileFlags, args);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = ild;
     psoDesc.pRootSignature = rootSig;
-    psoDesc.VS = {vertexShader->GetBufferPointer(), vertexShader->GetBufferSize()};
-    psoDesc.PS = {pixelShader->GetBufferPointer(), pixelShader->GetBufferSize()};
+    psoDesc.VS = {blobV->GetBufferPointer(), blobV->GetBufferSize()};
+    psoDesc.PS = {blobP->GetBufferPointer(), blobP->GetBufferSize()};
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -74,12 +74,12 @@ void Shader::InitCs(const char* cs, ID3D12Device* device, ID3D12RootSignature* r
     constexpr ShaderCompileFlags compileFlags = 0;
 #endif
 
-    std::string csPath = FileHelper::GetAssetShaderFullPath(cs);
-    ComPtr<IDxcBlob> computeShader = CompileShaderDXC(csPath, "CSMain", "cs_6_6", compileFlags, args);
+    const std::string csPath = FileHelper::GetAssetShaderFullPath(cs);
+    ComPtr<IDxcBlob> blobC = CompileShaderDXC(csPath, "CSMain", "cs_6_6", compileFlags, args);
 
     D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.pRootSignature = rootSig;
-    psoDesc.CS = {computeShader->GetBufferPointer(), computeShader->GetBufferSize()};
+    psoDesc.CS = {blobC->GetBufferPointer(), blobC->GetBufferSize()};
     V(device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pso)));
 
 #ifdef _DEBUG

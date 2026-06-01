@@ -32,6 +32,11 @@ float3 DebugInfoColor(float3 x)
     return IsInf3(x) ? float3(0, 1, 1) : (IsNaN3(x) ? float3(1, 0, 1) : x);
 }
 
+float3 GetNaNVisualizerColor(uint frameIdx)
+{
+    return float3(1, frameIdx % 2, 1);
+}
+
 float3 NormalizeSafe(float3 v, float3 fallback)
 {
     float len2 = dot(v, v);

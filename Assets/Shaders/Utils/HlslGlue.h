@@ -147,7 +147,23 @@ namespace hlsl
 #define GLUE_OUT(T) out T
 #define GLUE_INOUT(T) inout T
 
-#define const
+namespace hlsl
+{
+    typedef float4x4 float4x4;
+
+    typedef float2 float2;
+    typedef float3 float3;
+    typedef float4 float4;
+    typedef uint uint;
+    typedef uint2 uint2;
+    typedef uint3 uint3;
+    typedef uint4 uint4;
+    typedef int2 int2;
+    typedef int3 int3;
+    typedef int4 int4;
+}
+
+//#define const
 
 #endif
 
