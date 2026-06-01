@@ -6,5 +6,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (DTid.x > gSettings.FrameDimensions.x || DTid.y > gSettings.FrameDimensions.y)
         return;
 
-    Core(DTid.xy);
+    //Core(DTid.xy);
+    gTexOutput[DTid.xy].rgb = COLOR_RED;
+    gTexAccumulation[DTid.xy].rgb = COLOR_GREEN;
 }

@@ -4,6 +4,8 @@
 
 #include "System/pch.h"
 #include "Scene/SceneManager.h"
+
+#include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "Utils/Helper.h"
 
@@ -42,6 +44,8 @@ void SceneManager::LoadScene(const char* filepath)
 
 void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
+    GPU_SCOPE(cmdList, "Upload Scene");
+
     assert(m_gpuDataDirty);
 
     const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertex.size() * sizeof(Vertex);

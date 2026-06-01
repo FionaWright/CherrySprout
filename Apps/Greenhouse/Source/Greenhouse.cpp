@@ -2,6 +2,7 @@
 
 #include "Greenhouse.h"
 
+#include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "PathTracing/CBVs.h"
 #include "Scene/SceneManager.h"
@@ -48,9 +49,9 @@ void Greenhouse::Init(D3D* d3d)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    m_rootSigPT.SmartInit(d3d->GetDevice(), 1, 6, 2, true, &sampler, 1);
+    m_rootSigPT.SmartInit(d3d->GetDevice(), 1, 0, 2, false, &sampler, 1);
 
-    m_descriptorSet.Init(&m_heap, true);
+    m_descriptorSet.Init(&m_heap, false);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvPathTracingSettings), &m_uploadHeapCBV);
     m_descriptorSet.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_accum);
     m_descriptorSet.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_output);
@@ -72,6 +73,8 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 
     // Render Path-Tracer
     {
+        GPU_SCOPE(cmdList, "Path-Trace");
+
         // Fill Settings
         // TODO: push constants
         {
@@ -97,6 +100,8 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 
     // Copy to RTV
     {
+        GPU_SCOPE(cmdList, "Copy PT Output to RTV");
+
         D12Resource* rtv = d3d->GetRtv();
 
         m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);

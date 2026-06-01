@@ -7,8 +7,7 @@
 void Core(uint2 pixelCoord)
 {
     float3 c = AccumulateAndFetch(pixelCoord, COLOR_RED, true);
-
-    gOutput[pixelCoord].rgb = c;
+    gTexOutput[pixelCoord].rgb = c;
 }
 
 #endif

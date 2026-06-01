@@ -71,7 +71,7 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
     if (hasSrvTextures)
     {
         CD3DX12_DESCRIPTOR_RANGE1 range;
-        range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, numSRV, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+        range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, numSRV, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
         CD3DX12_ROOT_PARAMETER1 param;
         param.InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
