@@ -1,10 +1,10 @@
-#include "Cbv.h"
+#include "Utils/CommonStructs.h"
 
 struct VsIn
 {
     float3 position : POSITION;
-    float2 uv : TEXCOORD0;
     float3 normal : NORMAL;
+    float2 uv : TEXCOORD0;
 };
 
 struct VsOut
@@ -12,27 +12,23 @@ struct VsOut
     float4 position : SV_POSITION;
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
-    float3 viewDir : TEXCOORD2;
 };
 
-ConstantBuffer<CbvMatrices> c_matrices : register(b0);
-ConstantBuffer<CbvRasterVS> c_cbvRaster : register(b1);
+ConstantBuffer<CbvMatrices> gMatrices : register(b0);
 
 VsOut VSMain(VsIn input)
 {
     VsOut output;
 
     float4 pos = float4(input.position, 1.0f);
-    float4 worldPos = mul(c_matrices.M, pos);
+    float4 worldPos = mul(gMatrices.M, pos);
 
-    output.normal = normalize(mul((float3x3)c_matrices.MTI, (float3)input.normal));
+    output.normal = normalize(mul((float3x3)gMatrices.MTI, (float3)input.normal));
 
-    pos = mul(c_matrices.V, worldPos);
+    pos = mul(gMatrices.V, worldPos);
 
-    output.position = mul(c_matrices.P, pos);
+    output.position = mul(gMatrices.P, pos);
     output.uv = input.uv;
-
-    output.viewDir = normalize(c_cbvRaster.CameraPos - worldPos.xyz);
 
     return output;
 }

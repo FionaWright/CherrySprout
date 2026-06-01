@@ -1,6 +1,7 @@
 #ifndef H_GREENHOUSE_H
 #define H_GREENHOUSE_H
 
+#include "Forward.h"
 #include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
@@ -8,6 +9,13 @@
 #include "HWI/Shader.h"
 #include "Scene/SceneManager.h"
 #include "System/App.h"
+
+enum class RenderBackend : uint32_t
+{
+    ePathTracer,
+    eForward,
+    eCount
+};
 
 class Greenhouse final : public App
 {
@@ -23,6 +31,8 @@ public:
 private:
     SceneManager m_sceneManager;
     PathTracer m_pathTracer;
+    Forward m_forward;
+    RenderBackend m_renderBackend = RenderBackend::ePathTracer;
 
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;

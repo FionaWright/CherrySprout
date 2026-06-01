@@ -50,6 +50,11 @@ if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
                 "${OPEN_USD_DIR_BUILD}"
 
             INSTALL_COMMAND ""
+
+            BUILD_BYPRODUCTS
+                "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib"
+                "${OPEN_USD_DIR_BUILD}/lib/tbb.lib"
+                "${OPEN_USD_DIR_BUILD}/lib/tbbmalloc.lib"
     )
 endif()
 
