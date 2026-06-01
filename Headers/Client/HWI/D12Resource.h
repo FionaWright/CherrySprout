@@ -10,22 +10,25 @@ class UploadHeap;
 class D12Resource
 {
 public:
-    D12Resource() {}
+    D12Resource()
+    {
+    }
+
     D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState);
 
     void Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
               const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr,
               const CD3DX12_HEAP_PROPERTIES& heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT));
     void InitBuffer(const char* name, ID3D12Device* device, size_t size,
-                    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false);
+                    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false,
+                    D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
     void InitUpload(const char* name, ID3D12Device* device, size_t uploadBufferSize);
-    //void InitRTAS(const char* name, ID3D12Device* device, size_t size, D3D12_RESOURCE_FLAGS flags);
 
     void UploadBuffer(ID3D12GraphicsCommandList* cmdList, UploadHeap* uploadHeap, const void* pData, size_t totalBytes);
     void UploadTexture(ID3D12GraphicsCommandList* cmdList, UploadHeap* uploadHeap, const uint8_t* pData,
                        size_t totalBytes, size_t rowPitch);
     void UploadTextureArray(ID3D12GraphicsCommandList* cmdList, UploadHeap* uploadHeap, const uint8_t** pData,
-                       size_t totalBytesPerSlice, size_t rowPitch);
+                            size_t totalBytesPerSlice, size_t rowPitch);
 
     void Transition(ID3D12GraphicsCommandList* cmdList, const D3D12_RESOURCE_STATES& newState,
                     UINT subresourceIdx = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);

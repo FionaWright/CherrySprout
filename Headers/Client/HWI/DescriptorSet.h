@@ -42,6 +42,7 @@ public:
     void SetName(const char* str) { m_name = str; }
 
     void AddCBV(ID3D12Device* device, size_t size, UploadHeap* uploadHeap, const char* debugName = nullptr);
+
     void UpdateCBV(uint32_t regIdx, const void* data) const;
 
     void AddSRV(ID3D12Device* device, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
@@ -52,7 +53,8 @@ public:
     void SetSRV_Buffer(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource,
                        uint32_t numElements,
                        size_t stride);
-    //void SetTlas(ID3D12Device* device, uint32_t srvIdx, const std::shared_ptr<TLAS>& tlas);
+    void SetSRV_RTAS(ID3D12Device* device, uint32_t srvIdx, const D12Resource* d12Resource);
+
     void TransitionAllSRVToShaderResource(ID3D12GraphicsCommandList* cmdList) const;
 
     void AddUAV(ID3D12Device* device, ID3D12Resource* resource,

@@ -34,6 +34,7 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
         scene->MegaBufferVertex.insert(std::end(scene->MegaBufferVertex), std::begin(Vertices), std::end(Vertices));
         scene->MegaBufferIndex.insert(std::end(scene->MegaBufferIndex), std::begin(Indices), std::end(Indices));
 
+        obj.MegaBufferVertexCount = static_cast<uint32_t>(scene->MegaBufferVertex.size()) - obj.MegaBufferVertexOffset;
         obj.MegaBufferIndexCount = static_cast<uint32_t>(scene->MegaBufferIndex.size()) - obj.MegaBufferIndexOffset;
 
         memcpy(obj.M, M, sizeof(float)*16);

@@ -16,12 +16,12 @@ ConstantBuffer<CbvPathTracingSettings>      gSettings               : register(b
 
 // =================== T Registers (Default) =====================================================================
 
-//RaytracingAccelerationStructure             gTLAS                   : register(t0, REGISTER_SPACE_DEFAULT);
+RaytracingAccelerationStructure             gTLAS                   : register(t0, REGISTER_SPACE_DEFAULT);
 
-//StructuredBuffer<Vertex>                    gMegaBufferVertex       : register(t1, REGISTER_SPACE_DEFAULT);
-//StructuredBuffer<uint>                      gMegaBufferIndex        : register(t2, REGISTER_SPACE_DEFAULT);
-//StructuredBuffer<InstanceData>              gMegaBufferInstanceData : register(t3, REGISTER_SPACE_DEFAULT);
-//StructuredBuffer<Material>                  gMegaBufferMaterials    : register(t4, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<Vertex>                    gMegaBufferVertex       : register(t1, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<uint3>                     gMegaBufferIndex        : register(t2, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<InstanceData>              gMegaBufferInstanceData : register(t3, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<Material>                  gMegaBufferMaterials    : register(t4, REGISTER_SPACE_DEFAULT);
 
 //Texture2D<float4>                           gTexEnvMap              : register(t5, REGISTER_SPACE_DEFAULT);
 

@@ -2,49 +2,52 @@
 #define H_MATH_HLSL_H
 
 #include "Constants.h"
-#include "Hlslhlsl::.h"
+#include "HlslGlue.h"
 
 // Only for functions that are required by both C++ and HLSL
 
-float CopySign(float mag, float sign)
+inline float CopySign(float mag, float sign)
 {
-    return sign < 0.0f ? -hlsl::abs(mag) : hlsl::abs(mag);
+    return sign < 0.0f ? -abs(mag) : abs(mag);
 }
 
-float SafeSqrt(float x) { return hlsl::sqrt(hlsl::max(0.0f, x)); }
+inline float SafeSqrt(float x)
+{
+    return sqrt(max(0.0f, x));
+}
 
-hlsl::float3 EaSquareToSphere(hlsl::float2 uv)
+inline hlsl::float3 EaSquareToSphere(hlsl::float2 uv)
 {
     // Transform to [-1, 1]^2
     const float ax = 2.0f * uv.x - 1.0f;
     const float ay = 2.0f * uv.y - 1.0f;
-    const float absax = hlsl::abs(ax);
-    const float absay = hlsl::abs(ay);
+    const float absax = abs(ax);
+    const float absay = abs(ay);
 
     // Compute radius and angle
     const float signedDist = 1 - (absax + absay); // Signed distance to the u + v = 1 diagonal diamond
-    const float d = hlsl::abs(signedDist);
+    const float d = abs(signedDist);
     const float r = 1 - d;
     const float phi = (r == 0 ? 1 : (absay - absax) / r + 1) * PI / 4;
 
     // Compute vector
     const float y = CopySign(1 - r * r, signedDist);
-    const float cosPhi = CopySign(hlsl::cos(phi), ax);
-    const float sinPhi = CopySign(hlsl::sin(phi), ay);
+    const float cosPhi = CopySign(cos(phi), ax);
+    const float sinPhi = CopySign(sin(phi), ay);
     return hlsl::float3(cosPhi * r * SafeSqrt(2 - r * r), y, sinPhi * r * SafeSqrt(2 - r * r));
 }
 
-hlsl::float2 EaSphereToSquare(hlsl::float3 d)
+inline hlsl::float2 EaSphereToSquare(hlsl::float3 d)
 {
-    float x = hlsl::abs(d.x);
-    float y = hlsl::abs(d.y);
-    float z = hlsl::abs(d.z);
+    float x = abs(d.x);
+    float y = abs(d.y);
+    float z = abs(d.z);
     float r = SafeSqrt(1 - y);
-    float a = hlsl::max(x, z);
-    float b = hlsl::min(x, z);
+    float a = max(x, z);
+    float b = min(x, z);
     b = a == 0 ? 0 : b / a;
 
-    float phi = hlsl::Atan(b) * 2.0f / PI; // Can use polynomial to optimize here?
+    float phi = atan(b) * 2.0f / PI; // Can use polynomial to optimize here?
     if (x < z)
         phi = 1 - phi;
 
@@ -61,17 +64,17 @@ hlsl::float2 EaSphereToSquare(hlsl::float3 d)
     return hlsl::float2(0.5f * (u + 1), 0.5f * (v + 1));
 }
 
-hlsl::float2 PanoSphereToSquare(hlsl::float3 d)
+inline hlsl::float2 PanoSphereToSquare(hlsl::float3 d)
 {
-    float lambda = hlsl::atan2(d.z, d.x);    // [-pi,pi]
-    float phi = hlsl::asin(hlsl::clamp(d.y, -1.0f, 1.0f));
+    float lambda = atan2(d.z, d.x);    // [-pi,pi]
+    float phi = asin(clamp(d.y, -1.0f, 1.0f));
     float u = (lambda + PI) / (2.0f * PI);
     float v = (phi + 0.5 * PI) / PI;
-    u = hlsl::frac(u);
+    u = frac(u);
     return hlsl::float2(u, v);
 }
 
-hlsl::float3 CubemapCubeToSphere(hlsl::uint face, hlsl::float2 uv)
+inline hlsl::float3 CubemapCubeToSphere(hlsl::uint face, hlsl::float2 uv)
 {
     hlsl::float3 d;
     switch (face)
@@ -98,12 +101,28 @@ hlsl::float3 CubemapCubeToSphere(hlsl::uint face, hlsl::float2 uv)
         return hlsl::float3(0,0,0);
     }
 
-    return hlsl::Normalize(d);
+    return normalize(d);
 }
 
-float Luminance(hlsl::float3 color)
+inline float Luminance(hlsl::float3 color)
 {
     return dot(color, hlsl::float3(0.2126,0.7152,0.0722));
+}
+
+// https://backend.orbit.dtu.dk/ws/files/126824972/onb_frisvad_jgt2012_v2.pdf
+inline void BuildBasisFrisvad(hlsl::float3 N, GLUE_OUT(hlsl::float3) T, GLUE_OUT(hlsl::float3) B)
+{
+    if (N.z < -0.999999f)
+    {
+        T = hlsl::float3(0, -1, 0);
+        B = hlsl::float3(-1, 0, 0);
+        return;
+    }
+
+    float a = 1.0 / (1.0 + N.z);
+    float b = -N.x * N.y * a;
+    T = hlsl::float3(1.0 - N.x * N.x * a, b, -N.x);
+    B = hlsl::float3(b, 1.0 - N.y * N.y * a, -N.y);
 }
 
 #endif

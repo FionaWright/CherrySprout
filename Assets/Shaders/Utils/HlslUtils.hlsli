@@ -47,22 +47,6 @@ float3 NormalizeSafe(float3 v, float3 fallback)
     return v * rsqrt(len2);
 }
 
-// https://backend.orbit.dtu.dk/ws/files/126824972/onb_frisvad_jgt2012_v2.pdf
-void BuildBasisFrisvad(float3 N, out float3 T, out float3 B)
-{
-    if (N.z < -0.999999f)
-    {
-        T = float3(0, -1, 0);
-        B = float3(-1, 0, 0);
-        return;
-    }
-
-    float a = 1.0 / (1.0 + N.z);
-    float b = -N.x * N.y * a;
-    T = float3(1.0 - N.x * N.x * a, b, -N.x);
-    B = float3(b, 1.0 - N.y * N.y * a, -N.y);
-}
-
 bool CheckTIR(float n1, float n2, float cosTi)
 {
     float sin2Ti = 1.0f - cosTi * cosTi;
@@ -152,5 +136,15 @@ float3 SRGB_to_LRGB(float3 srgb)
         srgb.b < 0.04045 ? low.b  : high.b
     );
 }
+
+float  RemapUtoS(float v)  { return (v - 1.0f) * 2.0f; }
+float2 RemapUtoS(float2 v) { return (v - 1.0f) * 2.0f; }
+float3 RemapUtoS(float3 v) { return (v - 1.0f) * 2.0f; }
+float4 RemapUtoS(float4 v) { return (v - 1.0f) * 2.0f; }
+
+float  RemapStoU(float v)  { return (v + 1.0f) * 0.5f; }
+float2 RemapStoU(float2 v) { return (v + 1.0f) * 0.5f; }
+float3 RemapStoU(float3 v) { return (v + 1.0f) * 0.5f; }
+float4 RemapStoU(float4 v) { return (v + 1.0f) * 0.5f; }
 
 #endif

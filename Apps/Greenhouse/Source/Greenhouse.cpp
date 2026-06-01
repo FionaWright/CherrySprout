@@ -23,7 +23,7 @@ void Greenhouse::Init(D3D* d3d)
     m_heap.Init("Test Heap", d3d->GetDevice(), 20000, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), pathTracerCbvRequiredSize + 256);
 
-    m_pathTracer.Init(d3d, &m_heap, &m_uploadHeapCBV);
+    m_pathTracer.Init(d3d, &m_heap, &m_uploadHeapCBV, &m_sceneManager.GetScene());
 }
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
@@ -39,7 +39,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_sceneManager.UploadScene(d3d, cmdList);
     }
 
-    m_pathTracer.Render(d3d, cmdList, &m_heap);
+    m_pathTracer.Render(d3d, cmdList, &m_heap, &m_sceneManager.GetScene());
 
     // Copy to RTV
     {

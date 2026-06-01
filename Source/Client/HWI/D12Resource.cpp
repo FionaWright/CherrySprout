@@ -35,12 +35,12 @@ void D12Resource::Init(const char* name, ID3D12Device* device, const D3D12_RESOU
 }
 
 void D12Resource::InitBuffer(const char* name, ID3D12Device* device, const size_t size,
-                             const D3D12_RESOURCE_FLAGS flags, const bool readbackHeap)
+                             const D3D12_RESOURCE_FLAGS flags, const bool readbackHeap, D3D12_RESOURCE_STATES initialState)
 {
     m_desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
     const auto heapProp = readbackHeap ? CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK) : CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
-    Init(name, device, m_desc, D3D12_RESOURCE_STATE_COMMON, nullptr, heapProp);
+    Init(name, device, m_desc, initialState, nullptr, heapProp);
 }
 
 void D12Resource::InitUpload(const char* name, ID3D12Device* device, const size_t uploadBufferSize)

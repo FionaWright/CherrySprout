@@ -18,6 +18,7 @@ public:
 
     bool IsGpuDataDirty() const { return m_gpuDataDirty; }
 
+    Scene& GetScene() { return m_scene; }
     SceneCPU& GetCPU() { return m_scene.CPU; }
     SceneGPU& GetGPU() { return m_scene.GPU; }
 

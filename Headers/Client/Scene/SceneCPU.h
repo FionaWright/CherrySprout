@@ -22,6 +22,7 @@ struct Object
     uint32_t MaterialIndex;
 
     uint32_t MegaBufferVertexOffset;
+    uint32_t MegaBufferVertexCount;
     uint32_t MegaBufferIndexOffset;
     uint32_t MegaBufferIndexCount;
 };

@@ -98,41 +98,43 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resou
 
 void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource)
 {
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Format = d12Resource->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = d12Resource->GetDesc().MipLevels;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.PlaneSlice = 0;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    desc.Format = d12Resource->GetDesc().Format;
+    desc.Texture2D.MipLevels = d12Resource->GetDesc().MipLevels;
+    desc.Texture2D.MostDetailedMip = 0;
+    desc.Texture2D.PlaneSlice = 0;
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName().c_str() : nullptr;
-    SetSRV(device, srvIdx, d12Resource, srvDesc, debugName);
+    SetSRV(device, srvIdx, d12Resource, desc, debugName);
 }
 
 void DescriptorSet::SetSRV_Buffer(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource,
                                   const uint32_t numElements, const size_t stride)
 {
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    srvDesc.Buffer.FirstElement = 0;
-    srvDesc.Buffer.NumElements = numElements;
-    srvDesc.Buffer.StructureByteStride = stride;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+    desc.Buffer.FirstElement = 0;
+    desc.Buffer.NumElements = numElements;
+    desc.Buffer.StructureByteStride = stride;
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName().c_str() : nullptr;
-    SetSRV(device, srvIdx, d12Resource, srvDesc, debugName);
+    SetSRV(device, srvIdx, d12Resource, desc, debugName);
 }
 
-// void DescriptorSet::SetTlas(ID3D12Device* device, const uint32_t srvIdx, const std::shared_ptr<TLAS>& tlas)
-// {
-//     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-//     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-//     srvDesc.RaytracingAccelerationStructure.Location = tlas->GetResource()->GetGPUVirtualAddress();
-//     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-//
-//     SetSRV(device, srvIdx, heap, nullptr, srvDesc);
-// }
+void DescriptorSet::SetSRV_RTAS(ID3D12Device* device, const uint32_t srvIdx, const D12Resource* d12Resource)
+{
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+    if (d12Resource)
+        desc.RaytracingAccelerationStructure.Location = d12Resource->GetResource()->GetGPUVirtualAddress();
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+    const char* debugName = Config::GetSystem().DebugHeapEnabled && d12Resource ? d12Resource->GetName().c_str() : nullptr;
+    SetSRV(device, srvIdx, nullptr, desc, debugName);
+}
 
 void DescriptorSet::TransitionAllSRVToShaderResource(ID3D12GraphicsCommandList* cmdList) const
 {
