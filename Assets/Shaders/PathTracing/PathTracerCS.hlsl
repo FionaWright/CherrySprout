@@ -7,6 +7,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     //Core(DTid.xy);
-    gTexOutput[DTid.xy].rgb = COLOR_RED;
+    gTexOutput[DTid.xy].rgb = float3(DTid.xy / (float2)gSettings.FrameDimensions.xy, 0);
     gTexAccumulation[DTid.xy].rgb = COLOR_GREEN;
 }

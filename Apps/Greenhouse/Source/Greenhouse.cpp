@@ -2,10 +2,12 @@
 
 #include "Greenhouse.h"
 
+#include "imgui.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "PathTracing/CBVs.h"
 #include "Scene/SceneManager.h"
+#include "System/Gui.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/Helper.h"
 #include "Utils/D3DUtils.h"
@@ -107,7 +109,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
         rtv->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        rtv->CopyTextureInto(cmdList, m_output.GetResource(), 0, 0, 0);
+        rtv->CopyTextureInto(cmdList, m_output.GetResource(), Config::GetSystem().WindowAppGuiWidth, 0, 0);
     }
 }
 
@@ -117,4 +119,10 @@ void Greenhouse::PostUpdate(D3D* d3d)
 
 void Greenhouse::RenderGUI()
 {
+    Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
+                     ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
+
+    ImGui::Text("Test");
+
+    Gui::EndWindow();
 }
