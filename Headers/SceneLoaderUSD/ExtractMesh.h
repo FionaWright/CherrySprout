@@ -196,8 +196,6 @@ namespace SceneLoaderUSD
         ImporterObject obj;
         ExtractGeometry(prim, obj.Vertices, obj.Indices);
 
-        obj.Name = prim.GetName().GetString();
-
         pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
 
         // TODO: Guessing
@@ -216,6 +214,8 @@ namespace SceneLoaderUSD
             if (it != matPathToIdxMap.end())
                 obj.MaterialIndex = static_cast<int>(it->second);
         }
+
+        obj.Name = boundMat ? boundMat.GetPrim().GetName().GetString() : prim.GetName().GetString();
 
         return obj;
     }

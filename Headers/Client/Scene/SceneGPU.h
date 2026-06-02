@@ -15,8 +15,6 @@ struct SceneGPU
     D12Resource MegaBufferMaterials;
     // TODO: MegaBufferPunctualLights
 
-    D12Resource RTAS;
-
     // TODO: Textures
 };
 

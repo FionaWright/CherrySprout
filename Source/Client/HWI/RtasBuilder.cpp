@@ -7,6 +7,12 @@
 
 #include "Utils/Helper.h"
 
+void RtasBuilder::Init(ID3D12Device* device, Scene* scene)
+{
+    const size_t megaBufferInstanceDataSize = scene->CPU.Objects.size() * sizeof(InstanceData);
+    scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
+}
+
 void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UploadHeap* uploadHeap, Scene* scene)
 {
     std::cout << "Building RTAS..." << std::endl;
@@ -52,7 +58,6 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
     }
 
     const size_t megaBufferInstanceDataSize = m_megaBufferInstanceData.size() * sizeof(InstanceData);
-    scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
     scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataSize);
 
     buildTlas(device, cmdList, blasInstances);

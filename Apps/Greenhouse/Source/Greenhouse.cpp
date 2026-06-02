@@ -71,7 +71,21 @@ void Greenhouse::RenderGUI()
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
                      ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
-    ImGui::Text("Test");
+    bool switchedRenderBackends = false;
+
+    static int e = static_cast<int>(m_config.RenderBackend);
+    int c = 0;
+    switchedRenderBackends |= ImGui::RadioButton("Path Tracer", &e, c++);
+    switchedRenderBackends |= ImGui::RadioButton("Forward", &e, c++);
+    m_config.RenderBackend = static_cast<RenderBackendMode>(e);
+
+    if (switchedRenderBackends)
+    {
+        m_uploadHeapCBV.UnreserveData();
+        m_sceneManager.UnreserveData();
+        m_currRenderBackend->UnreserveData();
+        m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
+    }
 
     Gui::EndWindow();
 }

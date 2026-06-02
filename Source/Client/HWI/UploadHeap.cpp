@@ -11,7 +11,7 @@
 
 void UploadHeap::Init(ID3D12Device* device, const size_t maxUploadSize)
 {
-    if (m_mappedPointer)
+    if (m_mappedPointer && m_resource.GetResource())
     {
         m_resource.GetResource()->Unmap(0, nullptr);
     }

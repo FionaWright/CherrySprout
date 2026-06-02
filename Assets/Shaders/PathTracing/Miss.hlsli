@@ -3,6 +3,8 @@
 
 float3 Miss(float3 origin, float3 direction, uint bounceIdx)
 {
+    return COLOR_GREEN;
+
     float3 Li = float3(0, 0, 0);
 
     //if (cEnvMapEnabled)

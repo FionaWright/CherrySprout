@@ -17,6 +17,7 @@ public:
     void UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdList);
 
     bool IsGpuDataDirty() const { return m_gpuDataDirty; }
+    void UnreserveData() { m_uploadHeap.UnreserveData(); }
 
     Scene& GetScene() { return m_scene; }
     SceneCPU& GetCPU() { return m_scene.CPU; }

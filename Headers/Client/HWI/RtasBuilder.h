@@ -20,6 +20,7 @@ struct BlasEntry
 class RtasBuilder
 {
 public:
+    void Init(ID3D12Device* device, Scene* scene);
     void Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UploadHeap* uploadHeap, Scene* scene);
 
     D12Resource* GetRtasResource() { return &m_tlasResult; }

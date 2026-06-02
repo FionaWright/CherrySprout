@@ -21,6 +21,7 @@ public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene) override;
     void Update(D3D* d3d, TimeArgs timeArgs) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P) override;
+    void UnreserveData() override {};
 
     size_t TotalCbvRequiredSize() override
     {

@@ -59,6 +59,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* sc
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output);
 
     m_shader.InitCs("PathTracing/PathTracerCS.hlsl", d3d->GetDevice(), m_rootSig.Get());
+
+    m_rtasBuilder.Init(d3d->GetDevice(), scene);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -95,7 +97,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap
         settings.RussianRouletteMinBounces = 99;
         settings.SPP = 1;
         settings.FrameIdx = m_frameIdx;
-        settings.AccumulationEnabled = true;
+        settings.AccumulationEnabled = false;
         settings.DirLight = XMFLOAT3(1, -1, 0);
         settings.DirLightColor = XMFLOAT3(1, 1, 1);
         settings.DirLightCosAngularRadius = 0.1f;
@@ -141,4 +143,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap
     }
 
     m_frameIdx++;
+}
+
+void PathTracer::UnreserveData()
+{
+    m_rtasUploadHeap.UnreserveData();
+    m_rtasDirty = true;
 }
