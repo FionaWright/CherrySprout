@@ -1,8 +1,6 @@
 #ifndef H_CONSTANTS_H
 #define H_CONSTANTS_H
 
-#include "Complex.h"
-
 // ============ DATA ===========
 
 #ifndef __cplusplus
@@ -23,7 +21,7 @@
 
 // ============ PHYSICS ========
 
-#define IOR_AIR             CreateComplex(1.0f, 0.0f)
+//#define IOR_AIR             CreateComplex(1.0f, 0.0f)
 
 #define BOLTZMANN           1.38064852e-23f
 

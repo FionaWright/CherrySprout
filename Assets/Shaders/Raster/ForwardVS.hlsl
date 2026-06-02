@@ -20,15 +20,22 @@ VsOut VSMain(VsIn input)
 {
     VsOut output;
 
+    output.normal = normalize(mul((float3x3)gMatrices.MTI, (float3)input.normal));
+    output.uv = input.uv;
+
     float4 pos = float4(input.position, 1.0f);
     float4 worldPos = mul(gMatrices.M, pos);
-
-    output.normal = normalize(mul((float3x3)gMatrices.MTI, (float3)input.normal));
-
     pos = mul(gMatrices.V, worldPos);
-
     output.position = mul(gMatrices.P, pos);
-    output.uv = input.uv;
+
+    //float4 pos = float4(input.position, 1.0f);
+    //float4 worldPos = mul(pos, gMatrices.M);
+    //pos = mul(worldPos, gMatrices.V);
+    //output.position = mul(pos, gMatrices.P);
+
+    //output.position = float4(input.position * 0.5f, 1);
+    //output.uv = float2(input.uv);
+    //output.normal = float3(input.normal);
 
     return output;
 }

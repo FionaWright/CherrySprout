@@ -42,7 +42,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene
     };
 
     m_shader.InitVsPs("Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", {ildDesc, _countof(ildDesc)}, d3d->GetDevice(),
-                      m_rootSig.Get(), true);
+                      m_rootSig.Get(), false);
 }
 
 void Forward::Update(D3D* d3d, TimeArgs timeArgs)
@@ -57,18 +57,19 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* h
         const uint32_t w = Config::GetSystem().RtvWidth;
         const uint32_t h = Config::GetSystem().RtvHeight;
         const uint32_t left = Config::GetSystem().WindowAppGuiWidth;
-        const CD3DX12_VIEWPORT viewport(float(left + w), 0.0f, float(w), float(h));
+        const CD3DX12_VIEWPORT viewport(float(left), 0.0f, float(w), float(h));
         const CD3DX12_RECT scissorRect(left, 0, left + w, h);
 
         cmdList->RSSetViewports(1, &viewport);
         cmdList->RSSetScissorRects(1, &scissorRect);
 
         const auto rtvHandle = d3d->GetRtvHandle();
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
-        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+        //const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
+        //cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
         cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &scissorRect);
-        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+        //->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     }
 
     //const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(heap->GetGPUHandle(), heap->GetBindlessTexBase(), heap->GetIncrementSize());
@@ -92,7 +93,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* h
     }
 
     {
-        GPU_SCOPE(cmdList, "Skybox Pass");
+        //GPU_SCOPE(cmdList, "Skybox Pass");
 
         //if (skybox)
         //    skybox->RenderForward(d3d, cmdList, vMatrix, pMatrix);

@@ -1,8 +1,6 @@
 #ifndef H_COMPLEX_H
 #define H_COMPLEX_H
 
-#include "HlslGlue.h"
-
 // Represents a complex number (a + bi) where i^2 == -1
 
 struct Complex
@@ -98,8 +96,8 @@ void Complex::Div(Complex c)
     float b = Im;
 
     float k = c.Re * c.Re + c.Im * c.Im;
-    Re = (a * c.Re + b * c.Im) / max(1e-6, k);
-    Im = (c.Re * b - a * c.Im) / max(1e-6, k);
+    Re = (a * c.Re + b * c.Im) / max(1e-6f, k);
+    Im = (c.Re * b - a * c.Im) / max(1e-6f, k);
 }
 
 Complex Div(Complex c1, Complex c2)

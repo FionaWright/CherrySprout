@@ -8,15 +8,20 @@
 #include "Scene/SceneManager.h"
 #include "System/Gui.h"
 #include "System/HighResolutionClock.h"
+#include "Utils/Constants.h"
 #include "Utils/Helper.h"
 #include "Utils/D3DUtils.h"
+
+//#define TEST_SCENE R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)"
+#define TEST_SCENE R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\Cube\Cube.usda)"
 
 void Greenhouse::Init(D3D* d3d)
 {
     App::Init(d3d);
 
-    m_sceneManager.LoadScene(
-        R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)");
+    m_sceneManager.LoadScene(TEST_SCENE);
+
+    CURRENT ISSUE IS EACH GROUP OF 3 VERTICES IS THE SAME, NO DEDUPLICATION AS WELL. COMPARE SCENE LOADER
 
     std::cout << "Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize() << std::endl;
     std::cout << "Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize() << std::endl;
@@ -25,7 +30,7 @@ void Greenhouse::Init(D3D* d3d)
     m_heap.Init("Test Heap", d3d->GetDevice(), 20000, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
 
-    m_cameraController.Init(XMFLOAT3(0, 0, 0), 0, 0);
+    m_cameraController.Init(XMFLOAT3(0, 0, 5), 0, PI);
 
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
     m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
@@ -41,7 +46,7 @@ void Greenhouse::Init(D3D* d3d)
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
-    m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms);
+    m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f);
 
     if (!m_currRenderBackend->IsInitialized())
     {
