@@ -52,9 +52,9 @@ void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdLis
     const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndex.size() * sizeof(uint32_t);
     const size_t megaBufferMaterialsBytes = m_scene.CPU.MegaBufferMaterials.size() * sizeof(Material);
 
-    m_scene.GPU.MegaBufferVertex.InitBuffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
-    m_scene.GPU.MegaBufferIndex.InitBuffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
-    m_scene.GPU.MegaBufferMaterials.InitBuffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
+    m_scene.GPU.MegaBufferVertex.Init_Buffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
+    m_scene.GPU.MegaBufferIndex.Init_Buffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
+    m_scene.GPU.MegaBufferMaterials.Init_Buffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
 
     size_t uploadHeapRequiredSize = 0;
     uploadHeapRequiredSize += m_scene.GPU.MegaBufferVertex.GetIntermediateSize();

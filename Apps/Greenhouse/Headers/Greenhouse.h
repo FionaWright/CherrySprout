@@ -2,20 +2,14 @@
 #define H_GREENHOUSE_H
 
 #include "Forward.h"
+#include "GreenhouseConfig.h"
 #include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
-#include "HWI/RootSig.h"
 #include "HWI/Shader.h"
+#include "Render/CameraController.h"
 #include "Scene/SceneManager.h"
 #include "System/App.h"
-
-enum class RenderBackend : uint32_t
-{
-    ePathTracer,
-    eForward,
-    eCount
-};
 
 class Greenhouse final : public App
 {
@@ -29,10 +23,17 @@ public:
     void RenderGUI() override;
 
 private:
+    GreenhouseConfig m_config;
+    float m_aspectRatio = 0.0f;
+    XMMATRIX m_projectionMatrix{};
+
+    CameraController m_cameraController;
     SceneManager m_sceneManager;
+
     PathTracer m_pathTracer;
     Forward m_forward;
-    RenderBackend m_renderBackend = RenderBackend::ePathTracer;
+
+    IRenderBackend* m_currRenderBackend = nullptr;
 
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;

@@ -13,6 +13,8 @@
 
 void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene)
 {
+    IRenderBackend::Init(d3d, heap, uploadHeapCBV, scene);
+
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
 
@@ -42,7 +44,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* sc
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    m_rootSigPT.SmartInit(d3d->GetDevice(), 1, 5, 2, false, &sampler, 1);
+    m_rootSig.SmartInit(d3d->GetDevice(), 1, 5, 2, false, &sampler, 1);
 
     m_descriptorSet.Init(heap, false);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
@@ -50,13 +52,13 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* sc
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.MegaBufferInstanceData.size(), sizeof(InstanceData));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output);
 
-    m_shaderPT.InitCs("PathTracing/PathTracerCS.hlsl", d3d->GetDevice(), m_rootSigPT.Get());
+    m_shader.InitCs("PathTracing/PathTracerCS.hlsl", d3d->GetDevice(), m_rootSig.Get());
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -64,7 +66,7 @@ void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
 
 }
 
-void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene)
+void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX&, const XMMATRIX&)
 {
     GPU_SCOPE(cmdList, "Path-Trace");
 
@@ -117,14 +119,26 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap
     }
 
     heap->Bind(cmdList);
-    cmdList->SetComputeRootSignature(m_rootSigPT.Get());
-    cmdList->SetPipelineState(m_shaderPT.GetPSO());
+    cmdList->SetComputeRootSignature(m_rootSig.Get());
+    cmdList->SetPipelineState(m_shader.GetPSO());
     m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
     constexpr uint32_t THREAD_COUNTS = 16;
     const uint32_t groupX = (Config::GetSystem().RtvWidth + (THREAD_COUNTS-1)) / THREAD_COUNTS;
     const uint32_t groupY = (Config::GetSystem().RtvHeight + (THREAD_COUNTS-1)) / THREAD_COUNTS;
     cmdList->Dispatch(groupX, groupY, 1);
+
+    // Copy to RTV
+    {
+        GPU_SCOPE(cmdList, "Copy PT Output to RTV");
+
+        D12Resource* rtv = d3d->GetRtv();
+
+        m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        rtv->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        rtv->CopyTextureInto(cmdList, m_output.GetResource(), Config::GetSystem().WindowAppGuiWidth, 0, 0);
+    }
 
     m_frameIdx++;
 }

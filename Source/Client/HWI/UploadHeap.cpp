@@ -18,14 +18,15 @@ void UploadHeap::Init(ID3D12Device* device, const size_t maxUploadSize)
 
     m_maxUploadSize = maxUploadSize;
 
-    m_resource.InitUpload("Upload Heap", device, m_maxUploadSize);
+    m_resource.Init_Upload("Upload Heap", device, m_maxUploadSize);
 
     V(m_resource.GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedPointer)));
 }
 
 UploadHeap::~UploadHeap()
 {
-    m_resource.GetResource()->Unmap(0, nullptr);
+    if (m_resource.GetResource())
+        m_resource.GetResource()->Unmap(0, nullptr);
 }
 
 // CBVs must be 256-aligned

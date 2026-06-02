@@ -19,10 +19,13 @@ public:
     void Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
               const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr,
               const CD3DX12_HEAP_PROPERTIES& heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT));
-    void InitBuffer(const char* name, ID3D12Device* device, size_t size,
-                    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false,
+    void Init_Buffer(const char* name, ID3D12Device* device, size_t size,
+                     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false,
+                     D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
+    void Init_Tex2D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth,
+                    DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
                     D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
-    void InitUpload(const char* name, ID3D12Device* device, size_t uploadBufferSize);
+    void Init_Upload(const char* name, ID3D12Device* device, size_t uploadBufferSize);
 
     void UploadBuffer(ID3D12GraphicsCommandList* cmdList, UploadHeap* uploadHeap, const void* pData, size_t totalBytes);
     void UploadTexture(ID3D12GraphicsCommandList* cmdList, UploadHeap* uploadHeap, const uint8_t* pData,
@@ -37,6 +40,7 @@ public:
                          uint32_t dstZ = 0, const D3D12_BOX* srcBox = nullptr) const;
 
     UINT64 GetIntermediateSize() const;
+    bool IsInitialized() const { return m_resource != nullptr; }
 
     ID3D12Resource* GetResource() const { return m_resource.Get(); }
     D3D12_RESOURCE_STATES GetCurrentState() const { return m_currentState; }
@@ -44,7 +48,7 @@ public:
     [[nodiscard]] const std::string& GetName() const { return m_name; }
 
 private:
-    ComPtr<ID3D12Resource> m_resource;
+    ComPtr<ID3D12Resource> m_resource = nullptr;
     D3D12_RESOURCE_DESC m_desc = {};
     D3D12_RESOURCE_STATES m_currentState = {};
     size_t m_uploadBufferAssignedOffset = 0;

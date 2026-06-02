@@ -25,15 +25,17 @@ public:
     D12Resource* GetRtasResource() { return &m_tlasResult; }
 
 private:
-    void buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object
-                   * object);
+    void buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object* object);
     void buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
                    const std::vector<D3D12_RAYTRACING_INSTANCE_DESC>& blasInstances);
+
     D12Resource m_tlasScratch;
     D12Resource m_tlasResult;
     ComPtr<ID3D12Resource> m_tlasInstanceBuffer;
 
     std::vector<BlasEntry> m_blasList;
+
+    std::vector<InstanceData> m_megaBufferInstanceData;
 };
 
 

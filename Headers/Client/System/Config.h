@@ -28,7 +28,7 @@ struct SettingsSystem
 struct SettingsRender
 {
     DXGI_FORMAT RtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    float RtvClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    float RtvClearColor[4] = {0.3f, 0.3f, 0.5f, 1.0f};
 
     float FoV = 60.0f;
     float NearPlane = 0.1f;

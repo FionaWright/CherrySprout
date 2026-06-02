@@ -5,6 +5,7 @@
 #ifndef CHERRYSPROUT_PATHTRACER_H
 #define CHERRYSPROUT_PATHTRACER_H
 
+#include "IRenderBackend.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
 #include "HWI/RootSig.h"
@@ -15,14 +16,14 @@
 
 struct TimeArgs;
 
-class PathTracer
+class PathTracer : public IRenderBackend
 {
 public:
-    void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene);
-    void Update(D3D* d3d, TimeArgs timeArgs);
-    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene);
+    void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene) override;
+    void Update(D3D* d3d, TimeArgs timeArgs) override;
+    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P) override;
 
-    static size_t TotalCbvRequiredSize() { return sizeof(CbvPathTracingSettings); }
+    size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
 
     D12Resource* GetTexOutput() { return &m_output; }
 
@@ -33,8 +34,8 @@ private:
 
     uint32_t m_frameIdx = 0;
 
-    Shader m_shaderPT;
-    RootSig m_rootSigPT;
+    Shader m_shader;
+    RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
     D12Resource m_output, m_accum;
 };

@@ -13,6 +13,8 @@
 
 void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene)
 {
+    IRenderBackend::Init(d3d, heap, uploadHeapCBV, scene);
+
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
 
@@ -47,49 +49,47 @@ void Forward::Update(D3D* d3d, TimeArgs timeArgs)
 {
 }
 
-void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P) const
+void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
 
-    const float fRtvWidth = static_cast<float>(Config::GetSystem().RtvWidth);
-    const float fRtvHeight = static_cast<float>(Config::GetSystem().RtvHeight);
+    {
+        const uint32_t w = Config::GetSystem().RtvWidth;
+        const uint32_t h = Config::GetSystem().RtvHeight;
+        const uint32_t left = Config::GetSystem().WindowAppGuiWidth;
+        const CD3DX12_VIEWPORT viewport(float(left + w), 0.0f, float(w), float(h));
+        const CD3DX12_RECT scissorRect(left, 0, left + w, h);
 
-    const CD3DX12_VIEWPORT viewport(0.0f, 0.0f, fRtvWidth, fRtvHeight);
-    const CD3DX12_RECT scissorRect(0, 0, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        cmdList->RSSetViewports(1, &viewport);
+        cmdList->RSSetScissorRects(1, &scissorRect);
 
-    cmdList->RSSetViewports(1, &viewport);
-    cmdList->RSSetScissorRects(1, &scissorRect);
+        const auto rtvHandle = d3d->GetRtvHandle();
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
-    const auto rtvHandle = d3d->GetRtvHandle();
-
-    const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), d3d->GetFrameIndex(), d3d->GetDsvDescriptorSize());
-    cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-    cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &scissorRect);
-    cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-    CbvMatrices matrices = {};
-    XMStoreFloat4x4(&matrices.V, V);
-    XMStoreFloat4x4(&matrices.P, P);
+        cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &scissorRect);
+        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    }
 
     //const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(heap->GetGPUHandle(), heap->GetBindlessTexBase(), heap->GetIncrementSize());
 
-    cmdList->SetGraphicsRootSignature(m_rootSig.Get());
-    cmdList->SetPipelineState(m_shader.GetPSO());
-    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    {
+        D3D12_VERTEX_BUFFER_VIEW viewV;
+        D3D12_INDEX_BUFFER_VIEW viewI;
+        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertex, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex), scene->CPU.MegaBufferIndex.size(), viewV, viewI);
 
-    D3D12_VERTEX_BUFFER_VIEW viewV;
-    viewV.BufferLocation = scene->GPU.MegaBufferVertex.GetResource()->GetGPUVirtualAddress();
-    viewV.SizeInBytes = scene->CPU.MegaBufferVertex.size() * sizeof(Vertex);
-    viewV.StrideInBytes = sizeof(Vertex);
+        scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        m_descriptorSet.TransitionAllSRVToShaderResource(cmdList);
 
-    D3D12_INDEX_BUFFER_VIEW viewI;
-    viewI.BufferLocation = scene->GPU.MegaBufferIndex.GetResource()->GetGPUVirtualAddress();
-    viewI.SizeInBytes = scene->CPU.MegaBufferIndex.size() * sizeof(uint32_t);
-    viewI.Format = DXGI_FORMAT_R32_UINT;
+        cmdList->IASetVertexBuffers(0, 1, &viewV);
+        cmdList->IASetIndexBuffer(&viewI);
+        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    cmdList->IASetVertexBuffers(0, 1, &viewV);
-    cmdList->IASetIndexBuffer(&viewI);
+        heap->Bind(cmdList);
+        cmdList->SetGraphicsRootSignature(m_rootSig.Get());
+        cmdList->SetPipelineState(m_shader.GetPSO());
+    }
 
     {
         GPU_SCOPE(cmdList, "Skybox Pass");
@@ -98,25 +98,30 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* h
         //    skybox->RenderForward(d3d, cmdList, vMatrix, pMatrix);
     }
 
+    CbvMatrices matrices = {};
+    XMStoreFloat4x4(&matrices.V, V);
+    XMStoreFloat4x4(&matrices.P, P);
+
     for (int i = 0; i < scene->CPU.Objects.size(); ++i)
     {
         const Object& obj = scene->CPU.Objects[i];
-        const InstanceData& instanceData = scene->CPU.MegaBufferInstanceData[i];
 
         GPU_SCOPE(cmdList, obj.DebugName.c_str());
 
-        matrices.M = instanceData.M;
-        matrices.MTI = instanceData.MTI;
+        const XMMATRIX M = XMMatrixSet(
+            obj.M[0], obj.M[1], obj.M[2], obj.M[3],
+            obj.M[4], obj.M[5], obj.M[6], obj.M[7],
+            obj.M[8], obj.M[9], obj.M[10], obj.M[11],
+            obj.M[12], obj.M[13], obj.M[14], obj.M[15]
+            );
+
+        XMStoreFloat4x4(&matrices.M, M);
+        XMStoreFloat4x4(&matrices.MTI, XMMatrixTranspose(XMMatrixInverse(nullptr, M)));
         m_descriptorSet.UpdateCBV(0, &matrices);
 
-        m_descriptorSet.TransitionAllSRVToShaderResource(cmdList);
         m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
-
         //cmdList->SetGraphicsRootDescriptorTable(2, bindlessHandle);
 
-        const size_t byteOffsetVertex = obj.MegaBufferVertexOffset * sizeof(Vertex);
-        const size_t byteOffsetIndex = obj.MegaBufferIndexOffset * sizeof(uint32_t);
-
-        cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, byteOffsetIndex, byteOffsetVertex, 0);
+        cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
     }
 }

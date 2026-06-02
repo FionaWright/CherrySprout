@@ -1,8 +1,9 @@
 #ifndef H_MICROFACET_H
 #define H_MICROFACET_H
 
-#include "Random.h"
-#include "MathUtils.hlsli"
+#include "Utils/Random.h"
+#include "Utils/MathUtils.h"
+#include "Utils/HlslUtils.hlsli"
 
 // https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 

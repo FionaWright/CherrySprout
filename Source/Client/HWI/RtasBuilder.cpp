@@ -48,12 +48,12 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         XMStoreFloat4x4(&instanceData.MTI, MTI);
         instanceData.MegaBufferOffsetVertex = obj.MegaBufferVertexOffset;
         instanceData.MegaBufferOffsetIndex = obj.MegaBufferIndexOffset;
-        scene->CPU.MegaBufferInstanceData.emplace_back(instanceData);
+        m_megaBufferInstanceData.emplace_back(instanceData);
     }
 
-    const size_t megaBufferInstanceDataSize = scene->CPU.MegaBufferInstanceData.size() * sizeof(InstanceData);
-    scene->GPU.MegaBufferInstanceData.InitBuffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
-    scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, uploadHeap, scene->CPU.MegaBufferInstanceData.data(), megaBufferInstanceDataSize);
+    const size_t megaBufferInstanceDataSize = m_megaBufferInstanceData.size() * sizeof(InstanceData);
+    scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
+    scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataSize);
 
     buildTlas(device, cmdList, blasInstances);
 
@@ -91,8 +91,8 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     BlasEntry entry;
 
-    entry.Scratch.InitBuffer("BLAS Scratch", device, prebuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    entry.Result.InitBuffer("BLAS Result", device, prebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+    entry.Scratch.Init_Buffer("BLAS Scratch", device, prebuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    entry.Result.Init_Buffer("BLAS Result", device, prebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
     buildDesc.Inputs = inputs;
@@ -140,8 +140,8 @@ void RtasBuilder::buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
     device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
 
-    m_tlasScratch.InitBuffer("TLAS Scratch", device, prebuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    m_tlasResult.InitBuffer("TLAS Result", device, prebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+    m_tlasScratch.Init_Buffer("TLAS Scratch", device, prebuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_tlasResult.Init_Buffer("TLAS Result", device, prebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
     buildDesc.Inputs = inputs;

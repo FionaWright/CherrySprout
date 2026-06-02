@@ -1,0 +1,26 @@
+//
+// Created by fionaw on 25/09/2025.
+//
+
+#ifndef PT_CAMERACONTROLLER_H
+#define PT_CAMERACONTROLLER_H
+
+#include "Camera.h"
+
+class CameraController
+{
+public:
+    void Init(const XMFLOAT3& pos, const float pitch, const float yaw) { m_camera.Init(pos, pitch, yaw); }
+    bool UpdateCamera(double deltaTime_ms);
+
+    XMMATRIX GetViewMatrix() const { return m_camera.GetViewMatrix(); }
+    Camera& GetCamera() { return m_camera; }
+    const Camera& GetCamera() const { return m_camera; }
+
+private:
+    Camera m_camera;
+    float m_speed = 22.5f;
+    float m_rotationSpeed = 15.0f;
+};
+
+#endif //PT_CAMERACONTROLLER_H

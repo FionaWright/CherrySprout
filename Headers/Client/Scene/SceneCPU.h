@@ -37,9 +37,6 @@ struct SceneCPU
     std::vector<uint32_t> MegaBufferIndex;
     std::vector<Material> MegaBufferMaterials;
     // TODO: MegaBufferPunctualLights
-
-    // Filled by RTAS Builder:
-    std::vector<InstanceData> MegaBufferInstanceData;
 };
 
 #endif //CHERRYSPROUT_SCENE_CPU_H

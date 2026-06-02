@@ -5,6 +5,7 @@
 #ifndef CHERRYSPROUT_FORWARD_H
 #define CHERRYSPROUT_FORWARD_H
 
+#include "IRenderBackend.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
 #include "HWI/Shader.h"
@@ -14,14 +15,19 @@
 struct Scene;
 struct TimeArgs;
 
-class Forward
+class Forward : public IRenderBackend
 {
 public:
-    void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene);
-    void Update(D3D* d3d, TimeArgs timeArgs);
-    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P) const;
+    void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene) override;
+    void Update(D3D* d3d, TimeArgs timeArgs) override;
+    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P) override;
 
-    static size_t TotalCbvRequiredSize() { return sizeof(CbvMatrices) + sizeof(CbvForward) + sizeof(Material); }
+    size_t TotalCbvRequiredSize() override
+    {
+        return  Align(sizeof(CbvMatrices), 256) +
+                Align(sizeof(CbvForward), 256) +
+                Align(sizeof(Material), 256);
+    }
 
 private:
     Shader m_shader;
