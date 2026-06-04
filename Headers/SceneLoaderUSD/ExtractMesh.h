@@ -31,6 +31,32 @@
 
 namespace SceneLoaderUSD
 {
+    struct VertexHasher
+    {
+        size_t operator()(const Vertex& v) const
+        {
+            size_t h = 0;
+
+            auto hashCombine = [&](size_t value)
+            {
+                h ^= value + 0x9e3779b9 + (h << 6) + (h >> 2);
+            };
+
+            hashCombine(std::hash<float>{}(v.Position.x));
+            hashCombine(std::hash<float>{}(v.Position.y));
+            hashCombine(std::hash<float>{}(v.Position.z));
+
+            hashCombine(std::hash<float>{}(v.Normal.x));
+            hashCombine(std::hash<float>{}(v.Normal.y));
+            hashCombine(std::hash<float>{}(v.Normal.z));
+
+            hashCombine(std::hash<float>{}(v.UV.x));
+            hashCombine(std::hash<float>{}(v.UV.y));
+
+            return h;
+        }
+    };
+
     inline void ExtractGeometry(const pxr::UsdPrim& prim, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
     {
         pxr::UsdGeomMesh mesh(prim);
@@ -150,6 +176,9 @@ namespace SceneLoaderUSD
 
         currVertexIndex = 0;
 
+        std::unordered_map<Vertex, uint32_t, VertexHasher> vertexLookup;
+        vertexLookup.reserve(maxVertexCount);
+
         for (size_t faceIdx = 0; faceIdx < faceVertexCounts.size(); ++faceIdx)
         {
             const int verticesInFace = faceVertexCounts[faceIdx];
@@ -160,7 +189,7 @@ namespace SceneLoaderUSD
                 int v2 = v + 1;
                 for (int vi : { 0, v1, v2 })
                 {
-                    const int pvIdx = currVertexIndex + v;
+                    const int pvIdx = currVertexIndex + vi;
                     const int ptIdx = faceVertexIndices[pvIdx];
 
                     const PxrVertex pxrv = pxrVertices.at(pvIdx);
@@ -182,8 +211,21 @@ namespace SceneLoaderUSD
 
                     vertex.Normal = { (float)N[0], (float)N[1], (float)N[2]};
 
-                    indices.emplace_back(static_cast<uint32_t>(vertices.size()));
+                    auto it = vertexLookup.find(vertex);
+
+                    if (it != vertexLookup.end())
+                    {
+                        indices.emplace_back(it->second);
+                        continue;
+                    }
+
+                    const uint32_t newIndex =
+                            static_cast<uint32_t>(vertices.size());
+
                     vertices.emplace_back(vertex);
+                    vertexLookup.emplace(vertex, newIndex);
+
+                    indices.emplace_back(newIndex);
                 }
             }
 

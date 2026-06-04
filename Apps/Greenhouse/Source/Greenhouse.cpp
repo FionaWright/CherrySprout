@@ -21,8 +21,6 @@ void Greenhouse::Init(D3D* d3d)
 
     m_sceneManager.LoadScene(TEST_SCENE);
 
-    CURRENT ISSUE IS EACH GROUP OF 3 VERTICES IS THE SAME, NO DEDUPLICATION AS WELL. COMPARE SCENE LOADER
-
     std::cout << "Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize() << std::endl;
     std::cout << "Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize() << std::endl;
     const size_t maxCbvRequiredSize = std::max(m_pathTracer.TotalCbvRequiredSize(), m_forward.TotalCbvRequiredSize());

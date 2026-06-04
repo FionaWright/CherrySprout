@@ -77,7 +77,8 @@ void PrintSceneDebug(const SceneCPU* scene)
 
 int main(const int argc, char** argv)
 {
-    std::string filepath = R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)";
+    //std::string filepath = R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)";
+    std::string filepath = R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\Cube\Cube.usda)";
     SceneCPU scene;
     LoadUSD(filepath.c_str(), &scene);
 
