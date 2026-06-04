@@ -48,7 +48,9 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Ng_ff = hitInfo.Entering ? Ng : -Ng;
 
     hitInfo.Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
+    hitInfo.Ns.y = -hitInfo.Ns.y; // TODO: Should not need this
     hitInfo.Ns = normalize(mul((float3x3)instance.MTI, hitInfo.Ns));
+
     //if (false)
     //{
     //    float3 bumpSample = gTextures[hitInfo.Mat.TexIdxNormal].Sample(gSampler, hitInfo.UV).rgb * 2.0f - 1.0f;

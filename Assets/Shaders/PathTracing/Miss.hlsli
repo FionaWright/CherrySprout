@@ -3,7 +3,8 @@
 
 float3 Miss(float3 origin, float3 direction, uint bounceIdx)
 {
-    return abs(direction);
+    if (bounceIdx == 0) // TODO
+        return abs(direction);
 
     float3 Li = float3(0, 0, 0);
 
@@ -24,7 +25,7 @@ float3 Miss(float3 origin, float3 direction, uint bounceIdx)
         //if (cDirLightIsDistant)
         //    Li += gSettings.DirLightColor * gSettings.DirLightIntensity * saturate(sunCos);
         if (sunCos > gSettings.DirLightCosAngularRadius)
-            Li += gSettings.DirLightColor * gSettings.DirLightIntensity * 100.0f;
+            Li += gSettings.DirLightColor * gSettings.DirLightIntensity;
     }
 
     return Li;

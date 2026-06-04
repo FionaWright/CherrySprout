@@ -12,7 +12,7 @@ enum class RenderBackendMode : uint32_t
 
 struct GreenhouseConfig
 {
-    RenderBackendMode RenderBackend = RenderBackendMode::eForward;
+    RenderBackendMode RenderBackend = RenderBackendMode::ePathTracer;
 };
 
 #endif

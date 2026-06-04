@@ -60,7 +60,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
             m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
         }
 
-        m_currRenderBackend->LoadSceneData(d3d->GetDevice(), &m_sceneManager.GetScene());
+        m_currRenderBackend->SetSceneDataNotLoaded();
         m_renderBackendDirty = false;
     }
 
@@ -70,8 +70,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
         const SceneConfig& sceneConfig = s_sceneConfigs.at(m_currentSceneIdx);
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str());
-
-        m_currRenderBackend->LoadSceneData(d3d->GetDevice(), &m_sceneManager.GetScene());
 
         m_sceneDirty = false;
     }
@@ -87,7 +85,12 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     if (m_sceneManager.IsGpuDataDirty())
     {
         m_sceneManager.UploadScene(d3d, cmdList);
-        m_pathTracer.MarkRtasDirty();
+        m_currRenderBackend->SetSceneDataNotLoaded();
+    }
+
+    if (!m_currRenderBackend->IsSceneDataLoaded())
+    {
+        m_currRenderBackend->LoadSceneData(d3d, cmdList, &m_sceneManager.GetScene());
     }
 
     XMMATRIX V = m_cameraController.GetViewMatrix();
@@ -138,6 +141,7 @@ void Greenhouse::RenderGUI()
 
         m_sceneDirty |= ImGui::Button("Reload Scene##xx");
     }
+    ImGui::Unindent(IM_GUI_INDENTATION);
 
     ImGui::SeparatorText("Render Backend##xx");
     ImGui::Indent(IM_GUI_INDENTATION);
@@ -148,6 +152,7 @@ void Greenhouse::RenderGUI()
         m_renderBackendDirty |= ImGui::RadioButton("Forward", &e, c++);
         m_config.RenderBackend = static_cast<RenderBackendMode>(e);
     }
+    ImGui::Unindent(IM_GUI_INDENTATION);
 
     m_ptDirty |= m_sceneDirty | m_renderBackendDirty;
 

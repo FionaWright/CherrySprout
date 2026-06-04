@@ -56,12 +56,26 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_shader.InitCs("PathTracing/PathTracerCS.hlsl", d3d->GetDevice(), m_rootSig.Get());
 }
 
-void PathTracer::LoadSceneData(ID3D12Device* device, Scene* scene)
+void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene)
 {
-    m_descriptorSet.SetSRV_Buffer(device, 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex));
-    m_descriptorSet.SetSRV_Buffer(device, 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
-    m_descriptorSet.SetSRV_Buffer(device, 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
-    m_descriptorSet.SetSRV_Buffer(device, 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
+    IRenderBackend::LoadSceneData(d3d, cmdList, scene);
+    
+    {
+        GPU_SCOPE(cmdList, "Build RTAS");
+
+        ComPtr<ID3D12Device5> device5;
+        V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+        ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+        V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
+
+        m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
+    }
+
+    m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -76,21 +90,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    if (m_rtasDirty)
-    {
-        GPU_SCOPE(cmdList, "Build RTAS");
-
-        ComPtr<ID3D12Device5> device5;
-        V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
-        ComPtr<ID3D12GraphicsCommandList4> cmdList4;
-        V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
-
-        m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
-        m_descriptorSet.SetSRV_RTAS(d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
-
-        m_rtasDirty = false;
-    }
-
     // Fill Settings
     // TODO: push constants
     {
@@ -103,10 +102,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.SPP = 1;
         settings.FrameIdx = m_frameIdx;
         settings.AccumulationEnabled = false;
-        settings.DirLight = XMFLOAT3(1, -1, 0);
+        settings.DirLight = XMFLOAT3(1, -1, 1);
         settings.DirLightColor = XMFLOAT3(1, 1, 1);
-        settings.DirLightCosAngularRadius = 0.1f;
-        settings.DirLightIntensity = 1.0f;
+        settings.DirLightCosAngularRadius = 0.00465f;
+        settings.DirLightIntensity = 100.0f;
         settings.FireflyThreshold = 9999;
 
         // TODO: Do I need both?

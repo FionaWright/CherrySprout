@@ -6,12 +6,16 @@
 
 void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 Lo, inout float3 throughput, inout RngInfo rngInfo, float3 wo, float hitDist)
 {
-    Lo += COLOR_BLUE * throughput;
-    throughput *= COLOR_BLUE;
-    return;
+    //Lo += COLOR_BLUE * throughput;
+    //throughput *= COLOR_BLUE;
+    //return;
 
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
+
+    //Lo += COLOR_BLUE * throughput;
+    //throughput = hitInfo.Ns;
+    //return;
 
     float3 wi, L_sample;
 

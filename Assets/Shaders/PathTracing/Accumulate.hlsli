@@ -12,7 +12,7 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 color, bool nanTestEnabled)
     bool isNaN = nanTestEnabled && (IsNaN3(color) || IsNaN3(accumColor));
     if (isNaN)
     {
-        color = GetNaNVisualizerColor(gSettings.FrameIdx);
+        color = GetNaNVisualizerColor(pixelCoord);
         gTexAccumulation[pixelCoord].rgb = NAN;
         return color;
     }

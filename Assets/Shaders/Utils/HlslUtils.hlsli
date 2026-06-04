@@ -4,7 +4,7 @@
 // https://sakibsaikia.github.io/graphics/2022/01/04/Nan-Checks-In-HLSL.html
 bool IsNaN(float x) // WARNING: This may be giving false positives? See mul(cMatXyzToRgb, float3(0.04491435,4.6650298,2.231335))
 {
-    return (int(x) & 0x7fffffff) > 0x7f800000;
+    return (asuint(x) & 0x7fffffff) > 0x7f800000;
 }
 
 bool IsNaN3(float3 x)
@@ -14,7 +14,7 @@ bool IsNaN3(float3 x)
 
 bool IsInf(float x)
 {
-    return (int(x) & 0x7fffffff) == 0x7f800000;
+    return !IsNaN(x) && IsNaN(x * 0.0);
 }
 
 bool IsInf3(float3 x)
@@ -32,9 +32,14 @@ float3 DebugInfoColor(float3 x)
     return IsInf3(x) ? float3(0, 1, 1) : (IsNaN3(x) ? float3(1, 0, 1) : x);
 }
 
-float3 GetNaNVisualizerColor(uint frameIdx)
+float3 GetNaNVisualizerColor(uint2 pixelCoord)
 {
-    return float3(1, frameIdx % 2, 1);
+    return float3(1, pixelCoord.x + pixelCoord.y % 2, 1);
+}
+
+float3 GetInfVisualizerColor(uint2 pixelCoord)
+{
+    return float3(1, pixelCoord.x + pixelCoord.y % 2, 0);
 }
 
 float3 NormalizeSafe(float3 v, float3 fallback)

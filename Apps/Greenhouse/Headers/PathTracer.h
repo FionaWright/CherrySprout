@@ -20,20 +20,17 @@ class PathTracer : public IRenderBackend
 {
 public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;
-    void LoadSceneData(ID3D12Device* device, Scene* scene) override;
+    void LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene) override;
     void Update(D3D* d3d, TimeArgs timeArgs) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override;
 
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
 
-    void MarkRtasDirty() { m_rtasDirty = true; }
-
     D12Resource* GetTexOutput() { return &m_output; }
 
 private:
     RtasBuilder m_rtasBuilder;
-    bool m_rtasDirty = true;
 
     uint32_t m_frameIdx = 0;
 

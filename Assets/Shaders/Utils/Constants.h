@@ -7,7 +7,7 @@
 
 #define UINT_MAX            4294967296.0
 
-#define NAN                 0.0f/0.0f;
+#define NAN                 asfloat(0x7FC00000)
 
 #endif
 

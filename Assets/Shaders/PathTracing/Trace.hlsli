@@ -28,6 +28,7 @@ float3 Trace(inout RayQuery<RAY_FLAGS> q, RayDesc ray, RngInfo rngInfo)
         float3 wo = -ray.Direction;
 
         Hit(q, ray, Lo, throughput, rngInfo, wo, hitDist);
+        //return throughput;
     }
 
     return Lo;
