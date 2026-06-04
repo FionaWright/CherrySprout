@@ -5,15 +5,16 @@
 #include "System/pch.h"
 #include "PathTracer.h"
 
+#include "Greenhouse.h"
 #include "Debug/GPUEventScoped.h"
 #include "PathTracing/CBVs.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene)
+void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
-    IRenderBackend::Init(d3d, heap, uploadHeapCBV, scene);
+    IRenderBackend::Init(d3d, heap, uploadHeapCBV);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -47,20 +48,20 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* sc
     m_rootSig.SmartInit(d3d->GetDevice(), 1, 5, 2, false, &sampler, 1);
 
     m_descriptorSet.Init(heap, false);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
-
-    m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
-
+    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output);
+    m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
 
     m_shader.InitCs("PathTracing/PathTracerCS.hlsl", d3d->GetDevice(), m_rootSig.Get());
+}
 
-    m_rtasBuilder.Init(d3d->GetDevice(), scene);
+void PathTracer::LoadSceneData(ID3D12Device* device, Scene* scene)
+{
+    m_descriptorSet.SetSRV_Buffer(device, 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex));
+    m_descriptorSet.SetSRV_Buffer(device, 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
+    m_descriptorSet.SetSRV_Buffer(device, 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
+    m_descriptorSet.SetSRV_Buffer(device, 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -68,9 +69,12 @@ void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
 
 }
 
-void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX&, const XMMATRIX&)
+void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo)
 {
     GPU_SCOPE(cmdList, "Path-Trace");
+
+    Scene* scene = renderInfo.Scene;
+    const Heap* heap = renderInfo.Heap;
 
     if (m_rtasDirty)
     {
@@ -81,8 +85,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap
         ComPtr<ID3D12GraphicsCommandList4> cmdList4;
         V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
-        m_rtasUploadHeap.Init(d3d->GetDevice(), 64 + scene->CPU.Objects.size() * sizeof(InstanceData));
-        m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), &m_rtasUploadHeap, scene);
+        m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
         m_descriptorSet.SetSRV_RTAS(d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
 
         m_rtasDirty = false;
@@ -92,7 +95,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap
     // TODO: push constants
     {
         CbvPathTracingSettings settings;
-        settings.CameraPositionWorld = XMFLOAT3(0,0,0);
+        XMStoreFloat4x4(&settings.InvP, *renderInfo.InvP);
+        XMStoreFloat4x4(&settings.InvV, *renderInfo.InvV);
+        settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
         settings.MaxRayDepth = 1;
         settings.RussianRouletteMinBounces = 99;
         settings.SPP = 1;
@@ -147,6 +152,5 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap
 
 void PathTracer::UnreserveData()
 {
-    m_rtasUploadHeap.UnreserveData();
-    m_rtasDirty = true;
+
 }

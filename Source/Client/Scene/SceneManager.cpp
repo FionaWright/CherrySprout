@@ -13,7 +13,10 @@ typedef void (*LoadUSDFunc)(const char* usdPath, SceneCPU* scene);
 
 void SceneManager::LoadScene(const char* filepath)
 {
-    const bool isUSD = std::filesystem::path(filepath).extension().string().starts_with(".usd");
+    m_scene = {};
+
+    const std::string fullpath = std::string(SOURCE_DIR) + "/" + filepath;
+    const bool isUSD = std::filesystem::path(fullpath).extension().string().starts_with(".usd");
     if (!isUSD)
         throw std::runtime_error("Non-USD scenes not supported yet!");
 
@@ -35,7 +38,7 @@ void SceneManager::LoadScene(const char* filepath)
         return;
     }
 
-    LoadUSD(filepath, &m_scene.CPU);
+    LoadUSD(fullpath.c_str(), &m_scene.CPU);
 
     FreeLibrary(dll);
 
@@ -46,7 +49,7 @@ void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdLis
 {
     GPU_SCOPE(cmdList, "Upload Scene");
 
-    assert(m_gpuDataDirty);
+    CherryAssert(m_gpuDataDirty);
 
     const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertex.size() * sizeof(Vertex);
     const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndex.size() * sizeof(uint32_t);
@@ -61,6 +64,7 @@ void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdLis
     uploadHeapRequiredSize += m_scene.GPU.MegaBufferIndex.GetIntermediateSize();
     uploadHeapRequiredSize += m_scene.GPU.MegaBufferMaterials.GetIntermediateSize();
     uploadHeapRequiredSize += 512 * 3; // For safety
+    m_uploadHeap = {};
     m_uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
     m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex.data(), megaBufferIndexBytes);

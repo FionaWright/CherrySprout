@@ -8,6 +8,19 @@
 #define CherryPrint(str)
 #endif
 
+inline void CherryAssert(const bool expr, const char* message = nullptr)
+{
+#ifdef _DEBUG
+    if (!expr)
+    {
+        if (message)
+            throw std::exception((std::string("Assertion failed: '") + message + "'\n").c_str());
+        else
+            throw std::exception(std::string("Assertion failed!").c_str());
+    }
+#endif
+}
+
 inline std::string wstringToString(const std::wstring& wstr)
 {
     if (wstr.empty()) return {};

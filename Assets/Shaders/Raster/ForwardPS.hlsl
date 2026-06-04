@@ -23,21 +23,21 @@ SamplerState gSampler : register(s0);
 
 float4 PSMain(VsOut input) : SV_TARGET
 {
-    return float4(1, 0, 0, 1);
+    //float3 bumpSample = gTextures[gMaterial.TexIdxNormal].SampleLevel(gSampler, input.uv, 0).rgb * 2.0f - 1.0f;
+    //bumpSample.y = -bumpSample.y; // DX convention
+
+    float3 N = normalize(input.normal);
+    //ShadingFrame bumpFrame = CreateShadingFrame(N);
+    //float3 N_w = bumpFrame.ToWorld(bumpSample);
+
+    return float4(N, 1);
 /*
 
     float4 albedo = gTextures[gMaterial.TexIdxAlbedo].Sample(gSampler, input.uv).rgba;
 	float4 albedoGamma = float4(pow(albedo.rgb, 2.2f), albedo.a);
 
-    float3 bumpSample = gTextures[gMaterial.TexIdxNormal].SampleLevel(gSampler, input.uv, 0).rgb * 2.0f - 1.0f;
-    bumpSample.y = -bumpSample.y; // DX convention
-
     float2 roughMet = gTextures[gMaterial.TexIdxRoughMet].Sample(gSampler, input.uv).gb;
     float3 emission = gTextures[gMaterial.TexIdxEmissive].Sample(gSampler, input.uv).rgb;
-
-    float3 N = normalize(input.normal);
-    ShadingFrame bumpFrame = CreateShadingFrame(N);
-    float3 N_w = bumpFrame.ToWorld(bumpSample);
 
     float3 irradianceIblSample = gIrradiance.SampleLevel(gSampler, N_w, 0).rgb;
 

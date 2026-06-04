@@ -5,15 +5,16 @@
 #include "System/pch.h"
 #include "Forward.h"
 
+#include "Greenhouse.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/Heap.h"
 #include "Scene/Scene.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/D3DUtils.h"
 
-void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene)
+void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
-    IRenderBackend::Init(d3d, heap, uploadHeapCBV, scene);
+    IRenderBackend::Init(d3d, heap, uploadHeapCBV);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -42,16 +43,19 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, Scene* scene
     };
 
     m_shader.InitVsPs("Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", {ildDesc, _countof(ildDesc)}, d3d->GetDevice(),
-                      m_rootSig.Get(), false);
+                      m_rootSig.Get(), true);
 }
 
 void Forward::Update(D3D* d3d, TimeArgs timeArgs)
 {
 }
 
-void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const XMMATRIX& V, const XMMATRIX& P)
+void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
+
+    Scene* scene = renderInfo.Scene;
+    Heap* heap = renderInfo.Heap;
 
     {
         const uint32_t w = Config::GetSystem().RtvWidth;
@@ -64,12 +68,11 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* h
         cmdList->RSSetScissorRects(1, &scissorRect);
 
         const auto rtvHandle = d3d->GetRtvHandle();
-        //const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
-        //cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
         cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &scissorRect);
-        //->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     }
 
     //const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(heap->GetGPUHandle(), heap->GetBindlessTexBase(), heap->GetIncrementSize());
@@ -100,8 +103,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* h
     }
 
     CbvMatrices matrices = {};
-    XMStoreFloat4x4(&matrices.V, V);
-    XMStoreFloat4x4(&matrices.P, P);
+    XMStoreFloat4x4(&matrices.V, *renderInfo.V);
+    XMStoreFloat4x4(&matrices.P, *renderInfo.P);
 
     for (int i = 0; i < scene->CPU.Objects.size(); ++i)
     {

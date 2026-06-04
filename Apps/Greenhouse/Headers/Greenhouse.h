@@ -11,6 +11,17 @@
 #include "Scene/SceneManager.h"
 #include "System/App.h"
 
+struct GreenHouseRenderInfo
+{
+    Camera* Camera;
+    XMMATRIX* V;
+    XMMATRIX* InvV;
+    XMMATRIX* P;
+    XMMATRIX* InvP;
+    Scene* Scene;
+    Heap* Heap;
+};
+
 class Greenhouse final : public App
 {
 public:
@@ -24,8 +35,13 @@ public:
 
 private:
     GreenhouseConfig m_config;
-    float m_aspectRatio = 0.0f;
     XMMATRIX m_projectionMatrix{};
+    XMMATRIX m_invProjectionMatrix{};
+    float m_aspectRatio = 0.0f;
+    uint32_t m_currentSceneIdx = 0;
+    bool m_renderBackendDirty = false;
+    bool m_sceneDirty = true;
+    bool m_ptDirty = false;
 
     CameraController m_cameraController;
     SceneManager m_sceneManager;

@@ -10,8 +10,10 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Root constants support
 - [ ] Run path-tracer without sync?
 - [ ] Scene switching in GUI
+- [ ] Profiling
 
 - [ ] Python executor
 - [ ] Path visualizer
 - [ ] Debug Info Output (Make it better)
 - [ ] RMSE Tester
+- [ ] PT Assert based system inspired by Viggo

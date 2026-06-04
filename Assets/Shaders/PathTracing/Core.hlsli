@@ -12,8 +12,6 @@
 
 void Core(uint2 pixelCoord)
 {
-    RayQuery<RAY_FLAGS> q;
-
     float3 origin = gSettings.CameraPositionWorld;
 
     RayDesc ray;
@@ -21,6 +19,8 @@ void Core(uint2 pixelCoord)
     ray.Direction = 0;
     ray.TMin = 0.001;
     ray.TMax = 1000.0;
+
+    RayQuery<RAY_FLAGS> q;
 
     float3 colorSum = float3(0,0,0);
     for (uint i = 0; i < gSettings.SPP; i++)
@@ -30,7 +30,8 @@ void Core(uint2 pixelCoord)
         float2 pixelUV = pixelCoord;
         pixelUV *= gSettings.TexelSize;
 
-        float2 ndc = RemapUtoS(pixelUV);
+        //float2 ndc = RemapUtoS(pixelUV);
+        float2 ndc = pixelUV * 2.0f - 1.0f;
         ndc.y = -ndc.y;
         float4 clip = float4(ndc, 0, 1); // z=0 for near plane
         float4 view = mul(gSettings.InvP, clip);

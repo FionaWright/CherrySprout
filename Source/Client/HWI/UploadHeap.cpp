@@ -4,8 +4,6 @@
 
 #include "HWI/UploadHeap.h"
 
-#include <cassert>
-
 #include "Utils/Helper.h"
 #include "Utils/D3DUtils.h"
 
@@ -14,6 +12,7 @@ void UploadHeap::Init(ID3D12Device* device, const size_t maxUploadSize)
     if (m_mappedPointer && m_resource.GetResource())
     {
         m_resource.GetResource()->Unmap(0, nullptr);
+        m_mappedPointer = nullptr;
     }
 
     m_maxUploadSize = maxUploadSize;
@@ -26,7 +25,10 @@ void UploadHeap::Init(ID3D12Device* device, const size_t maxUploadSize)
 UploadHeap::~UploadHeap()
 {
     if (m_resource.GetResource())
+    {
         m_resource.GetResource()->Unmap(0, nullptr);
+        m_mappedPointer = nullptr;
+    }
 }
 
 // CBVs must be 256-aligned
@@ -36,17 +38,17 @@ size_t UploadHeap::GetAssignedUploadOffset(const size_t size, const size_t align
     const size_t offset = Align(m_currUploadOffset, alignmentRequirement);
     m_currUploadOffset = offset + size;
 
-    assert(m_currUploadOffset <= m_maxUploadSize);
+    CherryAssert(m_currUploadOffset <= m_maxUploadSize);
     return offset;
 }
 
 uint8_t* UploadHeap::GetMappedPointer(const size_t offset) const
 {
-    assert(m_mappedPointer);
+    CherryAssert(m_mappedPointer);
     return m_mappedPointer + offset;
 }
 
-void UploadHeap::UnreserveData() // Done when you know that the data isn't currently being used on the GPU nor in a current cmdList
+void UploadHeap::FlushData() // Done when you know that the data isn't currently being used on the GPU nor in a current cmdList
 {
     m_currUploadOffset = 0;
 }

@@ -2,24 +2,25 @@
 #include "Greenhouse.h"
 
 #include "imgui.h"
+#include "Scenes.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "PathTracing/CBVs.h"
 #include "Scene/SceneManager.h"
 #include "System/Gui.h"
+#include "System/GuiUtils.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/Constants.h"
+#include "Utils/ConstantsCpp.h"
 #include "Utils/Helper.h"
 #include "Utils/D3DUtils.h"
-
-//#define TEST_SCENE R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)"
-#define TEST_SCENE R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\Cube\Cube.usda)"
 
 void Greenhouse::Init(D3D* d3d)
 {
     App::Init(d3d);
 
-    m_sceneManager.LoadScene(TEST_SCENE);
+    m_currentSceneIdx = 0;
+    Config::SetUIntFromArg(&m_currentSceneIdx, "--defaultSceneIndex");
 
     std::cout << "Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize() << std::endl;
     std::cout << "Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize() << std::endl;
@@ -32,6 +33,7 @@ void Greenhouse::Init(D3D* d3d)
 
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
     m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
+    m_invProjectionMatrix = XMMatrixInverse(nullptr, m_projectionMatrix);
 
     if (!d3d->GetRayTracingSupported())
     {
@@ -40,16 +42,41 @@ void Greenhouse::Init(D3D* d3d)
     }
 
     m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
+    m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
 }
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
-    m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f);
-
-    if (!m_currRenderBackend->IsInitialized())
+    if (m_renderBackendDirty)
     {
-        m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV, &m_sceneManager.GetScene());
+        m_uploadHeapCBV.FlushData();
+        m_sceneManager.UnreserveData();
+        m_currRenderBackend->UnreserveData();
+
+        m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
+
+        if (!m_currRenderBackend->IsInitialized())
+        {
+            m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
+        }
+
+        m_currRenderBackend->LoadSceneData(d3d->GetDevice(), &m_sceneManager.GetScene());
+        m_renderBackendDirty = false;
     }
+
+    if (m_sceneDirty)
+    {
+        m_sceneManager.UnreserveData();
+
+        const SceneConfig& sceneConfig = s_sceneConfigs.at(m_currentSceneIdx);
+        m_sceneManager.LoadScene(sceneConfig.Filepath.c_str());
+
+        m_currRenderBackend->LoadSceneData(d3d->GetDevice(), &m_sceneManager.GetScene());
+
+        m_sceneDirty = false;
+    }
+
+    m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f);
 
     m_currRenderBackend->Update(d3d, timeArgs);
 }
@@ -60,9 +87,22 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     if (m_sceneManager.IsGpuDataDirty())
     {
         m_sceneManager.UploadScene(d3d, cmdList);
+        m_pathTracer.MarkRtasDirty();
     }
 
-    m_currRenderBackend->Render(d3d, cmdList, &m_heap, &m_sceneManager.GetScene(), m_cameraController.GetViewMatrix(), m_projectionMatrix);
+    XMMATRIX V = m_cameraController.GetViewMatrix();
+    XMMATRIX InvV = XMMatrixInverse(nullptr, V);
+
+    GreenHouseRenderInfo renderInfo;
+    renderInfo.Scene = &m_sceneManager.GetScene();
+    renderInfo.Heap = &m_heap;
+    renderInfo.Camera = &m_cameraController.GetCamera();
+    renderInfo.V = &V;
+    renderInfo.InvV = &InvV;
+    renderInfo.P = &m_projectionMatrix;
+    renderInfo.InvP = &m_invProjectionMatrix;
+
+    m_currRenderBackend->Render(d3d, cmdList, renderInfo);
 }
 
 void Greenhouse::PostUpdate(D3D* d3d)
@@ -74,21 +114,42 @@ void Greenhouse::RenderGUI()
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
                      ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
-    bool switchedRenderBackends = false;
-
-    static int e = static_cast<int>(m_config.RenderBackend);
-    int c = 0;
-    switchedRenderBackends |= ImGui::RadioButton("Path Tracer", &e, c++);
-    switchedRenderBackends |= ImGui::RadioButton("Forward", &e, c++);
-    m_config.RenderBackend = static_cast<RenderBackendMode>(e);
-
-    if (switchedRenderBackends)
+    ImGui::SeparatorText("Scene##xx");
+    ImGui::Indent(IM_GUI_INDENTATION);
     {
-        m_uploadHeapCBV.UnreserveData();
-        m_sceneManager.UnreserveData();
-        m_currRenderBackend->UnreserveData();
-        m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
+        const char* curName = s_sceneConfigs.at(m_currentSceneIdx).Name.c_str();
+        if (GuiUtils::BeginComboWithTooltip("Scene##xx", curName))
+        {
+            for (size_t i = 0; i < s_sceneConfigs.size(); i++)
+            {
+                const bool isSelected = m_currentSceneIdx == i;
+                if (ImGui::Selectable(s_sceneConfigs.at(i).Name.c_str(), isSelected))
+                {
+                    m_currentSceneIdx = i;
+                    m_sceneDirty = true;
+                }
+
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::EndCombo();
+        }
+
+        m_sceneDirty |= ImGui::Button("Reload Scene##xx");
     }
+
+    ImGui::SeparatorText("Render Backend##xx");
+    ImGui::Indent(IM_GUI_INDENTATION);
+    {
+        static int e = static_cast<int>(m_config.RenderBackend);
+        int c = 0;
+        m_renderBackendDirty |= ImGui::RadioButton("Path Tracer", &e, c++);
+        m_renderBackendDirty |= ImGui::RadioButton("Forward", &e, c++);
+        m_config.RenderBackend = static_cast<RenderBackendMode>(e);
+    }
+
+    m_ptDirty |= m_sceneDirty | m_renderBackendDirty;
 
     Gui::EndWindow();
 }

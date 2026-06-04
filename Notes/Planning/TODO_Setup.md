@@ -12,7 +12,7 @@ Setting up the project to be able to begin new work
 - [x] Design and implement new GUI
 - [x] OpenUSD linked (Make separate project/repo?)
 - [ ] Set up forward/deferred backends for debugging. Do in Greenhouse
-- [ ] Load and render a cube
+- [x] Load and render a cube
 - [ ] Load and render cornell box
 - [ ] Load and render ABeautifulGame
 - [ ] Create a test that will make sure the framerate never drops dramatically in the future

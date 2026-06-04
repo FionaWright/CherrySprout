@@ -23,7 +23,7 @@ void D12Resource::Init(const char* name, ID3D12Device* device, const D3D12_RESOU
 {
 #ifdef _DEBUG
     m_name = name;
-    assert(!m_initialized);
+    CherryAssert(!m_initialized);
     m_initialized = true;
 #endif
 
@@ -90,7 +90,7 @@ void D12Resource::UploadTexture(ID3D12GraphicsCommandList* cmdList, UploadHeap* 
                                 const size_t totalBytes,
                                 const size_t rowPitch)
 {
-    assert(m_desc.DepthOrArraySize == 1);
+    CherryAssert(m_desc.DepthOrArraySize == 1);
 
     const UINT subresourceIndex = D3D12CalcSubresource(0, 0, 0, m_desc.MipLevels, m_desc.DepthOrArraySize);
 
@@ -109,7 +109,7 @@ void D12Resource::UploadTextureArray(ID3D12GraphicsCommandList* cmdList, UploadH
                                 const size_t totalBytesPerSlice,
                                 const size_t rowPitch)
 {
-    assert(m_desc.MipLevels == 1);
+    CherryAssert(m_desc.MipLevels == 1);
 
     std::vector<D3D12_SUBRESOURCE_DATA> subresourceDatas(m_desc.DepthOrArraySize, {nullptr, (LONG_PTR)rowPitch, (LONG_PTR)totalBytesPerSlice});
     for (int a = 0; a < m_desc.DepthOrArraySize; a++)

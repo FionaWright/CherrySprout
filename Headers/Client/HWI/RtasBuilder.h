@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "D12Resource.h"
+#include "UploadHeap.h"
 #include "Scene/Scene.h"
 
 struct BlasEntry
@@ -20,8 +21,7 @@ struct BlasEntry
 class RtasBuilder
 {
 public:
-    void Init(ID3D12Device* device, Scene* scene);
-    void Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UploadHeap* uploadHeap, Scene* scene);
+    void Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene);
 
     D12Resource* GetRtasResource() { return &m_tlasResult; }
 
@@ -30,12 +30,12 @@ private:
     void buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
                    const std::vector<D3D12_RAYTRACING_INSTANCE_DESC>& blasInstances);
 
+    UploadHeap m_uploadHeap;
     D12Resource m_tlasScratch;
     D12Resource m_tlasResult;
     ComPtr<ID3D12Resource> m_tlasInstanceBuffer;
 
     std::vector<BlasEntry> m_blasList;
-
     std::vector<InstanceData> m_megaBufferInstanceData;
 };
 

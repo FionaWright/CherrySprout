@@ -20,7 +20,7 @@ public:
     ID3D12Resource* GetUploadResource() const { return m_resource.GetResource(); }
     uint8_t* GetMappedPointer(size_t offset) const;
 
-    void UnreserveData();
+    void FlushData();
 
 private:
     D12Resource m_resource;

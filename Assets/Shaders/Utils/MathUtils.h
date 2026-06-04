@@ -1,5 +1,5 @@
-#ifndef H_MATH_HLSL_H
-#define H_MATH_HLSL_H
+#ifndef H_MATH_UTILS_SHADER_H
+#define H_MATH_UTILS_SHADER_H
 
 #include "Constants.h"
 #include "HlslGlue.h"
