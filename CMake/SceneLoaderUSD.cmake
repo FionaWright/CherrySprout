@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
-    include(cmake/MsvcFlags.cmake)
+    include(CMake/MsvcFlags.cmake)
 endif()
 
 set(USD_DEBUG 0)
@@ -89,9 +89,9 @@ set_target_properties(tbb_malloc PROPERTIES
 # -------------- SCENE LOADER TARGET ------------------
 
 add_library(SceneLoaderUSD SHARED
-        Source/SceneLoaderUSD/SceneLoaderUSD.cpp
-        Source/SceneLoaderUSD/Importer.cpp
-        Source/SceneLoaderUSD/Processor.cpp
+        "${CMAKE_SOURCE_DIR}/Source/SceneLoaderUSD/SceneLoaderUSD.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/SceneLoaderUSD/Importer.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/SceneLoaderUSD/Processor.cpp"
 )
 
 target_include_directories(SceneLoaderUSD PUBLIC

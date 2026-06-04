@@ -56,6 +56,6 @@ endif()
 set(USD_BIN_DIR ${CMAKE_BINARY_DIR}/SceneLoaderUSD/bin)
 file(MAKE_DIRECTORY "${USD_BIN_DIR}")
 
-include(SceneLoaderUSD.cmake)
+include(CMake/SceneLoaderUSD.cmake)
 
 add_subdirectory(Apps)
