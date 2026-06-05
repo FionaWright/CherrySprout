@@ -6,7 +6,7 @@
 #include "PathTracing/Hit.hlsli"
 #include "PathTracing/Miss.hlsli"
 
-float3 Trace(inout RayQuery<RAY_FLAGS> q, RayDesc ray, RngInfo rngInfo)
+float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, RngInfo rngInfo)
 {
     float3 Lo = float3(0, 0, 0);
     float3 throughput = float3(1, 1, 1);

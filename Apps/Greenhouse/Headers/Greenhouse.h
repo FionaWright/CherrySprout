@@ -6,7 +6,7 @@
 #include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
-#include "HWI/Shader.h"
+#include "HWI/Pipeline.h"
 #include "Render/CameraController.h"
 #include "Scene/SceneManager.h"
 #include "System/App.h"

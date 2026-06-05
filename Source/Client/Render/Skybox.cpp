@@ -23,7 +23,9 @@ void Skybox::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap
             D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
         }
     };
-    m_shaderForward.InitVsPs("Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", {rasterILD, _countof(rasterILD)}, device, m_rootSig.Get(), true);
+
+    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
+    m_shaderForward.InitGraphics(device, "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc);
 
     constexpr XMFLOAT3 vertexBuffer[8] = {
         {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
@@ -54,7 +56,7 @@ void Skybox::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap
     // Init Generate Irradiance
     {
         m_rootSigGenIrr.SmartInit(device, 0, 1, 1, false, &sampler, 1);
-        m_shaderGenIrr.InitCs("Compute/GenIrradianceIblCS.hlsl", device, m_rootSigGenIrr.Get());
+        m_shaderGenIrr.InitCompute(device, "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get());
 
         if (!m_texIrradianceIBL.IsInitialized())
             m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", device, cubemap->GetDesc().Width, cubemap->GetDesc().Height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

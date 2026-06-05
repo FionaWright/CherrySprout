@@ -15,7 +15,7 @@
 #include "System/Input.h"
 
 #ifdef _DEBUG
-//#include "Debug/HotReloader.h"
+#include "Debug/HotReloader.h"
 #endif
 
 Engine::Engine(App* app, const HWND hWnd, const UINT windowWidth, const UINT windowHeight)
@@ -52,7 +52,14 @@ void Engine::Frame()
     Input::ProgressFrame();
 
 #ifdef _DEBUG
-    //HotReloader::CheckFiles(m_d3d.get());
+    if (m_hotReloaderPendingGraphics)
+        HotReloader::ReloadPipelines(m_d3d.get(), false, ReloadMode::eGraphics);
+    else if (m_hotReloaderPendingCompute)
+        HotReloader::ReloadPipelines(m_d3d.get(), false, ReloadMode::eCompute);
+    else
+        HotReloader::ReloadPipelines(m_d3d.get(), !m_hotReloaderPendingAll);
+
+    m_hotReloaderPendingAll = m_hotReloaderPendingGraphics = m_hotReloaderPendingCompute = false;
 #endif
 }
 

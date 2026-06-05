@@ -30,6 +30,11 @@ private:
     double m_fpsTimeSinceUpdate10ms = 0.0, m_fpsTimeSinceUpdate50ms = 0.0, m_fpsTimeSinceUpdate100ms = 0.0;
     unsigned int m_fpsFramesSinceUpdate10ms = 0, m_fpsFramesSinceUpdate50ms = 0, m_fpsFramesSinceUpdate100ms = 0;
     std::vector<float> m_fpsGuiQueue;
+
+    // GUI State:
+#ifdef _DEBUG
+    bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
+#endif
 };
 
 #endif

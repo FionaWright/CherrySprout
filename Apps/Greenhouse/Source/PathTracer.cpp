@@ -53,13 +53,14 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output);
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
 
-    m_shader.InitCs("PathTracing/PathTracerCS.hlsl", d3d->GetDevice(), m_rootSig.Get());
+    auto desc = CreateComputePipelineDesc(m_rootSig.Get());
+    m_pipeline.InitCompute(d3d->GetDevice(), "PathTracing/PathTracerCS.hlsl", desc);
 }
 
 void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene)
 {
     IRenderBackend::LoadSceneData(d3d, cmdList, scene);
-    
+
     {
         GPU_SCOPE(cmdList, "Build RTAS");
 
@@ -126,7 +127,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     heap->Bind(cmdList);
     cmdList->SetComputeRootSignature(m_rootSig.Get());
-    cmdList->SetPipelineState(m_shader.GetPSO());
+    cmdList->SetPipelineState(m_pipeline.GetPSO());
     m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
     constexpr uint32_t THREAD_COUNTS = 16;

@@ -42,8 +42,8 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         },
     };
 
-    m_shader.InitVsPs("Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", {ildDesc, _countof(ildDesc)}, d3d->GetDevice(),
-                      m_rootSig.Get(), true);
+    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true);
+    m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", desc);
 }
 
 void Forward::Update(D3D* d3d, TimeArgs timeArgs)
@@ -92,7 +92,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
         heap->Bind(cmdList);
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
-        cmdList->SetPipelineState(m_shader.GetPSO());
+        cmdList->SetPipelineState(m_pipeline.GetPSO());
     }
 
     {

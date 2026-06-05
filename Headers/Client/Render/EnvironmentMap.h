@@ -10,7 +10,9 @@
 
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
-#include "HWI/Shader.h"
+#include "HWI/Pipeline.h"
+
+class D3D;
 
 struct CBV_PanoToEA
 {
@@ -38,7 +40,7 @@ public:
     void Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap, const std::string& filePath, float rotation);
     void InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap);
 
-    DirectX::XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
+    XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
 
     D12Resource* GetPano() { return &m_pano; }
     D12Resource* GetEA() { return &m_ea; }
@@ -53,7 +55,7 @@ private:
     bool m_resourcesInitialized = false;
 
     RootSig m_rootSigPanoToEA, m_rootSigPanoToCM;
-    Shader m_shaderPanoToEA, m_shaderPanoToCM;
+    Pipeline m_shaderPanoToEA, m_shaderPanoToCM;
     DescriptorSet m_dsPanoToEA, m_dsPanoToCM;
 
     //RootSig m_rootSigMaxLumRedSearch;

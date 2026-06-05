@@ -1,7 +1,9 @@
 #ifndef H_D3D_UTILS_H
 #define H_D3D_UTILS_H
 
-#include <d3d12.h>
+#include "System/Config.h"
+#include "HWI/D12Resource.h"
+#include "HWI/D3D.h"
 
 inline size_t Align(const size_t value, const size_t alignment)
 {
@@ -159,6 +161,44 @@ inline void VertexIndexBuffersToViews(const D12Resource* vertexBuffer, const D12
     viewI.BufferLocation = indexBuffer->GetResource()->GetGPUVirtualAddress();
     viewI.SizeInBytes = indexCount * sizeof(uint32_t);
     viewI.Format = DXGI_FORMAT_R32_UINT;
+}
+
+inline D3D12_GRAPHICS_PIPELINE_STATE_DESC CreateGraphicsPipelineDesc(ID3D12RootSignature* rootSig,
+                                                                     const D3D12_INPUT_LAYOUT_DESC& ild,
+                                                                     bool dsvEnabled = false,
+                                                                     uint32_t numRTVs = 1,
+                                                                     D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+{
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+    desc.InputLayout = ild;
+    desc.pRootSignature = rootSig;
+    desc.PrimitiveTopologyType = topologyType;
+
+    desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+
+    desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    desc.SampleMask = UINT_MAX;
+    desc.SampleDesc.Count = 1;
+
+    desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    desc.DepthStencilState.DepthEnable = dsvEnabled ? TRUE : FALSE;
+    desc.DepthStencilState.StencilEnable = dsvEnabled ? TRUE : FALSE;
+    desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+    desc.NumRenderTargets = numRTVs;
+    for (int i = 0; i < numRTVs; i++)
+        desc.RTVFormats[i] = Config::GetRender().RtvFormat;
+
+    return desc;
+}
+
+inline D3D12_COMPUTE_PIPELINE_STATE_DESC CreateComputePipelineDesc(ID3D12RootSignature* rootSig)
+{
+    D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+    desc.pRootSignature = rootSig;
+    return desc;
 }
 
 #endif

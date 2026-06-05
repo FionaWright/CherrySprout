@@ -10,7 +10,7 @@
 #include "HWI/Heap.h"
 #include "HWI/RootSig.h"
 #include "HWI/RtasBuilder.h"
-#include "HWI/Shader.h"
+#include "HWI/Pipeline.h"
 #include "HWI/UploadHeap.h"
 #include "PathTracing/CBVs.h"
 
@@ -34,7 +34,7 @@ private:
 
     uint32_t m_frameIdx = 0;
 
-    Shader m_shader;
+    Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
     D12Resource m_output, m_accum;

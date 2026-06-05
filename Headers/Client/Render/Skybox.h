@@ -7,7 +7,9 @@
 
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
-#include "HWI/Shader.h"
+#include "HWI/Pipeline.h"
+
+class D3D;
 
 class Skybox
 {
@@ -25,11 +27,11 @@ private:
     D12Resource m_cubeIndexBuffer;
 
     RootSig m_rootSig;
-    Shader m_shaderForward;
+    Pipeline m_shaderForward;
     DescriptorSet m_dsForwardRender;
 
     RootSig m_rootSigGenIrr;
-    Shader m_shaderGenIrr;
+    Pipeline m_shaderGenIrr;
     DescriptorSet m_dsGenIrr;
     D12Resource m_texIrradianceIBL;
 };

@@ -11,7 +11,7 @@
 #include "Utils/ConstantsCpp.h"
 
 #ifdef _DEBUG
-//#   include "Debug/HotReloader.h"
+#   include "Debug/HotReloader.h"
 #endif
 
 void Engine::RenderGUI()
@@ -86,9 +86,17 @@ void Engine::RenderGUI()
     ImGui::Indent(IM_GUI_INDENTATION);
     {
 #ifdef _DEBUG
-        if (ImGui::Button("Reload All Shaders"))
+        if (ImGui::Button("Reload All Pipelines"))
         {
-            //HotReloader::PendFullReload();
+            m_hotReloaderPendingAll = true;
+        }
+        if (ImGui::Button("Reload Graphics Pipelines"))
+        {
+            m_hotReloaderPendingGraphics = true;
+        }
+        if (ImGui::Button("Reload Compute Pipelines"))
+        {
+            m_hotReloaderPendingCompute = true;
         }
 #endif
     }

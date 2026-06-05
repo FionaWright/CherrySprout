@@ -8,7 +8,7 @@
 #include "IRenderBackend.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
-#include "HWI/Shader.h"
+#include "HWI/Pipeline.h"
 #include "Scene/Material.h"
 #include "Utils/CommonStructs.h"
 
@@ -32,7 +32,7 @@ public:
     }
 
 private:
-    Shader m_shader;
+    Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
 };
