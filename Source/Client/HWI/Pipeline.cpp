@@ -19,16 +19,6 @@
 void Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps,
                             D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs)
 {
-    SetGraphics(device, vs, ps, desc, compileArgs);
-
-#ifdef _DEBUG
-    HotReloader::TrackGraphicsPipeline(vs, ps, this, desc, compileArgs);
-#endif
-}
-
-void Pipeline::SetGraphics(ID3D12Device* device, const char* vs, const char* ps,
-                            D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs)
-{
 #if defined(_DEBUG)
     constexpr ShaderCompileFlags compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
 #else
@@ -47,6 +37,10 @@ void Pipeline::SetGraphics(ID3D12Device* device, const char* vs, const char* ps,
     desc.PS = {blobP->GetBufferPointer(), blobP->GetBufferSize()};
 
     V(device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_pso)));
+
+#ifdef _DEBUG
+    HotReloader::TrackGraphicsPipeline(vs, ps, this, desc, compileArgs);
+#endif
 }
 
 void Pipeline::InitCompute(ID3D12Device* device, const char* cs, ID3D12RootSignature* rootSig,
@@ -57,16 +51,6 @@ void Pipeline::InitCompute(ID3D12Device* device, const char* cs, ID3D12RootSigna
 }
 
 void Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_PIPELINE_STATE_DESC& desc,
-                           const std::vector<std::string>& compileArgs)
-{
-    SetCompute(device, cs, desc, compileArgs);
-
-#ifdef _DEBUG
-    HotReloader::TrackComputePipeline(cs, this, desc, compileArgs);
-#endif
-}
-
-void Pipeline::SetCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_PIPELINE_STATE_DESC& desc,
                            const std::vector<std::string>& compileArgs)
 {
 #if defined(_DEBUG)
@@ -80,4 +64,8 @@ void Pipeline::SetCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_PI
 
     desc.CS = {blobC->GetBufferPointer(), blobC->GetBufferSize()};
     V(device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_pso)));
+
+#ifdef _DEBUG
+    HotReloader::TrackComputePipeline(cs, this, desc, compileArgs);
+#endif
 }

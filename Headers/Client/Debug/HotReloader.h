@@ -48,8 +48,8 @@ enum class ReloadMode : uint32_t
 class HotReloader
 {
 public:
-    static void TrackGraphicsPipeline(const char* vsID, const char* psID, Pipeline* ptr, const D3D12_GRAPHICS_PIPELINE_STATE_DESC desc, const std::vector<std::string> compileArgs);
-    static void TrackComputePipeline(const char* csID, Pipeline* ptr, const D3D12_COMPUTE_PIPELINE_STATE_DESC desc, const std::vector<std::string> compileArgs);
+    static void TrackGraphicsPipeline(const char* vsID, const char* psID, Pipeline* ptr, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs);
+    static void TrackComputePipeline(const char* csID, Pipeline* ptr, const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs);
     static void ReloadPipelines(D3D* d3d, bool onlyModified = true, ReloadMode reloadMode = ReloadMode::eAll);
 
 private:

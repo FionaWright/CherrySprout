@@ -14,8 +14,8 @@ std::vector<GraphicsPipelineEntry> HotReloader::s_graphicsPipelines;
 std::vector<ComputePipelineEntry> HotReloader::s_computePipelines;
 
 void HotReloader::TrackGraphicsPipeline(const char* vsID, const char* psID, Pipeline* ptr,
-                                        const D3D12_GRAPHICS_PIPELINE_STATE_DESC desc,
-                                        const std::vector<std::string> compileArgs)
+                                        const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
+                                        const std::vector<std::string>& compileArgs)
 {
     const std::string vsPath = FileHelper::GetAssetShaderFullPath(vsID);
     const std::string psPath = FileHelper::GetAssetShaderFullPath(psID);
@@ -25,14 +25,28 @@ void HotReloader::TrackGraphicsPipeline(const char* vsID, const char* psID, Pipe
 
     const ShaderEntry vsEntry = {vsID, vsPath, std::filesystem::last_write_time(vsPath)};
     const ShaderEntry psEntry = {psID, psPath, std::filesystem::last_write_time(psPath)};
+
+    for (auto& entry : s_graphicsPipelines)
+    {
+        if (entry.Ptr == ptr)
+        {
+            entry.VertexEntry = vsEntry;
+            entry.PixelEntry = psEntry;
+            entry.Desc = desc;
+            entry.CompileArgs = compileArgs;
+            CherryPrint("Hot Reloader Updated Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
+            return;
+        }
+    }
+
     GraphicsPipelineEntry entry = {vsEntry, psEntry, ptr, desc, compileArgs};
     s_graphicsPipelines.emplace_back(entry);
 
     CherryPrint("Hot Reloader Tracking Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
 }
 
-void HotReloader::TrackComputePipeline(const char* csID, Pipeline* ptr, const D3D12_COMPUTE_PIPELINE_STATE_DESC desc,
-                                       const std::vector<std::string> compileArgs)
+void HotReloader::TrackComputePipeline(const char* csID, Pipeline* ptr, const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc,
+                                       const std::vector<std::string>& compileArgs)
 {
     const std::string csPath = FileHelper::GetAssetShaderFullPath(csID);
 
@@ -40,6 +54,19 @@ void HotReloader::TrackComputePipeline(const char* csID, Pipeline* ptr, const D3
         throw std::exception("Path Invalid");
 
     const ShaderEntry csEntry = {csID, csPath, std::filesystem::last_write_time(csPath)};
+
+    for (auto& entry : s_computePipelines)
+    {
+        if (entry.Ptr == ptr)
+        {
+            entry.ComputeEntry = csEntry;
+            entry.Desc = desc;
+            entry.CompileArgs = compileArgs;
+            CherryPrint("Hot Reloader Updated Compute Pipeline: " << entry.ComputeEntry.ID);
+            return;
+        }
+    }
+
     ComputePipelineEntry entry = {csEntry, ptr, desc, compileArgs};
     s_computePipelines.emplace_back(entry);
 
@@ -87,11 +114,8 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
 
         CherryPrint("Hot Reloading Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
 
-        entry.Ptr->SetGraphics(d3d->GetDevice(), entry.VertexEntry.ID.c_str(),
+        entry.Ptr->InitGraphics(d3d->GetDevice(), entry.VertexEntry.ID.c_str(),
                                 entry.PixelEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
-
-        entry.VertexEntry.Timestamp = std::filesystem::last_write_time(entry.VertexEntry.Filepath);
-        entry.PixelEntry.Timestamp = std::filesystem::last_write_time(entry.PixelEntry.Filepath);
     }
 
     for (int i = 0; i < dirtyComputePipelines.size(); i++)
@@ -100,8 +124,6 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
 
         CherryPrint("Hot Reloading Compute Pipeline: " << entry.ComputeEntry.ID);
 
-        entry.Ptr->SetCompute(d3d->GetDevice(), entry.ComputeEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
-
-        entry.ComputeEntry.Timestamp = std::filesystem::last_write_time(entry.ComputeEntry.Filepath);
+        entry.Ptr->InitCompute(d3d->GetDevice(), entry.ComputeEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
     }
 }
