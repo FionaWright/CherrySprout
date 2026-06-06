@@ -29,9 +29,7 @@ namespace SceneLoaderUSD
     {
         std::vector<ImporterObject> Objects;
         std::vector<Material> Materials;
-        std::vector<std::string> TextureFilePaths;
-
-        std::unordered_map<std::string, uint32_t> TexturePathToIndexMap;
+        std::vector<const char*> TextureFilePaths;
     };
 
     ImporterContext Import(const char* usdPath);

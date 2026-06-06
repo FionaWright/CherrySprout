@@ -233,6 +233,47 @@ namespace SceneLoaderUSD
         }
     }
 
+    static bool TryExtractBoundMaterialIdx(const pxr::UsdPrim& prim, const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx)
+    {
+        pxr::UsdShadeMaterial boundMat;
+
+        if (prim.HasAPI<pxr::UsdShadeMaterialBindingAPI>())
+        {
+            boundMat = pxr::UsdShadeMaterialBindingAPI(prim).ComputeBoundMaterial(pxr::UsdShadeTokens->full);
+        }
+
+        if (!boundMat)
+        {
+            const pxr::UsdRelationship relationship = prim.GetRelationship(pxr::TfToken("material:binding"));
+
+            if (relationship)
+            {
+                pxr::SdfPathVector targets;
+                relationship.GetTargets(&targets);
+                if (!targets.empty())
+                {
+                    const pxr::UsdPrim primMat = prim.GetStage()->GetPrimAtPath(targets[0]);
+                    if (primMat)
+                        boundMat = pxr::UsdShadeMaterial(primMat);
+                }
+            }
+        }
+
+        if (boundMat)
+        {
+            const std::string& path = boundMat.GetPrim().GetPath().GetString();
+            const auto it = matPathToIdxMap.find(path);
+            if (it != matPathToIdxMap.end())
+            {
+                matIdx = static_cast<int>(it->second);
+                return true;
+            }
+        }
+
+        matIdx = -1;
+        return false;
+    }
+
     inline ImporterObject ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const std::unordered_map<std::string, size_t>& matPathToIdxMap)
     {
         ImporterObject obj;
@@ -248,16 +289,9 @@ namespace SceneLoaderUSD
                 obj.M[i] = static_cast<float>(xform[r][c]);
             }
 
-        const pxr::UsdShadeMaterial boundMat = pxr::UsdShadeMaterialBindingAPI(prim).ComputeBoundMaterial(pxr::UsdShadeTokens->full);
-        if (boundMat)
-        {
-            const std::string& path = boundMat.GetPrim().GetPath().GetString();
-            const auto it = matPathToIdxMap.find(path);
-            if (it != matPathToIdxMap.end())
-                obj.MaterialIndex = static_cast<int>(it->second);
-        }
+        TryExtractBoundMaterialIdx(prim, matPathToIdxMap, obj.MaterialIndex);
 
-        obj.Name = boundMat ? boundMat.GetPrim().GetName().GetString() : prim.GetName().GetString();
+        obj.Name = prim.GetName().GetString();
 
         return obj;
     }

@@ -30,7 +30,7 @@
 #include <iostream>
 #include <ostream>
 
-#include "ExtractMaterial.h"
+#include "../../Headers/SceneLoaderUSD/Material/ExtractMaterial.h"
 #include "ExtractMesh.h"
 
 using namespace SceneLoaderUSD;
@@ -51,7 +51,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath)
         if (prim.IsA<pxr::UsdShadeMaterial>())
         {
             matPathToIdxMap[prim.GetPath().GetString()] = context.Materials.size();
-            const Material mat = ExtractMaterial(pxr::UsdShadeMaterial(prim));
+            const Material mat = ExtractMaterial(pxr::UsdShadeMaterial(prim), context.TextureFilePaths);
             context.Materials.emplace_back(mat);
         }
     }

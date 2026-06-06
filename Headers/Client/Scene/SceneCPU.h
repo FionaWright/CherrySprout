@@ -31,7 +31,7 @@ struct SceneCPU
 {
     // Filled by Scene Loader:
     std::vector<Object> Objects;
-    std::vector<std::string> TextureFilepaths;
+    std::vector<const char*> TextureFilepaths;
 
     std::vector<Vertex> MegaBufferVertex;
     std::vector<uint32_t> MegaBufferIndex;
