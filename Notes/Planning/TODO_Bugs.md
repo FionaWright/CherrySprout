@@ -2,6 +2,8 @@
 
 Disable ForceSyncCpuGpu, cmd allocator issue crashes after a frame
 
-Ray direction is wrong
+Weird darkening over time / transparency at high SPP issues
 
-Hot reloader doesn't find out when a pipeline is updated (PathTracer feature flags)
+Cant switch between forward/pt 
+
+No scene loader point instancing 

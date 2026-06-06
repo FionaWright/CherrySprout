@@ -6,6 +6,7 @@
 - [ ] RNG Stratified Sampling
 - [ ] Async scene loading
 - [ ] Shader build step to reduce runtime computation
+- [ ] GLTF scene loader
 
 ## New
 - [ ] Principled BSDF

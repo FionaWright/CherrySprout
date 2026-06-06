@@ -2,7 +2,6 @@
 
 Stuff in the repo that I don't like
 
-- [ ] FileHelper::ReadDataFromDDSFile
-- [ ] Fetch imgui
+- [x] FileHelper::ReadDataFromDDSFile
 
 - [ ] Remove vectors and strings from scene data

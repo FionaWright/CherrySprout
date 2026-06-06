@@ -3,14 +3,14 @@
 Setup stuff that is not required to begin work on the core stuff, but still needs to be done eventually
 
 - [ ] PBR BSDF from CherryPip
-- [ ] Environment maps
+- [x] Environment maps
 - [ ] Glass
 
 - [x] Hot reloading
 - [ ] Root constants support
 - [ ] Run path-tracer without sync?
 - [x] Scene switching in GUI
-- [ ] Profiling
+- [ ] Profiling (Tracy?)
 
 - [ ] Python executor
 - [ ] Path visualizer
