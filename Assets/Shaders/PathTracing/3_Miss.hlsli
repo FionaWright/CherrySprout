@@ -3,8 +3,9 @@
 
 float3 Miss(float3 origin, float3 direction, uint bounceIdx)
 {
+    return float3(1, 1, 1);
     //if (bounceIdx == 0) // TODO
-        return abs(direction);
+        //return abs(direction);
 
     float3 Li = float3(0, 0, 0);
 

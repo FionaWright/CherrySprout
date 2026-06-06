@@ -7,20 +7,10 @@
 
 void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 Lo, inout float3 throughput, inout RngInfo rngInfo, float3 wo, float hitDist)
 {
-    //Lo += COLOR_BLUE * throughput;
-    //throughput *= COLOR_BLUE;
-    //return;
-
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
 
-    //Lo += COLOR_BLUE * throughput;
-    //throughput = hitInfo.Ns;
-    //return;
-
     float3 wi, L_sample;
-
-    //bool isGlass = hitInfo.Mat.Flags & PtMaterialFlags::eIsGlass && cLightingGlassEnabled;
 
     {
         L_sample = throughput * hitInfo.Li;
@@ -37,6 +27,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 Lo, inout 
         float pdf = 1.0f / (2.0f * PI);
         throughput *= diffuseBrdf * NdL / max(0.001f, pdf);
     }
+
+    L_sample = float3(0.5, 0, 0);
 
     //if (!cDebugInfoOutputEnabled && throughput.x <= 0 && throughput.y <= 0 && throughput.z <= 0)
     //    break;
