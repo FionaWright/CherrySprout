@@ -61,6 +61,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
     }
 
     const size_t megaBufferInstanceDataSize = scene->CPU.Objects.size() * sizeof(InstanceData);
+    scene->GPU.MegaBufferInstanceData = {};
     scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
     scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, &m_uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataSize);
 
