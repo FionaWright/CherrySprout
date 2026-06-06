@@ -54,7 +54,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
-    m_pipeline.InitCompute(d3d->GetDevice(), "PathTracing/PathTracerCS.hlsl", desc);
+    m_pipeline.InitCompute(d3d->GetDevice(), "PathTracing/0_PathTracerCS.hlsl", desc);
 }
 
 void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene)
@@ -165,5 +165,5 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
-    m_pipeline.SetCompute(device, "PathTracing/PathTracerCS.hlsl", desc, compileArgs);
+    m_pipeline.SetCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
 }

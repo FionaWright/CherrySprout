@@ -15,6 +15,6 @@ Setting up the project to be able to begin new work
 - [x] Load and render a cube
 - [ ] Load and render cornell box
 - [ ] Load and render ABeautifulGame
-- [ ] Create a test that will make sure the framerate never drops dramatically in the future
+- [ ] Create a test that will make sure the framerate never drops dramatically in the future (2000+ for a lambert cube should be realistic)
 - [x] Materials
 - [ ] Set up texture loading in SceneLoaderUSD and bindless sampling

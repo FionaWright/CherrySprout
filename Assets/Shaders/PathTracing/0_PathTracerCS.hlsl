@@ -1,4 +1,4 @@
-#include "PathTracing/Core.hlsli"
+#include "PathTracing/1_Core.hlsli"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)

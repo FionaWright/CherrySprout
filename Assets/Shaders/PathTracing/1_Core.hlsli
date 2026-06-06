@@ -4,8 +4,8 @@
 #define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/Trace.hlsli"
-#include "PathTracing/Accumulate.hlsli"
+#include "PathTracing/2_Trace.hlsli"
+#include "PathTracing/2_Accumulate.hlsli"
 
 #include "Utils/Random.h"
 #include "Utils/HlslUtils.hlsli"

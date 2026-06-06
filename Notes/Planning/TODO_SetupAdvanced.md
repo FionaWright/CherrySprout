@@ -6,10 +6,10 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Environment maps
 - [ ] Glass
 
-- [ ] Hot reloading
+- [x] Hot reloading
 - [ ] Root constants support
 - [ ] Run path-tracer without sync?
-- [ ] Scene switching in GUI
+- [x] Scene switching in GUI
 - [ ] Profiling
 
 - [ ] Python executor
@@ -17,3 +17,4 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Debug Info Output (Make it better)
 - [ ] RMSE Tester
 - [ ] PT Assert based system inspired by Viggo
+- [ ] PT meta counter debug increment/F4/etc system

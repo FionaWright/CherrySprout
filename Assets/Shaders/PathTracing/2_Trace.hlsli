@@ -1,10 +1,10 @@
 #ifndef H_TRACE_H
 #define H_TRACE_H
 
-#include "Utils/Random.h"
+#include "PathTracing/3_Hit.hlsli"
+#include "PathTracing/3_Miss.hlsli"
 
-#include "PathTracing/Hit.hlsli"
-#include "PathTracing/Miss.hlsli"
+#include "Utils/Random.h"
 
 float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, RngInfo rngInfo)
 {

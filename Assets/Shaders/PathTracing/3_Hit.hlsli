@@ -1,7 +1,8 @@
 #ifndef H_HIT_H
 #define H_HIT_H
 
-#include "PathTracing/GetHitInfo.hlsli"
+#include "PathTracing/4_GetHitInfo.hlsli"
+
 #include "Utils/RandomExtras.h"
 
 void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 Lo, inout float3 throughput, inout RngInfo rngInfo, float3 wo, float hitDist)
