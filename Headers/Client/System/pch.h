@@ -22,6 +22,9 @@
 // D3D12 extension library.
 #include <d3dx12/d3dx12.h>
 
+// Texture Library
+#include <DirectXTex.h>
+
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 

@@ -32,7 +32,7 @@ CPMAddPackage(
     NAME imgui
     GITHUB_REPOSITORY ocornut/imgui
     GIT_TAG v1.92.6
-    DOWLOAD_ONLY TRUE
+    DOWNLOAD_ONLY TRUE
 )
 
 # Manually make ImGui available as a target
@@ -49,40 +49,14 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
 
-# TODO: Replace with DirectXTex
-
-# Zlib
-CPMADDPACKAGE(
-        NAME zlib
-        GITHUB_REPOSITORY madler/zlib
-        GIT_TAG v1.3.2
-
-        OPTIONS
-        "ZLIB_BUILD_SHARED OFF"
-        "ZLIB_BUILD_TESTING OFF"
+# DirectXTex
+CPMAddPackage(
+        NAME DirectXTex
+        GITHUB_REPOSITORY microsoft/DirectXTex
+        GIT_TAG may2026
 )
 
-# SPNG
-add_library(spng STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spng/spng.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spng/spng.h
-)
-target_include_directories(spng 
-    PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spng
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty
-)
-target_compile_definitions(spng PUBLIC SPNG_STATIC)
-target_link_libraries(spng PUBLIC zlibstatic)
-
-# tinyddsloader
-add_library(tinyddsloader STATIC)
-
-# generate tinyddsloader.cpp as simple #include "tinyddsloader.h"
-target_compile_definitions(tinyddsloader PRIVATE TINYDDSLOADER_IMPLEMENTATION)
-target_include_directories(tinyddsloader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/tinyddsloader)
-
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tinyddsloader.cpp "#include \"tinyddsloader.h\"\n")
-
-target_sources(tinyddsloader PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/tinyddsloader.cpp)
+# Alias for consistency
+if(TARGET DirectXTex)
+    add_library(DirectXTex::DirectXTex ALIAS DirectXTex)
+endif()

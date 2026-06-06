@@ -8,6 +8,7 @@
 #include "HWI/Heap.h"
 #include "HWI/Pipeline.h"
 #include "Render/CameraController.h"
+#include "Render/EnvironmentMap.h"
 #include "Scene/SceneManager.h"
 #include "System/App.h"
 
@@ -20,6 +21,7 @@ struct GreenHouseRenderInfo
     XMMATRIX* InvP;
     Scene* Scene;
     Heap* Heap;
+    EnvironmentMap* EnvironmentMap;
 
     RenderBackendConfig* BackendConfig;
     PathTracerConfig* PathTracerConfig;
@@ -42,13 +44,16 @@ private:
     XMMATRIX m_invProjectionMatrix{};
     float m_aspectRatio = 0.0f;
     uint32_t m_currentSceneIdx = 0;
-    bool m_renderBackendDirty = false;
+
     bool m_sceneDirty = true;
+    bool m_envMapDirty = true;
+    bool m_renderBackendDirty = false;
     bool m_ptFrameDirty = false;
     bool m_ptPipelineDirty = false;
 
     CameraController m_cameraController;
     SceneManager m_sceneManager;
+    EnvironmentMap m_envMap;
 
     PathTracer m_pathTracer;
     Forward m_forward;

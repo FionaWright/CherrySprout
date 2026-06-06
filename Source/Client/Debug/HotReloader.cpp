@@ -34,7 +34,7 @@ void HotReloader::TrackGraphicsPipeline(const char* vsID, const char* psID, Pipe
             entry.PixelEntry = psEntry;
             entry.Desc = desc;
             entry.CompileArgs = compileArgs;
-            CherryPrint("Hot Reloader Updated Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
+            CherryPrint("Hot Reloader Updated Graphics Pipeline: " << vsEntry.ID << ", " << psEntry.ID);
             return;
         }
     }
@@ -62,7 +62,7 @@ void HotReloader::TrackComputePipeline(const char* csID, Pipeline* ptr, const D3
             entry.ComputeEntry = csEntry;
             entry.Desc = desc;
             entry.CompileArgs = compileArgs;
-            CherryPrint("Hot Reloader Updated Compute Pipeline: " << entry.ComputeEntry.ID);
+            CherryPrint("Hot Reloader Updated Compute Pipeline: " << csEntry.ID);
             return;
         }
     }

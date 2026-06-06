@@ -1,7 +1,7 @@
 #ifndef H_BUFFERS_H
 #define H_BUFFERS_H
 
-#include "PathTracing/CBVs.h"
+#include "Utils/CBVs.h"
 #include "Scene/Vertex.h"
 #include "Scene/Material.h"
 #include "Scene/InstanceData.h"
@@ -23,7 +23,7 @@ StructuredBuffer<uint3>                     gMegaBufferIndex        : register(t
 StructuredBuffer<InstanceData>              gMegaBufferInstanceData : register(t3, REGISTER_SPACE_DEFAULT);
 StructuredBuffer<Material>                  gMegaBufferMaterials    : register(t4, REGISTER_SPACE_DEFAULT);
 
-//Texture2D<float4>                           gTexEnvMap              : register(t5, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                           gTexEnvMap              : register(t5, REGISTER_SPACE_DEFAULT);
 
 // =================== T Registers (Scene Textures) ==============================================================
 

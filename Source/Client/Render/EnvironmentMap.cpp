@@ -8,6 +8,7 @@
 #include "Utils/MathUtils.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/Heap.h"
+#include "../../../Assets/Shaders/Utils/CBVs.h"
 #include "System/FileHelper.h"
 #include "Utils/D3DUtils.h"
 
@@ -17,7 +18,7 @@ void EnvironmentMap::CreateCubemapResource(ID3D12Device* device)
         m_cubemap.Init_Tex2D("Cubemap", device, 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 }
 
-void EnvironmentMap::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap, const std::string& filePath, const float rotation)
+void EnvironmentMap::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeapCBV, const std::string& filePath, const float rotation)
 {
     GPU_SCOPE(cmdList, "Init Pano/EA Map");
 
@@ -26,36 +27,48 @@ void EnvironmentMap::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLi
     if (!m_resourcesInitialized)
         initResources(device);
 
+    // Initialize Panoramic
     if (m_currentPanoFilepath != filePath)
     {
-        //m_pano.Init(device, cmdList, FileHelper::GetAssetFullPath(("Textures/" + filePath).c_str()), 1);
+        //const std::string fullPath = FileHelper::GetAssetTextureFullPath(filePath.c_str()); // TODO
+        const std::string fullPath = R"(C:\Users\fionawright\source\repos\CherrySprout\Assets\Textures\Env Maps\autumn_field_puresky_4k.hdr)";
+        const std::wstring fullPathW = stringToWString(fullPath);
+
+        TexMetadata texMetadata;
+        ScratchImage scratchImage;
+        V(LoadFromHDRFile(fullPathW.c_str(), &texMetadata, scratchImage));
+
+        m_pano.Init_Tex2D("Panoramic Environment Map", device, texMetadata.width, texMetadata.height, 1, texMetadata.format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
+        m_pano.UploadTexture(cmdList, &m_panoUploadHeap, scratchImage.GetPixels(), scratchImage.GetPixelsSize(), scratchImage.GetImage(0, 0, 0)->rowPitch);
+
         m_currentPanoFilepath = filePath;
     }
 
-    m_pano.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    {
+        m_dsPanoToEA.Init(heap);
+        m_dsPanoToEA.AddCBV(device, sizeof(CbvPanoToEA), uploadHeapCBV, "CBV Pano To EA");
+        m_dsPanoToEA.SetSRV_Tex2D(device, 0, &m_pano);
+        m_dsPanoToEA.SetUAV_Tex2D(device, 0, &m_ea);
 
-    m_dsPanoToEA.Init(heap);
-    m_dsPanoToEA.AddCBV(device, sizeof(CBV_PanoToEA), uploadHeap, "CBV Pano To EA");
-    m_dsPanoToEA.SetSRV_Tex2D(device, 0, &m_pano);
-    m_dsPanoToEA.SetUAV_Tex2D(device, 0, &m_ea);
+        CbvPanoToEA cbv = {};
+        cbv.OutputDimensions = hlsl::uint2(m_ea.GetDesc().Width, m_ea.GetDesc().Height);
+        cbv.InputDimensions = hlsl::uint2(m_pano.GetDesc().Width, m_pano.GetDesc().Height);
+        cbv.Rotation = rotation / 360.0f;
+        m_dsPanoToEA.UpdateCBV(0, &cbv);
+    }
 
-    CBV_PanoToEA cbv = {};
-    cbv.OutputWidth = m_ea.GetDesc().Width;
-    cbv.OutputHeight = m_ea.GetDesc().Height;
-    cbv.InputWidth = m_pano.GetDesc().Width;
-    cbv.InputHeight = m_pano.GetDesc().Height;
-    cbv.Rotation = rotation / 360.0f;
-    m_dsPanoToEA.UpdateCBV(0, &cbv);
+    {
+        m_pano.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-    heap->Bind(cmdList);
-    cmdList->SetComputeRootSignature(m_rootSigPanoToEA.Get());
-    cmdList->SetPipelineState(m_shaderPanoToEA.GetPSO());
-    m_dsPanoToEA.SetDescriptorTables_Compute(cmdList);
+        heap->Bind(cmdList);
+        cmdList->SetComputeRootSignature(m_rootSigPanoToEA.Get());
+        cmdList->SetPipelineState(m_shaderPanoToEA.GetPSO());
+        m_dsPanoToEA.SetDescriptorTables_Compute(cmdList);
+    }
 
     const uint32_t groupSizeX = (m_ea.GetDesc().Width + 15) / 16;
     const uint32_t groupSizeY = (m_ea.GetDesc().Height + 15) / 16;
-
     cmdList->Dispatch(groupSizeX, groupSizeY, 1);
 
     m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -70,36 +83,37 @@ void EnvironmentMap::InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList
     if (!m_cubemap.IsInitialized())
         m_cubemap.Init_Tex2D("Cubemap", device, 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    m_pano.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    m_cubemap.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+        uavDesc.Format = m_cubemap.GetDesc().Format;
+        uavDesc.Texture2DArray.ArraySize = 6;
+        uavDesc.Texture2DArray.MipSlice = 0;
+        uavDesc.Texture2DArray.FirstArraySlice = 0;
 
-    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-    uavDesc.Format = m_cubemap.GetDesc().Format;
-    uavDesc.Texture2DArray.ArraySize = 6;
-    uavDesc.Texture2DArray.MipSlice = 0;
-    uavDesc.Texture2DArray.FirstArraySlice = 0;
+        m_dsPanoToCM.Init(heap);
+        m_dsPanoToCM.AddCBV(device, sizeof(CbvPanoToCM), uploadHeap, "CBV Cubemap");
+        m_dsPanoToCM.SetSRV_Tex2D(device, 0, &m_pano);
+        m_dsPanoToCM.SetUAV(device, 0, m_cubemap.GetResource(), uavDesc);
 
-    m_dsPanoToCM.Init(heap);
-    m_dsPanoToCM.AddCBV(device, sizeof(CBV), uploadHeap, "CBV Cubemap");
-    m_dsPanoToCM.SetSRV_Tex2D(device, 0, &m_pano);
-    m_dsPanoToCM.SetUAV(device, 0, m_cubemap.GetResource(), uavDesc);
+        CbvPanoToCM cbv = {};
+        cbv.OutputWidth = m_cubemap.GetDesc().Width;
+        cbv.InputDimensions = hlsl::uint2(m_pano.GetDesc().Width, m_pano.GetDesc().Height);
+        cbv.Rotation = m_rotation / 360.0f;
+        m_dsPanoToCM.UpdateCBV(0, &cbv);
+    }
 
-    CBV_PanoToCM cbv = {};
-    cbv.OutputWidth = m_cubemap.GetDesc().Width;
-    cbv.InputWidth = m_pano.GetDesc().Width;
-    cbv.InputHeight = m_pano.GetDesc().Height;
-    cbv.Rotation = m_rotation / 360.0f;
-    m_dsPanoToCM.UpdateCBV(0, &cbv);
+    {
+        m_pano.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_cubemap.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-    cmdList->SetComputeRootSignature(m_rootSigPanoToCM.Get());
-    heap->Bind(cmdList);
-
-    m_dsPanoToCM.SetDescriptorTables_Compute(cmdList);
+        heap->Bind(cmdList);
+        cmdList->SetComputeRootSignature(m_rootSigPanoToCM.Get());
+        cmdList->SetPipelineState(m_shaderPanoToCM.GetPSO());
+        m_dsPanoToCM.SetDescriptorTables_Compute(cmdList);
+    }
 
     const uint32_t groupSizeXY = (m_cubemap.GetDesc().Width + 15) / 16;
-
-    cmdList->SetPipelineState(m_shaderPanoToCM.GetPSO());
     cmdList->Dispatch(groupSizeXY, groupSizeXY, 6);
 
     //TextureLoader::CreateMipMapsCubemap(device, cmdList, m_cubemap.GetD12Resource());
@@ -109,6 +123,8 @@ void EnvironmentMap::InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList
 
 void EnvironmentMap::initResources(ID3D12Device* device)
 {
+    m_panoUploadHeap.Init(device, sizeof(float) * 4 * 4096 * 2048);
+
     m_ea.Init_Tex2D("Equal-Area Envmap", device, 4096, 4096, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     D3D12_STATIC_SAMPLER_DESC sampler;
@@ -123,7 +139,7 @@ void EnvironmentMap::initResources(ID3D12Device* device)
     m_resourcesInitialized = true;
 }
 
-// TODO
+// TODO : Should be pre-proc?
 XMFLOAT3 EnvironmentMap::GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap)
 {
     return XMFLOAT3(0.0f, 0.0f, 0.0f);

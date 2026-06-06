@@ -7,7 +7,7 @@
 
 #include "Greenhouse.h"
 #include "Debug/GPUEventScoped.h"
-#include "PathTracing/CBVs.h"
+#include "../../../Assets/Shaders/Utils/CBVs.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
@@ -45,7 +45,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 5, 2, false, &sampler, 1);
+    m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, 2, false, &sampler, 1);
 
     m_descriptorSet.Init         (heap, false);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
@@ -76,6 +76,7 @@ void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Sce
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
+    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, nullptr);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -89,6 +90,11 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
+
+    if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, renderInfo.EnvironmentMap->GetEA());
+    else
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, renderInfo.EnvironmentMap->GetPano());
 
     // Fill Settings
     // TODO: push constants
@@ -109,7 +115,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.DirLightCosAngularRadius = renderInfo.BackendConfig->DirLightCosTheta;
         settings.DirLightIntensity = renderInfo.BackendConfig->DirLightIntensity;
 
-        // TODO: Do I need both?
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
         m_descriptorSet.UpdateCBV(0, &settings);

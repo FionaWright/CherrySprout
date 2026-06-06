@@ -5,7 +5,7 @@
 #include "Scenes.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
-#include "PathTracing/CBVs.h"
+#include "../../../Assets/Shaders/Utils/CBVs.h"
 #include "Scene/SceneManager.h"
 #include "System/Gui.h"
 #include "System/GuiUtils.h"
@@ -22,9 +22,13 @@ void Greenhouse::Init(D3D* d3d)
     m_currentSceneIdx = 0;
     Config::SetUIntFromArg(&m_currentSceneIdx, "--defaultSceneIndex");
 
-    std::cout << "Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize() << std::endl;
-    std::cout << "Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize() << std::endl;
-    const size_t maxCbvRequiredSize = std::max(m_pathTracer.TotalCbvRequiredSize(), m_forward.TotalCbvRequiredSize());
+    size_t maxCbvRequiredSize = 0;
+    {
+        std::cout << "Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize() << std::endl;
+        std::cout << "Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize() << std::endl;
+        maxCbvRequiredSize += std::max(m_pathTracer.TotalCbvRequiredSize(), m_forward.TotalCbvRequiredSize());
+        maxCbvRequiredSize += EnvironmentMap::GetCbvRequiredSize();
+    }
 
     m_heap.Init("Test Heap", d3d->GetDevice(), 20000, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
@@ -104,6 +108,12 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_currRenderBackend->LoadSceneData(d3d, cmdList, &m_sceneManager.GetScene());
     }
 
+    if (m_envMapDirty)
+    {
+        m_envMap.Init(d3d->GetDevice(), cmdList, &m_heap, &m_uploadHeapCBV, "TEST", 0);
+        m_envMapDirty = false;
+    }
+
     XMMATRIX V = m_cameraController.GetViewMatrix();
     XMMATRIX InvV = XMMatrixInverse(nullptr, V);
 
@@ -117,6 +127,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     renderInfo.InvP = &m_invProjectionMatrix;
     renderInfo.BackendConfig = &m_config.RenderBackendConfig;
     renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
+    renderInfo.EnvironmentMap = &m_envMap;
 
     m_currRenderBackend->Render(d3d, cmdList, renderInfo);
 }

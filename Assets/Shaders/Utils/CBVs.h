@@ -31,4 +31,20 @@ struct CbvPathTracingSettings
     hlsl::uint2 FrameDimensions;
 };
 
+struct CbvPanoToEA
+{
+    hlsl::uint2 OutputDimensions;
+    hlsl::uint2 InputDimensions;
+
+    float Rotation;
+    float p[3];
+};
+
+struct CbvPanoToCM
+{
+    hlsl::uint OutputWidth;
+    hlsl::uint2 InputDimensions;
+    float Rotation;
+};
+
 #endif

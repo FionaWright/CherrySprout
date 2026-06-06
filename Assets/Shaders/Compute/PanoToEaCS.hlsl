@@ -1,37 +1,29 @@
-#include "HlslMath.h"
+#include "Utils/MathUtils.h"
+#include "Utils/CBVs.h"
 
 Texture2D<float3> gPano : register(t0);
 RWTexture2D<float4> gEA : register(u0);
 
 SamplerState gSampler : register(s0);
 
-cbuffer CB : register(b0)
-{
-    uint gOutputWidth;
-    uint gOutputHeight;
-    uint gInputWidth;
-    uint gInputHeight;
-
-    float gRotation;
-    float3 p;
-}
+ConstantBuffer<CbvPanoToEA> cbv : register(b0);
 
 [numthreads(16,16,1)]
-void CSMain(uint3 dispatchThreadID : SV_DispatchThreadID)
+void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    if (dispatchThreadID.x >= gOutputWidth || dispatchThreadID.y >= gOutputHeight)
+    if (DTid.x >= cbv.OutputDimensions.x || DTid.y >= cbv.OutputDimensions.y)
         return;
 
     // Normalized coordinates in [0,1]
-    float u = (dispatchThreadID.x + 0.5f) / gOutputWidth;
-    float v = (dispatchThreadID.y + 0.5f) / gOutputHeight;
+    float u = (DTid.x + 0.5f) / cbv.OutputDimensions.x;
+    float v = (DTid.y + 0.5f) / cbv.OutputDimensions.y;
 
     float3 dir = EaSquareToSphere(float2(u, v));
     float2 panoUV = PanoSphereToSquare(dir);
-    panoUV.x = frac(panoUV.x + gRotation);
+    panoUV.x = frac(panoUV.x + cbv.Rotation);
     panoUV.y = 1 - panoUV.y;
 
     float3 color = gPano.SampleLevel(gSampler, panoUV, 0.0f).rgb;
 
-    gEA[dispatchThreadID.xy] = float4(color, 1);
+    gEA[DTid.xy] = float4(color, 1);
 }

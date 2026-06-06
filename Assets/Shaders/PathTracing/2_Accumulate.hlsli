@@ -19,7 +19,7 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 color, bool nanTestEnabled)
         return color;
     }
 
-    if (!GetPathTracerFeatureFlag(FEATURE_FLAGS, eFeature_Accumulation))
+    if (!FEATURE_ENABLED(Accumulation))
         return color;
 
     float3 newSum = accumColor + color;

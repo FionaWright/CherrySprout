@@ -3,24 +3,24 @@
 
 float3 Miss(float3 origin, float3 direction, uint bounceIdx)
 {
-    return float3(1, 1, 1);
+    //return float3(1, 1, 1);
     //if (bounceIdx == 0) // TODO
         //return abs(direction);
 
     float3 Li = float3(0, 0, 0);
 
-    //if (cEnvMapEnabled)
-    //{
-    //    float2 uv;
-    //    if (cEnvMapIsEqualArea)
-    //        uv = EaSphereToSquare(direction);
-    //    else
-    //        uv = PanoSphereToSquare(direction);
-//
-    //    Li += saturate(gEnvMap.Sample(gSampler, uv).rgb);
-    //}
+    if (FEATURE_ENABLED(EnvironmentMap))
+    {
+        float2 uv;
+        if (FEATURE_ENABLED(EnvironmentMapEA))
+            uv = EaSphereToSquare(direction);
+        else
+            uv = PanoSphereToSquare(direction);
 
-    if (true && bounceIdx >= 1)
+        Li += saturate(gTexEnvMap.Sample(gSampler, uv).rgb);
+    }
+
+    if (false && bounceIdx >= 1)
     {
         float sunCos = dot(direction, -normalize(gSettings.DirLightDirection));
         //if (cDirLightIsDistant)

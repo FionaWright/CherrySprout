@@ -1,4 +1,5 @@
 
+#[[
 set(TEXCONV_EXE ${CMAKE_SOURCE_DIR}/ThirdParty/texconv/texconv.exe)
 
 # Directories containing textures
@@ -95,6 +96,7 @@ add_custom_target(CopyModels ALL
         DEPENDS ${COPIED_OUTPUTS}
 )
 add_dependencies(client CopyModels)
+]]
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES MATCHES "Release")
     add_custom_target(CopyShaders ALL

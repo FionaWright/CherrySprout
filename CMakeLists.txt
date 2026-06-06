@@ -25,11 +25,7 @@ target_link_libraries(client
         dxgi
         dxguid
         imgui
-        zlibstatic
-
-        spng
-        tinyddsloader
-
+        DirectXTex::DirectXTex
         WinPixEventRuntime
 )
 target_include_directories(client PUBLIC

@@ -11,36 +11,22 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
 #include "HWI/Pipeline.h"
+#include "../../../Assets/Shaders/Utils/CBVs.h"
+#include "HWI/UploadHeap.h"
+#include "Utils/D3DUtils.h"
 
 class D3D;
-
-struct CBV_PanoToEA
-{
-    uint32_t OutputWidth;
-    uint32_t OutputHeight;
-    uint32_t InputWidth;
-    uint32_t InputHeight;
-
-    float Rotation;
-    float p[3];
-};
-
-struct CBV_PanoToCM
-{
-    uint32_t OutputWidth;
-    uint32_t InputWidth;
-    uint32_t InputHeight;
-    float Rotation;
-};
 
 class EnvironmentMap
 {
 public:
     void CreateCubemapResource(ID3D12Device* device);
-    void Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap, const std::string& filePath, float rotation);
+
+    void Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeapCBV, const std::string& filePath, float rotation);
     void InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap);
 
     XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
+    static size_t GetCbvRequiredSize() { return Align(sizeof(CbvPanoToEA), 256) + Align(sizeof(CbvPanoToCM), 256); }
 
     D12Resource* GetPano() { return &m_pano; }
     D12Resource* GetEA() { return &m_ea; }
@@ -48,6 +34,8 @@ public:
 
 private:
     void initResources(ID3D12Device* device);
+
+    UploadHeap m_panoUploadHeap;
 
     D12Resource m_pano, m_ea, m_cubemap;
     float m_rotation = 0.0f;

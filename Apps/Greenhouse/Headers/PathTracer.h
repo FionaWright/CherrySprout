@@ -12,7 +12,7 @@
 #include "HWI/RtasBuilder.h"
 #include "HWI/Pipeline.h"
 #include "HWI/UploadHeap.h"
-#include "PathTracing/CBVs.h"
+#include "../../../Assets/Shaders/Utils/CBVs.h"
 
 struct TimeArgs;
 
