@@ -110,7 +110,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 
     if (m_envMapDirty)
     {
-        m_envMap.Init(d3d->GetDevice(), cmdList, &m_heap, &m_uploadHeapCBV, "TEST", 0);
+        m_envMap.Init(d3d->GetDevice(), cmdList, &m_heap, &m_uploadHeapCBV, "autumn_field_puresky_4k.hdr", 0);
         m_envMapDirty = false;
     }
 

@@ -30,8 +30,8 @@ void EnvironmentMap::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLi
     // Initialize Panoramic
     if (m_currentPanoFilepath != filePath)
     {
-        //const std::string fullPath = FileHelper::GetAssetTextureFullPath(filePath.c_str()); // TODO
-        const std::string fullPath = R"(C:\Users\fionawright\source\repos\CherrySprout\Assets\Textures\Env Maps\autumn_field_puresky_4k.hdr)";
+        const std::string fullPath = FileHelper::GetAssetTextureFullPath(("EnvMaps/" + filePath).c_str()); // TODO
+        //const std::string fullPath = R"(C:\Users\fionawright\source\repos\CherrySprout\Assets\Textures\Env Maps\autumn_field_puresky_4k.hdr)";
         const std::wstring fullPathW = stringToWString(fullPath);
 
         TexMetadata texMetadata;
