@@ -7,6 +7,7 @@
 
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
+#include "HWI/Heap.h"
 #include "System/TextureLoader.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
@@ -47,10 +48,8 @@ void SceneManager::LoadScene(const char* filepath)
     m_gpuDataDirty = true;
 }
 
-void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdList)
+void SceneManager::UploadScene(D3D* d3d)
 {
-    GPU_SCOPE(cmdList, "Upload Scene");
-
     CherryAssert(m_gpuDataDirty);
 
     const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertex.size() * sizeof(Vertex);
@@ -82,14 +81,38 @@ void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdLis
     m_uploadHeap = {};
     m_uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
-    m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex.data(), megaBufferIndexBytes);
-    m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials.data(), megaBufferMaterialsBytes);
-    m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex.data(), megaBufferVertexBytes);
-
-    for (int i = 0; i < textureCount; i++)
+    // Upload Data
     {
-        TextureLoader::UploadTexture(cmdList, &m_uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+        const auto cmdList = cmdListPtr.Get();
+
+        m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex.data(), megaBufferIndexBytes);
+        m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials.data(), megaBufferMaterialsBytes);
+        m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex.data(), megaBufferVertexBytes);
+
+        for (int i = 0; i < textureCount; i++)
+        {
+            TextureLoader::UploadTexture(cmdList, &m_uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
+        }
+
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
     }
 
+    m_uploadHeap = {};
+
     m_gpuDataDirty = false;
+}
+
+void SceneManager::AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const
+{
+    heap->FreeSceneTextures();
+
+    const size_t textureCount = m_scene.GPU.SceneTextures.size();
+    for (int i = 0; i < textureCount; i++)
+    {
+        const D12Resource& tex = m_scene.GPU.SceneTextures[i];
+        heap->AddSRV_SceneTexture(d3d->GetDevice(), &tex);
+    }
 }

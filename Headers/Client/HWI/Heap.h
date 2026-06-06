@@ -17,11 +17,14 @@ public:
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorHandleAtIndex(uint32_t idx) const;
     uint32_t GetNextDescriptorIdx(const char* debugName = nullptr);
 
-    uint32_t GetNextDescriptorIdx_Bindless(const char* debugName = nullptr);
-    uint32_t AddBindlessTexture2D(ID3D12Device* device, D12Resource* resource, DXGI_FORMAT format);
-    [[nodiscard]] uint32_t GetBindlessTexBase() const { return m_baseBindlessTex; }
+    uint32_t GetNextDescriptorIdx_SceneTexture(const char* debugName = nullptr);
+    uint32_t AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* resource);
+    void FreeSceneTextures();
+    [[nodiscard]] uint32_t GetBindlessTexBase() const { return m_baseSceneTextures; }
 
     void Bind(ID3D12GraphicsCommandList* cmdList) const;
+    void BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList) const;
+    void BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList) const;
     void PrintHeapInfo() const;
 
     [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const { return m_heapResource->GetCPUDescriptorHandleForHeapStart(); }
@@ -31,7 +34,7 @@ public:
     [[nodiscard]] const std::vector<const char*>& GetDebugDescriptorList() const { return m_debugDescriptorNames; }
     [[nodiscard]] const std::vector<const char*>& GetDebugDescriptorListBindless() const { return m_debugDescriptorNamesBindless; }
     [[nodiscard]] uint32_t GetCurrBindedDescriptorCount() const { return m_currentHeapIndex; }
-    [[nodiscard]] uint32_t GetCurrBindlessDescriptorCount() const { return m_currentHeapIndexBindlessTex - m_baseBindlessTex; }
+    [[nodiscard]] uint32_t GetCurrBindlessDescriptorCount() const { return m_currentHeapIndexSceneTextures - m_baseSceneTextures; }
 
 private:
     std::string m_name;
@@ -43,9 +46,9 @@ private:
     std::vector<const char*> m_debugDescriptorNames = {};
     std::vector<const char*> m_debugDescriptorNamesBindless = {};
 
-    size_t m_baseBindlessTex = 0;
+    size_t m_baseSceneTextures = 0;
     size_t m_currentHeapIndex = 0;
-    size_t m_currentHeapIndexBindlessTex = 0;
+    size_t m_currentHeapIndexSceneTextures = 0;
     size_t m_heapSize = 0;
 };
 

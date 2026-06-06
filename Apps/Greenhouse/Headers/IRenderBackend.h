@@ -19,7 +19,7 @@ interface IRenderBackend
     virtual ~IRenderBackend() = default;
 
     virtual void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) { m_isInitialized = true; }
-    virtual void LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene) { m_sceneDataLoaded = true; }
+    virtual void LoadSceneData(D3D* d3d, Scene* scene) { m_sceneDataLoaded = true; }
     virtual void Update(D3D* d3d, TimeArgs timeArgs) = 0;
     virtual void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) = 0;
     virtual void UnreserveData() = 0;
@@ -28,7 +28,7 @@ interface IRenderBackend
 
     bool IsInitialized() const { return m_isInitialized; }
     bool IsSceneDataLoaded() const { return m_sceneDataLoaded; }
-    void SetSceneDataNotLoaded() { m_sceneDataLoaded = false; }
+    void SetSceneDataLoaded(const bool state) { m_sceneDataLoaded = state; }
 
 protected:
     bool m_isInitialized = false;

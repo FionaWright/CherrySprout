@@ -1,6 +1,17 @@
 #ifndef H_COMPILE_SHADER_DXC_H
 #define H_COMPILE_SHADER_DXC_H
 
+inline std::vector<uint8_t> readFileToByteVector(const std::string& filename)
+{
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    if (!file) throw std::runtime_error("Failed to open file");
+    const auto size = static_cast<size_t>(file.tellg());
+    std::vector<uint8_t> data(size);
+    file.seekg(0);
+    file.read(reinterpret_cast<char*>(data.data()), size);
+    return data;
+}
+
 enum ShaderCompileFlags
 {
     SCF_Debug            = 1 << 0,
@@ -51,7 +62,7 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
     V(DxcCreateInstanceFn(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
     V(library->CreateIncludeHandler(&includeHandler));
 
-    const auto shaderBytes = FileHelper::ReadFileToByteVector(filePath);
+    const auto shaderBytes = readFileToByteVector(filePath);
 
     DxcBuffer buffer;
     buffer.Ptr = shaderBytes.data();

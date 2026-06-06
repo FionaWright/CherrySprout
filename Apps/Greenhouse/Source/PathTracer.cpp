@@ -45,9 +45,9 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, 2, false, &sampler, 1);
+    m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, 2, true, &sampler, 1);
 
-    m_descriptorSet.Init         (heap, false);
+    m_descriptorSet.Init         (heap, true);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
@@ -56,12 +56,13 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags);
 }
 
-void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene)
+void PathTracer::LoadSceneData(D3D* d3d, Scene* scene)
 {
-    IRenderBackend::LoadSceneData(d3d, cmdList, scene);
+    IRenderBackend::LoadSceneData(d3d, scene);
 
     {
-        GPU_SCOPE(cmdList, "Build RTAS");
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        const auto cmdList = cmdListPtr.Get();
 
         ComPtr<ID3D12Device5> device5;
         V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
@@ -69,6 +70,10 @@ void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Sce
         V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
         m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
+
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
     }
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -91,12 +96,12 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    EnvironmentMap* envMap = renderInfo.EnvironmentMap;
-
+    D12Resource* envMap = nullptr;
     if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
+        envMap = renderInfo.EnvironmentMap->GetEA();
     else
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap->GetPano(), envMap->GetPano()->GetDesc().Format);
+        envMap = renderInfo.EnvironmentMap->GetPano();
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap, envMap->GetDesc().Format);
 
     // Fill Settings
     // TODO: push constants
@@ -123,18 +128,20 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     }
 
     {
-        m_output.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_accum.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_output.Transition                             (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_accum.Transition                              (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        scene->GPU.MegaBufferInstanceData.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        scene->GPU.MegaBufferMaterials.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene->GPU.MegaBufferVertex.Transition          (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene->GPU.MegaBufferIndex.Transition           (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene->GPU.MegaBufferInstanceData.Transition    (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene->GPU.MegaBufferMaterials.Transition       (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        envMap->Transition                              (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-    heap->Bind(cmdList);
     cmdList->SetComputeRootSignature(m_rootSig.Get());
     cmdList->SetPipelineState(m_pipeline.GetPSO());
+    heap->Bind(cmdList);
+    heap->BindSceneTextures_Compute(cmdList);
     m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
     constexpr uint32_t THREAD_COUNTS = 16;

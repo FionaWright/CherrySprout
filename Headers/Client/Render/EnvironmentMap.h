@@ -22,8 +22,8 @@ class EnvironmentMap
 public:
     void CreateCubemapResource(ID3D12Device* device);
 
-    void Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeapCBV, const std::string& filePath, float rotation);
-    void InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap);
+    void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, const std::string& filePath, float rotation);
+    void InitCubemap(D3D* d3d, Heap* heap, UploadHeap* uploadHeap);
 
     XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
     static size_t GetCbvRequiredSize() { return Align(sizeof(CbvPanoToEA), 256) + Align(sizeof(CbvPanoToCM), 256); }
@@ -45,7 +45,7 @@ private:
     bool m_resourcesInitialized = false;
 
     RootSig m_rootSigPanoToEA, m_rootSigPanoToCM;
-    Pipeline m_shaderPanoToEA, m_shaderPanoToCM;
+    Pipeline m_pipelinePanoToEA, m_pipelinePanoToCM;
     DescriptorSet m_dsPanoToEA, m_dsPanoToCM;
 
     //RootSig m_rootSigMaxLumRedSearch;

@@ -40,6 +40,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     precise float3 bary = float3(1 - barycentrics.x - barycentrics.y, barycentrics.x, barycentrics.y);
 
     hitInfo.UV = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
+    hitInfo.UV.y = 1 - hitInfo.UV.y;
 
 	float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
 	float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
@@ -55,7 +56,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     //if (false)
     //{
-    //    float3 bumpSample = gTextures[hitInfo.Mat.TexIdxNormal].Sample(gSampler, hitInfo.UV).rgb * 2.0f - 1.0f;
+    //    float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSampler, hitInfo.UV).rgb * 2.0f - 1.0f;
     //    bumpSample.y = -bumpSample.y; // DX-convention
 //
     //    ShadingFrame bumpFrame = CreateShadingFrame(hitInfo.Ns);
@@ -63,20 +64,20 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     //}
     hitInfo.Ns_ff = hitInfo.Entering ? hitInfo.Ns : -hitInfo.Ns;
 
-    //float4 albedoSample = gTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
-    float4 albedoSample = 1;
-    if (true)
-        albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
+    float4 albedoSample = gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
+    //float4 albedoSample = 1;
+    //if (true)
+    //    albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
 
-    //float3 emissionSample = gTextures[hitInfo.Mat.TexIdxEmissive].Sample(gSampler, hitInfo.UV).rgb;
+    //float3 emissionSample = gSceneTextures[hitInfo.Mat.TexIdxEmissive].Sample(gSampler, hitInfo.UV).rgb;
 
-    //float2 roughMetSample = gTextures[hitInfo.Mat.TexIdxRoughMet].Sample(gSampler, hitInfo.UV).gb;
+    //float2 roughMetSample = gSceneTextures[hitInfo.Mat.TexIdxRoughMet].Sample(gSampler, hitInfo.UV).gb;
     float2 roughMetSample = float2(1, 0);
     hitInfo.Mat.Roughness *= roughMetSample.r;
     hitInfo.Mat.Metallic *= roughMetSample.g;
 
     //hitInfo.Albedo = float3(hitInfo.Mat.BaseColor.rgb * albedoSample.rgb);
-    hitInfo.Albedo = float3(1,1,1);
+    hitInfo.Albedo = albedoSample.rgb;
     hitInfo.Opacity = albedoSample.a;
     hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
 }

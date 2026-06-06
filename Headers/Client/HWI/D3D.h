@@ -8,6 +8,23 @@
 #include "D12Resource.h"
 #include "System/Config.h"
 
+struct CommandAllocatorEntry
+{
+    UINT64 Fence;
+    ComPtr<ID3D12CommandAllocator> Allocator;
+};
+
+struct CommandQueue
+{
+    ComPtr<ID3D12CommandQueue> Queue;
+    ComPtr<ID3D12Fence> Fence;
+
+    UINT64 NextFenceValue = 1;
+
+    std::queue<CommandAllocatorEntry> AllocatorPool;
+    std::queue<ComPtr<ID3D12GraphicsCommandList>> CommandListPool;
+};
+
 class D3D
 {
 public:
@@ -38,12 +55,14 @@ public:
     void DestroyAllCmdListsAndAllocators();
     void ExecuteCommandList(ID3D12GraphicsCommandList* cmdList);
     void Present();
-    UINT64 Signal();
+    UINT64 Signal(D3D12_COMMAND_LIST_TYPE type);
     void Flush();
-    void WaitForSignal(UINT64 fence) const;
-    bool IsFenceComplete(UINT64 fenceVal) const;
+    void WaitForSignal(UINT64 fence, D3D12_COMMAND_LIST_TYPE type);
+    bool IsFenceComplete(UINT64 fenceVal, D3D12_COMMAND_LIST_TYPE type);
 
 private:
+    CommandQueue& getQueue(D3D12_COMMAND_LIST_TYPE type);
+
     // Pipeline objects.
     ComPtr<IDXGISwapChain3> m_swapChain;
     ComPtr<ID3D12Device> m_device;
@@ -54,16 +73,9 @@ private:
     ComPtr<ID3D12DescriptorHeap> m_rtvHeap, m_dsvHeap;
     UINT m_rtvDescriptorSize = 0, m_dsvDescriptorSize = 0;
 
-    struct CommandAllocatorEntry
-    {
-        UINT64 Fence;
-        ComPtr<ID3D12CommandAllocator> Allocator;
-    };
-
-    std::queue<CommandAllocatorEntry> m_commandAllocatorQueue;
-    std::queue<ComPtr<ID3D12GraphicsCommandList>> m_commandListQueue;
-
-    ComPtr<ID3D12CommandQueue> m_commandQueue;
+    CommandQueue m_commandQueueDirect;
+    CommandQueue m_commandQueueCompute;
+    CommandQueue m_commandQueueCopy;
 
     bool m_useWarpDevice = false;
     bool m_tearingSupport = false;
@@ -72,8 +84,6 @@ private:
     // Synchronization objects.
     UINT m_frameIndex = 0;
     HANDLE m_fenceEvent = {};
-    ComPtr<ID3D12Fence> m_fence;
-    UINT64 m_fenceValue = 0;
     UINT64 m_frameBufferFences[NUM_FRAMES_IN_FLIGHT] = {};
 
     // Debugging

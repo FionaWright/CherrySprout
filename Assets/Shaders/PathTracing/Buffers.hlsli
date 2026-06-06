@@ -27,7 +27,7 @@ Texture2D<float4>                           gTexEnvMap              : register(t
 
 // =================== T Registers (Scene Textures) ==============================================================
 
-//Texture2D<float4>                           gSceneTextures[]        : register(t0, REGISTER_SPACE_SCENE_TEXTURES);
+Texture2D<float4>                           gSceneTextures[]        : register(t0, REGISTER_SPACE_SCENE_TEXTURES);
 
 // =================== T Registers (Debug) =======================================================================
 

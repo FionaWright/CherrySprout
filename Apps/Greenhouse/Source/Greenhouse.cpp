@@ -20,7 +20,7 @@ void Greenhouse::Init(D3D* d3d)
     App::Init(d3d);
 
     m_currentSceneIdx = 0;
-    Config::SetUIntFromArg(&m_currentSceneIdx, "--defaultSceneIndex");
+    Config::SetUIntFromArg(&m_currentSceneIdx, "--scene");
 
     size_t maxCbvRequiredSize = 0;
     {
@@ -30,7 +30,8 @@ void Greenhouse::Init(D3D* d3d)
         maxCbvRequiredSize += EnvironmentMap::GetCbvRequiredSize();
     }
 
-    m_heap.Init("Test Heap", d3d->GetDevice(), 20000, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    constexpr size_t numDescriptors = 20000; // TODO: Handle this properly
+    m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
 
     m_cameraController.Init(XMFLOAT3(0, 0, 5), 0, PI);
@@ -64,7 +65,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
             m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
         }
 
-        m_currRenderBackend->SetSceneDataNotLoaded();
+        m_currRenderBackend->SetSceneDataLoaded(false);
         m_renderBackendDirty = false;
     }
 
@@ -91,31 +92,32 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_ptPipelineDirty = false;
     }
 
-    m_currRenderBackend->Update(d3d, timeArgs);
-}
-
-void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
-{
     // Upload Scene
     if (m_sceneManager.IsGpuDataDirty())
     {
-        m_sceneManager.UploadScene(d3d, cmdList);
-        m_currRenderBackend->SetSceneDataNotLoaded();
+        m_sceneManager.UploadScene(d3d);
+        m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
+        m_currRenderBackend->SetSceneDataLoaded(false);
     }
 
     if (!m_currRenderBackend->IsSceneDataLoaded())
     {
-        m_currRenderBackend->LoadSceneData(d3d, cmdList, &m_sceneManager.GetScene());
+        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene());
     }
 
     if (m_envMapDirty)
     {
-        m_envMap.Init(d3d->GetDevice(), cmdList, &m_heap, &m_uploadHeapCBV, "autumn_field_puresky_4k.hdr", 0);
+        m_envMap.Init(d3d, &m_heap, &m_uploadHeapCBV, "autumn_field_puresky_4k.hdr", 0);
         m_envMapDirty = false;
     }
     else
         m_envMap.FreeUnusedResources();
 
+    m_currRenderBackend->Update(d3d, timeArgs);
+}
+
+void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
+{
     XMMATRIX V = m_cameraController.GetViewMatrix();
     XMMATRIX InvV = XMMatrixInverse(nullptr, V);
 

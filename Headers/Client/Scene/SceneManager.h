@@ -8,13 +8,15 @@
 #include "Scene.h"
 #include "HWI/UploadHeap.h"
 
+class Heap;
 class D3D;
 
 class SceneManager
 {
 public:
     void LoadScene(const char* filepath);
-    void UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdList);
+    void UploadScene(D3D* d3d);
+    void AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const;
 
     bool IsGpuDataDirty() const { return m_gpuDataDirty; }
     void UnreserveData() { m_uploadHeap.FlushData(); }

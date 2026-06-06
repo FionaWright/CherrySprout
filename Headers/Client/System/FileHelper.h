@@ -16,10 +16,6 @@ public:
     static std::string GetAssetShaderFullPath(const char* assetName);
     static std::string GetAssetModelFullPath(const char* assetName);
 
-    static std::vector<uint8_t> ReadFileToByteVector(const std::string& filename);
-    static HRESULT ReadDataFromFile(const char* filename, byte** data, UINT* size);
-    static HRESULT ReadDataFromDDSFile(const char* filename, byte** data, UINT* offset, UINT* size);
-
 private:
     static std::string m_assetsPath, m_shadersPath;
 };

@@ -16,8 +16,8 @@ void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescript
     m_descriptorIncSize = device->GetDescriptorHandleIncrementSize(m_type);
     m_heapSize = numDescriptors;
 
-    m_baseBindlessTex = static_cast<size_t>(static_cast<float>(m_heapSize) * 0.65f);
-    m_currentHeapIndexBindlessTex = m_baseBindlessTex; // Should I give more control to the user?
+    m_baseSceneTextures = static_cast<size_t>(static_cast<float>(m_heapSize) * 0.65f);
+    m_currentHeapIndexSceneTextures = m_baseSceneTextures; // Should I give more control to the user?
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = m_type;
@@ -31,8 +31,8 @@ void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescript
 #ifdef _DEBUG
     if (Config::GetSystem().DebugHeapEnabled)
     {
-        m_debugDescriptorNames.resize(m_baseBindlessTex);
-        m_debugDescriptorNamesBindless.resize(m_heapSize - m_baseBindlessTex);
+        m_debugDescriptorNames.resize(m_baseSceneTextures);
+        m_debugDescriptorNamesBindless.resize(m_heapSize - m_baseSceneTextures);
     }
 #endif
 }
@@ -45,7 +45,7 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Heap::GetDescriptorHandleAtIndex(const uint32_t id
 
 uint32_t Heap::GetNextDescriptorIdx(const char* debugName)
 {
-    if (m_currentHeapIndex >= m_baseBindlessTex)
+    if (m_currentHeapIndex >= m_baseSceneTextures)
         throw std::exception("Heap is too smol :(");
 
     const uint32_t idx = m_currentHeapIndex;
@@ -61,41 +61,49 @@ uint32_t Heap::GetNextDescriptorIdx(const char* debugName)
     return idx;
 }
 
-uint32_t Heap::GetNextDescriptorIdx_Bindless(const char* debugName)
+uint32_t Heap::GetNextDescriptorIdx_SceneTexture(const char* debugName)
 {
-    if (m_currentHeapIndexBindlessTex >= m_heapSize)
+    if (m_currentHeapIndexSceneTextures >= m_heapSize)
         throw std::exception("Heap is too smol :(");
 
-    const uint32_t idx = m_currentHeapIndexBindlessTex;
-    m_currentHeapIndexBindlessTex++;
+    const uint32_t idx = m_currentHeapIndexSceneTextures;
+    m_currentHeapIndexSceneTextures++;
 
 #ifdef _DEBUG
     if (debugName && Config::GetSystem().DebugHeapEnabled)
     {
-        m_debugDescriptorNamesBindless.at(idx - m_baseBindlessTex) = _strdup(debugName);
+        m_debugDescriptorNamesBindless.at(idx - m_baseSceneTextures) = _strdup(debugName);
     }
 #endif
 
     return idx;
 }
 
-uint32_t Heap::AddBindlessTexture2D(ID3D12Device* device, D12Resource* resource, DXGI_FORMAT format)
+uint32_t Heap::AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* resource)
 {
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.PlaneSlice = 0;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = format;
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    desc.Format = resource->GetDesc().Format;
+    desc.Texture2D.MipLevels = 1;
+    desc.Texture2D.MostDetailedMip = 0;
+    desc.Texture2D.PlaneSlice = 0;
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    uint32_t idx = GetNextDescriptorIdx_Bindless(resource->GetName().c_str());
+    const uint32_t idx = GetNextDescriptorIdx_SceneTexture(resource->GetName().c_str());
     const auto handle = GetDescriptorHandleAtIndex(idx);
 
-    device->CreateShaderResourceView(resource->GetResource(), &srvDesc, handle);
+    device->CreateShaderResourceView(resource->GetResource(), &desc, handle);
 
     uint32_t normalizedIdx = idx - GetBindlessTexBase();
     return normalizedIdx;
+}
+
+void Heap::FreeSceneTextures() // Always do on scene change
+{
+    m_currentHeapIndexSceneTextures = m_baseSceneTextures;
+#ifdef _DEBUG
+    m_debugDescriptorNamesBindless.clear();
+#endif
 }
 
 void Heap::Bind(ID3D12GraphicsCommandList* cmdList) const
@@ -104,10 +112,22 @@ void Heap::Bind(ID3D12GraphicsCommandList* cmdList) const
     cmdList->SetDescriptorHeaps(1, &heap);
 }
 
+void Heap::BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList) const
+{
+    const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), GetBindlessTexBase(), GetIncrementSize());
+    cmdList->SetGraphicsRootDescriptorTable(2, bindlessHandle);
+}
+
+void Heap::BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList) const
+{
+    const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), GetBindlessTexBase(), GetIncrementSize());
+    cmdList->SetComputeRootDescriptorTable(2, bindlessHandle);
+}
+
 void Heap::PrintHeapInfo() const
 {
     const uint32_t totalRegularDescriptors = m_currentHeapIndex;
-    const uint32_t totalBindlessDescriptors = m_currentHeapIndexBindlessTex - m_baseBindlessTex;
-    CherryPrint("[" << m_name << "] Total Binded Descriptors: " << totalRegularDescriptors << " , Total Bindless Descriptors: " << totalBindlessDescriptors);
-    CherryPrint("[" << m_name << "] Total Descriptors: " << totalRegularDescriptors + totalBindlessDescriptors << "/" << m_heapSize);
+    const uint32_t totalSceneTexDescriptors = m_currentHeapIndexSceneTextures - m_baseSceneTextures;
+    CherryPrint("[" << m_name << "] Total Binded Descriptors: " << totalRegularDescriptors << " , Total Bindless Descriptors: " << totalSceneTexDescriptors);
+    CherryPrint("[" << m_name << "] Total Descriptors: " << totalRegularDescriptors + totalSceneTexDescriptors << "/" << m_heapSize);
 }

@@ -9,7 +9,7 @@ class RootSig
 {
 public:
     void Init(ID3D12Device* device, const CD3DX12_ROOT_PARAMETER1* params, UINT paramCount, const D3D12_STATIC_SAMPLER_DESC* pSamplers, UINT samplerCount);
-    void SmartInit(ID3D12Device* device, UINT numCBV, UINT numSRV, UINT numUAV = 0, bool hasSrvTextures = false, const D3D12_STATIC_SAMPLER_DESC* samplers = nullptr,
+    void SmartInit(ID3D12Device* device, UINT numCBV, UINT numSRV, UINT numUAV = 0, bool hasSceneTextures = false, const D3D12_STATIC_SAMPLER_DESC* samplers = nullptr,
                    UINT samplerCount = 0);
 
     ID3D12RootSignature* Get() const { return m_rootSignature.Get(); }

@@ -36,7 +36,7 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* pa
     V(LoadFromDDSFile(fullPathW.c_str(), ddsFlags, &texMetadata, scratchImage));
 
     D12Resource texture;
-    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, texMetadata.format, flags, D3D12_RESOURCE_STATE_COPY_DEST);
+    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, texMetadata.format, flags, D3D12_RESOURCE_STATE_COMMON);
     return texture;
 }
 

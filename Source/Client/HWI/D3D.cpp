@@ -178,9 +178,13 @@ void D3D::Init(const size_t width, const size_t height)
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-    V(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    V(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueueDirect.Queue)));
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+    V(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueueCompute.Queue)));
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+    V(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueueCopy.Queue)));
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -195,7 +199,7 @@ void D3D::Init(const size_t width, const size_t height)
 
     ComPtr<IDXGISwapChain1> swapChain;
     V(factory->CreateSwapChainForHwnd(
-        m_commandQueue.Get(), // Swap chain needs the queue so that it can force a flush on it.
+        m_commandQueueDirect.Queue.Get(), // Swap chain needs the queue so that it can force a flush on it.
         Win32App::GetHwnd(),
         &swapChainDesc,
         nullptr,
@@ -267,8 +271,9 @@ void D3D::Init(const size_t width, const size_t height)
 
     // Create synchronization objects and wait until assets have been uploaded to the GPU.
     {
-        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-        m_fenceValue = 1;
+        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueDirect.Fence)));
+        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueCompute.Fence)));
+        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueCopy.Fence)));
 
         // Create an event handle to use for frame synchronization.
         m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -305,10 +310,12 @@ ComPtr<ID3D12GraphicsCommandList> D3D::GetAvailableCmdList(const D3D12_COMMAND_L
     ComPtr<ID3D12CommandAllocator> commandAllocator;
     ComPtr<ID3D12GraphicsCommandList> cmdList;
 
-    if (!m_commandAllocatorQueue.empty() && IsFenceComplete(m_commandAllocatorQueue.front().Fence))
+    CommandQueue& queue = getQueue(type);
+
+    if (!queue.AllocatorPool.empty() && IsFenceComplete(queue.AllocatorPool.front().Fence, type))
     {
-        commandAllocator = m_commandAllocatorQueue.front().Allocator;
-        m_commandAllocatorQueue.pop();
+        commandAllocator = queue.AllocatorPool.front().Allocator;
+        queue.AllocatorPool.pop();
 
         V(commandAllocator->Reset());
     }
@@ -317,10 +324,10 @@ ComPtr<ID3D12GraphicsCommandList> D3D::GetAvailableCmdList(const D3D12_COMMAND_L
         commandAllocator = CreateAllocator(type);
     }
 
-    if (!m_commandListQueue.empty())
+    if (!queue.CommandListPool.empty())
     {
-        cmdList = m_commandListQueue.front();
-        m_commandListQueue.pop();
+        cmdList = queue.CommandListPool.front();
+        queue.CommandListPool.pop();
 
         V(cmdList->Reset(commandAllocator.Get(), nullptr));
     }
@@ -338,27 +345,34 @@ ComPtr<ID3D12GraphicsCommandList> D3D::GetAvailableCmdList(const D3D12_COMMAND_L
 void D3D::DestroyAllCmdListsAndAllocators()
 {
     std::queue<CommandAllocatorEntry> emptyAlloc;
-    std::swap(m_commandAllocatorQueue, emptyAlloc);
+    std::swap(m_commandQueueDirect.AllocatorPool, emptyAlloc);
+    std::swap(m_commandQueueCompute.AllocatorPool, emptyAlloc);
+    std::swap(m_commandQueueCopy.AllocatorPool, emptyAlloc);
 
     std::queue<ComPtr<ID3D12GraphicsCommandList>> emptyList;
-    std::swap(m_commandListQueue, emptyList);
+    std::swap(m_commandQueueDirect.CommandListPool, emptyList);
+    std::swap(m_commandQueueCompute.CommandListPool, emptyList);
+    std::swap(m_commandQueueCopy.CommandListPool, emptyList);
 }
 
 void D3D::ExecuteCommandList(ID3D12GraphicsCommandList* cmdList)
 {
+    CommandQueue& queue = getQueue(cmdList->GetType());
+
     ID3D12CommandAllocator* commandAllocator;
     UINT dataSize = sizeof(commandAllocator);
 
     V(cmdList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, &commandAllocator));
 
     ID3D12CommandList* ppCommandLists[] = {cmdList};
-    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+    queue.Queue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-    const UINT64 fence = m_fenceValue;
-    V(m_commandQueue->Signal(m_fence.Get(), fence));
-    m_fenceValue++;
-    m_commandAllocatorQueue.push({fence, commandAllocator});
-    m_commandListQueue.emplace(cmdList);
+    const UINT64 fence = queue.NextFenceValue;
+    V(queue.Queue->Signal(queue.Fence.Get(), fence));
+    queue.NextFenceValue++;
+
+    queue.AllocatorPool.push({fence, commandAllocator});
+    queue.CommandListPool.emplace(cmdList);
     commandAllocator->Release();
 }
 
@@ -368,42 +382,68 @@ void D3D::Present()
     const UINT presentFlags = m_tearingSupport && syncInterval == 0 ? DXGI_PRESENT_ALLOW_TEARING : 0;
     V(m_swapChain->Present(syncInterval, presentFlags));
 
-    const UINT64 fence = m_fenceValue;
-    V(m_commandQueue->Signal(m_fence.Get(), fence));
+    CommandQueue& queue = getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+    const UINT64 fence = queue.NextFenceValue;
+    V(queue.Queue->Signal(queue.Fence.Get(), fence));
     m_frameBufferFences[m_frameIndex] = fence;
-    m_fenceValue++;
+    queue.NextFenceValue++;
 
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-    WaitForSignal(m_frameBufferFences[m_frameIndex]);
+    WaitForSignal(m_frameBufferFences[m_frameIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     if (Config::GetSystem().ForceSyncCpuGpu)
         Flush();
 }
 
-UINT64 D3D::Signal()
+UINT64 D3D::Signal(const D3D12_COMMAND_LIST_TYPE type)
 {
-    const UINT64 value = ++m_fenceValue;
-    V(m_commandQueue->Signal(m_fence.Get(), value));
+    CommandQueue& queue = getQueue(type);
+    const UINT64 value = ++queue.NextFenceValue;
+    V(queue.Queue->Signal(queue.Fence.Get(), value));
     return value;
 }
 
 void D3D::Flush()
 {
-    const UINT64 fence = Signal();
-    WaitForSignal(fence);
+    UINT64 fence = 0;
+
+    fence = Signal(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    WaitForSignal(fence, D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+    fence = Signal(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+    WaitForSignal(fence, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+
+    fence = Signal(D3D12_COMMAND_LIST_TYPE_COPY);
+    WaitForSignal(fence, D3D12_COMMAND_LIST_TYPE_COPY);
 }
 
-void D3D::WaitForSignal(const UINT64 fence) const
+void D3D::WaitForSignal(const UINT64 fence, const D3D12_COMMAND_LIST_TYPE type)
 {
-    if (!IsFenceComplete(fence))
+    if (!IsFenceComplete(fence, type))
     {
-        V(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
+        V(getQueue(type).Fence->SetEventOnCompletion(fence, m_fenceEvent));
         WaitForSingleObject(m_fenceEvent, INFINITE);
     }
 }
 
-bool D3D::IsFenceComplete(const UINT64 fenceVal) const
+bool D3D::IsFenceComplete(const UINT64 fenceVal, const D3D12_COMMAND_LIST_TYPE type)
 {
-    return m_fence->GetCompletedValue() >= fenceVal;
+    return getQueue(type).Fence->GetCompletedValue() >= fenceVal;
+}
+
+CommandQueue& D3D::getQueue(const D3D12_COMMAND_LIST_TYPE type)
+{
+    switch (type)
+    {
+    case D3D12_COMMAND_LIST_TYPE_DIRECT:
+        return m_commandQueueDirect;
+    case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+        return m_commandQueueCompute;
+    case D3D12_COMMAND_LIST_TYPE_COPY:
+        return m_commandQueueCopy;
+    default:
+        throw std::exception("Unsupported command queue type");
+    }
 }
