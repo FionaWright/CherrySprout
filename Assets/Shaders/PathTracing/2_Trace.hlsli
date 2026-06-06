@@ -6,7 +6,7 @@
 
 #include "Utils/Random.h"
 
-float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, RngInfo rngInfo)
+float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout RngInfo rngInfo)
 {
     float3 Lo = float3(0, 0, 0);
     float3 throughput = float3(1, 1, 1);
@@ -24,10 +24,9 @@ float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, RngInfo rngInfo)
             break;
         }
 
-        float hitDist = q.CommittedRayT();
         float3 wo = -ray.Direction;
 
-        Hit(q, ray, Lo, throughput, rngInfo, wo, hitDist);
+        Hit(q, ray, Lo, throughput, rngInfo, wo);
         //return throughput;
         //return ray.Direction;
     }

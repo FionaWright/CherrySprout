@@ -47,8 +47,8 @@ void EnvironmentMap::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLi
     {
         m_dsPanoToEA.Init(heap);
         m_dsPanoToEA.AddCBV(device, sizeof(CbvPanoToEA), uploadHeapCBV, "CBV Pano To EA");
-        m_dsPanoToEA.SetSRV_Tex2D(device, 0, &m_pano);
-        m_dsPanoToEA.SetUAV_Tex2D(device, 0, &m_ea);
+        m_dsPanoToEA.SetSRV_Tex2D(device, 0, &m_pano, m_pano.GetDesc().Format);
+        m_dsPanoToEA.SetUAV_Tex2D(device, 0, &m_ea, m_ea.GetDesc().Format);
 
         CbvPanoToEA cbv = {};
         cbv.OutputDimensions = hlsl::uint2(m_ea.GetDesc().Width, m_ea.GetDesc().Height);
@@ -93,7 +93,7 @@ void EnvironmentMap::InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList
 
         m_dsPanoToCM.Init(heap);
         m_dsPanoToCM.AddCBV(device, sizeof(CbvPanoToCM), uploadHeap, "CBV Cubemap");
-        m_dsPanoToCM.SetSRV_Tex2D(device, 0, &m_pano);
+        m_dsPanoToCM.SetSRV_Tex2D(device, 0, &m_pano, m_pano.GetDesc().Format);
         m_dsPanoToCM.SetUAV(device, 0, m_cubemap.GetResource(), uavDesc);
 
         CbvPanoToCM cbv = {};

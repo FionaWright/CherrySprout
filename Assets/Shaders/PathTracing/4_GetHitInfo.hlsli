@@ -45,10 +45,12 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 	float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
 	float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
 	float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
-    hitInfo.Ng_ff = hitInfo.Entering ? -Ng : Ng;
+    //Ng = -Ng;
+    hitInfo.Ng_ff = hitInfo.Entering ? Ng : -Ng;
 
     hitInfo.Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
-    hitInfo.Ns.y = -hitInfo.Ns.y; // TODO: Should not need this
+    //hitInfo.Ns.y = -hitInfo.Ns.y; // TODO: Should not need this
+    //hitInfo.Ns = -hitInfo.Ns;
     hitInfo.Ns = normalize(mul((float3x3)instance.MTI, hitInfo.Ns));
 
     //if (false)
@@ -59,7 +61,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     //    ShadingFrame bumpFrame = CreateShadingFrame(hitInfo.Ns);
     //    hitInfo.Ns = bumpFrame.ToWorld(bumpSample);
     //}
-    hitInfo.Ns_ff = hitInfo.Entering ? -hitInfo.Ns : hitInfo.Ns;
+    hitInfo.Ns_ff = hitInfo.Entering ? hitInfo.Ns : -hitInfo.Ns;
 
     //float4 albedoSample = gTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
     float4 albedoSample = 1;
@@ -73,7 +75,8 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Mat.Roughness *= roughMetSample.r;
     hitInfo.Mat.Metallic *= roughMetSample.g;
 
-    hitInfo.Albedo = float3(hitInfo.Mat.BaseColor.rgb * albedoSample.rgb);
+    //hitInfo.Albedo = float3(hitInfo.Mat.BaseColor.rgb * albedoSample.rgb);
+    hitInfo.Albedo = float3(1,1,1);
     hitInfo.Opacity = albedoSample.a;
     hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
 }

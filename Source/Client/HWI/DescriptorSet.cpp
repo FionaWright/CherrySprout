@@ -99,11 +99,11 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resou
     device->CreateShaderResourceView(resource, &desc, handle);
 }
 
-void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource)
+void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    desc.Format = d12Resource ? d12Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN;
+    desc.Format = format;
     desc.Texture2D.MipLevels = d12Resource ? d12Resource->GetDesc().MipLevels : 1;
     desc.Texture2D.MostDetailedMip = 0;
     desc.Texture2D.PlaneSlice = 0;
@@ -189,11 +189,11 @@ void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, ID3D12Re
     }
 }
 
-void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource)
+void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, DXGI_FORMAT format)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-    desc.Format = d12Resource->GetDesc().Format;
+    desc.Format = format;
     desc.Texture2D.MipSlice = 0;
     desc.Texture2D.PlaneSlice = 0;
 

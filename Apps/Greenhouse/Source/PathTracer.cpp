@@ -49,8 +49,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_descriptorSet.Init         (heap, false);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
 
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags);
@@ -76,7 +76,7 @@ void PathTracer::LoadSceneData(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Sce
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
-    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, nullptr);
+    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, nullptr, DXGI_FORMAT_R16G16B16A16_FLOAT);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -91,10 +91,12 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
+    EnvironmentMap* envMap = renderInfo.EnvironmentMap;
+
     if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, renderInfo.EnvironmentMap->GetEA());
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
     else
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, renderInfo.EnvironmentMap->GetPano());
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap->GetPano(), envMap->GetPano()->GetDesc().Format);
 
     // Fill Settings
     // TODO: push constants
