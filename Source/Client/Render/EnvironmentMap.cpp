@@ -10,6 +10,7 @@
 #include "HWI/Heap.h"
 #include "../../../Assets/Shaders/Utils/CBVs.h"
 #include "System/FileHelper.h"
+#include "System/TextureLoader.h"
 #include "Utils/D3DUtils.h"
 
 void EnvironmentMap::CreateCubemapResource(ID3D12Device* device)
@@ -30,16 +31,12 @@ void EnvironmentMap::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLi
     // Initialize Panoramic
     if (m_currentPanoFilepath != filePath)
     {
-        const std::string fullPath = FileHelper::GetAssetTextureFullPath(("EnvMaps/" + filePath).c_str()); // TODO
-        //const std::string fullPath = R"(C:\Users\fionawright\source\repos\CherrySprout\Assets\Textures\Env Maps\autumn_field_puresky_4k.hdr)";
-        const std::wstring fullPathW = stringToWString(fullPath);
+        const std::string fullPath = FileHelper::GetAssetTextureFullPath(("EnvMaps/" + filePath).c_str());
 
-        TexMetadata texMetadata;
         ScratchImage scratchImage;
-        V(LoadFromHDRFile(fullPathW.c_str(), &texMetadata, scratchImage));
-
-        m_pano.Init_Tex2D("Panoramic Environment Map", device, texMetadata.width, texMetadata.height, 1, texMetadata.format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
-        m_pano.UploadTexture(cmdList, &m_panoUploadHeap, scratchImage.GetPixels(), scratchImage.GetPixelsSize(), scratchImage.GetImage(0, 0, 0)->rowPitch);
+        m_pano = TextureLoader::LoadTexture2DHDR(device, fullPath.c_str(), scratchImage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_panoUploadHeap.Init(device, m_pano.GetIntermediateSize());
+        TextureLoader::UploadTexture(cmdList, &m_panoUploadHeap, scratchImage, &m_pano);
 
         m_currentPanoFilepath = filePath;
     }
@@ -121,10 +118,18 @@ void EnvironmentMap::InitCubemap(ID3D12Device* device, ID3D12GraphicsCommandList
     m_cubemap.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 }
 
+void EnvironmentMap::FreeUnusedResources()
+{
+    m_panoUploadHeap = {};
+    m_rootSigPanoToEA = {};
+    m_rootSigPanoToCM = {};
+    m_shaderPanoToEA = {};
+    m_shaderPanoToCM = {};
+    m_resourcesInitialized = false;
+}
+
 void EnvironmentMap::initResources(ID3D12Device* device)
 {
-    m_panoUploadHeap.Init(device, sizeof(float) * 4 * 4096 * 2048);
-
     m_ea.Init_Tex2D("Equal-Area Envmap", device, 4096, 4096, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     D3D12_STATIC_SAMPLER_DESC sampler;

@@ -15,7 +15,7 @@ struct SceneGPU
     D12Resource MegaBufferMaterials;
     // TODO: MegaBufferPunctualLights
 
-    // TODO: Textures
+    std::vector<D12Resource> SceneTextures;
 };
 
 #endif //CHERRYSPROUT_SCENE_GPU_H

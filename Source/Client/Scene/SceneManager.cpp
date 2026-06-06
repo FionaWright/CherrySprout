@@ -7,6 +7,8 @@
 
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
+#include "System/TextureLoader.h"
+#include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
 typedef void (*LoadUSDFunc)(const char* usdPath, SceneCPU* scene);
@@ -60,16 +62,34 @@ void SceneManager::UploadScene(const D3D* d3d, ID3D12GraphicsCommandList* cmdLis
     m_scene.GPU.MegaBufferMaterials.Init_Buffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
 
     size_t uploadHeapRequiredSize = 0;
-    uploadHeapRequiredSize += m_scene.GPU.MegaBufferVertex.GetIntermediateSize();
-    uploadHeapRequiredSize += m_scene.GPU.MegaBufferIndex.GetIntermediateSize();
-    uploadHeapRequiredSize += m_scene.GPU.MegaBufferMaterials.GetIntermediateSize();
-    uploadHeapRequiredSize += 512 * 3; // For safety
+    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferVertex.GetIntermediateSize(), 512);
+    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferIndex.GetIntermediateSize(), 512);
+    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferMaterials.GetIntermediateSize(), 512);
+
+    const size_t textureCount = m_scene.CPU.TextureFilepaths.size();
+    std::vector<ScratchImage> scratchImages(textureCount);
+
+    for (int i = 0; i < textureCount; i++)
+    {
+        const char* path = m_scene.CPU.TextureFilepaths[i];
+        D12Resource tex = TextureLoader::LoadTexture2DLDR(d3d->GetDevice(), path, scratchImages[i]);
+
+        uploadHeapRequiredSize += Align(tex.GetIntermediateSize(), 512);
+
+        m_scene.GPU.SceneTextures.emplace_back(std::move(tex));
+    }
+
     m_uploadHeap = {};
     m_uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
     m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex.data(), megaBufferIndexBytes);
     m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials.data(), megaBufferMaterialsBytes);
     m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex.data(), megaBufferVertexBytes);
+
+    for (int i = 0; i < textureCount; i++)
+    {
+        TextureLoader::UploadTexture(cmdList, &m_uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
+    }
 
     m_gpuDataDirty = false;
 }

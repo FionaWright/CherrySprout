@@ -32,6 +32,8 @@ public:
     D12Resource* GetEA() { return &m_ea; }
     D12Resource* GetCubemap() { return &m_cubemap; }
 
+    void FreeUnusedResources();
+
 private:
     void initResources(ID3D12Device* device);
 
