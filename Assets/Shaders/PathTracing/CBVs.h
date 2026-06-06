@@ -2,6 +2,7 @@
 #define H_CBVS_H
 
 #include "Utils/HlslGlue.h"
+#include "PathTracing/Flags.h"
 
 struct CbvPathTracingSettings
 {
@@ -14,13 +15,13 @@ struct CbvPathTracingSettings
     hlsl::uint RussianRouletteMinBounces;
     hlsl::uint SPP;
     hlsl::uint FrameIdx;
-    hlsl::uint AccumulationEnabled;
+    float pad;
 
     float DofFocalDist;
     float DofLensRadius;
     hlsl::float2 TexelSize;
 
-    hlsl::float3 DirLight;
+    hlsl::float3 DirLightDirection;
     float DirLightCosAngularRadius;
 
     hlsl::float3 DirLightColor;

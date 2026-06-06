@@ -24,6 +24,8 @@ public:
     void Update(D3D* d3d, TimeArgs timeArgs) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override;
+    void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags,
+                        const PathTracerDebugFlags& debugFlags);
 
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
 

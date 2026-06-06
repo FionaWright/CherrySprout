@@ -2,6 +2,7 @@
 #define H_ACCUMULATE_H
 
 #include "PathTracing/Buffers.hlsli"
+#include "PathTracing/Flags.h"
 #include "Utils/HlslUtils.hlsli"
 #include "Utils/Constants.h"
 
@@ -17,7 +18,7 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 color, bool nanTestEnabled)
         return color;
     }
 
-    if (!gSettings.AccumulationEnabled)
+    if (!GetPathTracerFeatureFlag(FEATURE_FLAGS, eFeature_Accumulation))
         return color;
 
     float3 newSum = accumColor + color;

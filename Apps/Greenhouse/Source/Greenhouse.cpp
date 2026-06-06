@@ -104,6 +104,8 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     renderInfo.InvV = &InvV;
     renderInfo.P = &m_projectionMatrix;
     renderInfo.InvP = &m_invProjectionMatrix;
+    renderInfo.BackendConfig = &m_config.RenderBackendConfig;
+    renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
 
     m_currRenderBackend->Render(d3d, cmdList, renderInfo);
 }
@@ -154,7 +156,38 @@ void Greenhouse::RenderGUI()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
-    m_ptDirty |= m_sceneDirty | m_renderBackendDirty;
+    ImGui::SeparatorText("Settings##xx");
+    ImGui::Indent(IM_GUI_INDENTATION);
+    {
+        ImGui::Text("Feature Flags:");
+        ImGui::Indent(IM_GUI_INDENTATION);
+        {
+            for (int i = 0; i < FEATURE_COUNT; i++)
+            {
+                const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
+                bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
+                m_ptPipelineDirty |= ImGui::Checkbox(s_featureFlagNames[i], &isEnabled);
+                SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, isEnabled);
+            }
+        }
+        ImGui::Unindent(IM_GUI_INDENTATION);
+
+        ImGui::Text("Debug Flags:");
+        ImGui::Indent(IM_GUI_INDENTATION);
+        {
+            for (int i = 0; i < DEBUG_COUNT; i++)
+            {
+                const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
+                bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, flag);
+                m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
+                SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, flag, isEnabled);
+            }
+        }
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+    ImGui::Unindent(IM_GUI_INDENTATION);
+
+    m_ptFrameDirty |= m_sceneDirty | m_renderBackendDirty | m_ptPipelineDirty;
 
     Gui::EndWindow();
 }

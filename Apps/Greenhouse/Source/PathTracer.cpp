@@ -47,7 +47,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootSig.SmartInit(d3d->GetDevice(), 1, 5, 2, false, &sampler, 1);
 
-    m_descriptorSet.Init(heap, false);
+    m_descriptorSet.Init         (heap, false);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output);
@@ -97,17 +97,18 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         CbvPathTracingSettings settings;
         XMStoreFloat4x4(&settings.InvP, *renderInfo.InvP);
         XMStoreFloat4x4(&settings.InvV, *renderInfo.InvV);
-        settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
-        settings.MaxRayDepth = 1;
-        settings.RussianRouletteMinBounces = 99;
-        settings.SPP = 1;
         settings.FrameIdx = m_frameIdx;
-        settings.AccumulationEnabled = false;
-        settings.DirLight = XMFLOAT3(1, -1, 1);
-        settings.DirLightColor = XMFLOAT3(1, 1, 1);
-        settings.DirLightCosAngularRadius = 0.00465f;
-        settings.DirLightIntensity = 100.0f;
-        settings.FireflyThreshold = 9999;
+        settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
+
+        settings.MaxRayDepth = renderInfo.PathTracerConfig->MaxRayDepth;
+        settings.RussianRouletteMinBounces = renderInfo.PathTracerConfig->RussianRouletteMinBounces;
+        settings.SPP = renderInfo.PathTracerConfig->SPP;
+        settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
+
+        settings.DirLightDirection = renderInfo.BackendConfig->DirLightDirection;
+        settings.DirLightColor = renderInfo.BackendConfig->DirLightColor;
+        settings.DirLightCosAngularRadius = renderInfo.BackendConfig->DirLightCosTheta;
+        settings.DirLightIntensity = renderInfo.BackendConfig->DirLightIntensity;
 
         // TODO: Do I need both?
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
@@ -153,4 +154,16 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 void PathTracer::UnreserveData()
 {
 
+}
+
+void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags)
+{
+    std::vector<std::string> compileArgs = {};
+
+    compileArgs.emplace_back("-DFEATURE_FLAGS=" + ToString(featureFlags));
+
+    compileArgs.emplace_back("-DDEBUG_FLAGS=" + ToString(debugFlags));
+
+    auto desc = CreateComputePipelineDesc(m_rootSig.Get());
+    m_pipeline.SetCompute(device, "PathTracing/PathTracerCS.hlsl", desc, compileArgs);
 }

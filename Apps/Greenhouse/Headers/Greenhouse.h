@@ -20,6 +20,9 @@ struct GreenHouseRenderInfo
     XMMATRIX* InvP;
     Scene* Scene;
     Heap* Heap;
+
+    RenderBackendConfig* BackendConfig;
+    PathTracerConfig* PathTracerConfig;
 };
 
 class Greenhouse final : public App
@@ -34,14 +37,15 @@ public:
     void RenderGUI() override;
 
 private:
-    GreenhouseConfig m_config;
+    GreenhouseConfig m_config{};
     XMMATRIX m_projectionMatrix{};
     XMMATRIX m_invProjectionMatrix{};
     float m_aspectRatio = 0.0f;
     uint32_t m_currentSceneIdx = 0;
     bool m_renderBackendDirty = false;
     bool m_sceneDirty = true;
-    bool m_ptDirty = false;
+    bool m_ptFrameDirty = false;
+    bool m_ptPipelineDirty = false;
 
     CameraController m_cameraController;
     SceneManager m_sceneManager;
