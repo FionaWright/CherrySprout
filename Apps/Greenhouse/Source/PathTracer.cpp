@@ -160,9 +160,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 {
     std::vector<std::string> compileArgs = {};
 
-    compileArgs.emplace_back("-DFEATURE_FLAGS=" + ToString(featureFlags));
+    compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
 
-    compileArgs.emplace_back("-DDEBUG_FLAGS=" + ToString(debugFlags));
+    compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.SetCompute(device, "PathTracing/PathTracerCS.hlsl", desc, compileArgs);

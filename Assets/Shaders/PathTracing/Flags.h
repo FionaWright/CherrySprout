@@ -47,66 +47,20 @@ static const char* s_debugFlagNames[DEBUG_COUNT] = {
     "Furnace Test", "Output Color"
 };
 
-inline PathTracerFeatureFlags operator&(PathTracerFeatureFlags lhs, PathTracerFeatureFlags rhs)
-{
-    const FEATURE_FLAG_TYPE combined = FEATURE_FLAG_TYPE(lhs) & FEATURE_FLAG_TYPE(rhs);
-    return PathTracerFeatureFlags(combined);
-}
-
-inline PathTracerDebugFlags operator&(PathTracerDebugFlags lhs, PathTracerDebugFlags rhs)
-{
-    const DEBUG_FLAG_TYPE combined = DEBUG_FLAG_TYPE(lhs) & DEBUG_FLAG_TYPE(rhs);
-    return PathTracerDebugFlags(combined);
-}
-
-inline PathTracerFeatureFlags operator|(PathTracerFeatureFlags lhs, PathTracerFeatureFlags rhs)
-{
-    const FEATURE_FLAG_TYPE combined = FEATURE_FLAG_TYPE(lhs) | FEATURE_FLAG_TYPE(rhs);
-    return PathTracerFeatureFlags(combined);
-}
-
-inline PathTracerFeatureFlags operator^(PathTracerFeatureFlags lhs, PathTracerFeatureFlags rhs)
-{
-    const FEATURE_FLAG_TYPE combined = FEATURE_FLAG_TYPE(lhs) ^ FEATURE_FLAG_TYPE(rhs);
-    return PathTracerFeatureFlags(combined);
-}
-
-inline PathTracerDebugFlags operator|(PathTracerDebugFlags lhs, PathTracerDebugFlags rhs)
-{
-    const DEBUG_FLAG_TYPE combined = DEBUG_FLAG_TYPE(lhs) | DEBUG_FLAG_TYPE(rhs);
-    return PathTracerDebugFlags(combined);
-}
-
-inline PathTracerDebugFlags operator^(PathTracerDebugFlags lhs, PathTracerDebugFlags rhs)
-{
-    const DEBUG_FLAG_TYPE combined = DEBUG_FLAG_TYPE(lhs) ^ DEBUG_FLAG_TYPE(rhs);
-    return PathTracerDebugFlags(combined);
-}
-
 inline void SetPathTracerFeatureFlag(PathTracerFeatureFlags& state, const PathTracerFeatureFlags flag, const bool enabled)
 {
     if (enabled)
-        state = state | flag;
+        state = PathTracerFeatureFlags(state | flag);
     else if (GetPathTracerFeatureFlag(state, flag))
-        state = state ^ flag;
+        state = PathTracerFeatureFlags(state ^ flag);
 }
 
 inline void SetPathTracerDebugFlag(PathTracerDebugFlags& state, const PathTracerDebugFlags flag, const bool enabled)
 {
     if (enabled)
-        state = state | flag;
+        state = PathTracerDebugFlags(state | flag);
     else if (GetPathTracerDebugFlag(state, flag))
-        state = state ^ flag;
-}
-
-inline std::string ToString(PathTracerFeatureFlags flags)
-{
-    return std::to_string(static_cast<FEATURE_FLAG_TYPE>(flags));
-}
-
-inline std::string ToString(PathTracerDebugFlags flags)
-{
-    return std::to_string(static_cast<DEBUG_FLAG_TYPE>(flags));
+        state = PathTracerDebugFlags(state ^ flag);
 }
 
 #else
