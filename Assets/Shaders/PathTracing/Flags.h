@@ -33,7 +33,17 @@ inline bool GetPathTracerFeatureFlag(const PathTracerFeatureFlags state, const P
     return bool(state & flag);
 }
 
+inline bool GetPathTracerFeatureFlag(const int state, const PathTracerFeatureFlags flag)
+{
+    return bool(state & flag);
+}
+
 inline bool GetPathTracerDebugFlag(const PathTracerDebugFlags state, const PathTracerDebugFlags flag)
+{
+    return bool(state & flag);
+}
+
+inline bool GetPathTracerDebugFlag(const int state, const PathTracerDebugFlags flag)
 {
     return bool(state & flag);
 }
@@ -46,6 +56,9 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
 static const char* s_debugFlagNames[DEBUG_COUNT] = {
     "Furnace Test", "Output Color"
 };
+
+static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = eFeature_Accumulation;
+static constexpr PathTracerDebugFlags s_defaultDebugFlags = eDebug_None;
 
 inline void SetPathTracerFeatureFlag(PathTracerFeatureFlags& state, const PathTracerFeatureFlags flag, const bool enabled)
 {

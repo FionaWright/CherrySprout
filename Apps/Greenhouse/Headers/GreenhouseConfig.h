@@ -14,8 +14,8 @@ struct PathTracerConfig
     float DofFocalDist = 5.0f;
     float DofLensRadius = 0.05f;
 
-    PathTracerFeatureFlags FeatureFlags = eFeature_Accumulation;
-    PathTracerDebugFlags DebugFlags = eDebug_None;
+    PathTracerFeatureFlags FeatureFlags = s_defaultFeatureFlags;
+    PathTracerDebugFlags DebugFlags = s_defaultDebugFlags;
 };
 
 struct ForwardConfig

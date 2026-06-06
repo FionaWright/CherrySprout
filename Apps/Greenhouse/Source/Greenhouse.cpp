@@ -74,7 +74,18 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneDirty = false;
     }
 
-    m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f);
+    m_ptFrameDirty |= m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f);
+    if (m_ptFrameDirty)
+    {
+        m_pathTracer.Reset();
+        m_ptFrameDirty = false;
+    }
+
+    if (m_ptPipelineDirty)
+    {
+        m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, m_config.PathTracerConfig.DebugFlags);
+        m_ptPipelineDirty = false;
+    }
 
     m_currRenderBackend->Update(d3d, timeArgs);
 }
