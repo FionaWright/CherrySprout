@@ -8,19 +8,26 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
 #include "HWI/Pipeline.h"
+#include "Utils/CommonStructs.h"
+#include "Utils/D3DUtils.h"
 
 class D3D;
 
 class Skybox
 {
 public:
-    void Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap, D12Resource* cubemap);
-    void RenderForward(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, const XMMATRIX& vMatrix, const XMMATRIX& pMatrix) const;
+    void Init(D3D* d3d, D12Resource* cubemap);
+    void RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* vMatrix, const XMMATRIX* pMatrix) const;
 
-    void UpdateCubemap(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeap);
+    void UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeapCBV);
     void GenerateIrradianceMap(ID3D12GraphicsCommandList* cmdList, const Heap* heap);
 
     D12Resource* GetIrradianceMap() { return &m_texIrradianceIBL; }
+
+    static size_t TotalCbvRequiredSize()
+    {
+        return  Align(sizeof(CbvMatrices), 256);
+    }
 
 private:
     D12Resource m_cubeVertexBuffer;

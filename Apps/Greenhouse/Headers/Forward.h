@@ -9,6 +9,7 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
 #include "HWI/Pipeline.h"
+#include "Render/Skybox.h"
 #include "Scene/Material.h"
 #include "Utils/CommonStructs.h"
 
@@ -19,7 +20,7 @@ class Forward : public IRenderBackend
 {
 public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;
-    void LoadSceneData(D3D* d3d, Scene* scene) override {};
+    void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap) override;;
     void Update(D3D* d3d, TimeArgs timeArgs) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override {};
@@ -35,6 +36,7 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
+    Skybox m_skybox;
 };
 
 

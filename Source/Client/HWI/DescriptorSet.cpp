@@ -69,11 +69,10 @@ void DescriptorSet::AddSRV(ID3D12Device* device, D12Resource* d12Resource,
     if (m_srvs.size() > 0)
         CherryAssert(srv.HeapIndex - m_srvs.back().HeapIndex == 1);
 
-    if (d12Resource)
-    {
-        const auto handle = m_pHeap->GetDescriptorHandleAtIndex(srv.HeapIndex);
-        device->CreateShaderResourceView(d12Resource->GetResource(), &desc, handle);
-    }
+    ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
+
+    const auto handle = m_pHeap->GetDescriptorHandleAtIndex(srv.HeapIndex);
+    device->CreateShaderResourceView(resource, &desc, handle);
 
     srv.D12Resource = d12Resource;
     m_srvs.emplace_back(srv);
@@ -85,13 +84,13 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resou
     if (srvIdx > m_srvs.size())
         throw std::exception("Invalid srv index");
 
-    ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
-
     if (srvIdx == m_srvs.size())
     {
         AddSRV(device, d12Resource, desc, debugName);
         return;
     }
+
+    ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
     SRV& srv = m_srvs.at(srvIdx);
     srv.D12Resource = d12Resource;

@@ -22,8 +22,8 @@ class EnvironmentMap
 public:
     void CreateCubemapResource(ID3D12Device* device);
 
-    void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, const std::string& filePath, float rotation);
-    void InitCubemap(D3D* d3d, Heap* heap, UploadHeap* uploadHeap);
+    void Init(D3D* d3d, Heap* heap, const std::string& filePath, float rotation);
+    void InitCubemap(D3D* d3d, Heap* heap);
 
     XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
     static size_t GetCbvRequiredSize() { return Align(sizeof(CbvPanoToEA), 256) + Align(sizeof(CbvPanoToCM), 256); }
@@ -32,12 +32,8 @@ public:
     D12Resource* GetEA() { return &m_ea; }
     D12Resource* GetCubemap() { return &m_cubemap; }
 
-    void FreeUnusedResources();
-
 private:
     void initResources(ID3D12Device* device);
-
-    UploadHeap m_panoUploadHeap;
 
     D12Resource m_pano, m_ea, m_cubemap;
     float m_rotation = 0.0f;

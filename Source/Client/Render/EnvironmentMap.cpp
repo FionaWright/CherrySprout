@@ -19,8 +19,11 @@ void EnvironmentMap::CreateCubemapResource(ID3D12Device* device)
         m_cubemap.Init_Tex2D("Cubemap", device, 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 }
 
-void EnvironmentMap::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, const std::string& filePath, const float rotation)
+void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, const float rotation)
 {
+    UploadHeap uploadHeap = {};
+    size_t maxRequiredUploadHeapSize = Align(sizeof(CbvPanoToEA), 256);
+
     const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
     const auto cmdList = cmdListPtr.Get();
 
@@ -36,15 +39,20 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, const
 
         ScratchImage scratchImage;
         m_pano = TextureLoader::LoadTexture2DHDR(d3d->GetDevice(), fullPath.c_str(), scratchImage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_panoUploadHeap.Init(d3d->GetDevice(), m_pano.GetIntermediateSize());
-        TextureLoader::UploadTexture(cmdList, &m_panoUploadHeap, scratchImage, &m_pano);
+
+        maxRequiredUploadHeapSize += Align(m_pano.GetIntermediateSize(), 512);
+        uploadHeap.Init(d3d->GetDevice(), maxRequiredUploadHeapSize);
+
+        TextureLoader::UploadTexture(cmdList, &uploadHeap, scratchImage, &m_pano);
 
         m_currentPanoFilepath = filePath;
     }
+    else
+        uploadHeap.Init(d3d->GetDevice(), maxRequiredUploadHeapSize);
 
     {
         m_dsPanoToEA.Init(heap);
-        m_dsPanoToEA.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToEA), uploadHeapCBV, "CBV Pano To EA");
+        m_dsPanoToEA.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToEA), &uploadHeap, "CBV Pano To EA");
         m_dsPanoToEA.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
         m_dsPanoToEA.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_ea, m_ea.GetDesc().Format);
 
@@ -74,8 +82,11 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV, const
     d3d->Flush();
 }
 
-void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap, UploadHeap* uploadHeap)
+void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
 {
+    UploadHeap uploadHeapCBV = {};
+    uploadHeapCBV.Init(d3d->GetDevice(), Align(sizeof(CbvPanoToCM), 256));
+
     const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
     const auto cmdList = cmdListPtr.Get();
 
@@ -93,7 +104,7 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap, UploadHeap* uploadHeap)
         uavDesc.Texture2DArray.FirstArraySlice = 0;
 
         m_dsPanoToCM.Init(heap);
-        m_dsPanoToCM.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToCM), uploadHeap, "CBV Cubemap");
+        m_dsPanoToCM.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToCM), &uploadHeapCBV, "CBV Cubemap");
         m_dsPanoToCM.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
         m_dsPanoToCM.SetUAV(d3d->GetDevice(), 0, m_cubemap.GetResource(), uavDesc);
 
@@ -122,17 +133,6 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap, UploadHeap* uploadHeap)
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
-}
-
-void EnvironmentMap::FreeUnusedResources()
-{
-    m_panoUploadHeap = {};
-    // TODO: Can't do this until hot reloader can handle it
-    //m_rootSigPanoToEA = {};
-    //m_rootSigPanoToCM = {};
-    //m_shaderPanoToEA = {};
-    //m_shaderPanoToCM = {};
-    //m_resourcesInitialized = false;
 }
 
 void EnvironmentMap::initResources(ID3D12Device* device)

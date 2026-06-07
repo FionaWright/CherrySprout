@@ -6,15 +6,17 @@
 #include "Render/Skybox.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/Heap.h"
+#include "HWI/UploadHeap.h"
 #include "Utils/CommonStructs.h"
 #include "Utils/D3DUtils.h"
+#include "Utils/Helper.h"
 
-void Skybox::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap, UploadHeap* uploadHeap, D12Resource* cubemap)
+void Skybox::Init(D3D* d3d, D12Resource* cubemap)
 {
     D3D12_STATIC_SAMPLER_DESC sampler;
     InitializeSamplerLinearClamp(&sampler);
 
-    m_rootSig.SmartInit(device, 1, 1, 0, false, &sampler, 1);
+    m_rootSig.SmartInit(d3d->GetDevice(), 1, 1, 0, false, &sampler, 1);
 
     D3D12_INPUT_ELEMENT_DESC rasterILD[] =
     {
@@ -25,7 +27,7 @@ void Skybox::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap
     };
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
-    m_shaderForward.InitGraphics(device, "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc);
+    m_shaderForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc);
 
     constexpr XMFLOAT3 vertexBuffer[8] = {
         {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
@@ -47,27 +49,43 @@ void Skybox::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap
         3, 2, 6
     };
 
-    m_cubeVertexBuffer.Init_Buffer("Cube Vertex Buffer", device, sizeof(XMFLOAT3) * 8);
-    m_cubeVertexBuffer.UploadBuffer(cmdList, uploadHeap, vertexBuffer, sizeof(XMFLOAT3) * 8);
+    m_cubeVertexBuffer.Init_Buffer("Cube Vertex Buffer", d3d->GetDevice(), sizeof(XMFLOAT3) * 8);
+    m_cubeIndexBuffer.Init_Buffer("Cube Index Buffer", d3d->GetDevice(), sizeof(uint32_t) * 36);
 
-    m_cubeIndexBuffer.Init_Buffer("Cube Index Buffer", device, sizeof(uint32_t) * 36);
-    m_cubeIndexBuffer.UploadBuffer(cmdList, uploadHeap, indexBuffer, sizeof(uint32_t) * 36);
+    {
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+        const auto cmdList = cmdListPtr.Get();
+
+        const size_t uploadHeapRequiredSize = m_cubeVertexBuffer.GetIntermediateSize() + m_cubeIndexBuffer.GetIntermediateSize();
+
+        UploadHeap uploadHeap;
+        uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
+
+        m_cubeVertexBuffer.UploadBuffer(cmdList, &uploadHeap, vertexBuffer, sizeof(XMFLOAT3) * 8);
+        m_cubeIndexBuffer.UploadBuffer(cmdList, &uploadHeap, indexBuffer, sizeof(uint32_t) * 36);
+
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
+    }
+
 
     // Init Generate Irradiance
+    if (false) // TODO
     {
-        m_rootSigGenIrr.SmartInit(device, 0, 1, 1, false, &sampler, 1);
-        m_shaderGenIrr.InitCompute(device, "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get());
+        m_rootSigGenIrr.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
+        m_shaderGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get());
 
         if (!m_texIrradianceIBL.IsInitialized())
-            m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", device, cubemap->GetDesc().Width, cubemap->GetDesc().Height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+            m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", d3d->GetDevice(), cubemap->GetDesc().Width, cubemap->GetDesc().Height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     }
 }
 
-void Skybox::RenderForward(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, const XMMATRIX& vMatrix, const XMMATRIX& pMatrix) const
+void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* vMatrix, const XMMATRIX* pMatrix) const
 {
     CbvMatrices matrices = {};
-    XMStoreFloat4x4(&matrices.V, vMatrix);
-    XMStoreFloat4x4(&matrices.P, pMatrix);
+    XMStoreFloat4x4(&matrices.V, *vMatrix);
+    XMStoreFloat4x4(&matrices.P, *pMatrix);
 
     cmdList->SetGraphicsRootSignature(m_rootSig.Get());
     cmdList->SetPipelineState(m_shaderForward.GetPSO());
@@ -87,7 +105,7 @@ void Skybox::RenderForward(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, H
     cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
-void Skybox::UpdateCubemap(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeap)
+void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
@@ -98,7 +116,7 @@ void Skybox::UpdateCubemap(ID3D12Device* device, D12Resource* cubemap, Heap* hea
     // Forward Render Material
     {
         m_dsForwardRender.Init(heap);
-        m_dsForwardRender.AddCBV(device, sizeof(CbvMatrices), uploadHeap, "CBV Matrices (Skybox)");
+        m_dsForwardRender.AddCBV(device, sizeof(CbvMatrices), uploadHeapCBV, "CBV Matrices (Skybox)");
         m_dsForwardRender.SetSRV(device, 0, cubemap, srvDesc);
     }
 

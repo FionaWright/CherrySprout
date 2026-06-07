@@ -47,21 +47,16 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, 2, true, &sampler, 1);
 
-    m_descriptorSet.Init         (heap, true);
-    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
-    m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
-
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex);
 }
 
-void PathTracer::LoadSceneData(D3D* d3d, Scene* scene)
+void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap)
 {
-    IRenderBackend::LoadSceneData(d3d, scene);
+    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap);
 
     {
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        // Note: Direct queue is required as you can't transition from D3D12_RESOURCE_STATE_INDEX_BUFFER in a compute queue. Buffer may be left in that state from previous rasterization passes
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
 
         ComPtr<ID3D12Device5> device5;
@@ -76,12 +71,19 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene)
         d3d->Flush();
     }
 
+    m_descriptorSet.Init         (heap, true);
+
+    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
+
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
+
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndex.size(), sizeof(uint32_t));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.Objects.size(), sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterials.size(), sizeof(Material));
-    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, nullptr, DXGI_FORMAT_R16G16B16A16_FLOAT);
+    //m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -96,6 +98,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
+    // TODO: Don't do this every frame, use dirty pattern
     D12Resource* envMap = nullptr;
     if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
         envMap = renderInfo.EnvironmentMap->GetEA();

@@ -12,6 +12,7 @@
 #include "System/HighResolutionClock.h"
 #include "Utils/D3DUtils.h"
 
+class EnvironmentMap;
 struct GreenHouseRenderInfo;
 
 interface IRenderBackend
@@ -19,7 +20,7 @@ interface IRenderBackend
     virtual ~IRenderBackend() = default;
 
     virtual void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) { m_isInitialized = true; }
-    virtual void LoadSceneData(D3D* d3d, Scene* scene) { m_sceneDataLoaded = true; }
+    virtual void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap) { m_currentlyLoadedScene = scene->Filepath; }
     virtual void Update(D3D* d3d, TimeArgs timeArgs) = 0;
     virtual void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) = 0;
     virtual void UnreserveData() = 0;
@@ -27,12 +28,11 @@ interface IRenderBackend
     virtual size_t TotalCbvRequiredSize() = 0;
 
     bool IsInitialized() const { return m_isInitialized; }
-    bool IsSceneDataLoaded() const { return m_sceneDataLoaded; }
-    void SetSceneDataLoaded(const bool state) { m_sceneDataLoaded = state; }
+    bool IsSceneDataLoaded(const std::string& filepath) const { return m_currentlyLoadedScene == filepath; }
 
 protected:
     bool m_isInitialized = false;
-    bool m_sceneDataLoaded = false;
+    std::string m_currentlyLoadedScene = "";
 };
 
 

@@ -46,6 +46,18 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", desc);
 }
 
+void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap)
+{
+    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap);
+
+    if (!envMap->GetCubemap()->IsInitialized())
+    {
+        envMap->InitCubemap(d3d, heap);
+        m_skybox.Init(d3d, envMap->GetCubemap());
+        m_skybox.UpdateDescriptorSet(d3d->GetDevice(), envMap->GetCubemap(), heap, uploadHeapCBV);
+    }
+}
+
 void Forward::Update(D3D* d3d, TimeArgs timeArgs)
 {
 }
@@ -75,7 +87,12 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     }
 
-    //const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(heap->GetGPUHandle(), heap->GetBindlessTexBase(), heap->GetIncrementSize());
+    heap->Bind(cmdList);
+
+    {
+        GPU_SCOPE(cmdList, "Skybox Pass");
+        m_skybox.RenderForward(cmdList, renderInfo.V, renderInfo.P);
+    }
 
     {
         D3D12_VERTEX_BUFFER_VIEW viewV;
@@ -90,16 +107,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         cmdList->IASetIndexBuffer(&viewI);
         cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        heap->Bind(cmdList);
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
-    }
-
-    {
-        //GPU_SCOPE(cmdList, "Skybox Pass");
-
-        //if (skybox)
-        //    skybox->RenderForward(d3d, cmdList, vMatrix, pMatrix);
     }
 
     CbvMatrices matrices = {};

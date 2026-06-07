@@ -10,6 +10,8 @@
 
 struct Scene
 {
+    std::string Filepath;
+
     SceneCPU CPU;
     SceneGPU GPU;
 };

@@ -17,6 +17,7 @@ typedef void (*LoadUSDFunc)(const char* usdPath, SceneCPU* scene);
 void SceneManager::LoadScene(const char* filepath)
 {
     m_scene = {};
+    m_scene.Filepath = filepath;
 
     const std::string fullpath = std::string(SOURCE_DIR) + "/" + filepath;
     const bool isUSD = std::filesystem::path(fullpath).extension().string().starts_with(".usd");

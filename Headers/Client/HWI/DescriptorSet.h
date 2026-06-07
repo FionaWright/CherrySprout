@@ -62,7 +62,7 @@ public:
 private:
     void setDescriptorTables(ID3D12GraphicsCommandList* cmdList, bool isCompute) const;
 
-    std::string m_name = "Unnamed Material";
+    std::string m_name = "Descriptor Set";
 
     Heap* m_pHeap = nullptr;
 
