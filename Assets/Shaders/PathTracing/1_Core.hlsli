@@ -10,6 +10,14 @@
 
 void Core(uint2 pixelCoord)
 {
+    if (gSettings.MaxFramesReached) // TODO: Make this cleaner?
+    {
+        float3 average = gTexAccumulation[pixelCoord].rgb;
+        average = pow(average, 1.0f/2.2f);
+        gTexOutput[pixelCoord].rgb = average;
+        return;
+    }
+
     float3 origin = gSettings.CameraPositionWorld;
 
     RayDesc ray;

@@ -34,10 +34,10 @@ enum class RenderBackendMode : uint32_t
 
 struct RenderBackendConfig
 {
-    XMFLOAT3 DirLightDirection = { 1, -1, 1 };
+    XMFLOAT3 DirLightDirection = { -1, -1, -1 };
     XMFLOAT3 DirLightColor = { 1, 1, 1 };
     float DirLightIntensity = 2.0f;
-    float DirLightCosTheta = 0.00465f;
+    float DirLightCosAngularRadius = 0.00465f;
 };
 
 struct GreenhouseConfig

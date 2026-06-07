@@ -15,7 +15,7 @@ struct CbvPathTracingSettings
     hlsl::uint RussianRouletteMinBounces;
     hlsl::uint SPP;
     hlsl::uint FrameIdx;
-    float pad;
+    hlsl::uint MaxFramesReached;
 
     float DofFocalDist;
     float DofLensRadius;

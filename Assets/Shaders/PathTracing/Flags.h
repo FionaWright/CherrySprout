@@ -98,7 +98,7 @@ static const char* s_debugFlagNames[DEBUG_COUNT] = {
 };
 
 static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(
-        eFeature_Accumulation | eFeature_EnvironmentMap | eFeature_EnvironmentMapEA | eFeature_NormalMaps
+        eFeature_Jitter | eFeature_Accumulation | eFeature_EnvironmentMap | eFeature_EnvironmentMapEA | eFeature_NormalMaps | eFeature_RussianRoulette
     );
 static constexpr PathTracerDebugFlags s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_NaNTests
