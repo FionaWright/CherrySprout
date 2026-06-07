@@ -7,7 +7,7 @@ Setting up the project to be able to begin new work
 - [x] Set up the app system
 - [x] Do a once over for all the files, refactoring stuff that it is bad
 - [x] Design and implement the new buffer abstractions
-- [ ] Camera controls (Do it better than last time)
+- [x] Camera controls (Do it better than last time)
 - [x] Design and implement new GUI
 - [x] OpenUSD linked (Make separate project/repo?)
 - [ ] Set up forward/deferred backends for debugging. Do in Greenhouse

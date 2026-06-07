@@ -75,6 +75,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
         const SceneConfig& sceneConfig = s_sceneConfigs.at(m_currentSceneIdx);
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str());
+        m_cameraController.GetCamera().SetPosition(sceneConfig.CameraPosition);
+        m_cameraController.GetCamera().SetRotation(sceneConfig.CameraPitchYaw);
 
         m_sceneDirty = false;
     }

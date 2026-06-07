@@ -58,17 +58,49 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath)
 
     pxr::UsdGeomXformCache xformCache(pxr::UsdTimeCode::Default());
 
-    // Assuming engine is Y-up and RH
+    std::unordered_set<pxr::SdfPath, pxr::SdfPath::Hash> prototypePaths;
 
     for (const pxr::UsdPrim& prim : stage->Traverse())
     {
+        if (!prim.IsA<pxr::UsdGeomPointInstancer>())
+            continue;
+
+        pxr::UsdGeomPointInstancer instancer(prim);
+        pxr::UsdRelationship relationship = instancer.GetPrototypesRel();
+        pxr::SdfPathVector targets;
+        relationship.GetTargets(&targets);
+
+        for (const auto& path : targets)
+        {
+            prototypePaths.insert(path);
+        }
+    }
+
+    const pxr::Usd_PrimFlagsPredicate predicate = pxr::UsdPrimIsActive && pxr::UsdPrimIsDefined && !pxr::UsdPrimIsAbstract;
+    for (const pxr::UsdPrim& prim : stage->Traverse(predicate))
+    {
+        if (prim.IsA<pxr::UsdShadeMaterial>())
+            continue;
+
+        bool isPrototype = false;
+        for (const auto& protoPath : prototypePaths)
+        {
+            if (prim.GetPath().HasPrefix(protoPath))
+            {
+                isPrototype = true;
+                break;
+            }
+        }
+        if (isPrototype)
+            continue;
+
         if (prim.IsA<pxr::UsdGeomPointInstancer>())
         {
-            // TODO
+            ExtractPointInstancer(&context, stage, prim, xformCache, matPathToIdxMap);
             continue;
         }
 
-        if (prim.IsInPrototype())
+        if (prim.IsInPrototype() || prim.IsInstanceProxy())
             continue;
 
         if (prim.IsA<pxr::UsdGeomMesh>())

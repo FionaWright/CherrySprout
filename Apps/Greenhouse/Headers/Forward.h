@@ -16,7 +16,7 @@
 struct Scene;
 struct TimeArgs;
 
-class Forward : public IRenderBackend
+class Forward final : public IRenderBackend
 {
 public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;

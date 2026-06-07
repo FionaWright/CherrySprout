@@ -23,6 +23,11 @@ XMMATRIX Camera::GetViewMatrix() const
     return XMMatrixLookToLH(positionVector, forward, up);
 }
 
+void Camera::SetRotation(const XMFLOAT2 pitchYaw)
+{
+    SetRotation(pitchYaw.x, pitchYaw.y);
+}
+
 void Camera::SetRotation(const float pitch, const float yaw)
 {
     m_yaw = yaw;

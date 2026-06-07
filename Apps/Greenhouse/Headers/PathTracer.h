@@ -17,7 +17,7 @@
 enum class DebugOutputIndex : hlsl::uint;
 struct TimeArgs;
 
-class PathTracer : public IRenderBackend
+class PathTracer final : public IRenderBackend
 {
 public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;

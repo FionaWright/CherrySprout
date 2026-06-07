@@ -45,6 +45,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     };
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true);
+    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", desc);
 }
 

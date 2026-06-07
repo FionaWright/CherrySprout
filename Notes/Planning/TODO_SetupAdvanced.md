@@ -7,7 +7,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Glass
 
 - [x] Hot reloading
-- [ ] Root constants support
+- [x] Root constants support
 - [ ] Run path-tracer without sync?
 - [x] Scene switching in GUI
 - [ ] Profiling (Tracy?)

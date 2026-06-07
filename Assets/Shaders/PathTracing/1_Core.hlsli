@@ -47,8 +47,8 @@ void Core(uint2 pixelCoord)
     float3 average = AccumulateAndFetch(pixelCoord, colorSum);
 
     // TODO: Better gamma correction?
-    //if (true)
-    //    average = pow(average, 1.0f/2.2f);
+    if (true)
+        average = pow(average, 1.0f/2.2f);
 
     gTexOutput[pixelCoord].rgb = average;
 }

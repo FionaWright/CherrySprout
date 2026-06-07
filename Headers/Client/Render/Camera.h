@@ -10,6 +10,7 @@ class Camera
 public:
     void Init(XMFLOAT3 pos, float pitch, float yaw);
     XMMATRIX GetViewMatrix() const;
+    void SetRotation(XMFLOAT2 pitchYaw);
     void SetRotation(float pitch, float yaw);
     void Rotate(float deltaYaw, float deltaPitch);
     void RotateYaw(float radians);

@@ -29,6 +29,8 @@
 #include "Importer.h"
 #include "SceneLoaderUSD.h"
 
+#define RH_TO_LH 1
+
 namespace SceneLoaderUSD
 {
     struct VertexHasher
@@ -57,7 +59,7 @@ namespace SceneLoaderUSD
         }
     };
 
-    inline void ExtractGeometry(const pxr::UsdPrim& prim, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
+    inline void ExtractGeometry(const pxr::UsdPrim& prim, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, const bool flip)
     {
         pxr::UsdGeomMesh mesh(prim);
         pxr::VtArray<pxr::GfVec3f> points;
@@ -96,12 +98,10 @@ namespace SceneLoaderUSD
             pxr::GfVec2f UV;
         };
 
-        // Ignoring flipping for now
-
         std::vector<pxr::GfVec3d> sumNormals(points.size(), pxr::GfVec3d(0,0,0));
         std::vector<bool> hasExplicitNormals(points.size(), false);
 
-        const size_t maxVertexCount = faceVertexCounts.size() * 4; // Assuming all faces are quads
+        const size_t maxVertexCount = faceVertexIndices.size(); // Assuming all faces are quads
         std::vector<PxrVertex> pxrVertices(maxVertexCount);
 
         const int normalsCount = static_cast<int>(normals.size());
@@ -161,6 +161,9 @@ namespace SceneLoaderUSD
             pxr::GfVec3f e2 = pxrVertices[v2].Position - pxrVertices[v0].Position;
             pxr::GfVec3d faceN = pxr::GfCross(e1, e2);
 
+            if (!flip)
+                faceN = -faceN;
+
             for (int v = 0; v < verticesInFace; ++v)
             {
                 const int pvIdx = currVertexIndex + v;
@@ -185,8 +188,8 @@ namespace SceneLoaderUSD
 
             for (int v = 1; v + 1 < verticesInFace; ++v)
             {
-                int v1 = v;
-                int v2 = v + 1;
+                int v1 = flip ? v+1 : v;
+                int v2 = flip ? v : v + 1;
                 for (int vi : { 0, v1, v2 })
                 {
                     const int pvIdx = currVertexIndex + vi;
@@ -210,6 +213,11 @@ namespace SceneLoaderUSD
                     N.Normalize();
 
                     vertex.Normal = { (float)N[0], (float)N[1], (float)N[2]};
+
+#if RH_TO_LH
+                    vertex.Position.z = -vertex.Position.z;
+                    vertex.Normal.z = -vertex.Normal.z;
+#endif
 
                     auto it = vertexLookup.find(vertex);
 
@@ -276,12 +284,31 @@ namespace SceneLoaderUSD
 
     inline ImporterObject ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const std::unordered_map<std::string, size_t>& matPathToIdxMap)
     {
-        ImporterObject obj;
-        ExtractGeometry(prim, obj.Vertices, obj.Indices);
-
         pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
 
-        // TODO: Guessing
+        double det;
+        const pxr::GfMatrix3d rotation = xform.ExtractRotationMatrix();
+        rotation.GetInverse(&det);
+        const bool flipFromTransform = det < 0;
+
+        pxr::TfToken orientationToken;
+        pxr::UsdGeomMesh(prim).GetOrientationAttr().Get(&orientationToken);
+        const bool flipFromOrientation = orientationToken == pxr::UsdGeomTokens->leftHanded;
+
+        const bool flip = !(flipFromOrientation ^ flipFromTransform); // Why do I need to negate?
+
+        ImporterObject obj;
+        ExtractGeometry(prim, obj.Vertices, obj.Indices, flip);
+
+#if RH_TO_LH
+        const pxr::GfMatrix4d flipXform(
+            1, 0,  0, 0,
+            0, 1,  0, 0,
+            0, 0, -1, 0,
+            0, 0,  0, 1);
+        xform = flipXform * xform * flipXform;
+#endif
+
         for (int r = 0; r < 4; r++)
             for (int c = 0; c < 4; c++)
             {
@@ -294,6 +321,90 @@ namespace SceneLoaderUSD
         obj.Name = prim.GetName().GetString();
 
         return obj;
+    }
+
+    inline void ExtractPointInstancer(ImporterContext* ctx, const pxr::UsdStageRefPtr& stage, const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const std::unordered_map<std::string, size_t>& matPathToIdxMap)
+    {
+        pxr::UsdGeomPointInstancer instancer(prim);
+
+        pxr::SdfPathVector protoPaths;
+        instancer.GetPrototypesRel().GetTargets(&protoPaths);
+
+        pxr::VtArray<pxr::GfVec3f> positions;
+        instancer.GetPositionsAttr().Get(&positions);
+
+        pxr::VtArray<pxr::GfQuatf> orientations;
+        instancer.GetOrientationsAttr().Get(&orientations);
+
+        pxr::VtArray<pxr::GfVec3f> scales;
+        instancer.GetScalesAttr().Get(&scales);
+
+        pxr::VtArray<int> indices;
+        instancer.GetProtoIndicesAttr().Get(&indices);
+
+        std::vector<std::vector<ImporterObject>> protoObjects;
+        for (const auto& path : protoPaths)
+        {
+            pxr::UsdPrim protoPrim = stage->GetPrimAtPath(path);
+
+            std::vector<ImporterObject> objects;
+            for (const auto& childPrim : pxr::UsdPrimRange(protoPrim))
+            {
+                if (!childPrim.IsA<pxr::UsdGeomMesh>())
+                    continue;
+
+                ImporterObject obj = ExtractMesh(childPrim, xformCache, matPathToIdxMap);
+                objects.emplace_back(std::move(obj));
+            }
+
+            protoObjects.emplace_back(std::move(objects));
+        }
+
+        pxr::GfMatrix4d instancerXForm = xformCache.GetLocalToWorldTransform(prim);
+
+        const size_t instanceCount = positions.size();
+        for (size_t i = 0; i < instanceCount; i++)
+        {
+            const int protoIdx = indices[i];
+            if (protoIdx < 0 || protoIdx >= protoObjects.size())
+                continue;
+
+            pxr::GfMatrix4d T(1), R(1), S(1);
+            T.SetTranslate(pxr::GfVec3d(positions[i]));
+
+            if (i < orientations.size())
+                R.SetRotate(pxr::GfMatrix3d(orientations[i]));
+
+            if (i < scales.size())
+                S.SetScale(pxr::GfVec3d(scales[i]));
+
+            pxr::GfMatrix4d instanceXForm = S * R * T;
+            instanceXForm = instanceXForm * instancerXForm;
+
+#if RH_TO_LH
+            const pxr::GfMatrix4d flip(
+                1, 0,  0, 0,
+                0, 1,  0, 0,
+                0, 0, -1, 0,
+                0, 0,  0, 1);
+            instanceXForm = flip * instanceXForm * flip;
+#endif
+
+            for (const auto& obj : protoObjects[protoIdx])
+            {
+                ImporterObject instancedObj = obj;
+
+                for (int r = 0; r < 4; r++)
+                    for (int c = 0; c < 4; c++)
+                    {
+                        const int rc = r * 4 + c;
+                        instancedObj.M[rc] = static_cast<float>(instanceXForm[r][c]);
+                    }
+
+                ctx->Objects.emplace_back(std::move(instancedObj));
+            }
+        }
+
     }
 }
 
