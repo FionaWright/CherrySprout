@@ -29,12 +29,12 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
     XMFLOAT3 right, up, forward;
     m_camera.GetBasis(right, up, forward);
 
-    const float speedPerFrame = m_speed * deltaTime_ms;
+    const float speedPerFramePan = m_speedPan * deltaTime_ms;
 
     if (Input::IsMouseMiddle() && !mouseOverGUI)
     {
         XMFLOAT2 deltaMouse = Input::GetMousePosDelta();
-        const float panSpeed = 3.5f * speedPerFrame;
+        const float panSpeed = speedPerFramePan;
         deltaMouse.x *= -panSpeed;
         deltaMouse.y *= panSpeed;
 
@@ -52,15 +52,17 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
 
     float forwardScalar = 0.0f;
     if (!mouseOverGUI)
-        forwardScalar = Input::GetMouseWheelDelta() * 230 * speedPerFrame;
+        forwardScalar = Input::GetMouseWheelDelta() * m_speedScroll * deltaTime_ms;
+
+    const float speedPerFrameWASD = m_speedWASD * deltaTime_ms;
 
     if (Input::IsKey(KeyCode::W))
     {
-        forwardScalar += speedPerFrame;
+        forwardScalar += speedPerFrameWASD;
     }
     else if (Input::IsKey(KeyCode::S))
     {
-        forwardScalar -= speedPerFrame;
+        forwardScalar -= speedPerFrameWASD;
     }
 
     const XMFLOAT3 forwardTranslation = XMFLOAT3(forward.x * forwardScalar, forward.y * forwardScalar, forward.z * forwardScalar);
@@ -69,11 +71,11 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
     float rightScalar = 0;
     if (Input::IsKey(KeyCode::A))
     {
-        rightScalar -= speedPerFrame;
+        rightScalar -= speedPerFrameWASD;
     }
     else if (Input::IsKey(KeyCode::D))
     {
-        rightScalar += speedPerFrame;
+        rightScalar += speedPerFrameWASD;
     }
 
     const XMFLOAT3 rightTranslation = XMFLOAT3(right.x * rightScalar, right.y * rightScalar, right.z * rightScalar);
@@ -82,11 +84,11 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
     float upScalar = 0;
     if (Input::IsKey(KeyCode::E))
     {
-        upScalar += speedPerFrame;
+        upScalar += speedPerFrameWASD;
     }
     else if (Input::IsKey(KeyCode::Q))
     {
-        upScalar -= speedPerFrame;
+        upScalar -= speedPerFrameWASD;
     }
 
     const XMFLOAT3 upTranslation = XMFLOAT3(up.x * upScalar, up.y * upScalar, up.z * upScalar);

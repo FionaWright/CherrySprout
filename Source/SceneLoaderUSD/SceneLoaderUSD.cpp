@@ -8,7 +8,7 @@
 #include "Importer.h"
 #include "Processor.h"
 
-void LoadUSD(const char* usdPath, SceneCPU* scene)
+void LoadUSD(const char* usdPath, float sceneScale, SceneCPU* scene)
 {
     std::cout << "Scene Loader USD: " << usdPath << std::endl;
 
@@ -24,6 +24,6 @@ void LoadUSD(const char* usdPath, SceneCPU* scene)
         return;
     }
 
-    const auto importerContext = SceneLoaderUSD::Import(usdPath);
+    const auto importerContext = SceneLoaderUSD::Import(usdPath, sceneScale);
     SceneLoaderUSD::Process(importerContext, scene);
 }

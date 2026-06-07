@@ -19,7 +19,9 @@ public:
 
 private:
     Camera m_camera;
-    float m_speed = 22.5f;
+    float m_speedScroll = 500.0f;
+    float m_speedPan = 8.0f;
+    float m_speedWASD = 1.0f;
     float m_rotationSpeed = 10.0f;
 };
 

@@ -59,7 +59,8 @@ namespace SceneLoaderUSD
         }
     };
 
-    inline void ExtractGeometry(const pxr::UsdPrim& prim, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, const bool flip)
+    inline void ExtractGeometry(const pxr::UsdPrim& prim, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+                                const bool flip)
     {
         pxr::UsdGeomMesh mesh(prim);
         pxr::VtArray<pxr::GfVec3f> points;
@@ -98,7 +99,7 @@ namespace SceneLoaderUSD
             pxr::GfVec2f UV;
         };
 
-        std::vector<pxr::GfVec3d> sumNormals(points.size(), pxr::GfVec3d(0,0,0));
+        std::vector<pxr::GfVec3d> sumNormals(points.size(), pxr::GfVec3d(0, 0, 0));
         std::vector<bool> hasExplicitNormals(points.size(), false);
 
         const size_t maxVertexCount = faceVertexIndices.size(); // Assuming all faces are quads
@@ -143,7 +144,8 @@ namespace SceneLoaderUSD
                         hasExplicitNormals.at(ptIdx) = true;
                     }
                 }
-                else if (!normals.empty() && (normalsInterp == pxr::UsdGeomTokens->vertex || normalsInterp == pxr::UsdGeomTokens->varying))
+                else if (!normals.empty() && (normalsInterp == pxr::UsdGeomTokens->vertex || normalsInterp ==
+                    pxr::UsdGeomTokens->varying))
                 {
                     if (ptIdx < normalsCount)
                     {
@@ -188,9 +190,9 @@ namespace SceneLoaderUSD
 
             for (int v = 1; v + 1 < verticesInFace; ++v)
             {
-                int v1 = flip ? v+1 : v;
+                int v1 = flip ? v + 1 : v;
                 int v2 = flip ? v : v + 1;
-                for (int vi : { 0, v1, v2 })
+                for (int vi : {0, v1, v2})
                 {
                     const int pvIdx = currVertexIndex + vi;
                     const int ptIdx = faceVertexIndices[pvIdx];
@@ -212,7 +214,7 @@ namespace SceneLoaderUSD
                     }
                     N.Normalize();
 
-                    vertex.Normal = { (float)N[0], (float)N[1], (float)N[2]};
+                    vertex.Normal = {(float)N[0], (float)N[1], (float)N[2]};
 
 #if RH_TO_LH
                     vertex.Position.z = -vertex.Position.z;
@@ -228,7 +230,7 @@ namespace SceneLoaderUSD
                     }
 
                     const uint32_t newIndex =
-                            static_cast<uint32_t>(vertices.size());
+                        static_cast<uint32_t>(vertices.size());
 
                     vertices.emplace_back(vertex);
                     vertexLookup.emplace(vertex, newIndex);
@@ -241,7 +243,8 @@ namespace SceneLoaderUSD
         }
     }
 
-    static bool TryExtractBoundMaterialIdx(const pxr::UsdPrim& prim, const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx)
+    static bool TryExtractBoundMaterialIdx(const pxr::UsdPrim& prim,
+                                           const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx)
     {
         pxr::UsdShadeMaterial boundMat;
 
@@ -282,7 +285,9 @@ namespace SceneLoaderUSD
         return false;
     }
 
-    inline ImporterObject ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const std::unordered_map<std::string, size_t>& matPathToIdxMap)
+    inline ImporterObject ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
+                                      const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const pxr::GfMatrix4d& globalXForm)
     {
         pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
 
@@ -302,12 +307,14 @@ namespace SceneLoaderUSD
 
 #if RH_TO_LH
         const pxr::GfMatrix4d flipXform(
-            1, 0,  0, 0,
-            0, 1,  0, 0,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
             0, 0, -1, 0,
-            0, 0,  0, 1);
+            0, 0, 0, 1);
         xform = flipXform * xform * flipXform;
 #endif
+
+        xform = globalXForm * xform;
 
         for (int r = 0; r < 4; r++)
             for (int c = 0; c < 4; c++)
@@ -323,7 +330,10 @@ namespace SceneLoaderUSD
         return obj;
     }
 
-    inline void ExtractPointInstancer(ImporterContext* ctx, const pxr::UsdStageRefPtr& stage, const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const std::unordered_map<std::string, size_t>& matPathToIdxMap)
+    inline void ExtractPointInstancer(ImporterContext* ctx, const pxr::UsdStageRefPtr& stage, const pxr::UsdPrim& prim,
+                                      pxr::UsdGeomXformCache& xformCache,
+                                      const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const pxr::GfMatrix4d& globalXForm)
     {
         pxr::UsdGeomPointInstancer instancer(prim);
 
@@ -353,7 +363,7 @@ namespace SceneLoaderUSD
                 if (!childPrim.IsA<pxr::UsdGeomMesh>())
                     continue;
 
-                ImporterObject obj = ExtractMesh(childPrim, xformCache, matPathToIdxMap);
+                ImporterObject obj = ExtractMesh(childPrim, xformCache, matPathToIdxMap, globalXForm);
                 objects.emplace_back(std::move(obj));
             }
 
@@ -383,12 +393,14 @@ namespace SceneLoaderUSD
 
 #if RH_TO_LH
             const pxr::GfMatrix4d flip(
-                1, 0,  0, 0,
-                0, 1,  0, 0,
+                1, 0, 0, 0,
+                0, 1, 0, 0,
                 0, 0, -1, 0,
-                0, 0,  0, 1);
+                0, 0, 0, 1);
             instanceXForm = flip * instanceXForm * flip;
 #endif
+
+            instanceXForm = globalXForm * instanceXForm;
 
             for (const auto& obj : protoObjects[protoIdx])
             {
@@ -404,7 +416,6 @@ namespace SceneLoaderUSD
                 ctx->Objects.emplace_back(std::move(instancedObj));
             }
         }
-
     }
 }
 

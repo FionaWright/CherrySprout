@@ -32,7 +32,7 @@ namespace SceneLoaderUSD
         std::vector<const char*> TextureFilePaths;
     };
 
-    ImporterContext Import(const char* usdPath);
+    ImporterContext Import(const char* usdPath, float sceneScale);
 }
 
 

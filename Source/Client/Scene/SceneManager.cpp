@@ -12,9 +12,9 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-typedef void (*LoadUSDFunc)(const char* usdPath, SceneCPU* scene);
+typedef void (*LoadUSDFunc)(const char* usdPath, float sceneScale, SceneCPU* scene);
 
-void SceneManager::LoadScene(const char* filepath)
+void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 {
     m_scene = {};
     m_scene.Filepath = filepath;
@@ -42,7 +42,7 @@ void SceneManager::LoadScene(const char* filepath)
         return;
     }
 
-    LoadUSD(fullpath.c_str(), &m_scene.CPU);
+    LoadUSD(fullpath.c_str(), sceneScale, &m_scene.CPU);
 
     FreeLibrary(dll);
 

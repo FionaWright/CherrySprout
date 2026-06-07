@@ -35,7 +35,7 @@
 
 using namespace SceneLoaderUSD;
 
-ImporterContext SceneLoaderUSD::Import(const char* usdPath)
+ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 {
     std::cout << "Importing USD: " << usdPath << std::endl;
 
@@ -76,6 +76,9 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath)
         }
     }
 
+    pxr::GfMatrix4d globalXform;
+    globalXform.SetScale(sceneScale);
+
     const pxr::Usd_PrimFlagsPredicate predicate = pxr::UsdPrimIsActive && pxr::UsdPrimIsDefined && !pxr::UsdPrimIsAbstract;
     for (const pxr::UsdPrim& prim : stage->Traverse(predicate))
     {
@@ -96,7 +99,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath)
 
         if (prim.IsA<pxr::UsdGeomPointInstancer>())
         {
-            ExtractPointInstancer(&context, stage, prim, xformCache, matPathToIdxMap);
+            ExtractPointInstancer(&context, stage, prim, xformCache, matPathToIdxMap, globalXform);
             continue;
         }
 
@@ -105,7 +108,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath)
 
         if (prim.IsA<pxr::UsdGeomMesh>())
         {
-            ImporterObject obj = ExtractMesh(prim, xformCache, matPathToIdxMap);
+            ImporterObject obj = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
             context.Objects.emplace_back(std::move(obj));
             continue;
         }

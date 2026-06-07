@@ -14,7 +14,7 @@ class D3D;
 class SceneManager
 {
 public:
-    void LoadScene(const char* filepath);
+    void LoadScene(const char* filepath, float sceneScale);
     void UploadScene(D3D* d3d);
     void AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const;
 
