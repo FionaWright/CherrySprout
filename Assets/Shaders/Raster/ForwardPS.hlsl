@@ -16,8 +16,8 @@ struct VsOut
 //TextureCube gIrradiance : register(t2);
 //Texture2D<float4> gSceneTextures[] : register(t3);
 
-ConstantBuffer<CbvForward> gForward : register(b1);
-ConstantBuffer<Material> gMaterial : register(b2);
+ConstantBuffer<CbvForward> gForward : register(b2);
+ConstantBuffer<Material> gMaterial : register(b3);
 
 SamplerState gSampler : register(s0);
 

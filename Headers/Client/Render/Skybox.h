@@ -26,7 +26,7 @@ public:
 
     static size_t TotalCbvRequiredSize()
     {
-        return  Align(sizeof(CbvMatrices), 256);
+        return  Align(sizeof(CbvMatrices_MVP), 256);
     }
 
 private:

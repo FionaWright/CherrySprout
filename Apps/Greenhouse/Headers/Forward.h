@@ -27,7 +27,7 @@ public:
 
     size_t TotalCbvRequiredSize() override
     {
-        return  Align(sizeof(CbvMatrices), 256) +
+        return  Align(sizeof(CbvMatrices_VP), 256) +
                 Align(sizeof(CbvForward), 256) +
                 Align(sizeof(Material), 256);
     }
@@ -37,6 +37,7 @@ private:
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
     Skybox m_skybox;
+    RootConstants m_rootConstants;
 };
 
 

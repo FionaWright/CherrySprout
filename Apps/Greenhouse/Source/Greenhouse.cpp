@@ -21,6 +21,7 @@ void Greenhouse::Init(D3D* d3d)
 
     m_currentSceneIdx = 0;
     Config::SetUIntFromArg(&m_currentSceneIdx, "--scene");
+    Config::SetUIntFromArg(reinterpret_cast<uint32_t*>(&m_config.RenderBackend), "--backend");
 
     size_t maxCbvRequiredSize = 0;
     {

@@ -17,7 +17,7 @@ DescriptorSet::~DescriptorSet()
     CherryPrint("DescriptorSet Destroyed!");
 }
 
-void DescriptorSet::Init(Heap* heap, bool hasBindlessParam)
+void DescriptorSet::Init(Heap* heap, const bool hasBindlessParam, const bool hasRootConstantsParam)
 {
     m_pHeap = heap;
 
@@ -26,6 +26,7 @@ void DescriptorSet::Init(Heap* heap, bool hasBindlessParam)
     m_descriptorIncSize = m_pHeap->GetIncrementSize();
 
     m_hasBindlessParam = hasBindlessParam;
+    m_hasRootConstantsParam = hasRootConstantsParam;
 }
 
 void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* uploadHeap, const char* debugName)
@@ -51,12 +52,12 @@ void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* upload
     m_cbvs.emplace_back(cbv);
 }
 
-void DescriptorSet::UpdateCBV(const uint32_t regIdx, const void* data) const
+void DescriptorSet::UpdateCBV(const uint32_t idx, const void* data) const
 {
-    if (regIdx >= m_cbvs.size())
+    if (idx >= m_cbvs.size())
         throw std::exception("You made a mistake :(");
 
-    const CBV& cbv = m_cbvs[regIdx];
+    const CBV& cbv = m_cbvs[idx];
     std::memcpy(cbv.MappedGpuPtr, data, cbv.Size);
 }
 
@@ -212,6 +213,9 @@ void DescriptorSet::SetDescriptorTables_Compute(ID3D12GraphicsCommandList* cmdLi
 void DescriptorSet::setDescriptorTables(ID3D12GraphicsCommandList* cmdList, const bool isCompute) const
 {
     int paramIdx = 0;
+
+    if (m_hasRootConstantsParam)
+        paramIdx++;
 
     if (m_cbvs.size() > 0)
     {

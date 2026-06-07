@@ -83,7 +83,7 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
 
 void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* vMatrix, const XMMATRIX* pMatrix) const
 {
-    CbvMatrices matrices = {};
+    CbvMatrices_MVP matrices = {};
     XMStoreFloat4x4(&matrices.V, *vMatrix);
     XMStoreFloat4x4(&matrices.P, *pMatrix);
 
@@ -116,7 +116,7 @@ void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Hea
     // Forward Render Material
     {
         m_dsForwardRender.Init(heap);
-        m_dsForwardRender.AddCBV(device, sizeof(CbvMatrices), uploadHeapCBV, "CBV Matrices (Skybox)");
+        m_dsForwardRender.AddCBV(device, sizeof(CbvMatrices_MVP), uploadHeapCBV, "CBV Matrices (Skybox)");
         m_dsForwardRender.SetSRV(device, 0, cubemap, srvDesc);
     }
 

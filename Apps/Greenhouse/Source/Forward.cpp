@@ -19,10 +19,12 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 3, 0, 0, false, &sampler, 1);
+    m_rootConstants.Init(0, 0, sizeof(CbvMatrices_M));
 
-    m_descriptorSet.Init(heap, false);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices), uploadHeapCBV);
+    m_rootSig.SmartInit(d3d->GetDevice(), 3, 0, 0, false, &sampler, 1, &m_rootConstants);
+
+    m_descriptorSet.Init(heap, false, true);
+    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), uploadHeapCBV);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), uploadHeapCBV);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(Material), uploadHeapCBV);
 
@@ -111,9 +113,12 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         cmdList->SetPipelineState(m_pipeline.GetPSO());
     }
 
-    CbvMatrices matrices = {};
-    XMStoreFloat4x4(&matrices.V, *renderInfo.V);
-    XMStoreFloat4x4(&matrices.P, *renderInfo.P);
+    CbvMatrices_VP matricesVP = {};
+    XMStoreFloat4x4(&matricesVP.V, *renderInfo.V);
+    XMStoreFloat4x4(&matricesVP.P, *renderInfo.P);
+    m_descriptorSet.UpdateCBV(0, &matricesVP);
+
+    CbvMatrices_M matricesM = {};
 
     for (int i = 0; i < scene->CPU.Objects.size(); ++i)
     {
@@ -128,9 +133,9 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
             obj.M[12], obj.M[13], obj.M[14], obj.M[15]
             );
 
-        XMStoreFloat4x4(&matrices.M, M);
-        XMStoreFloat4x4(&matrices.MTI, XMMatrixTranspose(XMMatrixInverse(nullptr, M)));
-        m_descriptorSet.UpdateCBV(0, &matrices);
+        XMStoreFloat4x4(&matricesM.M, M);
+        XMStoreFloat4x4(&matricesM.MTI, XMMatrixTranspose(XMMatrixInverse(nullptr, M)));
+        m_rootConstants.Bind_Graphics(cmdList, &matricesM);
 
         m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
         //cmdList->SetGraphicsRootDescriptorTable(2, bindlessHandle);

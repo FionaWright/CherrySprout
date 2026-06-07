@@ -11,7 +11,7 @@ struct VsOut
     float3 ViewDirection : TEXCOORD0;
 };
 
-ConstantBuffer<CbvMatrices> gMatrices : register(b0);
+ConstantBuffer<CbvMatrices_MVP> gMatrices : register(b0);
 
 VsOut VSMain(VsIn input)
 {

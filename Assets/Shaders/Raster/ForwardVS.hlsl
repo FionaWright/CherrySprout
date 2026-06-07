@@ -14,19 +14,20 @@ struct VsOut
     float3 normal : TEXCOORD1;
 };
 
-ConstantBuffer<CbvMatrices> gMatrices : register(b0);
+ConstantBuffer<CbvMatrices_M> gMatricesM : register(b0); // Push Constants
+ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1);
 
 VsOut VSMain(VsIn input)
 {
     VsOut output;
 
-    output.normal = normalize(mul((float3x3)gMatrices.MTI, (float3)input.normal));
+    output.normal = normalize(mul((float3x3)gMatricesM.MTI, (float3)input.normal));
     output.uv = input.uv;
 
     float4 pos = float4(input.position, 1.0f);
-    float4 worldPos = mul(gMatrices.M, pos);
-    pos = mul(gMatrices.V, worldPos);
-    output.position = mul(gMatrices.P, pos);
+    float4 worldPos = mul(gMatricesM.M, pos);
+    pos = mul(gMatricesVP.V, worldPos);
+    output.position = mul(gMatricesVP.P, pos);
 
     //float4 pos = float4(input.position, 1.0f);
     //float4 worldPos = mul(pos, gMatrices.M);
