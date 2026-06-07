@@ -9,72 +9,58 @@
 #include "System/Config.h"
 #include "System/Input.h"
 
-bool CameraController::UpdateCamera(double deltaTime_ms)
+bool CameraController::UpdateCamera(const double deltaTime_ms)
 {
     const bool mouseOverGUI = Input::GetMousePos().x < Config::GetSystem().WindowAppGuiWidth || Input::GetMousePos().x > Config::GetSystem().WindowAppGuiWidth + Config::GetSystem().RtvWidth;
     const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
 
+    bool changed = false;
+
     if (Input::IsMouseRight() && !mouseOverGUI)
     {
-        double pitch = m_camera.GetPitch();
-        double yaw = m_camera.GetYaw();
-
         XMFLOAT2 deltaMouse = Input::GetMousePosDelta();
-        deltaMouse.x *= m_rotationSpeed;
-        deltaMouse.y *= m_rotationSpeed;
+        deltaMouse.x *= m_rotationSpeed * deltaTime_ms;
+        deltaMouse.y *= m_rotationSpeed * deltaTime_ms;
+        m_camera.Rotate(deltaMouse.x, deltaMouse.y);
 
-        pitch += deltaMouse.y;
-        yaw += deltaMouse.x;
-        m_camera.SetPitch(pitch);
-        m_camera.SetYaw(yaw);
-
-        XMVECTOR rot = XMQuaternionRotationRollPitchYaw(pitch, yaw, 0);
-        rot = XMQuaternionNormalize(rot);
-
-        const XMVECTOR direction = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rot);
-        m_camera.SetForward(direction);
-
-        const XMVECTOR up = XMVector3Rotate(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rot);
-        m_camera.SetUp(up);
-
-        const XMVECTOR right = XMVector3Rotate(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), rot);
-        m_camera.SetRight(right);
-        return deltaMouse.x != 0 || deltaMouse.y != 0;
+        changed = deltaMouse.x != 0 || deltaMouse.y != 0;
     }
 
-    const XMFLOAT3 up = m_camera.GetUp();
-    const XMFLOAT3 right = m_camera.GetRight();
+    XMFLOAT3 right, up, forward;
+    m_camera.GetBasis(right, up, forward);
+
+    const float speedPerFrame = m_speed * deltaTime_ms;
 
     if (Input::IsMouseMiddle() && !mouseOverGUI)
     {
         XMFLOAT2 deltaMouse = Input::GetMousePosDelta();
-        const float panSpeed = 3.5f * m_speed;
-        deltaMouse.x *= panSpeed;
-        deltaMouse.y *= -panSpeed;
+        const float panSpeed = 3.5f * speedPerFrame;
+        deltaMouse.x *= -panSpeed;
+        deltaMouse.y *= panSpeed;
 
-        const XMFLOAT3 upTranslation = XMFLOAT3(up.x * -deltaMouse.y, up.y * -deltaMouse.y, up.z * -deltaMouse.y);
+        const XMFLOAT3 upTranslation = XMFLOAT3(up.x * deltaMouse.y, up.y * deltaMouse.y, up.z * deltaMouse.y);
         m_camera.AddPosition(upTranslation);
 
         const XMFLOAT3 rightTranslation = XMFLOAT3(right.x * deltaMouse.x, right.y * deltaMouse.x, right.z * deltaMouse.x);
         m_camera.AddPosition(rightTranslation);
-        return deltaMouse.x != 0 || deltaMouse.y != 0;
+
+        changed =  deltaMouse.x != 0 || deltaMouse.y != 0;
     }
 
     if (inTextField)
-        return false;
-
-    const XMFLOAT3 forward = m_camera.GetForward();
+        return changed;
 
     float forwardScalar = 0.0f;
     if (!mouseOverGUI)
-        forwardScalar = Input::GetMouseWheelDelta() * 230 * m_speed;
+        forwardScalar = Input::GetMouseWheelDelta() * 230 * speedPerFrame;
+
     if (Input::IsKey(KeyCode::W))
     {
-        forwardScalar += m_speed * deltaTime_ms;
+        forwardScalar += speedPerFrame;
     }
     else if (Input::IsKey(KeyCode::S))
     {
-        forwardScalar -= m_speed * deltaTime_ms;
+        forwardScalar -= speedPerFrame;
     }
 
     const XMFLOAT3 forwardTranslation = XMFLOAT3(forward.x * forwardScalar, forward.y * forwardScalar, forward.z * forwardScalar);
@@ -83,11 +69,11 @@ bool CameraController::UpdateCamera(double deltaTime_ms)
     float rightScalar = 0;
     if (Input::IsKey(KeyCode::A))
     {
-        rightScalar += m_speed * deltaTime_ms;
+        rightScalar -= speedPerFrame;
     }
     else if (Input::IsKey(KeyCode::D))
     {
-        rightScalar -= m_speed * deltaTime_ms;
+        rightScalar += speedPerFrame;
     }
 
     const XMFLOAT3 rightTranslation = XMFLOAT3(right.x * rightScalar, right.y * rightScalar, right.z * rightScalar);
@@ -96,15 +82,15 @@ bool CameraController::UpdateCamera(double deltaTime_ms)
     float upScalar = 0;
     if (Input::IsKey(KeyCode::E))
     {
-        upScalar += m_speed * deltaTime_ms;
+        upScalar += speedPerFrame;
     }
     else if (Input::IsKey(KeyCode::Q))
     {
-        upScalar -= m_speed * deltaTime_ms;
+        upScalar -= speedPerFrame;
     }
 
     const XMFLOAT3 upTranslation = XMFLOAT3(up.x * upScalar, up.y * upScalar, up.z * upScalar);
     m_camera.AddPosition(upTranslation);
 
-    return forwardScalar != 0 || rightScalar != 0 || upScalar != 0;
+    return changed || forwardScalar != 0 || rightScalar != 0 || upScalar != 0;
 }

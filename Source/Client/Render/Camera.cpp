@@ -8,45 +8,68 @@
 
 void Camera::Init(const XMFLOAT3 pos, const float pitch, const float yaw)
 {
-    m_pitch = pitch;
-    m_yaw = yaw;
-
-    RecomputeUpRightForward();
-
     m_pos = pos;
+
+    SetRotation(pitch, yaw);
 }
 
 XMMATRIX Camera::GetViewMatrix() const
 {
-    const XMVECTOR up = XMLoadFloat3(&m_up);
-    const XMVECTOR dir = XMLoadFloat3(&m_forward);
+    const XMVECTOR forward = XMVector3Rotate(XMVectorSet(0,0,1,0), m_orientation);
+    const XMVECTOR up = XMVector3Rotate(XMVectorSet(0,1,0,0), m_orientation);
 
     const XMVECTOR positionVector = XMLoadFloat3(&m_pos);
 
-    return XMMatrixLookToLH(positionVector, dir, up);
+    return XMMatrixLookToLH(positionVector, forward, up);
 }
 
-void Camera::RecomputePitchYaw()
+void Camera::SetRotation(const float pitch, const float yaw)
 {
-    m_yaw = atan2(m_forward.x, m_forward.z); // rotate around Y
-    m_pitch = atan2(-m_forward.y, sqrt(m_forward.x * m_forward.x + m_forward.z * m_forward.z)); // rotate around X
+    m_yaw = yaw;
+    m_pitch = pitch;
+
+    const XMVECTOR yawQuat =
+        XMQuaternionRotationAxis(
+            XMVectorSet(0.f, 1.f, 0.f, 0.f),
+            yaw);
+
+    const XMVECTOR pitchQuat =
+        XMQuaternionRotationAxis(
+            XMVectorSet(1.f, 0.f, 0.f, 0.f),
+            pitch);
+
+    m_orientation =
+        XMQuaternionNormalize(
+            XMQuaternionMultiply(
+                pitchQuat,
+                yawQuat));
 }
 
-void Camera::RecomputeUpRightForward()
+void Camera::Rotate(const float deltaYaw, const float deltaPitch)
 {
-    // horizontal radius
-    const float r = cosf(m_pitch);
+    m_yaw += deltaYaw;
+    m_pitch += deltaPitch;
+    SetRotation(m_pitch, m_yaw);
+}
 
-    m_forward = XMFLOAT3(
-        sinf(m_yaw) * r,   // x
-        -sinf(m_pitch),    // y  <-- negative to match RecomputePitchYaw()
-        cosf(m_yaw) * r    // z
-    );
+void Camera::GetBasis(XMFLOAT3& right, XMFLOAT3& up, XMFLOAT3& forward) const
+{
+    const XMVECTOR rightV =
+        XMVector3Rotate(
+            XMVectorSet(1.f, 0.f, 0.f, 0.f),
+            m_orientation);
 
-    // normalize for safety (in case of rounding)
-    m_forward = Normalize(m_forward);
+    const XMVECTOR upV =
+        XMVector3Rotate(
+            XMVectorSet(0.f, 1.f, 0.f, 0.f),
+            m_orientation);
 
-    // keep the same cross order you used before so the handedness matches
-    m_right = Normalize(Cross(m_forward, XMFLOAT3(0.0f, 1.0f, 0.0f)));
-    m_up    = Cross(m_right, m_forward);
+    const XMVECTOR forwardV =
+    XMVector3Rotate(
+        XMVectorSet(0.f, 0.f, 1.f, 0.f),
+        m_orientation);
+
+    XMStoreFloat3(&right, rightV);
+    XMStoreFloat3(&up, upV);
+    XMStoreFloat3(&forward, forwardV);
 }

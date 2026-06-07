@@ -10,36 +10,20 @@ class Camera
 public:
     void Init(XMFLOAT3 pos, float pitch, float yaw);
     XMMATRIX GetViewMatrix() const;
-
-    double GetPitch() const { return m_pitch; }
-    double GetYaw() const { return m_yaw; }
+    void SetRotation(float pitch, float yaw);
+    void Rotate(float deltaYaw, float deltaPitch);
+    void RotateYaw(float radians);
+    void RotatePitch(float radians);
+    void GetBasis(XMFLOAT3& right, XMFLOAT3& up, XMFLOAT3& forward) const;
 
     XMFLOAT3 GetPosition() const { return m_pos; }
-    XMFLOAT3 GetUp() const { return m_up; }
-    XMFLOAT3 GetRight() const { return m_right; }
-    XMFLOAT3 GetForward() const { return m_forward; }
-
-    void SetPitch(const double pitch) { m_pitch = pitch; }
-    void SetYaw(const double yaw) { m_yaw = yaw; }
-    void SetPitchYaw(const double pitch, const double yaw) { m_pitch = pitch; m_yaw = yaw; RecomputeUpRightForward(); }
-
     void SetPosition(const XMFLOAT3& pos) { m_pos = pos; }
     void AddPosition(const XMFLOAT3 offset) { m_pos.x += offset.x; m_pos.y += offset.y; m_pos.z += offset.z; }
 
-    void SetUp(const XMFLOAT3& up) { m_up = up; }
-    void SetRight(const XMFLOAT3& right) { m_right = right; }
-    void SetForward(const XMFLOAT3& forward) { m_forward = forward; }
-    void SetUp(const XMVECTOR& up) { XMStoreFloat3(&m_up, up); }
-    void SetRight(const XMVECTOR& right) { XMStoreFloat3(&m_right, right); }
-    void SetForward(const XMVECTOR& forward) { XMStoreFloat3(&m_forward, forward); }
-
-    void RecomputePitchYaw();
-    void RecomputeUpRightForward();
-
 private:
-    XMFLOAT3 m_up = {}, m_forward = {}, m_right = {};
     XMFLOAT3 m_pos = XMFLOAT3(0,0,0);
-    double m_pitch = 0.0, m_yaw = 0.0;
+    float m_pitch = 0.0f, m_yaw = 0.0f;
+    XMVECTOR m_orientation{};
 };
 
 
