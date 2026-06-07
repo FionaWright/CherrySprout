@@ -4,33 +4,29 @@
 #include "PathTracing/4_GetHitInfo.hlsli"
 #include "PathTracing/Debug/OutputColor.h"
 
+#include "BxDFs/ResolveBxDF.hlsli"
+
 #include "Utils/RandomExtras.h"
 
-void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, inout float3 throughput, inout RngInfo rngInfo, out float3 dbgOutput)
+void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo, out float3 dbgOutput)
 {
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
 
     float3 wo = -ray.Direction;
+
+    L_sample = beta * hitInfo.Li;
+
     float3 wi;
+    float3 f;
+    float pdf;
 
-    {
-        L_sample = throughput * hitInfo.Li;
+    BxDF bxdf;
+    bxdf.Sample(rngInfo, hitInfo, wo, wi, f, pdf);
 
-        float u1 = Rand01(rngInfo);
-        float u2 = Rand01(rngInfo);
+    beta *= f;
 
-        ShadingFrame sframe = CreateShadingFrame(hitInfo.Ns_ff);
-
-        wi = RandHemisphereUniformWorld(u1, u2, sframe);
-        float NdL = saturate(dot(hitInfo.Ns_ff, wi));
-
-        float3 diffuseBrdf = hitInfo.Albedo / PI;
-        float pdf = 1.0f / (2.0f * PI);
-        throughput *= diffuseBrdf * NdL / max(0.001f, pdf);
-    }
-
-    //if (!cDebugInfoOutputEnabled && throughput.x <= 0 && throughput.y <= 0 && throughput.z <= 0)
+    //if (!cDebugInfoOutputEnabled && beta.x <= 0 && beta.y <= 0 && beta.z <= 0)
     //    break;
 
     DBG_OUTPUT_START();

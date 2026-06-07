@@ -14,7 +14,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 
 - [ ] Python executor
 - [ ] Path visualizer
-- [ ] Debug Info Output (Make it better)
+- [x] Debug Info Output (Make it better)
 - [ ] RMSE Tester
 - [ ] PT Assert based system inspired by Viggo
 - [ ] PT meta counter debug increment/F4/etc system

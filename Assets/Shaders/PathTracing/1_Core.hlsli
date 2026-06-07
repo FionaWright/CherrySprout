@@ -24,6 +24,13 @@ void Core(uint2 pixelCoord)
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, i, gSettings.FrameIdx);
 
         float2 pixelUV = pixelCoord;
+        if (FEATURE_ENABLED(Jitter))
+        {
+            float rJitterX = Rand01(rngInfo);
+            float rJitterY = Rand01(rngInfo);
+            float2 jitter = float2(rJitterX, rJitterY) - 0.5f;
+            pixelUV += jitter;
+        }
         pixelUV *= gSettings.TexelSize;
 
         //float2 ndc = RemapUtoS(pixelUV);

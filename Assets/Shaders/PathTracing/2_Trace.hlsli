@@ -13,7 +13,7 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
     RayQuery<RAY_FLAGS> q;
 
     float3 Lo = float3(0, 0, 0);
-    float3 throughput = float3(1, 1, 1);
+    float3 beta = float3(1, 1, 1);
 
     for (uint i = 0; i <= gSettings.MaxRayDepth; i++)
     {
@@ -22,7 +22,7 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
 
         if (q.CommittedStatus() != COMMITTED_TRIANGLE_HIT)
         {
-            float3 L_sample = throughput * Miss(ray.Origin, ray.Direction, i);
+            float3 L_sample = beta * Miss(ray.Origin, ray.Direction, i);
 
             Lo += L_sample;
             break;
@@ -30,9 +30,19 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
 
         float3 L_sample;
         float3 dbgOutput;
-        Hit(q, ray, L_sample, throughput, rngInfo, dbgOutput);
+        Hit(q, ray, L_sample, beta, rngInfo, dbgOutput);
 
         Lo += L_sample;
+
+        if (FEATURE_ENABLED(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
+        {
+            float p = saturate(max(beta.r, max(beta.g, beta.b)));
+            p = max(p, 0.05f);
+            float rRR = Rand01(rngInfo);
+            if (rRR > p)
+                break;
+            beta /= p;
+        }
 
         if (DEBUG_ENABLED(OutputColor))
         {

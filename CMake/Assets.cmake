@@ -62,7 +62,7 @@ foreach(SRC ${TEXTURE_FILES})
                 COMMAND "${TEXCONV_EXE}"
                 -y
                 -ft dds
-                -f BC7_UNORM
+                -f BC7_UNORM -srgb
                 -o "${DDS_DIR}"
                 "${SRC}"
                 DEPENDS "${SRC}"

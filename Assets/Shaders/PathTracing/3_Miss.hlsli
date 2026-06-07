@@ -3,10 +3,6 @@
 
 float3 Miss(float3 origin, float3 direction, uint bounceIdx)
 {
-    //return float3(1, 1, 1);
-    //if (bounceIdx == 0) // TODO
-        //return abs(direction);
-
     float3 Li = float3(0, 0, 0);
 
     if (FEATURE_ENABLED(EnvironmentMap))
@@ -20,7 +16,7 @@ float3 Miss(float3 origin, float3 direction, uint bounceIdx)
         Li += saturate(gTexEnvMap.Sample(gSampler, uv).rgb);
     }
 
-    if (false && bounceIdx >= 1)
+    if (bounceIdx >= 1)
     {
         float sunCos = dot(direction, -normalize(gSettings.DirLightDirection));
         //if (cDirLightIsDistant)
