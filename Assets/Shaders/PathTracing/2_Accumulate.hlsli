@@ -7,22 +7,26 @@
 #include "Utils/HlslUtils.hlsli"
 #include "Utils/Constants.h"
 
-float3 AccumulateAndFetch(uint2 pixelCoord, float3 color, bool nanTestEnabled)
+float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)
 {
-    float3 accumColor = gTexAccumulation.Load(pixelCoord).rgb;
+    float3 accumColor = gSettings.FrameIdx == 0 ? 0 : gTexAccumulation.Load(pixelCoord).rgb;
 
-    bool isNaN = nanTestEnabled && (IsNaN3(color) || IsNaN3(accumColor));
-    if (isNaN)
+    if (DEBUG_ENABLED(NaNTests))
     {
-        color = GetNaNVisualizerColor(pixelCoord);
-        gTexAccumulation[pixelCoord].rgb = NAN;
-        return color;
+        if (IsNaN3(color) || IsNaN3(accumColor))
+        {
+            gTexAccumulation[pixelCoord].rgb = NAN;
+            return GetNaNVisualizerColor(pixelCoord);
+        }
+        else if (IsInf3(color) || IsInf3(accumColor))
+        {
+            gTexAccumulation[pixelCoord].rgb = INF;
+            return GetInfVisualizerColor(pixelCoord);
+        }
     }
 
     if (!FEATURE_ENABLED(Accumulation))
         return color;
-
-    float3 newSum = accumColor + color;
 
     float accumFrameCount = (float)gSettings.FrameIdx;
     float totalFrames = accumFrameCount + 1.0f;

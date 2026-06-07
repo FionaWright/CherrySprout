@@ -88,7 +88,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_ptPipelineDirty)
     {
-        m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, m_config.PathTracerConfig.DebugFlags);
+        m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, m_config.PathTracerConfig.DebugFlags, m_config.PathTracerConfig.DebugOutputIdx);
         m_ptPipelineDirty = false;
     }
 
@@ -216,6 +216,22 @@ void Greenhouse::RenderGUI()
             }
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
+
+        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
+        {
+            ImGui::Text("Debug Output:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                static int e = static_cast<int>(m_config.PathTracerConfig.DebugOutputIdx);
+                int c = 0;
+                for (int i = 0; i < static_cast<int>(DebugOutputIndex::eCount); i++)
+                {
+                    m_ptPipelineDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
+                }
+                m_config.PathTracerConfig.DebugOutputIdx = static_cast<DebugOutputIndex>(e);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+        }
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 

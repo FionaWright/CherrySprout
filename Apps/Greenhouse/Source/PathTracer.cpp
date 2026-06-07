@@ -53,7 +53,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, nullptr);
 
-    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags);
+    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex);
 }
 
 void PathTracer::LoadSceneData(D3D* d3d, Scene* scene)
@@ -169,11 +169,12 @@ void PathTracer::UnreserveData()
 
 }
 
-void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags)
+void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx)
 {
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
+    compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);

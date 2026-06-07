@@ -5,7 +5,7 @@
 
 struct Material
 {
-    hlsl::float4 BaseColor;
+    hlsl::float4 Albedo;
     hlsl::float3 EmissiveColor;
     hlsl::float3 TransmissionColor;
 
@@ -33,7 +33,7 @@ struct Material
 #ifdef __cplusplus
     Material()
     {
-        BaseColor                = { 1, 1, 1, 1 };
+        Albedo                = { 1, 1, 1, 1 };
         EmissiveColor            = { 1, 1, 1 };
         TransmissionColor        = { 1, 1, 1 };
 

@@ -1,6 +1,8 @@
 #ifndef H_GET_HIT_INFO_H
 #define H_GET_HIT_INFO_H
 
+#include "Utils/ShadingFrame.h"
+
 struct HitInfo
 {
     Material Mat;
@@ -54,14 +56,14 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     //hitInfo.Ns = -hitInfo.Ns;
     hitInfo.Ns = normalize(mul((float3x3)instance.MTI, hitInfo.Ns));
 
-    //if (false)
-    //{
-    //    float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSampler, hitInfo.UV).rgb * 2.0f - 1.0f;
-    //    bumpSample.y = -bumpSample.y; // DX-convention
-//
-    //    ShadingFrame bumpFrame = CreateShadingFrame(hitInfo.Ns);
-    //    hitInfo.Ns = bumpFrame.ToWorld(bumpSample);
-    //}
+    if (FEATURE_ENABLED(NormalMaps))
+    {
+        float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSampler, hitInfo.UV).rgb * 2.0f - 1.0f;
+        bumpSample.y = -bumpSample.y; // DX-convention
+
+        ShadingFrame bumpFrame = CreateShadingFrame(hitInfo.Ns);
+        hitInfo.Ns = bumpFrame.ToWorld(bumpSample);
+    }
     hitInfo.Ns_ff = hitInfo.Entering ? hitInfo.Ns : -hitInfo.Ns;
 
     float4 albedoSample = gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
@@ -76,7 +78,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Mat.Roughness *= roughMetSample.r;
     hitInfo.Mat.Metallic *= roughMetSample.g;
 
-    //hitInfo.Albedo = float3(hitInfo.Mat.BaseColor.rgb * albedoSample.rgb);
+    //hitInfo.Albedo = float3(hitInfo.Mat.Albedo.rgb * albedoSample.rgb);
     hitInfo.Albedo = albedoSample.rgb;
     hitInfo.Opacity = albedoSample.a;
     hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;

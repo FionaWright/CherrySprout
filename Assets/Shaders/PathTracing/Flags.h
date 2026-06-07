@@ -42,6 +42,7 @@ enum class Internal_PathTracerDebugIndex : hlsl::uint
 {
     Idx_FurnaceTest,
     Idx_OutputColor,
+    Idx_NaNTests,
 
     INTERNAL_DEBUG_COUNT
 };
@@ -52,6 +53,7 @@ enum PathTracerDebugFlags : DEBUG_FLAG_TYPE
 
     eDebug_FurnaceTest        = 1u << (hlsl::uint)Internal_PathTracerDebugIndex::Idx_FurnaceTest,
     eDebug_OutputColor        = 1u << (hlsl::uint)Internal_PathTracerDebugIndex::Idx_OutputColor,
+    eDebug_NaNTests           = 1u << (hlsl::uint)Internal_PathTracerDebugIndex::Idx_NaNTests,
 
     DEBUG_COUNT               =       (hlsl::uint)Internal_PathTracerDebugIndex::INTERNAL_DEBUG_COUNT
 };
@@ -91,14 +93,15 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
 };
 static const char* s_debugFlagNames[DEBUG_COUNT] = {
     "Furnace Test",
-    "Output Color"
+    "Output Color",
+    "NaN Tests",
 };
 
 static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(
-        eFeature_Accumulation | eFeature_EnvironmentMap | eFeature_EnvironmentMapEA
+        eFeature_Accumulation | eFeature_EnvironmentMap | eFeature_EnvironmentMapEA | eFeature_NormalMaps
     );
 static constexpr PathTracerDebugFlags s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
-        eDebug_None
+        eDebug_NaNTests
     );
 
 inline void SetPathTracerFeatureFlag(PathTracerFeatureFlags& state, const PathTracerFeatureFlags flag, const bool enabled)

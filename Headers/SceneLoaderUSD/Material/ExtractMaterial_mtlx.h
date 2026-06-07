@@ -204,7 +204,7 @@ namespace SceneLoaderUSD
             return result;
         };
 
-        readFloat3                  ("base_color",              &material.BaseColor);
+        readFloat3                  ("base_color",              &material.Albedo);
         readFloat3                  ("emission",                &material.EmissiveColor);
         readFloat3                  ("transmission_color",      &material.TransmissionColor);
 

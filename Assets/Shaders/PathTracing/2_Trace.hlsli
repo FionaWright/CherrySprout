@@ -24,11 +24,16 @@ float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout RngInfo rngIn
             break;
         }
 
-        float3 wo = -ray.Direction;
+        float3 L_sample;
+        float3 dbgOutput;
+        Hit(q, ray, L_sample, throughput, rngInfo, dbgOutput);
 
-        Hit(q, ray, Lo, throughput, rngInfo, wo);
-        //return throughput;
-        //return ray.Direction;
+        Lo += L_sample;
+
+        if (DEBUG_ENABLED(OutputColor))
+        {
+            return dbgOutput;
+        }
     }
 
     return Lo;

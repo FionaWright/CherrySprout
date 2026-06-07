@@ -9,6 +9,10 @@
 
 #define NAN                 asfloat(0x7FC00000)
 
+#define INF                 asfloat(0x7F800000)
+
+#define NEG_INF             asfloat(0xFF800000)
+
 #endif
 
 // ============ MATH ===========

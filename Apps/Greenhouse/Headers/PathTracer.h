@@ -14,6 +14,7 @@
 #include "HWI/UploadHeap.h"
 #include "../../../Assets/Shaders/Utils/CBVs.h"
 
+enum class DebugOutputIndex : hlsl::uint;
 struct TimeArgs;
 
 class PathTracer : public IRenderBackend
@@ -25,7 +26,7 @@ public:
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override;
     void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags,
-                        const PathTracerDebugFlags& debugFlags);
+                        const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx);
     void Reset();
 
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }

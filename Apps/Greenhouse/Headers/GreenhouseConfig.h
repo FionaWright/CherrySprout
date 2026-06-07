@@ -2,6 +2,7 @@
 #define H_GREENHOUSE_CONFIG_H
 
 #include "PathTracing/Flags.h"
+#include "PathTracing/Debug/OutputColor.h"
 
 struct PathTracerConfig
 {
@@ -16,6 +17,7 @@ struct PathTracerConfig
 
     PathTracerFeatureFlags FeatureFlags = s_defaultFeatureFlags;
     PathTracerDebugFlags DebugFlags = s_defaultDebugFlags;
+    DebugOutputIndex DebugOutputIdx = s_defaultOutputIndex;
 };
 
 struct ForwardConfig

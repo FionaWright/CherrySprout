@@ -2,15 +2,17 @@
 #define H_HIT_H
 
 #include "PathTracing/4_GetHitInfo.hlsli"
+#include "PathTracing/Debug/OutputColor.h"
 
 #include "Utils/RandomExtras.h"
 
-void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 Lo, inout float3 throughput, inout RngInfo rngInfo, float3 wo)
+void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, inout float3 throughput, inout RngInfo rngInfo, out float3 dbgOutput)
 {
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
 
-    float3 wi, L_sample;
+    float3 wo = -ray.Direction;
+    float3 wi;
 
     {
         L_sample = throughput * hitInfo.Li;
@@ -28,12 +30,17 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 Lo, inout 
         throughput *= diffuseBrdf * NdL / max(0.001f, pdf);
     }
 
-    //L_sample = float3(0.5, 0, 0);
-
     //if (!cDebugInfoOutputEnabled && throughput.x <= 0 && throughput.y <= 0 && throughput.z <= 0)
     //    break;
 
-    Lo += L_sample;
+    DBG_OUTPUT_START();
+    DBG_OUTPUT3(hitInfo.Ns,            NormalShaded);
+    DBG_OUTPUT3(hitInfo.Ns_ff,         NormalShadedFF);
+    DBG_OUTPUT3(hitInfo.Ng_ff,         NormalGeometricFF);
+    DBG_OUTPUT3(hitInfo.Albedo.rgb,    Albedo);
+    DBG_OUTPUT3(hitInfo.Li,            Emission);
+    DBG_OUTPUT2(hitInfo.UV,            UV);
+    // TODO DBG_OUTPUT_END() which does color remapping and stuff
 
     float hitDist = q.CommittedRayT();
     float3 hitPos = ray.Origin + ray.Direction * hitDist;
