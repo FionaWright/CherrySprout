@@ -112,6 +112,9 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
     {
         auto& entry = s_graphicsPipelines[i];
 
+        if (!entry.Ptr)
+            continue;
+
         CherryPrint("Hot Reloading Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
 
         entry.Ptr->InitGraphics(d3d->GetDevice(), entry.VertexEntry.ID.c_str(),
@@ -121,6 +124,9 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
     for (int i = 0; i < dirtyComputePipelines.size(); i++)
     {
         auto& entry = s_computePipelines[i];
+
+        if (!entry.Ptr)
+            continue;
 
         CherryPrint("Hot Reloading Compute Pipeline: " << entry.ComputeEntry.ID);
 

@@ -40,6 +40,8 @@ static constexpr DebugOutputIndex s_defaultOutputIndex = DebugOutputIndex::eDebu
 
 #    define DBG_OUTPUT_START() dbgOutput = NAN;
 
+#    define DBG_OUTPUT3_FORCE(value) { dbgOutput = value; return; }
+
 #    define DBG_OUTPUT3(value, idx) if (DEBUG_ENABLED(OutputColor) && DebugOutputIndex::eDebugOutput_##idx == (DebugOutputIndex)(DEBUG_OUTPUT_COLOR)) { dbgOutput = value; return; }
 #    define DBG_OUTPUT2(value, idx) if (DEBUG_ENABLED(OutputColor) && DebugOutputIndex::eDebugOutput_##idx == (DebugOutputIndex)(DEBUG_OUTPUT_COLOR)) { dbgOutput = float3(value, 0); return; }
 #    define DBG_OUTPUT1(value, idx) if (DEBUG_ENABLED(OutputColor) && DebugOutputIndex::eDebugOutput_##idx == (DebugOutputIndex)(DEBUG_OUTPUT_COLOR)) { dbgOutput = value.xxx; return; }

@@ -68,8 +68,8 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     float4 albedoSample = gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
     //float4 albedoSample = 1;
-    if (true) // TODO
-        albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
+    //if (true) // TODO
+    //    albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
 
     //float3 emissionSample = gSceneTextures[hitInfo.Mat.TexIdxEmissive].Sample(gSampler, hitInfo.UV).rgb;
 

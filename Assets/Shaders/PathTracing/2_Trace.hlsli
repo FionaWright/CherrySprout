@@ -1,13 +1,17 @@
 #ifndef H_TRACE_H
 #define H_TRACE_H
 
+#define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
+
 #include "PathTracing/3_Hit.hlsli"
 #include "PathTracing/3_Miss.hlsli"
 
 #include "Utils/Random.h"
 
-float3 Trace(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout RngInfo rngInfo)
+float3 Trace(RayDesc ray, inout RngInfo rngInfo)
 {
+    RayQuery<RAY_FLAGS> q;
+
     float3 Lo = float3(0, 0, 0);
     float3 throughput = float3(1, 1, 1);
 

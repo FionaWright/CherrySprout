@@ -1,8 +1,6 @@
 #ifndef H_CORE_H
 #define H_CORE_H
 
-#define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
-
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/2_Trace.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
@@ -19,8 +17,6 @@ void Core(uint2 pixelCoord)
     ray.Direction = 0;
     ray.TMin = 0.001;
     ray.TMax = 1000.0;
-
-    RayQuery<RAY_FLAGS> q;
 
     float3 colorSum = float3(0,0,0);
     for (uint i = 0; i < gSettings.SPP; i++)
@@ -39,7 +35,7 @@ void Core(uint2 pixelCoord)
         float4 world = mul(gSettings.InvV, view);
         ray.Direction = normalize(world.xyz - origin);
 
-        colorSum += Trace(q, ray, rngInfo);
+        colorSum += Trace(ray, rngInfo);
     }
 
     colorSum /= float(gSettings.SPP);
