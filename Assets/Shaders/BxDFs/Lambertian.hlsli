@@ -1,11 +1,6 @@
 #ifndef H_LAMBERTIAN_H
 #define H_LAMBERTIAN_H
 
-struct BxDF
-{
-#include "BxDFs/IBxDF.hlsli"
-};
-
 void BxDF::Sample(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
@@ -23,7 +18,7 @@ void BxDF::Sample(
     wi = RandHemisphereCosineWorld(u1, u2, sframe);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-    f = hitInfo.Albedo;
+    f = hitInfo.Mat.Albedo.rgb;
     pdf = NdL / PI;
 }
 
@@ -37,7 +32,7 @@ void BxDF::Evaluate(
 )
 {
     float NdL = dot(hitInfo.Ns_ff, wi);
-    f = hitInfo.Albedo;
+    f = hitInfo.Mat.Albedo.rgb;
     pdf = NdL / PI;
 }
 

@@ -2,7 +2,7 @@
 #define H_RANDOM_EXTRAS_H
 
 #include "Utils/Random.h"
-#include "Utils/ShadingFrame.h"
+#include "Utils/Math/ShadingFrame.h"
 
 inline hlsl::float3 RandDirectionCube(GLUE_INOUT(hlsl::uint) state)
 {

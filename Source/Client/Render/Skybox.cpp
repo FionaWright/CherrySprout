@@ -7,7 +7,7 @@
 #include "Debug/GPUEventScoped.h"
 #include "HWI/Heap.h"
 #include "HWI/UploadHeap.h"
-#include "Utils/CommonStructs.h"
+#include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 

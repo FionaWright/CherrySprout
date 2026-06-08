@@ -4,7 +4,7 @@
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/Flags.h"
 
-#include "PathTracing/Debug/ErrorColors.hlsli"
+#include "Utils/Debug/NaNTests.hlsli"
 #include "Utils/Constants.h"
 
 float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)

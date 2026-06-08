@@ -5,7 +5,7 @@
 #include "System/pch.h"
 #include "Render/EnvironmentMap.h"
 #include "Utils/Helper.h"
-#include "Utils/MathUtils.h"
+#include "Utils/SharedUtils.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/Heap.h"
 #include "../../../Assets/Shaders/Utils/CBVs.h"

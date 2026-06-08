@@ -1,4 +1,4 @@
-#include "Utils/MathUtils.h"
+#include "Utils/SharedUtils.h"
 #include "Utils/CBVs.h"
 
 Texture2D<float3> gPano : register(t0);

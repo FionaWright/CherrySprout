@@ -4,7 +4,7 @@
 
 #include "System/pch.h"
 #include "Render/Camera.h"
-#include "Utils/MathUtils.h"
+#include "Utils/SharedUtils.h"
 
 void Camera::Init(const XMFLOAT3 pos, const float pitch, const float yaw)
 {

@@ -3,6 +3,7 @@
 
 #include "Utils/HlslGlue.h"
 #include "PathTracing/Flags.h"
+#include "Raster/RasterOutputMode.h"
 
 struct CbvPathTracingSettings
 {
@@ -15,7 +16,7 @@ struct CbvPathTracingSettings
     hlsl::uint RussianRouletteMinBounces;
     hlsl::uint SPP;
     hlsl::uint FrameIdx;
-    hlsl::uint MaxFramesReached;
+    hlsl::uint IsMaxFramesReached;
 
     float DofFocalDist;
     float DofLensRadius;
@@ -45,6 +46,30 @@ struct CbvPanoToCM
     hlsl::uint OutputWidth;
     hlsl::uint2 InputDimensions;
     float Rotation;
+};
+
+struct CbvMatrices_MVP
+{
+    hlsl::float4x4 M, MTI, V, P;
+};
+
+struct CbvMatrices_M
+{
+    hlsl::float4x4 M, MTI;
+};
+
+struct CbvMatrices_VP
+{
+    hlsl::float4x4 V, P;
+};
+
+struct CbvForward
+{
+    hlsl::float3 DirLightDir;
+    hlsl::uint MaxCubemapMipMaps;
+
+    RasterOutputMode OutputMode;
+    hlsl::float3 _;
 };
 
 #endif

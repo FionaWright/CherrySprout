@@ -10,7 +10,7 @@
 
 void Core(uint2 pixelCoord)
 {
-    if (gSettings.MaxFramesReached) // TODO: Make this cleaner?
+    if (gSettings.IsMaxFramesReached) // TODO: Make this cleaner?
     {
         float3 average = gTexAccumulation[pixelCoord].rgb;
         average = pow(average, 1.0f/2.2f);
@@ -41,8 +41,7 @@ void Core(uint2 pixelCoord)
         }
         pixelUV *= gSettings.TexelSize;
 
-        //float2 ndc = RemapUtoS(pixelUV);
-        float2 ndc = pixelUV * 2.0f - 1.0f;
+        float2 ndc = RemapUtoS(pixelUV);
         ndc.y = -ndc.y;
         float4 clip = float4(ndc, 0, 1); // z=0 for near plane
         float4 view = mul(gSettings.InvP, clip);

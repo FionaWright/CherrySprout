@@ -1,6 +1,8 @@
 #ifndef H_CONSTANTS_H
 #define H_CONSTANTS_H
 
+#include "Utils/Constants.h"
+
 // ============ DATA ===========
 
 #ifndef __cplusplus
@@ -25,7 +27,7 @@
 
 // ============ PHYSICS ========
 
-//#define IOR_AIR             CreateComplex(1.0f, 0.0f)
+#define IOR_AIR             CreateComplex(1.0f, 0.0f)
 
 #define BOLTZMANN           1.38064852e-23f
 
@@ -36,9 +38,13 @@
 // ============ COLORS ===========
 
 #define COLOR_RED       float3(1,0,0)
+
 #define COLOR_GREEN     float3(0,1,0)
+
 #define COLOR_BLUE      float3(0,0,1)
+
 #define COLOR_WHITE     float3(1,1,1)
+
 #define COLOR_BLACK     float3(0,0,0)
 
 #endif

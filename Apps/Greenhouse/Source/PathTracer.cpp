@@ -119,7 +119,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RussianRouletteMinBounces = renderInfo.PathTracerConfig->RussianRouletteMinBounces;
         settings.SPP = renderInfo.PathTracerConfig->SPP;
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
-        settings.MaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && m_frameIdx > renderInfo.PathTracerConfig->MaxFrameNumber;
+        settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && m_frameIdx > renderInfo.PathTracerConfig->MaxFrameNumber;
 
         settings.DirLightDirection = renderInfo.BackendConfig->DirLightDirection;
         settings.DirLightColor = renderInfo.BackendConfig->DirLightColor;

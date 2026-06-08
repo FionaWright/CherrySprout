@@ -2,7 +2,7 @@
 #define H_MICROFACET_H
 
 #include "Utils/Random.h"
-#include "Utils/MathUtils.h"
+#include "Utils/SharedUtils.h"
 #include "Utils/HlslUtils.hlsli"
 
 // https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
@@ -187,7 +187,7 @@ float D_GGX(float NdH, float roughness)
 float D_BeckmannAniso(float3 H, float alphaX, float alphaY)
 {
     float tan2T = SSpaceTan2Theta(H);
-    if (IsNaN(1/tan2T)) return 0; // Is infinite
+    //if (IsNaN(1/tan2T)) return 0; // Is infinite // TODO: I don't want NaN tests to be used as part of normal code
 
     float cos4T = SSpaceCos2Theta(H) * SSpaceCos2Theta(H);
     float k1 = SSpaceCos2Phi(H) / (alphaX * alphaX);
@@ -226,7 +226,7 @@ float G_SmithFast(float NdL, float NdV, float roughness)
 float Lambda_Beckmann(float3 W, float alpha)
 {
     float absTanT = abs(SSpaceTanTheta(W));
-    if (IsNaN(1/absTanT)) return 0; // Is infinite
+    //if (IsNaN(1/absTanT)) return 0; // Is infinite // TODO: I don't want NaN tests to be used as part of normal code
 
     float a = 1 / (alpha * absTanT);
     if (a >= 1.6f) return 0;

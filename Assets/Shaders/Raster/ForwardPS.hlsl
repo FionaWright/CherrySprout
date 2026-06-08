@@ -1,7 +1,7 @@
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
-#include "Utils/MathUtils.h"
-#include "Utils/ShadingFrame.h"
-#include "Utils/CommonStructs.h"
+#include "Utils/SharedUtils.h"
+#include "Utils/Math/ShadingFrame.h"
+#include "Utils/CBVs.h"
 #include "Scene/Material.h"
 
 struct VsOut

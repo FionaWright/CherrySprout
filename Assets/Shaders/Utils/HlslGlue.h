@@ -7,6 +7,42 @@
 #include <cmath>
 #include <DirectXMath.h>
 
+inline DirectX::XMFLOAT3 operator/(const DirectX::XMFLOAT3& v, float s)
+{
+    return {
+        v.x / s,
+        v.y / s,
+        v.z / s
+    };
+}
+
+inline DirectX::XMFLOAT3 operator*(const DirectX::XMFLOAT3& v, float s)
+{
+    return {
+        v.x * s,
+        v.y * s,
+        v.z * s
+    };
+}
+
+inline DirectX::XMFLOAT3 operator+(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
+{
+    return {
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z
+    };
+}
+
+inline DirectX::XMFLOAT3 operator-(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
+{
+    return {
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
+    };
+}
+
 namespace hlsl
 {
     typedef DirectX::XMFLOAT4X4 float4x4;
@@ -42,9 +78,9 @@ namespace hlsl
 #define GLUE_INOUT(T) T&
 
 template <typename T>
-constexpr auto max(T&& a, T&& b)
+constexpr auto max(T a, T b)
 {
-    return std::max(std::forward<T>(a), std::forward<T>(b));
+    return std::max(a, b);
 }
 
 template <typename T>
@@ -105,34 +141,34 @@ constexpr auto log(T&& x)
 }
 
 template <typename T>
-constexpr T clamp(const T& x, const T& xmin, const T& xmax)
+constexpr auto clamp(const T& x, const T& xmin, const T& xmax)
 {
     return max(xmin, min(xmax, x));
 }
 
 template <typename T>
-constexpr T saturate(const T& x)
+constexpr auto saturate(const T& x)
 {
     return clamp(x, T(0), T(1));
 }
 
 template <typename T>
-inline T frac(const T& x)
+constexpr auto frac(const T& x)
 {
     return std::fmod(x, T(1));
-}
-
-template <typename T>
-inline auto normalize(const T& v)
-{
-    const auto mag = sqrt(dot(v, v));
-    return v / mag;
 }
 
 template <typename T>
 constexpr auto dot(const T& a, const T& b)
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+template <typename T>
+auto normalize(T& v)
+{
+    const auto mag = sqrt(dot(v, v));
+    return v / mag;
 }
 
 template <typename T, typename U>

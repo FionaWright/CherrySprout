@@ -11,7 +11,7 @@
 #include "HWI/Pipeline.h"
 #include "Render/Skybox.h"
 #include "Scene/Material.h"
-#include "Utils/CommonStructs.h"
+#include "Utils/CBVs.h"
 
 struct Scene;
 struct TimeArgs;

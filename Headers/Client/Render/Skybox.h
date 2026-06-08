@@ -8,7 +8,7 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
 #include "HWI/Pipeline.h"
-#include "Utils/CommonStructs.h"
+#include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
 class D3D;

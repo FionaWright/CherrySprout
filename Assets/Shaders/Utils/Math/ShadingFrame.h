@@ -1,7 +1,7 @@
 #ifndef H_SHADING_FRAME_H
 #define H_SHADING_FRAME_H
 
-#include "Utils/MathUtils.h"
+#include "Utils/SharedUtils.h"
 
 struct ShadingFrame
 {

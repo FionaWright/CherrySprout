@@ -1,37 +1,6 @@
 #ifndef H_MATH_UTILS_H
 #define H_MATH_UTILS_H
 
-// https://sakibsaikia.github.io/graphics/2022/01/04/Nan-Checks-In-HLSL.html
-bool IsNaN(float x) // WARNING: This may be giving false positives? See mul(cMatXyzToRgb, float3(0.04491435,4.6650298,2.231335))
-{
-    return (asuint(x) & 0x7fffffff) > 0x7f800000;
-}
-
-bool IsNaN3(float3 x)
-{
-    return IsNaN(x.x) || IsNaN(x.y) || IsNaN(x.z);
-}
-
-bool IsInf(float x)
-{
-    return !IsNaN(x) && IsNaN(x * 0.0);
-}
-
-bool IsInf3(float3 x)
-{
-    return IsInf(x.x) || IsInf(x.y) || IsInf(x.z);
-}
-
-float3 DebugInfoColor(float x)
-{
-    return IsInf(x) ? float3(0, 1, 1) : (IsNaN(x) ? float3(1, 0, 1) : x.xxx);
-}
-
-float3 DebugInfoColor(float3 x)
-{
-    return IsInf3(x) ? float3(0, 1, 1) : (IsNaN3(x) ? float3(1, 0, 1) : x);
-}
-
 float3 NormalizeSafe(float3 v, float3 fallback)
 {
     float len2 = dot(v, v);
@@ -47,11 +16,6 @@ bool CheckTIR(float n1, float n2, float cosTi)
     float sin2Ti = 1.0f - cosTi * cosTi;
     float sinTi = sqrt(max(0.0f, sin2Ti));
     return (n1 > n2) && (sinTi > n2 / n1);
-}
-
-float3 Reflect(float3 wo, float3 N)
-{
-    return wo - 2 * dot(wo, N) * N;
 }
 
 // https://www.shadertoy.com/view/7sKSRh
@@ -132,10 +96,10 @@ float3 SRGB_to_LRGB(float3 srgb)
     );
 }
 
-float  RemapUtoS(float v)  { return (v - 1.0f) * 2.0f; }
-float2 RemapUtoS(float2 v) { return (v - 1.0f) * 2.0f; }
-float3 RemapUtoS(float3 v) { return (v - 1.0f) * 2.0f; }
-float4 RemapUtoS(float4 v) { return (v - 1.0f) * 2.0f; }
+float  RemapUtoS(float v)  { return (v * 2.0f) - 1.0f; }
+float2 RemapUtoS(float2 v) { return (v * 2.0f) - 1.0f; }
+float3 RemapUtoS(float3 v) { return (v * 2.0f) - 1.0f; }
+float4 RemapUtoS(float4 v) { return (v * 2.0f) - 1.0f; }
 
 float  RemapStoU(float v)  { return (v + 1.0f) * 0.5f; }
 float2 RemapStoU(float2 v) { return (v + 1.0f) * 0.5f; }
