@@ -1,5 +1,5 @@
-#ifndef H_LAMBERTIAN_H
-#define H_LAMBERTIAN_H
+#ifndef H_BRDF_LAMBERTIAN_H
+#define H_BRDF_LAMBERTIAN_H
 
 void BxDF::Sample(
     inout RngInfo rngInfo,
@@ -14,8 +14,7 @@ void BxDF::Sample(
     float u1 = Rand01(rngInfo);
     float u2 = Rand01(rngInfo);
 
-    ShadingFrame sframe = CreateShadingFrame(hitInfo.Ns_ff);
-    wi = RandHemisphereCosineWorld(u1, u2, sframe);
+    wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
     f = hitInfo.Mat.Albedo.rgb;

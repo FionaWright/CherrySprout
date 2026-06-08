@@ -18,3 +18,4 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] RMSE Tester
 - [ ] PT Assert based system inspired by Viggo
 - [ ] PT meta counter debug increment/F4/etc system
+- [ ] Furnace Test

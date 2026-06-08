@@ -30,7 +30,6 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
     //    break;
 
     DBG_OUTPUT_START();
-    DBG_OUTPUT3(hitInfo.Ns,                NormalShaded);
     DBG_OUTPUT3(hitInfo.Ns_ff,             NormalShadedFF);
     DBG_OUTPUT3(hitInfo.Ng_ff,             NormalGeometricFF);
     DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,    Albedo);
@@ -38,8 +37,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
     DBG_OUTPUT2(hitInfo.UV,                UV);
     // TODO DBG_OUTPUT_END() which does color remapping and stuff
 
-    float hitDist = q.CommittedRayT();
-    float3 hitPos = ray.Origin + ray.Direction * hitDist;
+    float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;
 
     ray.Direction = wi;
     ray.Origin = hitPos + hitInfo.Ng_ff * EPSILON;

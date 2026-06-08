@@ -6,6 +6,12 @@ struct MicrofacetModel;
 // Missing:
 // VNDF Aniso
 
+#ifndef MICROFACET_MODEL_CHOSEN
+#    define NDF_TYPE_GGX
+#    define MASKING_SMITH
+#endif
+
+// TODO
 #if defined(NDF_TYPE_GGX)
 #   ifdef ANISOTROPY_ENABLED
 #       ifdef SAMPLE_VISIBLE_NORMALS
@@ -28,10 +34,6 @@ struct MicrofacetModel;
 #    include "MicrofacetModels/MM_Beckmann_Smith_Iso.hlsli"
 #endif
 
-#ifndef MICROFACET_MODEL_CHOSEN
-#	include "MicrofacetModels/MM_GGX_Smith_Iso.hlsli"
-#endif
-
 void InitializeMM(
     inout MicrofacetModel mm,
     float roughness,
@@ -49,10 +51,10 @@ void InitializeMM(
 
 void InitializeMMAniso(
     inout MicrofacetModel mm,
-    float3 anisoDirAndStrength)
+    HitInfo hitInfo)
 {
 #ifdef ANISOTROPY_ENABLED
-    mm.InitAniso(anisoDirAndStrength);
+    mm.InitAniso(hitInfo);
 #endif
 }
 

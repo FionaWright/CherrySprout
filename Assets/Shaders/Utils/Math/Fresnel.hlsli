@@ -13,53 +13,6 @@
 // https://scispace.com/pdf/handbook-of-optical-materials-3e2ukwmx2l.pdf
 // https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/
 
-/*
-
-E = Electric Field
-H = Magnetic Field Intensity
-Together they form an electromagnetic wave (light)
-For plane waves E, H, and rayDir are all perpendicular
-There's also B = Magnetic Flux Density which is proportional to H
-
-Polarization describes the orientation of E as the light propogates
-Linear Polarization: E oscillates along one fixed direction
-Circle Polarization: E moves in a circle
-Elliptical Polarization: General case, E traces an ellipse
-Unpolarized: A mixture of many polarization states
-Assume unpolarized for all rendering unless you are specifically implementing polarized rendering
-
-S-Polarization (Rs) is when E is oriented perpendicular to the plane of incidence
-P-Polarization (Rp) is when E is parallel
-Fresnel Unpolarized Reflectance is (Rs + Rp) / 2
-
-The Maxwell Equations define certain conditions of the E and H fields to be continuous across the interface between two media
-
-The Fresnel Equations solve the Maxwell Equations for a plane wave hitting a flat interface
-The reflected & transmitted field amplitudes are given as functions of:
-- Incident Angle (cosTheta or NdH)
-- Polarization
-- The IORs
-- Wavelength
-
-Fresnel is an approximation of Maxwell
-Schlick is an approximation of Fresnel
-
-Snell's Law: η_1 sin(θ_1) = η_2 sin(θ_2)
-Used to compute the refraction direction from IOR
-
-Try to avoid mixing up absolute vs relative IOR
-n is the abolute IOR against a vacuum
-eta is (often) the relative IOR (n_2/n_1)
-
-Dielectrics have a simple IOR spectra. Conductors instead need complex IOR spectra
-Conductor IOR: n(λ) + ik(λ)
-n is the phase velocity, k is the extinction coefficient describing absorption
-
-*/
-
-#define METALNESS_CONDUCTOR_THRESHOLD 0.5f
-bool IsConductor(float metalness) { return metalness > METALNESS_CONDUCTOR_THRESHOLD; }
-
 void Fresnel_Dielectric_Polarized(float n1, float n2, float cosTi, out float rp2, out float rs2)
 {
     float sin2Ti = 1.0f - cosTi * cosTi;
@@ -133,9 +86,12 @@ float Fresnel_Conductor_Unpolarized(Complex c1, Complex c2, float cosTheta)
     return reflectanceProb;
 }
 
-float Fresnel_Maxwell(Complex c1, Complex c2, float cosTheta, bool isConductor)
+#define METALNESS_CONDUCTOR_THRESHOLD 0.5f
+bool IsConductor(float metalness) { return metalness > METALNESS_CONDUCTOR_THRESHOLD; }
+
+float Fresnel_Maxwell(Complex c1, Complex c2, float cosTheta, float metallic)
 {
-    if (isConductor)
+    if (IsConductor(metallic))
         return Fresnel_Conductor_Unpolarized(c1, c2, cosTheta);
     else
         return Fresnel_Dielectric_Unpolarized(c1.Re, c2.Re, cosTheta);

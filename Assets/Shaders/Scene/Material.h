@@ -6,29 +6,36 @@
 struct Material
 {
     hlsl::float4 Albedo;
+
+    float EmissiveStrength;
     hlsl::float3 EmissiveColor;
+
+    float TransmissionFactor;
     hlsl::float3 TransmissionColor;
 
     float Roughness;
     float Metallic;
     float SpecularFactor;
-    float EmissiveStrength;
     float AnisoStrength;
-    float TransmissionFactor;
+
     float IOR_N;
 
     int TexIdxAlbedo;
     int TexIdxNormal;
     int TexIdxRoughness;
+
     int TexIdxMetallic;
     int TexIdxEmissiveStrength;
     int TexIdxAnisotropy;
     int TexIdxClearcoat;
+
     int TexIdxClearcoatRoughness;
     int TexIdxClearcoatNormal;
     int TexIdxSheenColor;
     int TexIdxSheenRoughness;
+
     int TexIdxTransmissionFactor;
+    hlsl::float3 p;
 
 #ifdef __cplusplus
     Material()

@@ -2,8 +2,6 @@
 #define H_CBVS_H
 
 #include "Utils/HlslGlue.h"
-#include "PathTracing/Flags.h"
-#include "Raster/RasterOutputMode.h"
 
 struct CbvPathTracingSettings
 {
@@ -68,7 +66,7 @@ struct CbvForward
     hlsl::float3 DirLightDir;
     hlsl::uint MaxCubemapMipMaps;
 
-    RasterOutputMode OutputMode;
+    hlsl::uint OutputMode;
     hlsl::float3 _;
 };
 

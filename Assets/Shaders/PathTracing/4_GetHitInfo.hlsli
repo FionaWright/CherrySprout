@@ -3,14 +3,15 @@
 
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/HlslUtils.hlsli"
+#include "PathTracing/Flags.h"
 
 struct HitInfo
 {
     Material Mat;
 
     float3 Ng_ff;
-    float3 Ns;
     float3 Ns_ff;
+    ShadingFrame SFrame;
 
     float3 Li;
 
@@ -18,7 +19,8 @@ struct HitInfo
     float AnisoStrength;
 
     float2 UV;
-    bool Entering;
+    bool IsEntering;
+    float RayT;
 };
 
 float3 SampleTexture(HitInfo hitInfo, int idx, float3 fallback)
@@ -43,7 +45,8 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     uint primitiveIdx = q.CommittedPrimitiveIndex();
     float2 barycentrics = q.CommittedTriangleBarycentrics();
 
-    hitInfo.Entering = q.CommittedTriangleFrontFace() != 0;
+    hitInfo.IsEntering = q.CommittedTriangleFrontFace() != 0;
+    hitInfo.RayT = q.CommittedRayT();
 
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
     hitInfo.Mat = gMegaBufferMaterials[instance.MaterialIndex];
@@ -63,10 +66,9 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 	float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
 	float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
 	float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
-    hitInfo.Ng_ff = hitInfo.Entering ? Ng : -Ng;
 
-    hitInfo.Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
-    hitInfo.Ns = normalize(mul((float3x3)instance.MTI, hitInfo.Ns));
+    float3 Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
+    Ns = normalize(mul((float3x3)instance.MTI, Ns));
 
     if (FEATURE_ENABLED(NormalMaps))
     {
@@ -74,10 +76,13 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
         bumpSample = RemapUtoS(bumpSample);
         bumpSample.y = -bumpSample.y; // DX-convention
 
-        ShadingFrame bumpFrame = CreateShadingFrame(hitInfo.Ns);
-        hitInfo.Ns = bumpFrame.ToWorld(bumpSample);
+        ShadingFrame bumpFrame = CreateShadingFrame(Ns);
+        Ns = bumpFrame.ToWorld(bumpSample);
     }
-    hitInfo.Ns_ff = hitInfo.Entering ? hitInfo.Ns : -hitInfo.Ns;
+
+    hitInfo.Ng_ff = hitInfo.IsEntering ? Ng : -Ng;
+    hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
+    hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
     float4 albedoSample = gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
     if (true) // TODO

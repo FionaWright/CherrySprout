@@ -26,6 +26,7 @@ struct BxDF
     );
 };
 
-#include "BxDFs/Lambertian.hlsli"
+#include "BxDFs/BRDF_Lambertian.hlsli"
+//#include "BxDFs/BSDF_PBR.hlsli"
 
 #endif

@@ -5,7 +5,7 @@
 
 struct ShadingFrame
 {
-    void Init(float3 n);
+    void Init(hlsl::float3 n);
 
     hlsl::float3 ToLocal(hlsl::float3 W);
     hlsl::float3 ToWorld(hlsl::float3 W_s);
@@ -15,20 +15,20 @@ struct ShadingFrame
     hlsl::float3 N;
 };
 
-ShadingFrame CreateShadingFrame(hlsl::float3 n)
+inline ShadingFrame CreateShadingFrame(const hlsl::float3 n)
 {
     ShadingFrame frame;
     frame.Init(n);
     return frame;
 }
 
-void ShadingFrame::Init(hlsl::float3 n)
+inline void ShadingFrame::Init(const hlsl::float3 n)
 {
     N = n;
     BuildBasisFrisvad(N, T, B);
 }
 
-hlsl::float3 ShadingFrame::ToLocal(hlsl::float3 W)
+inline hlsl::float3 ShadingFrame::ToLocal(const hlsl::float3 W)
 {
     return normalize(
             hlsl::float3(
@@ -37,7 +37,7 @@ hlsl::float3 ShadingFrame::ToLocal(hlsl::float3 W)
         );
 }
 
-hlsl::float3 ShadingFrame::ToWorld(hlsl::float3 W_s)
+inline hlsl::float3 ShadingFrame::ToWorld(const hlsl::float3 W_s)
 {
     return normalize(W_s.x * T + W_s.y * B + W_s.z * N);
 }

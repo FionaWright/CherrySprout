@@ -15,12 +15,14 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)
     {
         if (IsNaN3(color) || IsNaN3(accumColor))
         {
-            gTexAccumulation[pixelCoord].rgb = NAN;
+            if (FEATURE_ENABLED(Accumulation))
+                gTexAccumulation[pixelCoord].rgb = NAN;
             return GetNaNVisualizerColor(pixelCoord);
         }
         else if (IsInf3(color) || IsInf3(accumColor))
         {
-            gTexAccumulation[pixelCoord].rgb = INF;
+            if (FEATURE_ENABLED(Accumulation))
+                gTexAccumulation[pixelCoord].rgb = INF;
             return GetInfVisualizerColor(pixelCoord);
         }
     }

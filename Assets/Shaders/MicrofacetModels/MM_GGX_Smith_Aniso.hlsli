@@ -11,7 +11,7 @@ struct MicrofacetModel
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
     void Init(float roughness);
-    void InitAniso(float3 anisoDirStrength);
+    void InitAniso(HitInfo hitInfo);
 
     float m_alpha;
     float m_alphaX, m_alphaY;
@@ -26,9 +26,9 @@ void MicrofacetModel::Init(float roughness)
     m_alpha = RoughnessToAlpha(roughness);
 }
 
-void MicrofacetModel::InitAniso(float3 anisoDirStrength)
+void MicrofacetModel::InitAniso(HitInfo hitInfo)
 {
-    float2 alphaXY = AlphaToAnisoAlpha(m_alpha, anisoDirStrength.z);
+    float2 alphaXY = AlphaToAnisoAlpha(m_alpha, hitInfo.AnisoStrength);
 
     m_alphaX = alphaXY.x;
     m_alphaY = alphaXY.y;
@@ -41,7 +41,7 @@ void MicrofacetModel::InitAniso(float3 anisoDirStrength)
     m_isAniso = abs(m_alphaX - m_alphaY) > 0.0001f;
     if (m_isAniso)
     {
-        m_anisoDir = anisoDirStrength.xy;
+        m_anisoDir = hitInfo.AnisoDir;
 
         m_anisoT = float3(m_anisoDir.xy, 0);
         m_anisoB = float3(-m_anisoDir.y, m_anisoDir.x, 0);
