@@ -101,7 +101,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
 
-    DBG_OUTPUT3_FORCE(gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV).rgb);
+    //DBG_OUTPUT3_FORCE(gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV).rgb);
 
     DBG_OUTPUT3(Palette(instanceIdx),                                               InstanceIdx);
     DBG_OUTPUT3(Palette(instance.MaterialIndex),                                    MaterialIdx);
@@ -111,18 +111,18 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     DBG_OUTPUT3(hitInfo.Ng_ff,                                                      NormalGeometricFF);
     DBG_OUTPUT2(hitInfo.UV,                                                         UV);
 
-    DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,              Albedo);
-    DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                Opacity);
-    DBG_OUTPUT1(hitInfo.Mat.EmissiveStrength,        EmissiveStrength);
-    DBG_OUTPUT3(hitInfo.Mat.EmissiveColor,           EmissiveColor);
-    DBG_OUTPUT3(hitInfo.Li,                          Emission);
-    DBG_OUTPUT1(hitInfo.Mat.TransmissionFactor,      TransmissionFactor);
-    DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,       TransmissionColor);
-    DBG_OUTPUT1(hitInfo.Mat.Roughness,               Roughness);
-    DBG_OUTPUT1(hitInfo.Mat.Metallic,                Metallic);
-    DBG_OUTPUT3(hitInfo.Mat.SpecularFactor,          SpecularFactor);
-    DBG_OUTPUT1(hitInfo.Mat.AnisoStrength,           AnisoStrength);
-    DBG_OUTPUT1(hitInfo.Mat.IOR_N,                   IorN);
+    DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,                                             Albedo);
+    DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                                               Opacity);
+    DBG_OUTPUT1(hitInfo.Mat.EmissiveStrength,                                       EmissiveStrength);
+    DBG_OUTPUT3(hitInfo.Mat.EmissiveColor,                                          EmissiveColor);
+    DBG_OUTPUT3(hitInfo.Li,                                                         Emission);
+    DBG_OUTPUT1(hitInfo.Mat.TransmissionFactor,                                     TransmissionFactor);
+    DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,                                      TransmissionColor);
+    DBG_OUTPUT1(hitInfo.Mat.Roughness,                                              Roughness);
+    DBG_OUTPUT1(hitInfo.Mat.Metallic,                                               Metallic);
+    DBG_OUTPUT3(hitInfo.Mat.SpecularFactor,                                         SpecularFactor);
+    DBG_OUTPUT1(hitInfo.Mat.AnisoStrength,                                          AnisoStrength);
+    DBG_OUTPUT1(hitInfo.Mat.IOR_N,                                                  IorN);
 }
 
 #endif
