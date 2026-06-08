@@ -29,8 +29,10 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
         }
 
         float3 L_sample;
-        float3 dbgOutput;
-        Hit(q, ray, L_sample, beta, rngInfo, dbgOutput);
+        Hit(q, ray, L_sample, beta, rngInfo);
+
+        if (beta.x <= 0 && beta.y <= 0 && beta.z <= 0)
+            break;
 
         Lo += L_sample;
 
@@ -42,11 +44,6 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
             if (rRR > p)
                 break;
             beta /= p;
-        }
-
-        if (DEBUG_ENABLED(OutputColor))
-        {
-            return dbgOutput;
         }
     }
 

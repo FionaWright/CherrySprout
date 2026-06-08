@@ -8,7 +8,7 @@
 
 #include "Utils/RandomDirection.h"
 
-void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo, out float3 dbgOutput)
+void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo)
 {
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
@@ -26,15 +26,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
     beta *= f;
 
-    //if (!cDebugInfoOutputEnabled && beta.x <= 0 && beta.y <= 0 && beta.z <= 0)
-    //    break;
 
-    DBG_OUTPUT_START();
-    DBG_OUTPUT3(hitInfo.Ns_ff,             NormalShadedFF);
-    DBG_OUTPUT3(hitInfo.Ng_ff,             NormalGeometricFF);
-    DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,    Albedo);
-    DBG_OUTPUT3(hitInfo.Li,                Emission);
-    DBG_OUTPUT2(hitInfo.UV,                UV);
     // TODO DBG_OUTPUT_END() which does color remapping and stuff
 
     float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;

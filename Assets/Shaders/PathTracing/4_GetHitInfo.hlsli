@@ -5,6 +5,9 @@
 #include "Utils/HlslUtils.hlsli"
 #include "PathTracing/Flags.h"
 
+#include "Utils/Debug/Palette.hlsli"
+#include "PathTracing/Debug/OutputColor.h"
+
 struct HitInfo
 {
     Material Mat;
@@ -97,6 +100,29 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Mat.Metallic *= metallicSample;
 
     hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
+
+    DBG_OUTPUT3_FORCE(gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV).rgb);
+
+    DBG_OUTPUT3(Palette(instanceIdx),                                               InstanceIdx);
+    DBG_OUTPUT3(Palette(instance.MaterialIndex),                                    MaterialIdx);
+    DBG_OUTPUT2(barycentrics,                                                       Barycentrics);
+    DBG_OUTPUT3(SampleTexture(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0)),  NormalMap);
+    DBG_OUTPUT3(hitInfo.Ns_ff,                                                      NormalShadedFF);
+    DBG_OUTPUT3(hitInfo.Ng_ff,                                                      NormalGeometricFF);
+    DBG_OUTPUT2(hitInfo.UV,                                                         UV);
+
+    DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,              Albedo);
+    DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                Opacity);
+    DBG_OUTPUT1(hitInfo.Mat.EmissiveStrength,        EmissiveStrength);
+    DBG_OUTPUT3(hitInfo.Mat.EmissiveColor,           EmissiveColor);
+    DBG_OUTPUT3(hitInfo.Li,                          Emission);
+    DBG_OUTPUT1(hitInfo.Mat.TransmissionFactor,      TransmissionFactor);
+    DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,       TransmissionColor);
+    DBG_OUTPUT1(hitInfo.Mat.Roughness,               Roughness);
+    DBG_OUTPUT1(hitInfo.Mat.Metallic,                Metallic);
+    DBG_OUTPUT3(hitInfo.Mat.SpecularFactor,          SpecularFactor);
+    DBG_OUTPUT1(hitInfo.Mat.AnisoStrength,           AnisoStrength);
+    DBG_OUTPUT1(hitInfo.Mat.IOR_N,                   IorN);
 }
 
 #endif

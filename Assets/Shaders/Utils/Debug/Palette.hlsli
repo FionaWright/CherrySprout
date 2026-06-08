@@ -1,7 +1,7 @@
 #ifndef H_DEBUGPALETTE_H
 #define H_DEBUGPALETTE_H
 
-float4 Palette(uint idx)
+float3 Palette(uint idx)
 {
     const float3 colors[20] = {
         float3(1.0, 0.0, 0.0),   // Red
@@ -26,7 +26,7 @@ float4 Palette(uint idx)
         float3(0.25, 0.25, 1.0)  // Light blue
     };
 
-    return float4(colors[idx % 20], 1.0);
+    return colors[idx % 20];
 }
 
 #endif

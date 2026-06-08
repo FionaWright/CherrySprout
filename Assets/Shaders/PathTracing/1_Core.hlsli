@@ -31,6 +31,8 @@ void Core(uint2 pixelCoord)
     {
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, i, gSettings.FrameIdx);
 
+        DBG_OUTPUT1(Rand01(rngInfo), RNG);
+
         float2 pixelUV = pixelCoord;
         if (FEATURE_ENABLED(Jitter))
         {
@@ -53,6 +55,8 @@ void Core(uint2 pixelCoord)
     }
 
     colorSum /= float(gSettings.SPP);
+
+    DBG_OUTPUT_SET(colorSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, colorSum);
 
