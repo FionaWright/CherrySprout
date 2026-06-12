@@ -9,15 +9,20 @@
 enum class Internal_PathTracerFeatureIndex : hlsl::uint
 {
     Idx_Jitter,
-    Idx_DepthOfField,
     Idx_Accumulation,
+
     Idx_EnvironmentMap,
     Idx_EnvironmentMapEA,
+
     Idx_DirectionalLight,
     Idx_DirectionalLightDistant,
+
+    Idx_DepthOfField,
     Idx_RussianRoulette,
+
     Idx_NormalMaps,
     Idx_AlphaTesting,
+
     Idx_GlassMaterials,
     Idx_Anisotropy,
 
@@ -30,15 +35,20 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
     eFeature_None               = 0,
 
     eFeature_Jitter                     = 1u << __FEATURE_IDX(Jitter),
-    eFeature_DepthOfField               = 1u << __FEATURE_IDX(DepthOfField),
     eFeature_Accumulation               = 1u << __FEATURE_IDX(Accumulation),
+
     eFeature_EnvironmentMap             = 1u << __FEATURE_IDX(EnvironmentMap),
     eFeature_EnvironmentMapEA           = 1u << __FEATURE_IDX(EnvironmentMapEA),
+
     eFeature_DirectionalLight           = 1u << __FEATURE_IDX(DirectionalLight),
     eFeature_DirectionalLightDistant    = 1u << __FEATURE_IDX(DirectionalLightDistant),
+
+    eFeature_DepthOfField               = 1u << __FEATURE_IDX(DepthOfField),
     eFeature_RussianRoulette            = 1u << __FEATURE_IDX(RussianRoulette),
+
     eFeature_NormalMaps                 = 1u << __FEATURE_IDX(NormalMaps),
     eFeature_AlphaTesting               = 1u << __FEATURE_IDX(AlphaTesting),
+
     eFeature_GlassMaterials             = 1u << __FEATURE_IDX(GlassMaterials),
     eFeature_Anisotropy                 = 1u << __FEATURE_IDX(Anisotropy),
 
@@ -49,10 +59,13 @@ enum class Internal_PathTracerDebugIndex : hlsl::uint
 {
     Idx_FurnaceTest,
     Idx_OutputColor,
+
     Idx_NaNTests,
     Idx_Asserts,
+
     Idx_ForceSpecular,
     Idx_ForceDiffuse,
+
     Idx_ForceReflect,
     Idx_ForceRefract,
 
@@ -66,10 +79,13 @@ enum PathTracerDebugFlags : DEBUG_FLAG_TYPE
 
     eDebug_FurnaceTest                  = 1u << __DBG_IDX(FurnaceTest),
     eDebug_OutputColor                  = 1u << __DBG_IDX(OutputColor),
+
     eDebug_NaNTests                     = 1u << __DBG_IDX(NaNTests),
     eDebug_Asserts                      = 1u << __DBG_IDX(Asserts),
+
     eDebug_ForceSpecular                = 1u << __DBG_IDX(ForceSpecular),
     eDebug_ForceDiffuse                 = 1u << __DBG_IDX(ForceDiffuse),
+
     eDebug_ForceReflect                 = 1u << __DBG_IDX(ForceReflect),
     eDebug_ForceRefract                 = 1u << __DBG_IDX(ForceRefract),
 
@@ -80,25 +96,33 @@ enum PathTracerDebugFlags : DEBUG_FLAG_TYPE
 
 static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Jitter",
-    "Depth Of Field",
     "Accumulation",
+
     "Environment Map",
     "Environment Map Equal-Area",
+
     "Directional Light",
     "Directional Light is Distant",
+
+    "Depth Of Field",
     "Russian Roulette",
+
     "Normal Maps",
     "Alpha Testing",
+
     "Glass materials",
     "Anisotropy",
 };
 static const char* s_debugFlagNames[DEBUG_COUNT] = {
     "Furnace Test",
     "Output Color",
+
     "NaN Tests",
     "Asserts",
+
     "Force Specular",
     "Force Diffuse",
+
     "Force Reflect",
     "Force Refract",
 };

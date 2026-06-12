@@ -51,6 +51,22 @@ void Core(uint2 pixelCoord)
         float4 world = mul(gSettings.InvV, view);
         ray.Direction = normalize(world.xyz - origin);
 
+        if (FEATURE_ENABLED(DepthOfField))
+        {
+            float3 camRight = normalize(float3(gSettings.InvV[0][0], gSettings.InvV[1][0], gSettings.InvV[2][0]));
+            float3 camUp = normalize(float3(gSettings.InvV[0][1], gSettings.InvV[1][1], gSettings.InvV[2][1]));
+            float3 focalPoint = origin + ray.Direction * gSettings.DofFocalDist;
+
+            float rLensU = Rand01(rngInfo);
+            float rLensV = Rand01(rngInfo);
+            float r = sqrt(rLensU) * gSettings.DofLensRadius;
+            float theta = 2.0 * PI * rLensV;
+            float3 lensOffset = r * (camRight * cos(theta) + camUp * sin(theta));
+
+            ray.Origin = origin + lensOffset;
+            ray.Direction = normalize(focalPoint - ray.Origin);
+        }
+
         colorSum += Trace(ray, rngInfo);
     }
 

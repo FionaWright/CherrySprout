@@ -143,6 +143,14 @@ void Greenhouse::PostUpdate(D3D* d3d)
 {
 }
 
+bool Greenhouse::pathTracingFeatureEnabled(const PathTracerFeatureFlags flag) const
+{
+    if (m_config.RenderBackend != RenderBackendMode::ePathTracer)
+        return false;
+
+    return GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
+}
+
 void Greenhouse::RenderGUI()
 {
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
@@ -209,17 +217,9 @@ void Greenhouse::RenderGUI()
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Ray Depth", &m_config.PathTracerConfig.MaxRayDepth);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Frames", &m_config.PathTracerConfig.MaxFrameNumber);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("RR Min Bounces", &m_config.PathTracerConfig.RussianRouletteMinBounces);
+        m_ptFrameDirty |= GuiUtils::FwInputFloat("Firefly Threshold", &m_config.PathTracerConfig.FireFlyThreshold);
 
         ImGui::Spacing();
-
-        if (GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_DirectionalLight))
-        {
-            m_ptFrameDirty |= GuiUtils::FwInputFloat3("Dir Light Dir", (float*)&m_config.RenderBackendConfig.DirLightDirection);
-            m_ptFrameDirty |= GuiUtils::FwColorEdit3("Dir Light Color", (float*)&m_config.RenderBackendConfig.DirLightColor);
-            m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Intensity", &m_config.RenderBackendConfig.DirLightIntensity);
-            m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Radius", &m_config.RenderBackendConfig.DirLightCosAngularRadius);
-            ImGui::Spacing();
-        }
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
@@ -258,6 +258,33 @@ void Greenhouse::RenderGUI()
             ImGui::EndTable();
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
+        ImGui::Spacing();
+
+        if (pathTracingFeatureEnabled(eFeature_DirectionalLight))
+        {
+            ImGui::Text("Directional Light:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwInputFloat3("Dir Light Dir", (float*)&m_config.RenderBackendConfig.DirLightDirection);
+                m_ptFrameDirty |= GuiUtils::FwColorEdit3("Dir Light Color", (float*)&m_config.RenderBackendConfig.DirLightColor);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Intensity", &m_config.RenderBackendConfig.DirLightIntensity);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Radius", &m_config.RenderBackendConfig.DirLightCosAngularRadius);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
+        if (pathTracingFeatureEnabled(eFeature_DepthOfField))
+        {
+            ImGui::Text("Depth of Field:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwDragFloat("Focal Distance", &m_config.PathTracerConfig.DofFocalDist, 0.05f);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("Lens Radius", &m_config.PathTracerConfig.DofLensRadius);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
 
         ImGui::Text("Debug Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
@@ -277,6 +304,7 @@ void Greenhouse::RenderGUI()
             ImGui::EndTable();
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
+        ImGui::Spacing();
 
         if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
             m_config.PathTracerConfig.DebugOutputIdx = DebugOutputIndex::eDebugOutput_Disabled;

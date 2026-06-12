@@ -39,6 +39,8 @@ public:
     void RenderGUI() override;
 
 private:
+    bool pathTracingFeatureEnabled(PathTracerFeatureFlags flag) const;
+
     GreenhouseConfig m_config{};
     XMMATRIX m_projectionMatrix{};
     XMMATRIX m_invProjectionMatrix{};

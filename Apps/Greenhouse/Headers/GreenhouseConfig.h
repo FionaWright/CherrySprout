@@ -13,8 +13,8 @@ struct PathTracerConfig
     uint32_t RussianRouletteMinBounces = 4;
 
     float FireFlyThreshold = 2.5f;
-    float DofFocalDist = 5.0f;
-    float DofLensRadius = 0.05f;
+    float DofFocalDist = 0.1f;
+    float DofLensRadius = 0.003f;
 
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     PathTracerDebugFlags       DebugFlags       = s_defaultDebugFlags;

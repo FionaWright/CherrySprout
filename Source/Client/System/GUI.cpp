@@ -9,6 +9,7 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 #include "System/Config.h"
+#include "System/FileHelper.h"
 #include "System/GuiStyles.h"
 
 ComPtr<ID3D12DescriptorHeap> Gui::ms_cbvSrvUavHeap;
@@ -23,11 +24,7 @@ void Gui::Init(const HWND hwnd, ID3D12Device* device, const int framesInFlight)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;        // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;            // Enable Gamepad Controls
 
-#ifdef SOURCE_DIR
-    io.Fonts->AddFontFromFileTTF((std::string(SOURCE_DIR) + "/Assets/Fonts/Varela_Round/VarelaRound-Regular.ttf").c_str(), 13);
-#else
-    io.Fonts->AddFontDefault();
-#endif
+    io.Fonts->AddFontFromFileTTF(FileHelper::GetAssetFullPath("Fonts/Varela_Round/VarelaRound-Regular.ttf").c_str(), 13);
     io.Fonts->Build();
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};

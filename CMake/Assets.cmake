@@ -87,7 +87,7 @@ add_dependencies(client AssetsTextures)
 # Scenes
 # ============================================================================
 
-file(GLOB_RECURSE SCENE_FILES
+file(GLOB_RECURSE COPY_FILES
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.gltf"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.glb"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.usd"
@@ -96,19 +96,20 @@ file(GLOB_RECURSE SCENE_FILES
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.usdz"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.mtlx"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.mdl"
+        "${CMAKE_SOURCE_DIR}/Assets/Fonts/*.ttf"
 )
 
 set(SCENE_OUTPUTS "")
 
-foreach(SRC ${SCENE_FILES})
+foreach(SRC ${COPY_FILES})
 
     file(RELATIVE_PATH REL_PATH
-            "${CMAKE_SOURCE_DIR}/Assets/Scenes"
+            "${CMAKE_SOURCE_DIR}/Assets"
             "${SRC}"
     )
 
     set(DST
-            "${CMAKE_BINARY_DIR}/Assets/Scenes/${REL_PATH}"
+            "${CMAKE_BINARY_DIR}/Assets/${REL_PATH}"
     )
 
     get_filename_component(DST_DIR "${DST}" DIRECTORY)
@@ -120,18 +121,18 @@ foreach(SRC ${SCENE_FILES})
             "${SRC}"
             "${DST}"
             DEPENDS "${SRC}"
-            COMMENT "Copying scene ${REL_PATH}"
+            COMMENT "Copying file ${REL_PATH}"
     )
 
     list(APPEND SCENE_OUTPUTS "${DST}")
 
 endforeach()
 
-add_custom_target(AssetsScenes ALL
+add_custom_target(AssetsCopy ALL
         DEPENDS ${SCENE_OUTPUTS}
 )
 
-add_dependencies(client AssetsScenes)
+add_dependencies(client AssetsCopy)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES MATCHES "Release")
     add_custom_target(CopyShaders ALL

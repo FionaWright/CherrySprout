@@ -21,7 +21,7 @@ static const char* s_bxdfNames[static_cast<hlsl::uint>(BxdfMode::eCount)] =
     "Principled"
 };
 
-static constexpr BxdfMode s_defaultBxdfMode = BxdfMode::eLambertian;
+static constexpr BxdfMode s_defaultBxdfMode = BxdfMode::ePBR;
 
 #else
 
