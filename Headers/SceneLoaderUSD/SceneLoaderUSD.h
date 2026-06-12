@@ -6,4 +6,7 @@
 extern "C" __declspec(dllexport)
 void LoadUSD(const char* usdPath, float sceneScale, SceneCPU* scene);
 
+extern "C" __declspec(dllexport)
+void FreeScene(SceneCPU* scene);
+
 #endif

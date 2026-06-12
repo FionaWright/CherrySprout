@@ -9,15 +9,15 @@ void PrintSceneDebug(const SceneCPU* scene)
 {
     std::cout << "\n========== Scene Debug ==========\n";
 
-    std::cout << "Objects:      " << scene->Objects.size() << '\n';
-    std::cout << "Materials:    " << scene->MegaBufferMaterials.size() << '\n';
-    std::cout << "Textures:     " << scene->TextureFilepaths.size() << '\n';
-    std::cout << "Vertices:     " << scene->MegaBufferVertex.size() << '\n';
-    std::cout << "Indices:      " << scene->MegaBufferIndex.size() << '\n';
+    std::cout << "Objects:      " << scene->ObjectCount << '\n';
+    std::cout << "Materials:    " << scene->MegaBufferMaterialsCount << '\n';
+    std::cout << "Textures:     " << scene->TextureFilepathCount << '\n';
+    std::cout << "Vertices:     " << scene->MegaBufferVertexCount << '\n';
+    std::cout << "Indices:      " << scene->MegaBufferIndexCount << '\n';
 
     std::cout << "\n----- Materials -----\n";
 
-    for (size_t i = 0; i < scene->MegaBufferMaterials.size(); ++i)
+    for (size_t i = 0; i < scene->MegaBufferMaterialsCount; ++i)
     {
         const Material& mat = scene->MegaBufferMaterials[i];
 
@@ -38,7 +38,7 @@ void PrintSceneDebug(const SceneCPU* scene)
 
     std::cout << "\n----- Objects -----\n";
 
-    for (size_t i = 0; i < scene->Objects.size(); ++i)
+    for (size_t i = 0; i < scene->ObjectCount; ++i)
     {
         const Object& obj = scene->Objects[i];
 
@@ -55,7 +55,7 @@ void PrintSceneDebug(const SceneCPU* scene)
             << " IdxCount=" << obj.MegaBufferIndexCount
             << '\n';
 
-        if (obj.MaterialIndex >= scene->MegaBufferMaterials.size())
+        if (obj.MaterialIndex >= scene->MegaBufferMaterialsCount)
         {
             std::cout
                 << "    WARNING: Invalid material index ("
@@ -65,7 +65,7 @@ void PrintSceneDebug(const SceneCPU* scene)
 
     std::cout << "\n----- Textures -----\n";
 
-    for (size_t i = 0; i < scene->TextureFilepaths.size(); ++i)
+    for (size_t i = 0; i < scene->TextureFilepathCount; ++i)
     {
         std::cout << "[" << i << "] "
                   << scene->TextureFilepaths[i]
@@ -82,11 +82,13 @@ int main(const int argc, char** argv)
     SceneCPU scene;
     LoadUSD(filepath.c_str(), 1.0f, &scene);
 
-    for (const Object& obj : scene.Objects)
+    for (size_t i = 0; i < scene.ObjectCount; ++i)
     {
-        assert(obj.MegaBufferVertexOffset < scene.MegaBufferVertex.size());
-        assert(obj.MegaBufferIndexOffset < scene.MegaBufferIndex.size());
-        assert(obj.MegaBufferIndexOffset + obj.MegaBufferIndexCount <= scene.MegaBufferIndex.size());
+        const Object& obj = scene.Objects[i];
+
+        assert(obj.MegaBufferVertexOffset < scene.MegaBufferVertexCount);
+        assert(obj.MegaBufferIndexOffset < scene.MegaBufferIndexCount);
+        assert(obj.MegaBufferIndexOffset + obj.MegaBufferIndexCount <= scene.MegaBufferIndexCount);
     }
 
     PrintSceneDebug(&scene);

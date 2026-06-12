@@ -15,7 +15,7 @@
 struct Object
 {
 #ifdef _DEBUG
-    std::string DebugName = "Unnamed Object";
+    const char* DebugName = "Unnamed Object";
 #endif
 
     float M[16];
@@ -30,12 +30,21 @@ struct Object
 struct SceneCPU
 {
     // Filled by Scene Loader:
-    std::vector<Object> Objects;
-    std::vector<const char*> TextureFilepaths;
+    Object* Objects = nullptr;
+    size_t ObjectCount = 0;
 
-    std::vector<Vertex> MegaBufferVertex;
-    std::vector<uint32_t> MegaBufferIndex;
-    std::vector<Material> MegaBufferMaterials;
+    char** TextureFilepaths = nullptr;
+    size_t TextureFilepathCount = 0;
+
+    Vertex* MegaBufferVertex = nullptr;
+    size_t MegaBufferVertexCount = 0;
+
+    uint32_t* MegaBufferIndex = nullptr;
+    size_t MegaBufferIndexCount = 0;
+
+    Material* MegaBufferMaterials = nullptr;
+    size_t MegaBufferMaterialsCount = 0;
+
     // TODO: MegaBufferPunctualLights
 };
 

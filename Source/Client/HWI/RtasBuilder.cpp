@@ -18,12 +18,12 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
     m_megaBufferInstanceData.clear();
 
     m_uploadHeap = {};
-    m_uploadHeap.Init(device, 64 + scene->CPU.Objects.size() * sizeof(InstanceData));
+    m_uploadHeap.Init(device, 64 + scene->CPU.ObjectCount * sizeof(InstanceData));
 
     m_tlasScratch = {};
     m_tlasResult = {};
 
-    for (int i = 0; i < scene->CPU.Objects.size(); i++)
+    for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
         buildBlas(device, cmdList, scene->GPU.MegaBufferVertex.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i]);
     }
@@ -61,7 +61,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         m_megaBufferInstanceData.emplace_back(instanceData);
     }
 
-    const size_t megaBufferInstanceDataSize = scene->CPU.Objects.size() * sizeof(InstanceData);
+    const size_t megaBufferInstanceDataSize = scene->CPU.ObjectCount * sizeof(InstanceData);
     scene->GPU.MegaBufferInstanceData = {};
     scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
     scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, &m_uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataSize);

@@ -53,9 +53,9 @@ void SceneManager::UploadScene(D3D* d3d)
 {
     CherryAssert(m_gpuDataDirty);
 
-    const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertex.size() * sizeof(Vertex);
-    const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndex.size() * sizeof(uint32_t);
-    const size_t megaBufferMaterialsBytes = m_scene.CPU.MegaBufferMaterials.size() * sizeof(Material);
+    const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertexCount * sizeof(Vertex);
+    const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndexCount * sizeof(uint32_t);
+    const size_t megaBufferMaterialsBytes = m_scene.CPU.MegaBufferMaterialsCount * sizeof(Material);
 
     m_scene.GPU.MegaBufferVertex.Init_Buffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
     m_scene.GPU.MegaBufferIndex.Init_Buffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
@@ -66,7 +66,7 @@ void SceneManager::UploadScene(D3D* d3d)
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferIndex.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferMaterials.GetIntermediateSize(), 512);
 
-    const size_t textureCount = m_scene.CPU.TextureFilepaths.size();
+    const size_t textureCount = m_scene.CPU.TextureFilepathCount;
     std::vector<ScratchImage> scratchImages(textureCount);
 
     for (int i = 0; i < textureCount; i++)
@@ -87,9 +87,9 @@ void SceneManager::UploadScene(D3D* d3d)
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
         const auto cmdList = cmdListPtr.Get();
 
-        m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex.data(), megaBufferIndexBytes);
-        m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials.data(), megaBufferMaterialsBytes);
-        m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex.data(), megaBufferVertexBytes);
+        m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
+        m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
+        m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
 
         for (int i = 0; i < textureCount; i++)
         {

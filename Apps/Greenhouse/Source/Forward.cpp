@@ -100,7 +100,9 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     {
         D3D12_VERTEX_BUFFER_VIEW viewV;
         D3D12_INDEX_BUFFER_VIEW viewI;
-        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertex, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferVertex.size(), sizeof(Vertex), scene->CPU.MegaBufferIndex.size(), viewV, viewI);
+        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertex, &scene->GPU.MegaBufferIndex,
+            scene->CPU.MegaBufferVertexCount, sizeof(Vertex), scene->CPU.MegaBufferIndexCount,
+                    viewV, viewI);
 
         scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
@@ -121,11 +123,11 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     CbvMatrices_M matricesM = {};
 
-    for (int i = 0; i < scene->CPU.Objects.size(); ++i)
+    for (int i = 0; i < scene->CPU.ObjectCount; ++i)
     {
         const Object& obj = scene->CPU.Objects[i];
 
-        GPU_SCOPE(cmdList, obj.DebugName.c_str());
+        GPU_SCOPE(cmdList, obj.DebugName);
 
         const XMMATRIX M = XMMatrixSet(
             obj.M[0], obj.M[1], obj.M[2], obj.M[3],

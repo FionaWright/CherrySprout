@@ -11,38 +11,62 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
 {
     std::cout << "Processing scene..." << std::endl;
 
-    scene->MegaBufferVertex.clear();
-    scene->MegaBufferIndex.clear();
-    scene->MegaBufferMaterials.clear();
+    *scene = {};
 
-    // TODO: Load images here? Makes sense to me
+    scene->MegaBufferMaterials = new Material[importerContext.Materials.size()];
+    scene->MegaBufferMaterialsCount = importerContext.Materials.size();
+    memcpy(scene->MegaBufferMaterials, importerContext.Materials.data(), scene->MegaBufferMaterialsCount * sizeof(Material));
 
-    scene->MegaBufferMaterials = importerContext.Materials;
-    scene->TextureFilepaths = importerContext.TextureFilePaths;
-
-    for (const auto& [Name, Vertices, Indices, M, MaterialIndex] : importerContext.Objects)
+    scene->TextureFilepathCount = importerContext.TextureFilePaths.size();
+    scene->TextureFilepaths = static_cast<char**>(malloc(scene->TextureFilepathCount * sizeof(char*)));
+    for (size_t i = 0; i < scene->TextureFilepathCount; i++)
     {
+        scene->TextureFilepaths[i] = _strdup(importerContext.TextureFilePaths[i]);
+    }
+
+    size_t totalVertexCount = 0;
+    size_t totalIndexCount = 0;
+    for (size_t i = 0; i < importerContext.Objects.size(); i++)
+    {
+        totalVertexCount += importerContext.Objects[i].Vertices.size();
+        totalIndexCount += importerContext.Objects[i].Indices.size();
+    }
+    scene->MegaBufferVertex = new Vertex[totalVertexCount];
+    scene->MegaBufferIndex = new uint32_t[totalIndexCount];
+
+    scene->ObjectCount = importerContext.Objects.size();
+    scene->Objects = new Object[scene->ObjectCount];
+    for (size_t i = 0; i < scene->ObjectCount; i++)
+    {
+        const ImporterObject& impObj = importerContext.Objects[i];
         Object obj;
 
 #ifdef _DEBUG
-        obj.DebugName = Name;
+        // TODO
+        //obj.DebugName = Name.c_str();
 #endif
 
-        obj.MegaBufferVertexOffset = static_cast<uint32_t>(scene->MegaBufferVertex.size());
-        obj.MegaBufferIndexOffset = static_cast<uint32_t>(scene->MegaBufferIndex.size());
+        obj.MegaBufferVertexOffset  = static_cast<uint32_t>(scene->MegaBufferVertexCount);
+        obj.MegaBufferIndexOffset   = static_cast<uint32_t>(scene->MegaBufferIndexCount);
+        obj.MegaBufferVertexCount   = impObj.Vertices.size();
+        obj.MegaBufferIndexCount    = impObj.Indices.size();
 
-        scene->MegaBufferVertex.insert(std::end(scene->MegaBufferVertex), std::begin(Vertices), std::end(Vertices));
-        scene->MegaBufferIndex.insert(std::end(scene->MegaBufferIndex), std::begin(Indices), std::end(Indices));
+        Vertex* vAddr = scene->MegaBufferVertex + obj.MegaBufferVertexOffset;
+        uint32_t* iAddr = scene->MegaBufferIndex + obj.MegaBufferIndexOffset;
+        memcpy(vAddr, impObj.Vertices.data(), impObj.Vertices.size() * sizeof(Vertex));
+        memcpy(iAddr, impObj.Indices.data(), impObj.Indices.size() * sizeof(uint32_t));
+        scene->MegaBufferVertexCount += impObj.Vertices.size();
+        scene->MegaBufferIndexCount += impObj.Indices.size();
 
-        obj.MegaBufferVertexCount = static_cast<uint32_t>(scene->MegaBufferVertex.size()) - obj.MegaBufferVertexOffset;
-        obj.MegaBufferIndexCount = static_cast<uint32_t>(scene->MegaBufferIndex.size()) - obj.MegaBufferIndexOffset;
+        memcpy(obj.M, impObj.M, sizeof(float)*16);
 
-        memcpy(obj.M, M, sizeof(float)*16);
+        obj.MaterialIndex = impObj.MaterialIndex;
 
-        obj.MaterialIndex = MaterialIndex;
-
-        scene->Objects.emplace_back(std::move(obj));
+        scene->Objects[i] = obj;
     }
+
+    assert(totalVertexCount == scene->MegaBufferVertexCount);
+    assert(totalIndexCount == scene->MegaBufferIndexCount);
 
     std::cout << "Scene processed" << std::endl;
 }

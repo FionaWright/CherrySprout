@@ -27,3 +27,8 @@ void LoadUSD(const char* usdPath, float sceneScale, SceneCPU* scene)
     const auto importerContext = SceneLoaderUSD::Import(usdPath, sceneScale);
     SceneLoaderUSD::Process(importerContext, scene);
 }
+
+void FreeScene(SceneCPU* scene)
+{
+    // TODO
+}
