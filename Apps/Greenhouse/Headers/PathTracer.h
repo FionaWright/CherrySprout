@@ -14,6 +14,7 @@
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags.h"
 
+enum class BxdfMode : hlsl::uint;
 enum class DebugOutputIndex : hlsl::uint;
 struct TimeArgs;
 
@@ -26,7 +27,7 @@ public:
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override;
     void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags,
-                        const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx);
+                        const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const BxdfMode& bxdfMode);
     void Reset();
 
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }

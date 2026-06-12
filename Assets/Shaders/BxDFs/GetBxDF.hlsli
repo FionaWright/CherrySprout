@@ -3,6 +3,7 @@
 
 #include "Utils/RandomDirection.h"
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
+#include "BxDFs/BxDFMode.h"
 
 struct BxDF
 {
@@ -26,7 +27,15 @@ struct BxDF
     );
 };
 
-#include "BxDFs/BRDF_Lambertian.hlsli"
-//#include "BxDFs/BSDF_PBR.hlsli"
+#if   (BXDF_ENABLED(LAMBERTIAN))
+#    include "BxDFs/BRDF_Lambertian.hlsli"
+
+#elif (BXDF_ENABLED(PBR))
+#    include "BxDFs/BSDF_PBR.hlsli"
+
+#elif (BXDF_ENABLED(PRINCIPLED))
+// TODO
+
+#endif
 
 #endif

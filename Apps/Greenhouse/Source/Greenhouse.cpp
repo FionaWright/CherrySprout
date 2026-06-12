@@ -108,7 +108,11 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_ptPipelineDirty)
     {
-        m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, m_config.PathTracerConfig.DebugFlags, m_config.PathTracerConfig.DebugOutputIdx);
+        m_pathTracer.UpdatePipeline(d3d->GetDevice(),
+            m_config.PathTracerConfig.FeatureFlags,
+            m_config.PathTracerConfig.DebugFlags,
+            m_config.PathTracerConfig.DebugOutputIdx,
+            m_config.PathTracerConfig.BxdfMode);
         m_ptPipelineDirty = false;
     }
 
@@ -189,6 +193,22 @@ void Greenhouse::RenderGUI()
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Ray Depth", &m_config.PathTracerConfig.MaxRayDepth);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Frames", &m_config.PathTracerConfig.MaxFrameNumber);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("RR Min Bounces", &m_config.PathTracerConfig.RussianRouletteMinBounces);
+
+        // BxDF Mode
+        {
+            ImGui::Text("BxDF:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                static int e = static_cast<int>(m_config.PathTracerConfig.BxdfMode);
+                int c = 0;
+                for (int i = 0; i < static_cast<int>(BxdfMode::eCount); i++)
+                {
+                    m_ptPipelineDirty |= ImGui::RadioButton(s_bxdfNames[i], &e, c++);
+                }
+                m_config.PathTracerConfig.BxdfMode = static_cast<BxdfMode>(e);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+        }
 
         ImGui::Text("Feature Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);

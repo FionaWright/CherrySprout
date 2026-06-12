@@ -47,7 +47,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, 2, true, &sampler, 1);
 
-    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex);
+    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, s_defaultBxdfMode);
 }
 
 void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap)
@@ -173,11 +173,12 @@ void PathTracer::UnreserveData()
 
 }
 
-void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx)
+void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const BxdfMode& bxdfMode)
 {
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
+    compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
 
     if (debugOutputIdx != DebugOutputIndex::eDebugOutput_Disabled)
         compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));

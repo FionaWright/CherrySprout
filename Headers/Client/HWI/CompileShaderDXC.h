@@ -71,12 +71,10 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
 
     const std::string dataPath = FileHelper::GetAssetsPath() + "Data/";
     const std::string shadersPath = FileHelper::GetShadersPath();
-    const std::string dualIncludePath = FileHelper::GetShadersPath() + "DualIncludes/";
 
     std::wstring entryPointW = stringToWString(entryPoint);
     std::wstring targetProfileW = stringToWString(targetProfile);
     std::wstring dataPathW = stringToWString(dataPath);
-    std::wstring dualIncludePathW = stringToWString(dualIncludePath);
     std::wstring shadersPathW = stringToWString(shadersPath);
 
     ComPtr<IDxcResult> result;
@@ -84,7 +82,6 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
         L"-E", entryPointW.c_str(),
         L"-T", targetProfileW.c_str(),
         L"-I", dataPathW.c_str(),
-        L"-I", dualIncludePathW.c_str(),
         L"-I", shadersPathW.c_str()
     };
 
@@ -103,6 +100,13 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
 
     if (compileFlags & SCF_WarningsAsErrors)
         args.push_back(L"-WX");
+
+#ifdef _DEBUG
+    std::cout << "Compiling Shader: ";
+    for (const auto& arg : args)
+        std::cout << wstringToString(arg) << " ";
+    std::cout << std::endl;
+#endif
 
     if (FAILED(compiler->Compile(&buffer, args.data(), args.size(), includeHandler.Get(), IID_PPV_ARGS(&result))))
     {

@@ -1,6 +1,7 @@
 #ifndef H_GREENHOUSE_CONFIG_H
 #define H_GREENHOUSE_CONFIG_H
 
+#include "BxDFs/BxDFMode.h"
 #include "PathTracing/Flags.h"
 #include "PathTracing/Debug/OutputColor.h"
 
@@ -15,9 +16,10 @@ struct PathTracerConfig
     float DofFocalDist = 5.0f;
     float DofLensRadius = 0.05f;
 
-    PathTracerFeatureFlags FeatureFlags = s_defaultFeatureFlags;
-    PathTracerDebugFlags DebugFlags = s_defaultDebugFlags;
-    DebugOutputIndex DebugOutputIdx = s_defaultOutputIndex;
+    PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
+    PathTracerDebugFlags       DebugFlags       = s_defaultDebugFlags;
+    DebugOutputIndex           DebugOutputIdx   = s_defaultOutputIndex;
+    BxdfMode                   BxdfMode         = s_defaultBxdfMode;
 };
 
 struct ForwardConfig
