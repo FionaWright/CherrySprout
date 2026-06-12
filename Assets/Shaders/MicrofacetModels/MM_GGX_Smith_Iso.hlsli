@@ -26,7 +26,7 @@ float3 MicrofacetModel::Sample(float u1, float u2)
     float a2 = m_alpha * m_alpha;
 
     float phi = 2.0 * PI * u1;
-    float cosTheta = sqrt(max(0.0f, (1.0 - u2) / max(0.001f, 1.0 + (a2 - 1.0) * u2)));
+    float cosTheta = sqrt(max(0.0f, (1.0 - u2) / max(1e-6, 1.0 + (a2 - 1.0) * u2)));
     float sinTheta = sqrt(max(0.0f, 1.0 - cosTheta * cosTheta));
 
     float3 H_s = normalize(float3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
@@ -39,16 +39,16 @@ float MicrofacetModel::D(float3 H)
     float NdH = H.z;
 
     float denominator = (NdH * NdH * (a2 - 1.0f) + 1.0f);
-    return a2 / max(0.001f, PI * denominator * denominator);
+    return a2 / max(1e-6, PI * denominator * denominator);
 }
 
 float MicrofacetModel::G1(float3 W)
 {
     float a2 = m_alpha * m_alpha;
-    float NdW = W.z;
+    float NdW = abs(W.z); // abs() due to BTDFs
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
-    return saturate(2 * NdW / max(0.001f, denom));
+    return saturate(2 * NdW / max(1e-6, denom));
 }
 
 float MicrofacetModel::G2(float3 L, float3 V)
@@ -61,7 +61,7 @@ float MicrofacetModel::PDF(float D, float3 H, float3 V)
     float NdH = H.z;
     float VdH = dot(V, H);
 
-    return D * NdH / (4.0f * max(0.001f, VdH));
+    return D * NdH / (4.0f * max(1e-6, VdH));
 }
 
 #endif

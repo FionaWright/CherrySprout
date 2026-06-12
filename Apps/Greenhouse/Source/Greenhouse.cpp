@@ -148,11 +148,11 @@ void Greenhouse::RenderGUI()
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
                      ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
-    ImGui::SeparatorText("Scene##xx");
+    ImGui::SeparatorText("Scene");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
         const char* curName = s_sceneConfigs.at(m_currentSceneIdx).Name.c_str();
-        if (GuiUtils::BeginComboWithTooltip("Scene##xx", curName))
+        if (GuiUtils::BeginComboWithTooltip("Scene", curName))
         {
             for (size_t i = 0; i < s_sceneConfigs.size(); i++)
             {
@@ -170,11 +170,11 @@ void Greenhouse::RenderGUI()
             ImGui::EndCombo();
         }
 
-        m_sceneDirty |= ImGui::Button("Reload Scene##xx");
+        m_sceneDirty |= ImGui::Button("Reload Scene");
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
-    ImGui::SeparatorText("Render Backend##xx");
+    ImGui::SeparatorText("Render Backend");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
         static int e = static_cast<int>(m_config.RenderBackend);
@@ -185,7 +185,15 @@ void Greenhouse::RenderGUI()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
-    ImGui::SeparatorText("Settings##xx");
+    ImGui::SeparatorText("Info");
+    ImGui::Indent(IM_GUI_INDENTATION);
+    {
+        ImGui::Text("Frames : %i", m_pathTracer.GetCurrentFrameIdx());
+        ImGui::Text("Samples: %i", m_pathTracer.GetCurrentFrameIdx() * m_config.PathTracerConfig.SPP);
+    }
+    ImGui::Unindent(IM_GUI_INDENTATION);
+
+    ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
 

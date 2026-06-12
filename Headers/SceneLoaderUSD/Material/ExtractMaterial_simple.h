@@ -75,7 +75,7 @@ namespace SceneLoaderUSD
         material.TexIdxNormal               = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "normal");
         material.TexIdxRoughness            = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "roughness");
         material.TexIdxMetallic             = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "metallic");
-        material.TexIdxEmissiveStrength     = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "emissiveColor");
+        material.TexIdxEmissive     = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "emissiveColor");
         material.TexIdxAnisotropy           = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "anisotropy");
         material.TexIdxClearcoat            = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "clearcoat");
         material.TexIdxClearcoatRoughness   = MaterialUtils_Simple::TryFetchTexture(surface, textureList, "clearcoatRoughness");
@@ -119,7 +119,7 @@ namespace SceneLoaderUSD
 
         readFloatAssignedTexture    ("roughness",           material.TexIdxRoughness,           material.Roughness);
         readFloatAssignedTexture    ("metallic",            material.TexIdxMetallic,            material.Metallic);
-        readFloatAssignedTexture    ("emissiveStrength",    material.TexIdxEmissiveStrength,    material.EmissiveStrength);
+        readFloatAssignedTexture    ("emissiveStrength",    material.TexIdxEmissive,    material.EmissiveStrength);
         readFloatAssignedTexture    ("transmission",        material.TexIdxTransmissionFactor,  material.TransmissionFactor);
 
         readFloat                   ("specularFactor",  material.SpecularFactor);

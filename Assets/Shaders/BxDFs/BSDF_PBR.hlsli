@@ -19,6 +19,9 @@ void DiffuseLobe(
     float NdL = SSpaceCosTheta(L_s);
     pdf = NdL / PI;
     f = hitInfo.Mat.Albedo.rgb * (1.0 - hitInfo.Mat.Metallic);
+
+    DBG_OUTPUT1(0,                F);
+    DBG_OUTPUT1(0,                G);
 }
 
 void SpecularLobe(
@@ -40,6 +43,8 @@ void SpecularLobe(
     {
         f = 0.0f;
         pdf = 0.0f;
+        DBG_OUTPUT1(0,                F);
+        DBG_OUTPUT1(0,                G);
         return;
     }
 
@@ -53,18 +58,20 @@ void SpecularLobe(
     float G = mm.G2(L_s, V_s);
     pdf = mm.PDF(D, H_s, V_s);
 
-    float3 specularBrdf = 0.0f;
+    DBG_OUTPUT3(F,                F);
+    DBG_OUTPUT1(G,                G);
+
+    // Dirac Delta
     if (hitInfo.Mat.Roughness < EPSILON)
     {
         L_s = reflect(-V_s, N_s);
-        specularBrdf = F;
-        f = specularBrdf;
+        f = F;
+        pdf = 1;
+        return;
     }
-    else
-    {
-        specularBrdf = (D * G * F) / max(1e-6, 4 * NdV * NdL);
-        f = specularBrdf * NdL / max(1e-6, pdf);
-    }
+
+    float3 specularBrdf = (D * G * F) / max(1e-6, 4 * NdV * NdL);
+    f = specularBrdf * NdL / max(1e-6, pdf);
 }
 
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
@@ -82,8 +89,10 @@ void TransmissiveLobe(
     float eta = nCurrent / nNext;
     float eta2 = eta * eta;
 
-    // Recompute H_s
+    // Recompute H_s (Used for evaluation ONLY!)
     //H_s = normalize(nCurrent * V_s + nNext * L_s);
+
+    L_s = refract(-V_s, H_s, eta);
 
     float VdH = dot(H_s, V_s);
     float LdH = dot(L_s, H_s);
@@ -91,16 +100,24 @@ void TransmissiveLobe(
     float NdV = SSpaceCosTheta(V_s);
     float NdH = SSpaceCosTheta(H_s);
 
-    float denom = nCurrent * VdH + nNext * LdH;
-    float denom2 = denom * denom;
-    float factor = abs(VdH * LdH) / max(1e-6f, denom2) / max(1e-6f, abs(NdL * NdV));
-
     float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, abs(VdH));
     float D = mm.D(H_s);
     float G = mm.G2(L_s, V_s);
-    pdf = D * NdH * abs(LdH) / max(1e-6f, denom2);
+    float mmPdf = mm.PDF(D, H_s, V_s);
 
-    L_s = refract(-V_s, H_s, eta);
+    DBG_OUTPUT1(F,                F);
+    DBG_OUTPUT1(G,                G);
+
+    //float denom = nCurrent * VdH + nNext * LdH;
+    //float denom2 = denom * denom;
+    //float factor = abs(VdH * LdH) / max(1e-6f, denom2) / max(1e-6f, abs(NdL * NdV));
+    //pdf = D * NdH * abs(LdH) / max(1e-6f, denom2);
+
+    float denom = LdH + VdH / eta;
+    float denom2 = denom * denom;
+    float k = abs(VdH) / denom2;
+
+    pdf = k * mmPdf;
 
     f = (1 - F);
 
@@ -112,20 +129,13 @@ void TransmissiveLobe(
     if (hitInfo.Mat.Roughness < EPSILON)
     {
         f *= eta;
+        return;
     }
-    else
-    {
-        //throughput *= D * G;
-        //throughput /= max(1e-6f, pdf);
-        //throughput *= factor;
-        f *= eta2 * hitInfo.Mat.TransmissionColor;
 
-        //throughput *= abs(VdH);
-        //throughput *= G;
-        //throughput /= max(1e-6f, NdV * NdH);
-        //throughput *= G;
-        //throughput *= nNext * nNext * (1 - F) * G * abs(VdH) / max(1e-6f, NdV * NdH);
-    }
+    float eval = D * G * abs(LdH  * VdH / max(1e-6, NdV * denom2));
+
+    //f *= eta2 * hitInfo.Mat.TransmissionColor;
+    f *= eval * hitInfo.Mat.TransmissionColor / 1000;
 }
 
 bool IsReflect(inout RngInfo rngInfo, float iorCurrent, float iorNext, float NdV, out float reflectProb)
@@ -185,9 +195,14 @@ void BxDF::Sample(
     float3 H_s = mm.Sample(u1, u2);
     float VdH = dot(H_s, V_s);
 
+    DBG_OUTPUT3(H_s,                             Hs);
+    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     Hw);
+    DBG_OUTPUT1(mm.m_alpha,                      Alpha);
+    DBG_OUTPUT1(mm.D(H_s),                       D);
+
     float3 L_s = 0.0f;
 
-    if (Rand01(rngInfo) < hitInfo.Mat.TransmissionFactor)
+    if (FEATURE_ENABLED(GlassMaterials) && Rand01(rngInfo) < hitInfo.Mat.TransmissionFactor)
     {
         float iorCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -206,6 +221,7 @@ void BxDF::Sample(
         }
         else
         {
+            H_s *= Sign(VdH); // TODO: ?
             TransmissiveLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, iorCurrent, iorNext, u1, u2, L_s, f, pdf);
             pdf *= 1.0f - reflectProb;
             f /= max(1e-6, 1.0f - reflectProb);

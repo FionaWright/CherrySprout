@@ -25,7 +25,7 @@ struct Material
     int TexIdxRoughness;
 
     int TexIdxMetallic;
-    int TexIdxEmissiveStrength;
+    int TexIdxEmissive;
     int TexIdxAnisotropy;
     int TexIdxClearcoat;
 
@@ -56,7 +56,7 @@ struct Material
         TexIdxNormal                = -1;
         TexIdxRoughness             = -1;
         TexIdxMetallic              = -1;
-        TexIdxEmissiveStrength              = -1;
+        TexIdxEmissive              = -1;
         TexIdxAnisotropy            = -1;
         TexIdxClearcoat             = -1;
         TexIdxClearcoatRoughness    = -1;

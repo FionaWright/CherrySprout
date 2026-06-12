@@ -11,6 +11,11 @@ inline float CopySign(float mag, float sign)
     return sign < 0.0f ? -abs(mag) : abs(mag);
 }
 
+inline float Sign(float sign)
+{
+    return CopySign(1, sign);
+}
+
 inline float SafeSqrt(float x)
 {
     return sqrt(max(0.0f, x));

@@ -26,7 +26,15 @@ struct HitInfo
     float RayT;
 };
 
-float3 SampleTexture(HitInfo hitInfo, int idx, float3 fallback)
+float SampleTexture1(HitInfo hitInfo, int idx, float fallback)
+{
+    if (idx == -1)
+        return fallback;
+
+    return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).r;
+}
+
+float3 SampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
 {
     if (idx == -1)
         return fallback;
@@ -34,7 +42,7 @@ float3 SampleTexture(HitInfo hitInfo, int idx, float3 fallback)
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).rgb;
 }
 
-float4 SampleTexture(HitInfo hitInfo, int idx, float4 fallback)
+float4 SampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
 {
     if (idx == -1)
         return fallback;
@@ -75,7 +83,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     if (FEATURE_ENABLED(NormalMaps))
     {
-        float3 bumpSample = SampleTexture(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0));
+        float3 bumpSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0));
         bumpSample = RemapUtoS(bumpSample);
         bumpSample.y = -bumpSample.y; // DX-convention
 
@@ -87,15 +95,15 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
-    float4 albedoSample = gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV);
+    float4 albedoSample = SampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
     if (true) // TODO
         albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
     hitInfo.Mat.Albedo.rgb *= albedoSample.rgb;
 
-    //float3 emissionSample = gSceneTextures[hitInfo.Mat.TexIdxEmissive].Sample(gSampler, hitInfo.UV).rgb;
+    //float3 emissionSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
 
-    float roughnessSample = gSceneTextures[hitInfo.Mat.TexIdxRoughness].Sample(gSampler, hitInfo.UV).r;
-    float metallicSample = gSceneTextures[hitInfo.Mat.TexIdxMetallic].Sample(gSampler, hitInfo.UV).r;
+    float roughnessSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
+    float metallicSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
     hitInfo.Mat.Roughness *= roughnessSample;
     hitInfo.Mat.Metallic *= metallicSample;
 
@@ -103,26 +111,33 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     //DBG_OUTPUT3_FORCE(gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV).rgb);
 
-    DBG_OUTPUT3(Palette(instanceIdx),                                               InstanceIdx);
-    DBG_OUTPUT3(Palette(instance.MaterialIndex),                                    MaterialIdx);
-    DBG_OUTPUT2(barycentrics,                                                       Barycentrics);
-    DBG_OUTPUT3(SampleTexture(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0)),  NormalMap);
-    DBG_OUTPUT3(hitInfo.Ns_ff,                                                      NormalShadedFF);
-    DBG_OUTPUT3(hitInfo.Ng_ff,                                                      NormalGeometricFF);
-    DBG_OUTPUT2(hitInfo.UV,                                                         UV);
+    DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
+    DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);
+    DBG_OUTPUT2(barycentrics,                                                             Barycentrics);
+    DBG_OUTPUT3(hitInfo.Ns_ff,                                                            NormalShadedFF);
+    DBG_OUTPUT3(hitInfo.Ng_ff,                                                            NormalGeometricFF);
+    DBG_OUTPUT3(hitInfo.SFrame.T,                                                         Tangent);
+    DBG_OUTPUT3(hitInfo.SFrame.B,                                                         Bitangent);
+    DBG_OUTPUT2(hitInfo.UV,                                                               UV);
 
-    DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,                                             Albedo);
-    DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                                               Opacity);
-    DBG_OUTPUT1(hitInfo.Mat.EmissiveStrength,                                       EmissiveStrength);
-    DBG_OUTPUT3(hitInfo.Mat.EmissiveColor,                                          EmissiveColor);
-    DBG_OUTPUT3(hitInfo.Li,                                                         Emission);
-    DBG_OUTPUT1(hitInfo.Mat.TransmissionFactor,                                     TransmissionFactor);
-    DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,                                      TransmissionColor);
-    DBG_OUTPUT1(hitInfo.Mat.Roughness,                                              Roughness);
-    DBG_OUTPUT1(hitInfo.Mat.Metallic,                                               Metallic);
-    DBG_OUTPUT3(hitInfo.Mat.SpecularFactor,                                         SpecularFactor);
-    DBG_OUTPUT1(hitInfo.Mat.AnisoStrength,                                          AnisoStrength);
-    DBG_OUTPUT1(hitInfo.Mat.IOR_N,                                                  IorN);
+    DBG_OUTPUT3(SampleTexture3(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1),                     TexAlbedo);
+    DBG_OUTPUT3(SampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0)),       TexNormal);
+    DBG_OUTPUT3(SampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1),                   TexEmissive);
+    DBG_OUTPUT1(SampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1),                  TexRoughness);
+    DBG_OUTPUT1(SampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0),                   TexMetallic);
+
+    DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,                                                   Albedo);
+    DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                                                     Opacity);
+    DBG_OUTPUT1(hitInfo.Mat.EmissiveStrength,                                             EmissiveStrength);
+    DBG_OUTPUT3(hitInfo.Mat.EmissiveColor,                                                EmissiveColor);
+    DBG_OUTPUT3(hitInfo.Li,                                                               Emission);
+    DBG_OUTPUT1(hitInfo.Mat.TransmissionFactor,                                           TransmissionFactor);
+    DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,                                            TransmissionColor);
+    DBG_OUTPUT1(hitInfo.Mat.Roughness,                                                    Roughness);
+    DBG_OUTPUT1(hitInfo.Mat.Metallic,                                                     Metallic);
+    DBG_OUTPUT3(hitInfo.Mat.SpecularFactor,                                               SpecularFactor);
+    DBG_OUTPUT1(hitInfo.Mat.AnisoStrength,                                                AnisoStrength);
+    DBG_OUTPUT1(hitInfo.Mat.IOR_N,                                                        IorN);
 }
 
 #endif

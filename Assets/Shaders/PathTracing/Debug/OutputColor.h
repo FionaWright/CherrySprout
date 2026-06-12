@@ -15,10 +15,18 @@ enum class DebugOutputIndex : hlsl::uint
     eDebugOutput_InstanceIdx,
     eDebugOutput_MaterialIdx,
     eDebugOutput_Barycentrics,
-    eDebugOutput_NormalMap,
     eDebugOutput_NormalShadedFF,
     eDebugOutput_NormalGeometricFF,
+    eDebugOutput_Tangent,
+    eDebugOutput_Bitangent,
     eDebugOutput_UV,
+
+    // Textures:
+    eDebugOutput_TexAlbedo,
+    eDebugOutput_TexNormal,
+    eDebugOutput_TexEmissive,
+    eDebugOutput_TexRoughness,
+    eDebugOutput_TexMetallic,
 
     // Material:
     eDebugOutput_Albedo,
@@ -62,10 +70,18 @@ static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputInde
     "Instance Index",
     "Material Index",
     "Barycentrics",
-    "Normal Map",
     "Normal Shaded FF",
     "Normal Geometric FF",
+    "Tangent",
+    "Bitangent",
     "UV",
+
+    // Textures:
+    "Tex Albedo",
+    "Tex Normal",
+    "Tex Emissive",
+    "Tex Roughness",
+    "Tex Metallic",
 
     // Material
     "Albedo",

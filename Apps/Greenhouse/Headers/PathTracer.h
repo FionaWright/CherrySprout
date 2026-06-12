@@ -33,6 +33,7 @@ public:
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
 
     D12Resource* GetTexOutput() { return &m_output; }
+    uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
 private:
     RtasBuilder m_rtasBuilder;
