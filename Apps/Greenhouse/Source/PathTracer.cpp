@@ -178,10 +178,14 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
-    compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));
+
+    if (debugOutputIdx != DebugOutputIndex::eDebugOutput_Disabled)
+        compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
+
+    Reset();
 }
 
 void PathTracer::Reset()

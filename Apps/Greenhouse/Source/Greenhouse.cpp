@@ -216,14 +216,17 @@ void Greenhouse::RenderGUI()
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
 
+        if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
+            m_config.PathTracerConfig.DebugOutputIdx = DebugOutputIndex::eDebugOutput_Disabled;
+
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
         {
             ImGui::Text("Debug Output:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
                 static int e = static_cast<int>(m_config.PathTracerConfig.DebugOutputIdx);
-                int c = 0;
-                for (int i = 0; i < static_cast<int>(DebugOutputIndex::eCount); i++)
+                int c = 1;
+                for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
                 {
                     m_ptPipelineDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
                 }

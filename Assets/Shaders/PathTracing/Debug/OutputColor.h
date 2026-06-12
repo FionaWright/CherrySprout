@@ -6,6 +6,8 @@
 
 enum class DebugOutputIndex : hlsl::uint
 {
+    eDebugOutput_Disabled,
+
     // Core:
     eDebugOutput_RNG,
 
@@ -51,6 +53,8 @@ enum class DebugOutputIndex : hlsl::uint
 
 static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputIndex::eCount)] =
 {
+    "DISABLED",
+
     // Core
     "RNG",
 
@@ -90,10 +94,9 @@ static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputInde
     "PDF",
 };
 
-static constexpr DebugOutputIndex s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Albedo;
+static constexpr DebugOutputIndex s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Disabled;
 
-//#elif DEBUG_ENABLED(OutputColor)
-#else
+#elif defined(DEBUG_OUTPUT_COLOR)
 
 static bool gDebugValueFound = false;
 static float3 gDebugValue = NAN;
@@ -118,13 +121,12 @@ static float3 gDebugValue = NAN;
 
 #    define DBG_OUTPUT_SET(output) { output = gDebugValue; }
 
-//#else
-//#    define DBG_OUTPUT_START()
-//#    define DBG_OUTPUT3(value, idx)
-//#    define DBG_OUTPUT2(value, idx)
-//#    define DBG_OUTPUT1(value, idx)
-//#    define DBG_OUTPUT3_FORCE(value)
-//#    define DBG_OUTPUT_SET(output)
+#else
+#    define DBG_OUTPUT3(value, idx)
+#    define DBG_OUTPUT2(value, idx)
+#    define DBG_OUTPUT1(value, idx)
+#    define DBG_OUTPUT3_FORCE(value)
+#    define DBG_OUTPUT_SET(output)
 
 #endif
 
