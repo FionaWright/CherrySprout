@@ -13,6 +13,8 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_Accumulation,
     Idx_EnvironmentMap,
     Idx_EnvironmentMapEA,
+    Idx_DirectionalLight,
+    Idx_DirectionalLightDistant,
     Idx_RussianRoulette,
     Idx_NormalMaps,
     Idx_AlphaTesting,
@@ -27,16 +29,18 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
 {
     eFeature_None               = 0,
 
-    eFeature_Jitter             = 1u << __FEATURE_IDX(Jitter),
-    eFeature_DepthOfField       = 1u << __FEATURE_IDX(DepthOfField),
-    eFeature_Accumulation       = 1u << __FEATURE_IDX(Accumulation),
-    eFeature_EnvironmentMap     = 1u << __FEATURE_IDX(EnvironmentMap),
-    eFeature_EnvironmentMapEA   = 1u << __FEATURE_IDX(EnvironmentMapEA),
-    eFeature_RussianRoulette    = 1u << __FEATURE_IDX(RussianRoulette),
-    eFeature_NormalMaps         = 1u << __FEATURE_IDX(NormalMaps),
-    eFeature_AlphaTesting       = 1u << __FEATURE_IDX(AlphaTesting),
-    eFeature_GlassMaterials     = 1u << __FEATURE_IDX(GlassMaterials),
-    eFeature_Anisotropy         = 1u << __FEATURE_IDX(Anisotropy),
+    eFeature_Jitter                     = 1u << __FEATURE_IDX(Jitter),
+    eFeature_DepthOfField               = 1u << __FEATURE_IDX(DepthOfField),
+    eFeature_Accumulation               = 1u << __FEATURE_IDX(Accumulation),
+    eFeature_EnvironmentMap             = 1u << __FEATURE_IDX(EnvironmentMap),
+    eFeature_EnvironmentMapEA           = 1u << __FEATURE_IDX(EnvironmentMapEA),
+    eFeature_DirectionalLight           = 1u << __FEATURE_IDX(DirectionalLight),
+    eFeature_DirectionalLightDistant    = 1u << __FEATURE_IDX(DirectionalLightDistant),
+    eFeature_RussianRoulette            = 1u << __FEATURE_IDX(RussianRoulette),
+    eFeature_NormalMaps                 = 1u << __FEATURE_IDX(NormalMaps),
+    eFeature_AlphaTesting               = 1u << __FEATURE_IDX(AlphaTesting),
+    eFeature_GlassMaterials             = 1u << __FEATURE_IDX(GlassMaterials),
+    eFeature_Anisotropy                 = 1u << __FEATURE_IDX(Anisotropy),
 
     FEATURE_COUNT = (hlsl::uint)Internal_PathTracerFeatureIndex::INTERNAL_FEATURE_COUNT
 };
@@ -60,14 +64,14 @@ enum PathTracerDebugFlags : DEBUG_FLAG_TYPE
 {
     eDebug_None               = 0,
 
-    eDebug_FurnaceTest              = 1u << __DBG_IDX(FurnaceTest),
-    eDebug_OutputColor              = 1u << __DBG_IDX(OutputColor),
-    eDebug_NaNTests                 = 1u << __DBG_IDX(NaNTests),
-    eDebug_Asserts                  = 1u << __DBG_IDX(Asserts),
-    eDebug_ForceSpecular            = 1u << __DBG_IDX(ForceSpecular),
-    eDebug_ForceDiffuse             = 1u << __DBG_IDX(ForceDiffuse),
-    eDebug_ForceReflect             = 1u << __DBG_IDX(ForceReflect),
-    eDebug_ForceRefract             = 1u << __DBG_IDX(ForceRefract),
+    eDebug_FurnaceTest                  = 1u << __DBG_IDX(FurnaceTest),
+    eDebug_OutputColor                  = 1u << __DBG_IDX(OutputColor),
+    eDebug_NaNTests                     = 1u << __DBG_IDX(NaNTests),
+    eDebug_Asserts                      = 1u << __DBG_IDX(Asserts),
+    eDebug_ForceSpecular                = 1u << __DBG_IDX(ForceSpecular),
+    eDebug_ForceDiffuse                 = 1u << __DBG_IDX(ForceDiffuse),
+    eDebug_ForceReflect                 = 1u << __DBG_IDX(ForceReflect),
+    eDebug_ForceRefract                 = 1u << __DBG_IDX(ForceRefract),
 
     DEBUG_COUNT = (hlsl::uint)Internal_PathTracerDebugIndex::INTERNAL_DEBUG_COUNT
 };
@@ -80,6 +84,8 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Accumulation",
     "Environment Map",
     "Environment Map Equal-Area",
+    "Directional Light",
+    "Directional Light is Distant",
     "Russian Roulette",
     "Normal Maps",
     "Alpha Testing",

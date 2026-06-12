@@ -148,6 +148,14 @@ void Greenhouse::RenderGUI()
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
                      ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
+    static bool s_hideGUI = false;
+    ImGui::Checkbox("Hide GUI", &s_hideGUI);
+    if (s_hideGUI)
+    {
+        Gui::EndWindow();
+        return;
+    }
+
     ImGui::SeparatorText("Scene");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
@@ -202,6 +210,19 @@ void Greenhouse::RenderGUI()
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Frames", &m_config.PathTracerConfig.MaxFrameNumber);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("RR Min Bounces", &m_config.PathTracerConfig.RussianRouletteMinBounces);
 
+        ImGui::Spacing();
+
+        if (GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_DirectionalLight))
+        {
+            m_ptFrameDirty |= GuiUtils::FwInputFloat3("Dir Light Dir", (float*)&m_config.RenderBackendConfig.DirLightDirection);
+            m_ptFrameDirty |= GuiUtils::FwColorEdit3("Dir Light Color", (float*)&m_config.RenderBackendConfig.DirLightColor);
+            m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Intensity", &m_config.RenderBackendConfig.DirLightIntensity);
+            m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Radius", &m_config.RenderBackendConfig.DirLightCosAngularRadius);
+            ImGui::Spacing();
+        }
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+
         // BxDF Mode
         {
             ImGui::Text("BxDF:");
@@ -220,27 +241,40 @@ void Greenhouse::RenderGUI()
 
         ImGui::Text("Feature Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
+        if (ImGui::BeginTable("Feature Flags", 2))
         {
             for (int i = 0; i < FEATURE_COUNT; i++)
             {
+                ImGui::TableNextColumn();
+
                 const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
                 bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
                 m_ptPipelineDirty |= ImGui::Checkbox(s_featureFlagNames[i], &isEnabled);
                 SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, isEnabled);
+
+                ImGui::SetItemTooltip("%s", s_featureFlagNames[i]);
             }
+
+            ImGui::EndTable();
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
 
         ImGui::Text("Debug Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
+        if (ImGui::BeginTable("Debug Flags", 2))
         {
             for (int i = 0; i < DEBUG_COUNT; i++)
             {
+                ImGui::TableNextColumn();
+
                 const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
                 bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, flag);
                 m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
                 SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, flag, isEnabled);
+
+                ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
             }
+            ImGui::EndTable();
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
 
@@ -249,19 +283,25 @@ void Greenhouse::RenderGUI()
 
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
         {
-            ImGui::Text("Debug Output:");
+            ImGui::Text("Debug Outputs:");
             ImGui::Indent(IM_GUI_INDENTATION);
+            if (ImGui::BeginTable("Debug Outputs", 2))
             {
                 static int e = static_cast<int>(m_config.PathTracerConfig.DebugOutputIdx);
                 int c = 1;
                 for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
                 {
+                    ImGui::TableNextColumn();
                     m_ptPipelineDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
+                    ImGui::SetItemTooltip("%s", s_debugOutputIdxNames[i]);
                 }
                 m_config.PathTracerConfig.DebugOutputIdx = static_cast<DebugOutputIndex>(e);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::EndTable();
         }
+
+        ImGui::PopStyleVar();
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 

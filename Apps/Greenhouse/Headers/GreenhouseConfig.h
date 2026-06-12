@@ -38,7 +38,7 @@ struct RenderBackendConfig
 {
     XMFLOAT3 DirLightDirection = { -1, -1, -1 };
     XMFLOAT3 DirLightColor = { 1, 1, 1 };
-    float DirLightIntensity = 2.0f;
+    float DirLightIntensity = 1.0f;
     float DirLightCosAngularRadius = 0.00465f;
 };
 
