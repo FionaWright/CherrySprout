@@ -106,7 +106,7 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
         m_dsPanoToCM.Init(heap);
         m_dsPanoToCM.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToCM), &uploadHeapCBV, "CBV Cubemap");
         m_dsPanoToCM.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
-        m_dsPanoToCM.SetUAV(d3d->GetDevice(), 0, m_cubemap.GetResource(), uavDesc);
+        m_dsPanoToCM.SetUAV(d3d->GetDevice(), 0, &m_cubemap, uavDesc);
 
         CbvPanoToCM cbv = {};
         cbv.OutputWidth = m_cubemap.GetDesc().Width;

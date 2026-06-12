@@ -22,6 +22,7 @@ public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;
     void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap) override;;
     void Update(D3D* d3d, TimeArgs timeArgs) override;
+    void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override {};
 

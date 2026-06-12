@@ -130,7 +130,7 @@ void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Hea
         uavDesc.Texture2DArray.FirstArraySlice = 0;
 
         m_dsGenIrr.Init(heap);
-        m_dsGenIrr.AddUAV(device, m_texIrradianceIBL.GetResource(), uavDesc);
+        m_dsGenIrr.AddUAV(device, &m_texIrradianceIBL, uavDesc);
         m_dsGenIrr.SetSRV_Tex2D(device, 0, cubemap, cubemap->GetDesc().Format);
     }
 }

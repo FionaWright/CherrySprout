@@ -150,7 +150,7 @@ void DescriptorSet::TransitionAllSRVToShaderResource(ID3D12GraphicsCommandList* 
     }
 }
 
-void DescriptorSet::AddUAV(ID3D12Device* device, ID3D12Resource* resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
+void DescriptorSet::AddUAV(ID3D12Device* device, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
 {
     UAV uav;
 
@@ -158,6 +158,8 @@ void DescriptorSet::AddUAV(ID3D12Device* device, ID3D12Resource* resource, const
 
     if (m_uavs.size() > 0)
         CherryAssert(uav.HeapIndex - m_uavs.back().HeapIndex == 1);
+
+    ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
     if (resource)
     {
@@ -168,7 +170,7 @@ void DescriptorSet::AddUAV(ID3D12Device* device, ID3D12Resource* resource, const
     m_uavs.emplace_back(uav);
 }
 
-void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, ID3D12Resource* resource,
+void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource,
                            const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
 {
     if (uavIdx > m_uavs.size())
@@ -176,9 +178,11 @@ void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, ID3D12Re
 
     if (uavIdx == m_uavs.size())
     {
-        AddUAV(device, resource, desc);
+        AddUAV(device, d12Resource, desc);
         return;
     }
+
+    ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
     if (resource)
     {
@@ -197,7 +201,20 @@ void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, co
     desc.Texture2D.MipSlice = 0;
     desc.Texture2D.PlaneSlice = 0;
 
-    SetUAV(device, uavIdx, d12Resource->GetResource(), desc);
+    SetUAV(device, uavIdx, d12Resource, desc);
+}
+
+void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, D12Resource* d12Resource,
+                                  const uint32_t numElements, const size_t stride)
+{
+    D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+    desc.Buffer.FirstElement = 0;
+    desc.Buffer.NumElements = numElements;
+    desc.Buffer.StructureByteStride = stride;
+
+    const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName().c_str() : nullptr;
+    SetUAV(device, uavIdx, d12Resource, desc);
 }
 
 void DescriptorSet::SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const

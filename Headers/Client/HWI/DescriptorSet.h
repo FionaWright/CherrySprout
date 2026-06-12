@@ -52,9 +52,11 @@ public:
 
     void TransitionAllSRVToShaderResource(ID3D12GraphicsCommandList* cmdList) const;
 
-    void AddUAV(ID3D12Device* device, ID3D12Resource* resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
-    void SetUAV(ID3D12Device* device, uint32_t uavIdx, ID3D12Resource* resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
+    void AddUAV(ID3D12Device* device, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
+    void SetUAV(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
     void SetUAV_Tex2D(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, DXGI_FORMAT format);
+    void SetUAV_Buffer(ID3D12Device* device, uint32_t uavIdx, D12Resource* d12Resource, uint32_t numElements,
+                       size_t stride);
 
     void SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const;
     void SetDescriptorTables_Compute(ID3D12GraphicsCommandList* cmdList) const;

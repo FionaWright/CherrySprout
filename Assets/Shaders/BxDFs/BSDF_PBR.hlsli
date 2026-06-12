@@ -208,8 +208,10 @@ void BxDF::Sample(
         float iorCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
 
-        DBG_ASSERT(hitInfo.Mat.Metallic < EPSILON, NO_METAL_GLASS);
-        DBG_ASSERT(hitInfo.Li           < EPSILON, NO_EMISSIVE_GLASS);
+        hitInfo.Mat.Metallic = 1.0f;
+
+        DBG_ASSERT_ZERO(hitInfo.Mat.Metallic, NO_METAL_GLASS);
+        DBG_ASSERT_ZERO(hitInfo.Li          , NO_EMISSIVE_GLASS);
 
         float reflectProb;
         bool isReflect = IsReflect(rngInfo, iorCurrent, iorNext, VdH, reflectProb);
@@ -219,6 +221,8 @@ void BxDF::Sample(
             SpecularLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, u1, u2, F0, L_s, f, pdf);
             pdf *= reflectProb;
             f /= max(1e-6, reflectProb);
+
+            DBG_ASSERT_VALUE(f, BxDF_PBR_GLASS_SPEC_F);
         }
         else
         {

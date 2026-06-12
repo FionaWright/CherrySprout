@@ -39,6 +39,8 @@ public:
                          uint32_t dstY = 0,
                          uint32_t dstZ = 0, const D3D12_BOX* srcBox = nullptr) const;
 
+    void Readback(void* dst) const;
+
     UINT64 GetIntermediateSize() const;
     bool IsInitialized() const { return m_resource != nullptr; }
 

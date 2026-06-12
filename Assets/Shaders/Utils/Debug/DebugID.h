@@ -2,20 +2,31 @@
 #define H_DEBUG_ID_H
 
 #ifndef __cplusplus
-#   define CREATE_ID(id, idx, string) static const uint id = idx;
+
+// HLSL:
+// Fills an enum
+
+#   define CREATE_ID(id, _) id,
+
+enum DebugIdEnum : uint
+{
+
 #else
-#   define CREATE_ID(id, idx, string) string,
 
-#   include <vector>
-static constexpr auto s_debugIdList = {
+// C++:
+// Fills a string vector
+
+#   define CREATE_ID(_, string) string,
+
+static const char* s_debugIdList[] = {
+
 #endif
 
-// Indices MUST be in sequential order!!
-CREATE_ID(NO_METAL_GLASS,       0, "Transmissive materials cannot be metal")
-CREATE_ID(NO_EMISSIVE_GLASS,    1, "Transmissive materials cannot be emissive")
+    CREATE_ID(NO_METAL_GLASS            , "Transmissive material is metal")
+    CREATE_ID(NO_EMISSIVE_GLASS         , "Transmissive material is emissive")
 
-#ifdef __cplusplus
+    CREATE_ID(BxDF_PBR_GLASS_SPEC_F     , "BxDF_PBR Trans Specular Lobe: f invalid")
+
 };
-#endif
 
 #endif

@@ -38,8 +38,15 @@ void Greenhouse::Init(D3D* d3d)
     m_cameraController.Init(XMFLOAT3(0, 0, 5), 0, PI);
 
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
-    m_projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
-    m_invProjectionMatrix = XMMatrixInverse(nullptr, m_projectionMatrix);
+    m_renderInfo.P = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
+    m_renderInfo.InvP = XMMatrixInverse(nullptr, m_renderInfo.P);
+    m_renderInfo.V = m_cameraController.GetViewMatrix();
+    m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
+    m_renderInfo.Heap = &m_heap;
+    m_renderInfo.Camera = &m_cameraController.GetCamera();
+    m_renderInfo.BackendConfig = &m_config.RenderBackendConfig;
+    m_renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
+    m_renderInfo.EnvironmentMap = &m_envMap;
 
     if (!d3d->GetRayTracingSupported())
     {
@@ -78,6 +85,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_cameraController.GetCamera().SetPosition(sceneConfig.CameraPosition);
         m_cameraController.GetCamera().SetRotation(sceneConfig.CameraPitchYaw);
 
+        m_renderInfo.Scene = &m_sceneManager.GetScene();
+
         m_sceneDirty = false;
     }
 
@@ -91,7 +100,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     if (m_envMapDirty)
     {
         m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
-        m_envMapDirty = false;
     }
 
     if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath))
@@ -99,7 +107,13 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap);
     }
 
-    m_ptFrameDirty |= m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f);
+    if (m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f))
+    {
+        m_renderInfo.V = m_cameraController.GetViewMatrix();
+        m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
+        m_ptFrameDirty = true;
+    }
+
     if (m_ptFrameDirty)
     {
         m_pathTracer.Reset();
@@ -121,26 +135,16 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
 void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
-    XMMATRIX V = m_cameraController.GetViewMatrix();
-    XMMATRIX InvV = XMMatrixInverse(nullptr, V);
+    m_renderInfo.EnvMapDirty = m_envMapDirty;
 
-    GreenHouseRenderInfo renderInfo;
-    renderInfo.Scene = &m_sceneManager.GetScene();
-    renderInfo.Heap = &m_heap;
-    renderInfo.Camera = &m_cameraController.GetCamera();
-    renderInfo.V = &V;
-    renderInfo.InvV = &InvV;
-    renderInfo.P = &m_projectionMatrix;
-    renderInfo.InvP = &m_invProjectionMatrix;
-    renderInfo.BackendConfig = &m_config.RenderBackendConfig;
-    renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
-    renderInfo.EnvironmentMap = &m_envMap;
-
-    m_currRenderBackend->Render(d3d, cmdList, renderInfo);
+    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo);
 }
 
 void Greenhouse::PostUpdate(D3D* d3d)
 {
+    m_currRenderBackend->PostUpdate(d3d, m_renderInfo);
+
+    m_envMapDirty = false;
 }
 
 bool Greenhouse::pathTracingFeatureEnabled(const PathTracerFeatureFlags flag) const
@@ -305,6 +309,13 @@ void Greenhouse::RenderGUI()
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
+
+#ifdef _DEBUG
+        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_Asserts))
+        {
+            static_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_ErrorInfo();
+        }
+#endif
 
         if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
             m_config.PathTracerConfig.DebugOutputIdx = DebugOutputIndex::eDebugOutput_Disabled;

@@ -136,9 +136,14 @@ static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<Path
         eFeature_GlassMaterials |
         eFeature_RussianRoulette
     );
+
+#ifdef _DEBUG
 static constexpr PathTracerDebugFlags s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_NaNTests
     );
+#else
+static constexpr PathTracerDebugFlags s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(0);
+#endif
 
 inline bool GetPathTracerFeatureFlag(const PathTracerFeatureFlags state, const PathTracerFeatureFlags flag)
 {

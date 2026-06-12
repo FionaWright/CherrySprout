@@ -15,13 +15,15 @@
 struct GreenHouseRenderInfo
 {
     Camera* Camera;
-    XMMATRIX* V;
-    XMMATRIX* InvV;
-    XMMATRIX* P;
-    XMMATRIX* InvP;
+    XMMATRIX V;
+    XMMATRIX InvV;
+    XMMATRIX P;
+    XMMATRIX InvP;
     Scene* Scene;
     Heap* Heap;
     EnvironmentMap* EnvironmentMap;
+
+    bool EnvMapDirty = false;
 
     RenderBackendConfig* BackendConfig;
     PathTracerConfig* PathTracerConfig;
@@ -42,8 +44,6 @@ private:
     bool pathTracingFeatureEnabled(PathTracerFeatureFlags flag) const;
 
     GreenhouseConfig m_config{};
-    XMMATRIX m_projectionMatrix{};
-    XMMATRIX m_invProjectionMatrix{};
     float m_aspectRatio = 0.0f;
     uint32_t m_currentSceneIdx = 0;
 
@@ -54,13 +54,15 @@ private:
     bool m_ptPipelineDirty = false;
 
     CameraController m_cameraController;
+
     SceneManager m_sceneManager;
     EnvironmentMap m_envMap;
 
-    PathTracer m_pathTracer;
+    PathTracer m_pathTracer = {};
     Forward m_forward;
 
     IRenderBackend* m_currRenderBackend = nullptr;
+    GreenHouseRenderInfo m_renderInfo = {};
 
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;

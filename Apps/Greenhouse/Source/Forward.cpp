@@ -65,6 +65,11 @@ void Forward::Update(D3D* d3d, TimeArgs timeArgs)
 {
 }
 
+void Forward::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
+{
+
+}
+
 void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
@@ -94,7 +99,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     {
         GPU_SCOPE(cmdList, "Skybox Pass");
-        m_skybox.RenderForward(cmdList, renderInfo.V, renderInfo.P);
+        m_skybox.RenderForward(cmdList, &renderInfo.V, &renderInfo.P);
     }
 
     {
@@ -117,8 +122,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     }
 
     CbvMatrices_VP matricesVP = {};
-    XMStoreFloat4x4(&matricesVP.V, *renderInfo.V);
-    XMStoreFloat4x4(&matricesVP.P, *renderInfo.P);
+    XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
+    XMStoreFloat4x4(&matricesVP.P, renderInfo.P);
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
     CbvMatrices_M matricesM = {};

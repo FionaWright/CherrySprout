@@ -6,11 +6,14 @@
 #include "PathTracer.h"
 
 #include "Greenhouse.h"
+#include "imgui.h"
 #include "Debug/GPUEventScoped.h"
 #include "../../../Assets/Shaders/Utils/CBVs.h"
 #include "System/HighResolutionClock.h"
+#include "Utils/ConstantsCpp.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
+#include "Utils/Debug/DebugID.h"
 
 void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
@@ -45,7 +48,19 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, 2, true, &sampler, 1);
+    uint32_t numUAV = 2;
+
+#ifdef _DEBUG
+    {
+        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
+        m_gpuErrorInfoRW.Init_Buffer("Error Info R/W", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_gpuErrorInfoReadback.Init_Buffer("Error Info Readback", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        numUAV++;
+    }
+#endif
+
+    m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, numUAV, true, &sampler, 1);
 
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, s_defaultBxdfMode);
 }
@@ -78,6 +93,10 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
 
+#ifdef _DEBUG
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
+#endif
+
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
@@ -91,6 +110,30 @@ void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
 
 }
 
+void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
+{
+#ifdef _DEBUG
+    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_Asserts))
+    {
+        d3d->Flush();
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        const auto cmdList = cmdListPtr.Get();
+
+        m_gpuErrorInfoRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        m_gpuErrorInfoReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
+        cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
+
+        m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
+
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
+    }
+#endif
+}
+
 void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo)
 {
     GPU_SCOPE(cmdList, "Path-Trace");
@@ -98,20 +141,24 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    // TODO: Don't do this every frame, use dirty pattern
-    D12Resource* envMap = nullptr;
-    if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
-        envMap = renderInfo.EnvironmentMap->GetEA();
-    else
-        envMap = renderInfo.EnvironmentMap->GetPano();
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap, envMap->GetDesc().Format);
+    // TODO: This is stupid. Move stuff around so that it gets set once in LoadSceneData
+    if (renderInfo.EnvMapDirty)
+    {
+        D12Resource* envMap = nullptr;
+        if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
+            envMap = renderInfo.EnvironmentMap->GetEA();
+        else
+            envMap = renderInfo.EnvironmentMap->GetPano();
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap, envMap->GetDesc().Format);
+
+        envMap->Transition                              (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
 
     // Fill Settings
-    // TODO: push constants
     {
         CbvPathTracingSettings settings;
-        XMStoreFloat4x4(&settings.InvP, *renderInfo.InvP);
-        XMStoreFloat4x4(&settings.InvV, *renderInfo.InvV);
+        XMStoreFloat4x4(&settings.InvP, renderInfo.InvP);
+        XMStoreFloat4x4(&settings.InvV, renderInfo.InvV);
         settings.FrameIdx = m_frameIdx;
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
 
@@ -142,7 +189,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         scene->GPU.MegaBufferIndex.Transition           (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferInstanceData.Transition    (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferMaterials.Transition       (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        envMap->Transition                              (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
     cmdList->SetComputeRootSignature(m_rootSig.Get());
@@ -196,3 +242,41 @@ void PathTracer::Reset()
 {
     m_frameIdx = 0;
 }
+
+#ifdef _DEBUG
+void PathTracer::RenderGUI_ErrorInfo()
+{
+    std::vector<uint32_t> errors;
+    for (int i = 0; i < _countof(m_cpuErrorInfo); i++)
+    {
+        if (m_cpuErrorInfo[i].ExprCounter > 0 || m_cpuErrorInfo[i].NaNCounter > 0 || m_cpuErrorInfo[i].InfCounter > 0)
+        {
+            errors.emplace_back(i);
+        }
+    }
+
+    if (errors.size() == 0)
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(224/255., 82/255., 110/255., 255));
+    ImGui::Text("%s", "(!) Assertion Errors:");
+
+    ImGui::Indent(IM_GUI_INDENTATION);
+    for (int i = 0; i < errors.size(); i++)
+    {
+        if (i > 0)
+            ImGui::Spacing();
+
+        const uint32_t dbgId = errors[i];
+        ImGui::Text("%s: ", s_debugIdList[dbgId]);
+        ImGui::SetItemTooltip("%s: ", s_debugIdList[dbgId]);
+
+        ImGui::Text(" EXPR=%i, NAN=%i, INF=%i", m_cpuErrorInfo[dbgId].ExprCounter, m_cpuErrorInfo[dbgId].NaNCounter, m_cpuErrorInfo[dbgId].InfCounter);
+        ImGui::SetItemTooltip(" EXPR=%i, NAN=%i, INF=%i", m_cpuErrorInfo[dbgId].ExprCounter, m_cpuErrorInfo[dbgId].NaNCounter, m_cpuErrorInfo[dbgId].InfCounter);
+    }
+    ImGui::Unindent(IM_GUI_INDENTATION);
+    ImGui::Spacing();
+
+    ImGui::PopStyleColor();
+}
+#endif

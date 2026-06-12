@@ -151,6 +151,18 @@ void D12Resource::CopyTextureInto(ID3D12GraphicsCommandList* cmdList, ID3D12Reso
     cmdList->CopyTextureRegion(&dstLocation, dstX, dstY, dstZ, &srcLocation, srcBox);
 }
 
+void D12Resource::Readback(void* dst) const
+{
+    void* mappedData = nullptr;
+    const D3D12_RANGE readRange = {0, m_desc.Width};
+    V(m_resource->Map(0, &readRange, &mappedData));
+
+    memcpy(dst, mappedData, m_desc.Width);
+
+    constexpr D3D12_RANGE writeRange = {0, 0};
+    m_resource->Unmap(0, &writeRange);
+}
+
 UINT64 D12Resource::GetIntermediateSize() const
 {
     const UINT numSubresources = m_desc.MipLevels * m_desc.DepthOrArraySize;
