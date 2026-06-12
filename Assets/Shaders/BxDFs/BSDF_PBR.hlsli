@@ -102,7 +102,7 @@ void TransmissiveLobe(
 
     float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, abs(VdH));
     float D = mm.D(H_s);
-    float G = mm.G2(L_s, V_s);
+    float G = mm.G2(abs(L_s), V_s);
     float mmPdf = mm.PDF(D, H_s, V_s);
 
     DBG_OUTPUT1(F,                F);
@@ -132,10 +132,11 @@ void TransmissiveLobe(
         return;
     }
 
+    // TODO: Explodes. Need more debug systems
     float eval = D * G * abs(LdH  * VdH / max(1e-6, NdV * denom2));
 
-    //f *= eta2 * hitInfo.Mat.TransmissionColor;
-    f *= eval * hitInfo.Mat.TransmissionColor / 1000;
+    f *= eta2 * hitInfo.Mat.TransmissionColor;
+    //f *= eval * hitInfo.Mat.TransmissionColor;
 }
 
 bool IsReflect(inout RngInfo rngInfo, float iorCurrent, float iorNext, float NdV, out float reflectProb)
@@ -195,8 +196,8 @@ void BxDF::Sample(
     float3 H_s = mm.Sample(u1, u2);
     float VdH = dot(H_s, V_s);
 
-    DBG_OUTPUT3(H_s,                             Hs);
-    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     Hw);
+    DBG_OUTPUT3(H_s,                             H_s);
+    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     H_w);
     DBG_OUTPUT1(mm.m_alpha,                      Alpha);
     DBG_OUTPUT1(mm.D(H_s),                       D);
 

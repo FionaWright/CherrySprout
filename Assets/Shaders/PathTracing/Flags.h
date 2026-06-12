@@ -156,8 +156,8 @@ inline void SetPathTracerDebugFlag(PathTracerDebugFlags& state, const PathTracer
 #       define DEBUG_FLAGS eDebug_None
 #   endif
 
-#define FEATURE_ENABLED(flag)  FEATURE_FLAGS   &   eFeature_##flag
-#define DEBUG_ENABLED(flag)    DEBUG_FLAGS     &   eDebug_##flag
+#define FEATURE_ENABLED(flag)  (FEATURE_FLAGS   &   eFeature_##flag)
+#define DEBUG_ENABLED(flag)    (DEBUG_FLAGS     &   eDebug_##flag)
 
 #endif
 

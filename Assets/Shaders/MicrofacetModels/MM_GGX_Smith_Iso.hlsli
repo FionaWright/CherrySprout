@@ -45,7 +45,7 @@ float MicrofacetModel::D(float3 H)
 float MicrofacetModel::G1(float3 W)
 {
     float a2 = m_alpha * m_alpha;
-    float NdW = abs(W.z); // abs() due to BTDFs
+    float NdW = W.z;
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
     return saturate(2 * NdW / max(1e-6, denom));

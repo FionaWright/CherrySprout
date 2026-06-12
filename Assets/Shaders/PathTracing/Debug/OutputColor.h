@@ -43,10 +43,10 @@ enum class DebugOutputIndex : hlsl::uint
     eDebugOutput_IorN,
 
     // BSDF:
-    eDebugOutput_Hs,
-    eDebugOutput_Hw,
-    eDebugOutput_Ls,
-    eDebugOutput_Lw,
+    eDebugOutput_H_s,
+    eDebugOutput_H_w,
+    eDebugOutput_L_s,
+    eDebugOutput_L_w,
     eDebugOutput_Alpha,
     eDebugOutput_D,
     eDebugOutput_G,
@@ -98,10 +98,10 @@ static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputInde
     "IOR N",
 
     // BSDF
-    "Hs",
-    "Hw",
-    "Ls",
-    "Lw",
+    "H_s",
+    "H_w",
+    "L_s",
+    "L_w",
     "Alpha",
     "D",
     "G",

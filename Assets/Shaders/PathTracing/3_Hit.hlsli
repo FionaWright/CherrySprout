@@ -28,8 +28,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
     DBG_OUTPUT3(f,                                 f);
     DBG_OUTPUT1(pdf,                               PDF);
-    DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi),        Ls);
-    DBG_OUTPUT3(wi,                                Lw);
+    DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi),        L_s);
+    DBG_OUTPUT3(wi,                                L_w);
 
     float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;
 
