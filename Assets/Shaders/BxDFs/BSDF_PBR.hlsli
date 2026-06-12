@@ -22,8 +22,8 @@ void DiffuseLobe(
 }
 
 void SpecularLobe(
-    inout RngInfo rngInfo,  HitInfo hitInfo,
-    float3 V_s,             float3 N_s,
+    inout RngInfo rngInfo,  HitInfo hitInfo,       MicrofacetModel mm,
+    float3 V_s,             float3 N_s,            float3 H_s,
     float u1,               float u2,
 
     float3 F0,
@@ -33,12 +33,6 @@ void SpecularLobe(
     out float pdf
 )
 {
-    MicrofacetModel mm;
-    InitializeMM(mm, hitInfo.Mat.Roughness, rngInfo, V_s);
-    if (FEATURE_ENABLED(Anisotropy))
-        InitializeMMAniso(mm, hitInfo);
-
-    float3 H_s = mm.Sample(u1, u2);
     L_s = NormalizeSafe(reflect(-V_s, H_s), N_s);
 
     // Terminate ray if wi ends up inside surface
@@ -75,8 +69,8 @@ void SpecularLobe(
 
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
 void TransmissiveLobe(
-    inout RngInfo rngInfo,  HitInfo hitInfo,
-    float3 V_s,             float3 N_s,
+    inout RngInfo rngInfo,  HitInfo hitInfo,        MicrofacetModel mm,
+    float3 V_s,             float3 N_s,             float3 H_s,
     float nCurrent,         float nNext,
     float u1,               float u2,
 
@@ -87,11 +81,6 @@ void TransmissiveLobe(
 {
     float eta = nCurrent / nNext;
     float eta2 = eta * eta;
-
-    MicrofacetModel mm;
-    InitializeMM(mm, hitInfo.Mat.Roughness, rngInfo, V_s);
-
-    float3 H_s = normalize(mm.Sample(u1, u2));
 
     // Recompute H_s
     //H_s = normalize(nCurrent * V_s + nNext * L_s);
@@ -188,6 +177,14 @@ void BxDF::Sample(
     float u1 = Rand01(rngInfo);
     float u2 = Rand01(rngInfo);
 
+    MicrofacetModel mm;
+    InitializeMM(mm, hitInfo.Mat.Roughness, rngInfo, V_s);
+    if (FEATURE_ENABLED(Anisotropy))
+        InitializeMMAniso(mm, hitInfo);
+
+    float3 H_s = mm.Sample(u1, u2);
+    float VdH = dot(H_s, V_s);
+
     float3 L_s = 0.0f;
 
     if (Rand01(rngInfo) < hitInfo.Mat.TransmissionFactor)
@@ -199,17 +196,17 @@ void BxDF::Sample(
         DBG_ASSERT(hitInfo.Li           < EPSILON, NO_EMISSIVE_GLASS);
 
         float reflectProb;
-        bool isReflect = IsReflect(rngInfo, iorCurrent, iorNext, NdV, reflectProb);
+        bool isReflect = IsReflect(rngInfo, iorCurrent, iorNext, VdH, reflectProb);
 
         if (isReflect)
         {
-            SpecularLobe(rngInfo, hitInfo, V_s, N_s, u1, u2, F0, L_s, f, pdf);
+            SpecularLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, u1, u2, F0, L_s, f, pdf);
             pdf *= reflectProb;
             f /= max(1e-6, reflectProb);
         }
         else
         {
-            TransmissiveLobe(rngInfo, hitInfo, V_s, N_s, iorCurrent, iorNext, u1, u2, L_s, f, pdf);
+            TransmissiveLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, iorCurrent, iorNext, u1, u2, L_s, f, pdf);
             pdf *= 1.0f - reflectProb;
             f /= max(1e-6, 1.0f - reflectProb);
         }
@@ -219,11 +216,11 @@ void BxDF::Sample(
     }
 
     float specProb;
-    bool isSpecular = IsSpecular(rngInfo, NdV, F0, specProb);
+    bool isSpecular = IsSpecular(rngInfo, VdH, F0, specProb);
 
     if (isSpecular)
     {
-        SpecularLobe(rngInfo, hitInfo, V_s, N_s, u1, u2, F0, L_s, f, pdf);
+        SpecularLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, u1, u2, F0, L_s, f, pdf);
         pdf *= specProb;
         f /= max(1e-6, specProb);
     }
