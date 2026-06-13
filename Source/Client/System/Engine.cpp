@@ -112,15 +112,19 @@ void Engine::Render()
     }
 
 #ifdef _DEBUG
-    if (!m_scheduledSnapshot.empty())
+    if (!m_scheduledSnapshotRTV.empty())
     {
         uint8_t* data = nullptr;
         size_t dataSize = 0;
         Snapshotter::ResourceToSnapshot(m_d3d.get(), m_d3d->GetRtv(), data, dataSize);
-        Snapshotter::SnapshotToFile(m_d3d.get(), data, m_d3d->GetRtv(), m_scheduledSnapshot.c_str(), m_snapshotterIsPng);
-        Snapshotter::Rgba8SnapshotToClipboard(m_d3d.get(), data, m_d3d->GetRtv());
 
-        m_scheduledSnapshot = "";
+        ScratchImage scratch;
+        const Image* packed = Snapshotter::PackData(m_d3d.get(), data, m_d3d->GetRtv(), scratch);
+
+        Snapshotter::SnapshotToFile(packed, m_scheduledSnapshotRTV.c_str(), m_snapshotterIsPng);
+        Snapshotter::Rgba8SnapshotToClipboard(packed);
+
+        m_scheduledSnapshotRTV = "";
     }
 #endif
 }

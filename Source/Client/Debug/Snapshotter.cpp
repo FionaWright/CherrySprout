@@ -53,7 +53,7 @@ void Snapshotter::ResourceToSnapshot(D3D* d3d, D12Resource* d12Resource, uint8_t
     readbackBuffer.Readback(data);
 }
 
-const Image* PackData(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, ScratchImage& scratch)
+const Image* Snapshotter::PackData(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, ScratchImage& scratch)
 {
     UINT numRows;
     UINT64 rowPitch, slicePitch;
@@ -89,14 +89,9 @@ const Image* PackData(const D3D* d3d, uint8_t* data, const D12Resource* d12Resou
     return dst;
 }
 
-void Snapshotter::SnapshotToRgba8(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, uint8_t*& dataRgba8)
+void Snapshotter::SnapshotToRgba8(const Image* image, ScratchImage& scratch)
 {
-    ScratchImage scratch;
-    const Image* image = PackData(d3d, data, d12Resource, scratch);
-
-    ScratchImage converted;
-    V(Convert(*image, DXGI_FORMAT_R8G8B8A8_UNORM, TEX_FILTER_DEFAULT, TEX_THRESHOLD_DEFAULT, converted));
-    dataRgba8 = converted.GetPixels();
+    V(Convert(*image, DXGI_FORMAT_R8G8B8A8_UNORM, TEX_FILTER_DEFAULT, TEX_THRESHOLD_DEFAULT, scratch));
 }
 
 bool FormatIsHDR(const DXGI_FORMAT format)
@@ -116,12 +111,9 @@ bool FormatIsHDR(const DXGI_FORMAT format)
     }
 }
 
-void Snapshotter::SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, const char* fileName, const bool ldrIsPNG)
+void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const bool ldrIsPNG)
 {
-    ScratchImage scratch;
-    const Image* image = PackData(d3d, data, d12Resource, scratch);
-
-    const bool isHDR = FormatIsHDR(d12Resource->GetDesc().Format);
+    const bool isHDR = FormatIsHDR(image->format);
 
     const std::string fileNameWithExt = std::string(fileName) + (isHDR ? ".hdr" : (ldrIsPNG ? ".png" : ".tga"));
     const std::wstring fileNameW = stringToWString(fileNameWithExt);
@@ -144,13 +136,10 @@ void Snapshotter::SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resourc
         V(SaveToTGAFile(*image, TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA | TGA_FLAGS_DEFAULT_SRGB, fileNameW.c_str()));
 }
 
-void Snapshotter::Rgba8SnapshotToClipboard(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource)
+void Snapshotter::Rgba8SnapshotToClipboard(const Image* image)
 {
-    if (!data || !d12Resource)
+    if (!image)
         return;
-
-    ScratchImage scratch;
-    const Image* image = PackData(d3d, data, d12Resource, scratch);
 
     // Disable transparency
     uint8_t* pixels = image->pixels;

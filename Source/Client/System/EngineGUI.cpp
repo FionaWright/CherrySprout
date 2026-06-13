@@ -110,9 +110,9 @@ void Engine::RenderGUI()
         if (ImGui::Button("Take Snapshot (RTV)"))
         {
             if (buff[0] == '\0')
-                m_scheduledSnapshot = std::string(SOURCE_DIR) + "/Snapshots/Default";
+                m_scheduledSnapshotRTV = std::string(SOURCE_DIR) + "/Snapshots/Default_RTV";
             else
-                m_scheduledSnapshot = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
+                m_scheduledSnapshotRTV = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
         }
 #endif
     }

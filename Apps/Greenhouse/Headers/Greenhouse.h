@@ -66,6 +66,10 @@ private:
 
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;
+
+#ifdef _DEBUG
+    std::string m_scheduledSnapshotPT = "";
+#endif
 };
 
 #endif

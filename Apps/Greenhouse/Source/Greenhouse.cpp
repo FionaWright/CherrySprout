@@ -3,17 +3,19 @@
 
 #include "imgui.h"
 #include "Scenes.h"
-#include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
-#include "../../../Assets/Shaders/Utils/CBVs.h"
 #include "Scene/SceneManager.h"
 #include "System/Gui.h"
 #include "System/GuiUtils.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/Constants.h"
 #include "Utils/ConstantsCpp.h"
-#include "Utils/Helper.h"
 #include "Utils/D3DUtils.h"
+#include "Utils/Helper.h"
+
+#ifdef _DEBUG
+#   include "Debug/Snapshotter.h"
+#endif
 
 void Greenhouse::Init(D3D* d3d)
 {
@@ -143,6 +145,75 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 void Greenhouse::PostUpdate(D3D* d3d)
 {
     m_currRenderBackend->PostUpdate(d3d, m_renderInfo);
+
+    if (!m_scheduledSnapshotPT.empty())
+    {
+        D12Resource* accum = m_pathTracer.GetTexAccum();
+
+        D12Resource texGammaCorrected;
+        {
+            D3D12_STATIC_SAMPLER_DESC sampler;
+            InitializeSamplerLinearClamp(&sampler);
+
+            RootSig rootSig;
+            rootSig.SmartInit(d3d->GetDevice(), 1, 1, 1, false, &sampler, 1);
+
+            texGammaCorrected.Init_Tex2D("Accum Gamma Corrected", d3d->GetDevice(), accum->GetDesc().Width, accum->GetDesc().Height, 1, accum->GetDesc().Format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+            Pipeline pipeline;
+            pipeline.InitCompute(d3d->GetDevice(), "Compute/GammaCorrectCS.hlsl", rootSig.Get());
+
+            UploadHeap uploadHeap;
+            uploadHeap.Init(d3d->GetDevice(), Align(sizeof(CbvGammaCorrect), 256));
+
+            DescriptorSet set;
+            set.Init(&m_heap);
+            set.AddCBV(d3d->GetDevice(), sizeof(CbvGammaCorrect), &uploadHeap);
+            set.SetSRV_Tex2D(d3d->GetDevice(), 0, accum, accum->GetDesc().Format);
+            set.SetUAV_Tex2D(d3d->GetDevice(), 0, &texGammaCorrected, texGammaCorrected.GetDesc().Format);
+
+            CbvGammaCorrect cbv;
+            cbv.Dimensions = hlsl::uint2(accum->GetDesc().Width, accum->GetDesc().Height);
+            cbv.IsToSrgb = true;
+            set.UpdateCBV(0, &cbv);
+
+            d3d->Flush();
+            const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+            const auto cmdList = cmdListPtr.Get();
+            {
+                accum->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+                m_heap.Bind(cmdList);
+                cmdList->SetComputeRootSignature(rootSig.Get());
+                cmdList->SetPipelineState(pipeline.GetPSO());
+                set.TransitionAllSRVToShaderResource(cmdList);
+                set.SetDescriptorTables_Compute(cmdList);
+
+                constexpr uint32_t THREAD_COUNTS = 16;
+                const uint32_t groupX = (accum->GetDesc().Width + (THREAD_COUNTS-1)) / THREAD_COUNTS;
+                const uint32_t groupY = (accum->GetDesc().Height + (THREAD_COUNTS-1)) / THREAD_COUNTS;
+                cmdList->Dispatch(groupX, groupY, 1);
+            }
+            V(cmdList->Close());
+            d3d->ExecuteCommandList(cmdList);
+            d3d->Flush();
+        }
+
+        uint8_t* data = nullptr;
+        size_t dataSize = 0;
+        Snapshotter::ResourceToSnapshot(d3d, &texGammaCorrected, data, dataSize);
+
+        ScratchImage scratch;
+        const Image* packed = Snapshotter::PackData(d3d, data, &texGammaCorrected, scratch);
+
+        Snapshotter::SnapshotToFile(packed, m_scheduledSnapshotPT.c_str());
+
+        ScratchImage rgba8;
+        Snapshotter::SnapshotToRgba8(packed, rgba8);
+        Snapshotter::Rgba8SnapshotToClipboard(rgba8.GetImage(0,0,0));
+
+        m_scheduledSnapshotPT = "";
+    }
 
     m_envMapDirty = false;
 }
@@ -290,6 +361,7 @@ void Greenhouse::RenderGUI()
             ImGui::Spacing();
         }
 
+#ifdef _DEBUG
         ImGui::Text("Debug Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
         if (ImGui::BeginTable("Debug Flags", 2))
@@ -310,12 +382,10 @@ void Greenhouse::RenderGUI()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-#ifdef _DEBUG
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_Asserts))
         {
             static_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_ErrorInfo();
         }
-#endif
 
         if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
             m_config.PathTracerConfig.DebugOutputIdx = DebugOutputIndex::eDebugOutput_Disabled;
@@ -339,8 +409,27 @@ void Greenhouse::RenderGUI()
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::EndTable();
         }
+#endif
 
         ImGui::PopStyleVar();
+    }
+    ImGui::Unindent(IM_GUI_INDENTATION);
+
+    ImGui::SeparatorText("Tools:");
+    ImGui::Indent(IM_GUI_INDENTATION);
+    {
+#ifdef _DEBUG
+        static char buff[256];
+        ImGui::InputText("Snapshot Path", buff, 256);
+
+        if (ImGui::Button("Take Snapshot (PT)"))
+        {
+            if (buff[0] == '\0')
+                m_scheduledSnapshotPT = std::string(SOURCE_DIR) + "/Snapshots/Default_PT";
+            else
+                m_scheduledSnapshotPT = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
+        }
+#endif
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 

@@ -35,7 +35,7 @@ private:
 #ifdef _DEBUG
     bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
 
-    std::string m_scheduledSnapshot = "";
+    std::string m_scheduledSnapshotRTV = "";
     bool m_snapshotterIsPng = true;
 #endif
 };

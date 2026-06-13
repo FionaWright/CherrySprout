@@ -46,6 +46,13 @@ struct CbvPanoToCM
     float Rotation;
 };
 
+struct CbvGammaCorrect
+{
+    hlsl::uint2 Dimensions;
+    hlsl::uint IsToSrgb;
+    float p;
+};
+
 struct CbvMatrices_MVP
 {
     hlsl::float4x4 M, MTI, V, P;

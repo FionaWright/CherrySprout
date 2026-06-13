@@ -36,6 +36,7 @@ public:
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
 
     D12Resource* GetTexOutput() { return &m_output; }
+    D12Resource* GetTexAccum() { return &m_accum; }
     uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
 #ifdef _DEBUG

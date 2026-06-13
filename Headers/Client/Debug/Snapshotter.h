@@ -12,11 +12,13 @@ class Snapshotter
 public:
     static void ResourceToSnapshot(D3D* d3d, D12Resource* d12Resource, uint8_t*& data, size_t& dataSize);
 
-    static void SnapshotToRgba8(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, uint8_t*& dataRgba8);
+    static const Image* PackData(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, ScratchImage& scratch);
 
-    static void SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, const char* fileName, bool ldrIsPNG);
+    static void SnapshotToRgba8(const Image* image, ScratchImage& scratch);
 
-    static void Rgba8SnapshotToClipboard(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource);
+    static void SnapshotToFile(const Image* image, const char* fileName, bool ldrIsPNG = false);
+
+    static void Rgba8SnapshotToClipboard(const Image* image);
 };
 
 #endif
