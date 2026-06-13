@@ -8,10 +8,12 @@
 #include "HWI/UploadHeap.h"
 #include "Utils/Helper.h"
 
-D12Resource::D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState)
+D12Resource::D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState, const D3D12_RESOURCE_DESC& desc)
 {
     m_resource = resource;
     m_currentState = initialState;
+
+    m_desc = desc;
 
 #ifdef _DEBUG
     m_initialized = true;

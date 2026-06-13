@@ -10,11 +10,8 @@ class UploadHeap;
 class D12Resource
 {
 public:
-    D12Resource()
-    {
-    }
-
-    D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState);
+    D12Resource() {}
+    D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState, const D3D12_RESOURCE_DESC& desc);
 
     void Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
               const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr,

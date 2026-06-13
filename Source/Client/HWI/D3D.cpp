@@ -253,7 +253,17 @@ void D3D::Init(const size_t width, const size_t height)
             m_device->CreateRenderTargetView(rtvResource.Get(), nullptr, rtvHandle);
             rtvHandle.Offset(1, m_rtvDescriptorSize);
 
-            m_rtvs[n] = D12Resource(rtvResource, D3D12_RESOURCE_STATE_PRESENT);
+            D3D12_RESOURCE_DESC desc = {};
+            desc.Width = width;
+            desc.Height = height;
+            desc.Format = Config::GetRender().RtvFormat;
+            desc.DepthOrArraySize = 1;
+            desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            desc.MipLevels = 1;
+            desc.SampleDesc.Count = 1;
+            desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+            m_rtvs[n] = D12Resource(rtvResource, D3D12_RESOURCE_STATE_PRESENT, desc);
             std::wstring name = std::wstring(L"Swapchain Backbuffer #") + std::to_wstring(n);
             V(rtvResource->SetName(name.c_str()));
         }

@@ -6,3 +6,6 @@ build/*
 out/*
 
 *.html
+
+Snapshots/*
+!Snapshots/.gitkeep

@@ -34,6 +34,8 @@ private:
     // GUI State:
 #ifdef _DEBUG
     bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
+
+    std::string m_scheduledSnapshot = "";
 #endif
 };
 

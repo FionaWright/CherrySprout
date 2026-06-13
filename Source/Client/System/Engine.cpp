@@ -15,7 +15,8 @@
 #include "System/Input.h"
 
 #ifdef _DEBUG
-#include "Debug/HotReloader.h"
+#   include "Debug/HotReloader.h"
+#   include "Debug/Snapshotter.h"
 #endif
 
 Engine::Engine(App* app, const HWND hWnd, const UINT windowWidth, const UINT windowHeight)
@@ -109,6 +110,19 @@ void Engine::Render()
     {
         m_app->PostUpdate(m_d3d.get());
     }
+
+#ifdef _DEBUG
+    if (!m_scheduledSnapshot.empty())
+    {
+        uint8_t* data = nullptr;
+        size_t dataSize = 0;
+        Snapshotter::ResourceToSnapshot(m_d3d.get(), m_d3d->GetRtv(), data, dataSize);
+        Snapshotter::SnapshotToFile(m_d3d.get(), data, m_d3d->GetRtv(), m_scheduledSnapshot.c_str());
+        Snapshotter::Rgba8SnapshotToClipboard(m_d3d.get(), data, m_d3d->GetRtv());
+
+        m_scheduledSnapshot = "";
+    }
+#endif
 }
 
 void Engine::CalculateFPS(const double deltaTime_s)

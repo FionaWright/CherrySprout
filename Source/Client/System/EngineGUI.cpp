@@ -12,6 +12,7 @@
 
 #ifdef _DEBUG
 #   include "Debug/HotReloader.h"
+#   include "Debug/Snapshotter.h"
 #endif
 
 void Engine::RenderGUI()
@@ -97,6 +98,16 @@ void Engine::RenderGUI()
         if (ImGui::Button("Reload Compute Pipelines"))
         {
             m_hotReloaderPendingCompute = true;
+        }
+
+        ImGui::Spacing();
+
+        static char buff[256];
+        ImGui::InputText("Snapshot Path", buff, 256);
+
+        if (ImGui::Button("Take Snapshot (RTV)"))
+        {
+            m_scheduledSnapshot = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
         }
 #endif
     }
