@@ -2,6 +2,8 @@
 
 #include "Debug/Snapshotter.h"
 
+#include <wincodec.h>
+
 #include "HWI/D12Resource.h"
 #include "HWI/D3D.h"
 #include "Utils/Helper.h"
@@ -140,61 +142,110 @@ void Snapshotter::Rgba8SnapshotToClipboard(const D3D* d3d, uint8_t* data, const 
     ScratchImage scratch;
     const Image* image = PackData(d3d, data, d12Resource, scratch);
 
-    const DWORD imageSize = image->slicePitch;
-    const SIZE_T totalSize =
-        sizeof(BITMAPV5HEADER) + imageSize;
-
-    const HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, totalSize);
-    if (!hMem)
-        return;
-
-    auto* p = static_cast<uint8_t*>(GlobalLock(hMem));
-    if (!p)
+    // Disable transparency
+    uint8_t* pixels = image->pixels;
+    for (size_t i = 0; i < image->width * image->height; ++i)
     {
-        GlobalFree(hMem);
-        return;
+        pixels[i * 4 + 3] = 255;
     }
 
-    auto* hdr = reinterpret_cast<BITMAPV5HEADER*>(p);
+    // PNG
+    HGLOBAL hMemPng = nullptr;
+    {
+        Blob pngBlob;
+        V(SaveToWICMemory(
+            *image,
+            WIC_FLAGS_FORCE_SRGB,
+            GUID_ContainerFormatPng,
+            pngBlob));
 
-    ZeroMemory(hdr, sizeof(BITMAPV5HEADER));
+        hMemPng = GlobalAlloc(
+            GMEM_MOVEABLE,
+            pngBlob.GetBufferSize());
+        if (!hMemPng)
+            return;
 
-    hdr->bV5Size = sizeof(BITMAPV5HEADER);
-    hdr->bV5Width = static_cast<LONG>(image->width);
+        void* dst = GlobalLock(hMemPng);
+        if (!dst)
+        {
+            GlobalFree(hMemPng);
+            return;
+        }
 
-    // negative = top-down bitmap
-    hdr->bV5Height = -static_cast<LONG>(image->height);
+        memcpy(
+            dst,
+            pngBlob.GetBufferPointer(),
+            pngBlob.GetBufferSize());
 
-    hdr->bV5Planes = 1;
-    hdr->bV5BitCount = 32;
-    hdr->bV5Compression = BI_BITFIELDS;
+        GlobalUnlock(hMemPng);
+    }
 
-    hdr->bV5RedMask   = 0x000000FF;
-    hdr->bV5GreenMask = 0x0000FF00;
-    hdr->bV5BlueMask  = 0x00FF0000;
-    hdr->bV5AlphaMask = 0xFF000000;
+    HGLOBAL hMemDibv5 = nullptr;
+    {
+        const DWORD imageSize = image->slicePitch;
+        const SIZE_T totalSize =
+            sizeof(BITMAPV5HEADER) + imageSize;
 
-    hdr->bV5CSType = LCS_sRGB;
+        hMemDibv5 = GlobalAlloc(GMEM_MOVEABLE, totalSize);
+        if (!hMemDibv5)
+            return;
 
-    uint8_t* dstPixels = p + sizeof(BITMAPV5HEADER);
+        auto* p = static_cast<uint8_t*>(GlobalLock(hMemDibv5));
+        if (!p)
+        {
+            GlobalFree(hMemDibv5);
+            return;
+        }
 
-    memcpy(dstPixels, image->pixels, imageSize);
+        auto* hdr = reinterpret_cast<BITMAPV5HEADER*>(p);
 
-    GlobalUnlock(hMem);
+        ZeroMemory(hdr, sizeof(BITMAPV5HEADER));
+
+        hdr->bV5Size = sizeof(BITMAPV5HEADER);
+        hdr->bV5Width = static_cast<LONG>(image->width);
+        hdr->bV5SizeImage = imageSize;
+
+        // negative = top-down bitmap
+        hdr->bV5Height = -static_cast<LONG>(image->height);
+
+        hdr->bV5Planes = 1;
+        hdr->bV5BitCount = 32;
+        hdr->bV5Compression = BI_BITFIELDS;
+
+        hdr->bV5RedMask   = 0x000000FF;
+        hdr->bV5GreenMask = 0x0000FF00;
+        hdr->bV5BlueMask  = 0x00FF0000;
+        hdr->bV5AlphaMask = 0xFF000000;
+
+        hdr->bV5CSType = LCS_sRGB;
+
+        uint8_t* dstPixels = p + sizeof(BITMAPV5HEADER);
+
+        memcpy(dstPixels, image->pixels, imageSize);
+
+        GlobalUnlock(hMemDibv5);
+    }
 
     if (!OpenClipboard(nullptr))
     {
-        GlobalFree(hMem);
+        GlobalFree(hMemDibv5);
+        GlobalFree(hMemPng);
         return;
     }
 
     EmptyClipboard();
 
-    if (!SetClipboardData(CF_DIBV5, hMem))
+    if (!SetClipboardData(CF_DIBV5, hMemDibv5))
     {
-        CloseClipboard();
-        GlobalFree(hMem);
-        return;
+        GlobalFree(hMemDibv5);
+    }
+
+    const UINT pngFormat = RegisterClipboardFormatA("PNG");
+    assert(pngFormat != 0);
+
+    if (!SetClipboardData(pngFormat, hMemPng))
+    {
+        GlobalFree(hMemPng);
     }
 
     // Clipboard owns hMem after success.
