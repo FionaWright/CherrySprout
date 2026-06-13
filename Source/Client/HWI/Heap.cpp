@@ -89,7 +89,7 @@ uint32_t Heap::AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* reso
     desc.Texture2D.PlaneSlice = 0;
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    const uint32_t idx = GetNextDescriptorIdx_SceneTexture(resource->GetName().c_str());
+    const uint32_t idx = GetNextDescriptorIdx_SceneTexture(resource->GetName());
     const auto handle = GetDescriptorHandleAtIndex(idx);
 
     device->CreateShaderResourceView(resource->GetResource(), &desc, handle);

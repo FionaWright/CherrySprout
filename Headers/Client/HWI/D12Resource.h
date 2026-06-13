@@ -44,7 +44,12 @@ public:
     ID3D12Resource* GetResource() const { return m_resource.Get(); }
     D3D12_RESOURCE_STATES GetCurrentState() const { return m_currentState; }
     D3D12_RESOURCE_DESC GetDesc() const { return m_desc; }
-    [[nodiscard]] const std::string& GetName() const { return m_name; }
+
+#ifdef _DEBUG
+    [[nodiscard]] const char* GetName() const { return m_name.c_str(); }
+#else
+    [[nodiscard]] const char* GetName() const { return nullptr; }
+#endif
 
 private:
     ComPtr<ID3D12Resource> m_resource = nullptr;

@@ -12,7 +12,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Run path-tracer without sync?
 - [x] Scene switching in GUI
 - [ ] Profiling (Tracy?)
-- [ ] Snapshot tool (Can I make it go into my clipboard as well?)
+- [x] Snapshot tool (Can I make it go into my clipboard as well?)
 
 - [ ] Python executor
 - [ ] Path visualizer

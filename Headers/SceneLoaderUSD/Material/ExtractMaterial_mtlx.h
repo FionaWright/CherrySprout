@@ -35,7 +35,7 @@ namespace SceneLoaderUSD
                 pxr::SdfAssetPath assetPath;
                 if (fileInput.GetAttr().Get(&assetPath))
                 {
-                    const std::string resolvedPath = assetPath.GetResolvedPath();
+                    const std::string& resolvedPath = assetPath.GetResolvedPath();
                     return resolvedPath.empty() ? assetPath.GetAssetPath() : resolvedPath;
                 }
             }

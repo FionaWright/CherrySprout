@@ -5,8 +5,8 @@ add_executable(Greenhouse WIN32
         Source/main.cpp
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
-        ${CHERRYSPROUT_ASSETS_DIR}/Resources/CherrySprout.rc
-        ${CHERRYSPROUT_ASSETS_DIR}/Resources/Resources.h
+        ${CMAKE_SOURCE_DIR}/Assets/Resources/CherrySprout.rc
+        ${CMAKE_SOURCE_DIR}/Assets/Resources/Resources.h
 )
 
 target_compile_options(Greenhouse PRIVATE

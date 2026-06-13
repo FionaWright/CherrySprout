@@ -8,6 +8,7 @@
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
+#include "System/FileHelper.h"
 #include "System/TextureLoader.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
@@ -19,7 +20,7 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
     m_scene = {};
     m_scene.Filepath = filepath;
 
-    const std::string fullpath = std::string(SOURCE_DIR) + "/" + filepath;
+    const std::string fullpath = FileHelper::GetAssetFullPath(filepath);
     const bool isUSD = std::filesystem::path(fullpath).extension().string().starts_with(".usd");
     if (!isUSD)
         throw std::runtime_error("Non-USD scenes not supported yet!");

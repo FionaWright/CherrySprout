@@ -109,7 +109,7 @@ void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D1
     desc.Texture2D.PlaneSlice = 0;
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    const char* debugName = d12Resource && Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName().c_str() : nullptr;
+    const char* debugName = d12Resource && Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
     SetSRV(device, srvIdx, d12Resource, desc, debugName);
 }
 
@@ -123,7 +123,7 @@ void DescriptorSet::SetSRV_Buffer(ID3D12Device* device, const uint32_t srvIdx, D
     desc.Buffer.StructureByteStride = stride;
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName().c_str() : nullptr;
+    const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
     SetSRV(device, srvIdx, d12Resource, desc, debugName);
 }
 
@@ -135,7 +135,7 @@ void DescriptorSet::SetSRV_RTAS(ID3D12Device* device, const uint32_t srvIdx, con
         desc.RaytracingAccelerationStructure.Location = d12Resource->GetResource()->GetGPUVirtualAddress();
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    const char* debugName = Config::GetSystem().DebugHeapEnabled && d12Resource ? d12Resource->GetName().c_str() : nullptr;
+    const char* debugName = Config::GetSystem().DebugHeapEnabled && d12Resource ? d12Resource->GetName() : nullptr;
     SetSRV(device, srvIdx, nullptr, desc, debugName);
 }
 
@@ -213,7 +213,7 @@ void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, D
     desc.Buffer.NumElements = numElements;
     desc.Buffer.StructureByteStride = stride;
 
-    const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName().c_str() : nullptr;
+    const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
     SetUAV(device, uavIdx, d12Resource, desc);
 }
 

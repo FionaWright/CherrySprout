@@ -146,6 +146,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
 {
     m_currRenderBackend->PostUpdate(d3d, m_renderInfo);
 
+#ifdef _DEBUG
     if (!m_scheduledSnapshotPT.empty())
     {
         D12Resource* accum = m_pathTracer.GetTexAccum();
@@ -214,6 +215,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
 
         m_scheduledSnapshotPT = "";
     }
+#endif
 
     m_envMapDirty = false;
 }

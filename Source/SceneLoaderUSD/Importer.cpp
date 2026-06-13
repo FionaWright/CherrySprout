@@ -23,6 +23,8 @@
 #include "pxr/base/tf/token.h"
 #include "pxr/usd/sdf/assetPath.h"
 
+#include "ResolverOverride.h"
+
 #pragma warning(pop)
 
 #include "Importer.h"
@@ -40,6 +42,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
     std::cout << "Importing USD: " << usdPath << std::endl;
 
     ImporterContext context;
+
+    pxr::ArSetPreferredResolver("DdsFallbackResolver");
 
     pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdPath);
     if (!stage)
