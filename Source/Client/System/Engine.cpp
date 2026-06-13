@@ -117,7 +117,7 @@ void Engine::Render()
         uint8_t* data = nullptr;
         size_t dataSize = 0;
         Snapshotter::ResourceToSnapshot(m_d3d.get(), m_d3d->GetRtv(), data, dataSize);
-        Snapshotter::SnapshotToFile(m_d3d.get(), data, m_d3d->GetRtv(), m_scheduledSnapshot.c_str());
+        Snapshotter::SnapshotToFile(m_d3d.get(), data, m_d3d->GetRtv(), m_scheduledSnapshot.c_str(), m_snapshotterIsPng);
         Snapshotter::Rgba8SnapshotToClipboard(m_d3d.get(), data, m_d3d->GetRtv());
 
         m_scheduledSnapshot = "";

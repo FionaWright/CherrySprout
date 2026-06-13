@@ -14,7 +14,7 @@ public:
 
     static void SnapshotToRgba8(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, uint8_t*& dataRgba8);
 
-    static void SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, const char* fileName);
+    static void SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, const char* fileName, bool ldrIsPNG);
 
     static void Rgba8SnapshotToClipboard(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource);
 };

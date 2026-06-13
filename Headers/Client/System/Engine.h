@@ -36,6 +36,7 @@ private:
     bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
 
     std::string m_scheduledSnapshot = "";
+    bool m_snapshotterIsPng = true;
 #endif
 };
 

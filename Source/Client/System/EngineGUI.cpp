@@ -102,12 +102,17 @@ void Engine::RenderGUI()
 
         ImGui::Spacing();
 
+        ImGui::Checkbox("(LDR) Snapshot is PNG", &m_snapshotterIsPng);
+
         static char buff[256];
         ImGui::InputText("Snapshot Path", buff, 256);
 
         if (ImGui::Button("Take Snapshot (RTV)"))
         {
-            m_scheduledSnapshot = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
+            if (buff[0] == '\0')
+                m_scheduledSnapshot = std::string(SOURCE_DIR) + "/Snapshots/Default";
+            else
+                m_scheduledSnapshot = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
         }
 #endif
     }

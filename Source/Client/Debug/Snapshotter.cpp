@@ -116,20 +116,30 @@ bool FormatIsHDR(const DXGI_FORMAT format)
     }
 }
 
-void Snapshotter::SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, const char* fileName)
+void Snapshotter::SnapshotToFile(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, const char* fileName, const bool ldrIsPNG)
 {
     ScratchImage scratch;
     const Image* image = PackData(d3d, data, d12Resource, scratch);
 
     const bool isHDR = FormatIsHDR(d12Resource->GetDesc().Format);
 
-    const std::string fileNameWithExt = std::string(fileName) + (isHDR ? ".hdr" : ".tga");
+    const std::string fileNameWithExt = std::string(fileName) + (isHDR ? ".hdr" : (ldrIsPNG ? ".png" : ".tga"));
     const std::wstring fileNameW = stringToWString(fileNameWithExt);
 
     std::cout << "Saved snapshot to: " << fileNameWithExt << std::endl;
 
     if (isHDR)
         V(SaveToHDRFile(*image, fileNameW.c_str()));
+    else if (ldrIsPNG)
+    {
+        // Disable transparency
+        uint8_t* pixels = image->pixels;
+        for (size_t i = 0; i < image->width * image->height; ++i)
+        {
+            pixels[i * 4 + 3] = 255;
+        }
+        V(SaveToWICFile(*image, WIC_FLAGS_FORCE_SRGB, GUID_ContainerFormatPng, fileNameW.c_str()));
+    }
     else
         V(SaveToTGAFile(*image, TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA | TGA_FLAGS_DEFAULT_SRGB, fileNameW.c_str()));
 }
