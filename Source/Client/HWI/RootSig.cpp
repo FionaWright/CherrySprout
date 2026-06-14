@@ -51,6 +51,13 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
     std::vector<CD3DX12_ROOT_PARAMETER1> params;
     std::vector<CD3DX12_DESCRIPTOR_RANGE1> ranges;
 
+    size_t numRanges =
+        (numCBV > 0) +
+        (numSRV > 0) +
+        hasSceneTextures +
+        (numUAV > 0);
+    ranges.reserve(numRanges);
+
     if (rootConstants)
     {
         CD3DX12_ROOT_PARAMETER1 param;

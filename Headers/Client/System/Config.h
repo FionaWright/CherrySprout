@@ -16,7 +16,7 @@ struct SettingsSystem
     uint32_t WindowEngineGuiWidth = 340;
 
     bool VSyncEnabled = false;
-    bool ForceSyncCpuGpu = true;
+    bool ForceSyncCpuGpu = false;
     bool AppGuiEnabled = true;
 
     bool ProfilingEnabled = true;

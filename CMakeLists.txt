@@ -11,6 +11,8 @@ endif()
 include(cmake/Dependencies.cmake)
 include(cmake/Sources.cmake)
 
+include(cmake/Options.cmake)
+
 add_library(client STATIC
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
@@ -20,6 +22,7 @@ target_precompile_headers(client PRIVATE
 )
 target_link_libraries(client
         PUBLIC
+        ProjectOptions
         DX12Agility
         d3d12
         dxgi
@@ -44,7 +47,6 @@ set_target_properties(client PROPERTIES
 )
 
 include(cmake/Assets.cmake)
-include(cmake/Options.cmake)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
     target_compile_definitions(client PUBLIC SOURCE_DIR="${CMAKE_SOURCE_DIR}")
