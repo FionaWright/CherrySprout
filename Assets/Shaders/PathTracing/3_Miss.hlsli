@@ -7,12 +7,7 @@ float3 Miss(float3 origin, float3 direction, uint bounceIdx)
 
     if (FEATURE_ENABLED(EnvironmentMap))
     {
-        float2 uv;
-        if (FEATURE_ENABLED(EnvironmentMapEA))
-            uv = EaSphereToSquare(direction);
-        else
-            uv = PanoSphereToSquare(direction);
-
+        float2 uv = EaSphereToSquare(direction);
         Li += saturate(gTexEnvMap.Sample(gSampler, uv).rgb);
     }
 

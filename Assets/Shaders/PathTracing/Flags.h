@@ -12,7 +12,7 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_Accumulation,
 
     Idx_EnvironmentMap,
-    Idx_EnvironmentMapEA,
+    Idx_MIS,
 
     Idx_DirectionalLight,
     Idx_DirectionalLightDistant,
@@ -38,7 +38,7 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
     eFeature_Accumulation               = 1u << __FEATURE_IDX(Accumulation),
 
     eFeature_EnvironmentMap             = 1u << __FEATURE_IDX(EnvironmentMap),
-    eFeature_EnvironmentMapEA           = 1u << __FEATURE_IDX(EnvironmentMapEA),
+    eFeature_MIS                        = 1u << __FEATURE_IDX(MIS),
 
     eFeature_DirectionalLight           = 1u << __FEATURE_IDX(DirectionalLight),
     eFeature_DirectionalLightDistant    = 1u << __FEATURE_IDX(DirectionalLightDistant),
@@ -99,7 +99,7 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Accumulation",
 
     "Environment Map",
-    "Environment Map Equal-Area",
+    "Multiple Importance Sampling",
 
     "Directional Light",
     "Directional Light is Distant",
@@ -131,7 +131,6 @@ static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<Path
         eFeature_Jitter |
         eFeature_Accumulation |
         eFeature_EnvironmentMap |
-        eFeature_EnvironmentMapEA |
         eFeature_NormalMaps |
         eFeature_GlassMaterials |
         eFeature_RussianRoulette

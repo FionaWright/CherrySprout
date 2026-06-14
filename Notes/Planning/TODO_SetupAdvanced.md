@@ -12,6 +12,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] Scene switching in GUI
 - [ ] Profiling (Tracy?)
 - [x] Snapshot tool (Can I make it go into my clipboard as well?)
+- [ ] Set up forward/deferred backends for debugging. Do in Greenhouse
 
 - [ ] Python executor
 - [ ] Path visualizer

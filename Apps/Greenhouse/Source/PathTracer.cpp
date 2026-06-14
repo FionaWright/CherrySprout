@@ -110,7 +110,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-    //m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -149,19 +149,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    // TODO: This is stupid. Move stuff around so that it gets set once in LoadSceneData
-    if (renderInfo.EnvMapDirty)
-    {
-        D12Resource* envMap = nullptr;
-        if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_EnvironmentMapEA))
-            envMap = renderInfo.EnvironmentMap->GetEA();
-        else
-            envMap = renderInfo.EnvironmentMap->GetPano();
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 5, envMap, envMap->GetDesc().Format);
-
-        envMap->Transition                              (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    }
-
     // Fill Settings
     {
         CbvPathTracingSettings settings;
@@ -197,6 +184,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         scene->GPU.MegaBufferIndex.Transition           (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferInstanceData.Transition    (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferMaterials.Transition       (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+        renderInfo.EnvironmentMap->GetEA()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
     cmdList->SetComputeRootSignature(m_rootSig.Get());

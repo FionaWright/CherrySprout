@@ -10,7 +10,6 @@ Setting up the project to be able to begin new work
 - [x] Camera controls (Do it better than last time)
 - [x] Design and implement new GUI
 - [x] OpenUSD linked (Make separate project/repo?)
-- [ ] Set up forward/deferred backends for debugging. Do in Greenhouse
 - [x] Load and render a cube
 - [x] Load and render ABeautifulGame
 - [x] Create a test that will make sure the framerate never drops dramatically in the future (2000+ for a lambert cube should be realistic)

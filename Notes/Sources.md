@@ -13,3 +13,11 @@ CherryPip: https://github.com/FionaWright/CherryPip
 - Took ThirdParty/*
 - Took D3D.cpp/h
 - Took App.cpp/h
+
+https://openusd.org/release/index.html 
+
+https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_Int64_and_Float_Atomics.html#interlockedadd
+
+https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+
+https://pbr-book.org/4ed/contents
