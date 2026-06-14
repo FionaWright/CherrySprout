@@ -13,8 +13,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(USD_DEBUG 1)
 endif()
 
-set(PXR_AR_DEFAULT_RESOLVER, DdsFallbackResolver)
-
 # -------------- DOWNLOAD + BUILD USD ----------------
 
 include(ExternalProject)

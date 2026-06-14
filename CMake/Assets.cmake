@@ -14,6 +14,11 @@ file(GLOB_RECURSE TEXTURE_FILES
 
 set(TEXTURE_OUTPUTS "")
 
+# Note:
+# Even if the texture is converted to DDS, the orignal file is still copied to the build directory
+# This is because otherwise the OpenUSD ArResolver would break and fail to resolve filepaths
+# I tried to implement a custom ArResolver override but the online documentation wasn't good enough for me to able to figure it out without wasting loads of time
+
 foreach(SRC ${TEXTURE_FILES})
     if(IS_DIRECTORY "${SRC}")
         continue()
@@ -27,25 +32,23 @@ foreach(SRC ${TEXTURE_FILES})
     get_filename_component(EXT "${SRC}" EXT)
     string(TOLOWER "${EXT}" EXT)
 
-    if(EXT STREQUAL ".hdr" OR EXT STREQUAL ".exr") # HDR / EXR -> copy
+    set(DST "${CMAKE_BINARY_DIR}/Assets/${REL_PATH}")
 
-        set(DST "${CMAKE_BINARY_DIR}/Assets/${REL_PATH}")
+    get_filename_component(DST_DIR "${DST}" DIRECTORY)
+    file(MAKE_DIRECTORY "${DST_DIR}")
 
-        get_filename_component(DST_DIR "${DST}" DIRECTORY)
-        file(MAKE_DIRECTORY "${DST_DIR}")
+    add_custom_command(
+            OUTPUT "${DST}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${SRC}"
+            "${DST}"
+            DEPENDS "${SRC}"
+            COMMENT "Copying texture ${REL_PATH}"
+    )
 
-        add_custom_command(
-                OUTPUT "${DST}"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${SRC}"
-                "${DST}"
-                DEPENDS "${SRC}"
-                COMMENT "Copying texture ${REL_PATH}"
-        )
+    list(APPEND TEXTURE_OUTPUTS "${DST}")
 
-        list(APPEND TEXTURE_OUTPUTS "${DST}")
-
-    else() # LDR textures -> DDS
+    if(NOT EXT STREQUAL ".hdr" AND NOT EXT STREQUAL ".exr") # Don't convert HDR to DDS
 
         get_filename_component(NAME_WE "${REL_PATH}" NAME_WE)
         get_filename_component(REL_DIR "${REL_PATH}" DIRECTORY)

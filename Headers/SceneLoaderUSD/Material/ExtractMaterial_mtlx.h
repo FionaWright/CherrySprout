@@ -9,7 +9,6 @@
 #include "pxr/usd/usdGeom/mesh.h"
 #include "pxr/usd/usdLux/lightAPI.h"
 #include "pxr/usd/usdShade/shader.h"
-#include "pxr/usd/usdShade/tokens.h"
 #include "pxr/usd/usdShade/material.h"
 #include "pxr/base/gf/vec3f.h"
 #include "pxr/base/tf/token.h"
@@ -17,7 +16,6 @@
 
 #pragma warning(pop)
 
-#include "../Importer.h"
 #include "Scene/Material.h"
 
 namespace SceneLoaderUSD

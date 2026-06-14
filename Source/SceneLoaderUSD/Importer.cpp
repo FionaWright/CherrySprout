@@ -10,20 +10,10 @@
 #include "pxr/usd/usdGeom/mesh.h"
 #include "pxr/usd/usdGeom/xformCache.h"
 #include "pxr/usd/usdGeom/pointInstancer.h"
-#include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdLux/lightAPI.h"
-#include "pxr/usd/usdLux/distantLight.h"
-#include "pxr/usd/usdShade/shader.h"
-#include "pxr/usd/usdShade/tokens.h"
 #include "pxr/usd/usdShade/material.h"
 #include "pxr/usd/usdShade/materialBindingAPI.h"
 #include "pxr/base/gf/matrix4d.h"
-#include "pxr/base/gf/rotation.h"
-#include "pxr/base/gf/vec3f.h"
-#include "pxr/base/tf/token.h"
-#include "pxr/usd/sdf/assetPath.h"
-
-#include "ResolverOverride.h"
 
 #pragma warning(pop)
 
@@ -32,7 +22,7 @@
 #include <iostream>
 #include <ostream>
 
-#include "../../Headers/SceneLoaderUSD/Material/ExtractMaterial.h"
+#include "Material/ExtractMaterial.h"
 #include "ExtractMesh.h"
 
 using namespace SceneLoaderUSD;
@@ -42,8 +32,6 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
     std::cout << "Importing USD: " << usdPath << std::endl;
 
     ImporterContext context;
-
-    pxr::ArSetPreferredResolver("DdsFallbackResolver");
 
     pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdPath);
     if (!stage)
