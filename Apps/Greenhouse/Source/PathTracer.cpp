@@ -158,6 +158,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
 
         settings.MaxRayDepth = renderInfo.PathTracerConfig->MaxRayDepth;
+        settings.MaxShadowRayDepth = renderInfo.PathTracerConfig->MaxShadowRayDepth;
         settings.RussianRouletteMinBounces = renderInfo.PathTracerConfig->RussianRouletteMinBounces;
         settings.SPP = renderInfo.PathTracerConfig->SPP;
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
@@ -185,7 +186,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         scene->GPU.MegaBufferInstanceData.Transition    (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferMaterials.Transition       (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
-        renderInfo.EnvironmentMap->GetEA()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
     cmdList->SetComputeRootSignature(m_rootSig.Get());

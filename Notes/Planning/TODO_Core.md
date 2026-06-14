@@ -7,6 +7,7 @@ The main important tasks for the project
 - [ ] CDF Pre-processing
 - [ ] Env Map NEE
 - [ ] Confirm by RMSE test that it is faster
+- [ ] Shadow Ray transmission handling ?
 - [ ] Alias Tables
 - [ ] USD Lights loading 
 - [ ] Point Light NEE

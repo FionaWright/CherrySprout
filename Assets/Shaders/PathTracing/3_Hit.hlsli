@@ -23,8 +23,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
     L_sample = beta * hitInfo.Li;
 
-    // Direct
-    if (FEATURE_ENABLED(MIS))
+    if (FEATURE_ENABLED(DirectLighting))
     {
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
@@ -54,7 +53,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         }
     }
 
-    // Indirect
+    if (FEATURE_ENABLED(IndirectLighting))
     {
         float3 wi;
         float3 f;

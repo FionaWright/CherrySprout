@@ -11,8 +11,8 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_Jitter,
     Idx_Accumulation,
 
+    Idx_NormalMaps,
     Idx_EnvironmentMap,
-    Idx_MIS,
 
     Idx_DirectionalLight,
     Idx_DirectionalLightDistant,
@@ -20,10 +20,12 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_DepthOfField,
     Idx_RussianRoulette,
 
-    Idx_NormalMaps,
     Idx_AlphaTesting,
-
     Idx_GlassMaterials,
+
+    Idx_IndirectLighting,
+    Idx_DirectLighting,
+
     Idx_Anisotropy,
 
     INTERNAL_FEATURE_COUNT
@@ -37,8 +39,8 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
     eFeature_Jitter                     = 1u << __FEATURE_IDX(Jitter),
     eFeature_Accumulation               = 1u << __FEATURE_IDX(Accumulation),
 
+    eFeature_NormalMaps                 = 1u << __FEATURE_IDX(NormalMaps),
     eFeature_EnvironmentMap             = 1u << __FEATURE_IDX(EnvironmentMap),
-    eFeature_MIS                        = 1u << __FEATURE_IDX(MIS),
 
     eFeature_DirectionalLight           = 1u << __FEATURE_IDX(DirectionalLight),
     eFeature_DirectionalLightDistant    = 1u << __FEATURE_IDX(DirectionalLightDistant),
@@ -46,10 +48,12 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
     eFeature_DepthOfField               = 1u << __FEATURE_IDX(DepthOfField),
     eFeature_RussianRoulette            = 1u << __FEATURE_IDX(RussianRoulette),
 
-    eFeature_NormalMaps                 = 1u << __FEATURE_IDX(NormalMaps),
     eFeature_AlphaTesting               = 1u << __FEATURE_IDX(AlphaTesting),
-
     eFeature_GlassMaterials             = 1u << __FEATURE_IDX(GlassMaterials),
+
+    eFeature_IndirectLighting           = 1u << __FEATURE_IDX(IndirectLighting),
+    eFeature_DirectLighting             = 1u << __FEATURE_IDX(DirectLighting),
+
     eFeature_Anisotropy                 = 1u << __FEATURE_IDX(Anisotropy),
 
     FEATURE_COUNT = (hlsl::uint)Internal_PathTracerFeatureIndex::INTERNAL_FEATURE_COUNT
@@ -98,8 +102,8 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Jitter",
     "Accumulation",
 
+    "Normal Maps",
     "Environment Map",
-    "Multiple Importance Sampling",
 
     "Directional Light",
     "Directional Light is Distant",
@@ -107,10 +111,12 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Depth Of Field",
     "Russian Roulette",
 
-    "Normal Maps",
     "Alpha Testing",
-
     "Glass materials",
+
+    "Indirect Lighting",
+    "Direct Lighting",
+
     "Anisotropy",
 };
 static const char* s_debugFlagNames[DEBUG_COUNT] = {

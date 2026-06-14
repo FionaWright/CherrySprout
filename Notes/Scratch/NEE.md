@@ -64,3 +64,7 @@ beta *= f_bxdf;
 ```
 
 ### Sampling (Alias Table)
+
+https://arxiv.org/pdf/2106.12270
+
+https://github.com/ByteHamster/alias-table-gpu 

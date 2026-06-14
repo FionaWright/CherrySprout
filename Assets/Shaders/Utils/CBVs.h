@@ -28,6 +28,9 @@ struct CbvPathTracingSettings
 
     float FireflyThreshold;
     hlsl::uint2 FrameDimensions;
+
+    hlsl::uint MaxShadowRayDepth;
+    hlsl::float3 p;
 };
 
 struct CbvPanoToEA
