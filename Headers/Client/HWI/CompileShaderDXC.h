@@ -97,11 +97,13 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
 
     if (compileFlags & SCF_DisableOptimize)
         args.push_back(L"-Od");
+    else
+        args.push_back(L"-O3");
 
     if (compileFlags & SCF_WarningsAsErrors)
         args.push_back(L"-WX");
 
-#ifdef _DEBUG
+#ifdef CHERRY_PRINT_ENABLED
     std::cout << "Compiling Shader: ";
     for (const auto& arg : args)
         std::cout << wstringToString(arg) << " ";

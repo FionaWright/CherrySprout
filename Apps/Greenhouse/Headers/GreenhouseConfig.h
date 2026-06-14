@@ -10,7 +10,7 @@ struct PathTracerConfig
     uint32_t SPP = 1;
     uint32_t MaxRayDepth = 8;
     uint32_t MaxFrameNumber = 0;
-    uint32_t RussianRouletteMinBounces = 4;
+    uint32_t RussianRouletteMinBounces = 1;
 
     float FireFlyThreshold = 2.5f;
     float DofFocalDist = 0.1f;

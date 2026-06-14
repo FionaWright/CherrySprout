@@ -39,13 +39,9 @@ void Greenhouse::Init(D3D* d3d)
     m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
 
-    m_cameraController.Init(XMFLOAT3(0, 0, 5), 0, PI);
-
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
     m_renderInfo.P = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
     m_renderInfo.InvP = XMMatrixInverse(nullptr, m_renderInfo.P);
-    m_renderInfo.V = m_cameraController.GetViewMatrix();
-    m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
     m_renderInfo.Heap = &m_heap;
     m_renderInfo.Camera = &m_cameraController.GetCamera();
     m_renderInfo.BackendConfig = &m_config.RenderBackendConfig;
@@ -88,8 +84,11 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
         const SceneConfig& sceneConfig = s_sceneConfigs.at(m_currentSceneIdx);
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str(), sceneConfig.SceneScale);
+
         m_cameraController.GetCamera().SetPosition(sceneConfig.CameraPosition);
         m_cameraController.GetCamera().SetRotation(sceneConfig.CameraPitchYaw);
+        m_renderInfo.V = m_cameraController.GetViewMatrix();
+        m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
 
         m_renderInfo.Scene = &m_sceneManager.GetScene();
 

@@ -14,7 +14,7 @@ struct SceneConfig
     std::string Name;
     std::string Filepath;
 
-    XMFLOAT3 CameraPosition{0,0,0};
+    XMFLOAT3 CameraPosition{0, 0, 0};
     XMFLOAT2 CameraPitchYaw{0, PI};
     float SceneScale = 1.0f;
 };
@@ -31,6 +31,8 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     {
         .Name = "Chess",
         .Filepath = "Scenes/USD/OpenChessSet/chess_set.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
     },
 };
 

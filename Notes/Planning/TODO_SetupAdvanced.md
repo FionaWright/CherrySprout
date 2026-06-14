@@ -5,11 +5,10 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] PBR BSDF from CherryPip
 - [x] Environment maps
 - [x] Glass
-- [ ] Denoising
 
 - [x] Hot reloading
 - [x] Root constants support
-- [ ] Run path-tracer without sync?
+- [x] Run path-tracer without sync?
 - [x] Scene switching in GUI
 - [ ] Profiling (Tracy?)
 - [x] Snapshot tool (Can I make it go into my clipboard as well?)
@@ -19,6 +18,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] Debug Info Output (Make it better)
 - [ ] RMSE Tester
 - [x] PT Assert based system inspired by Viggo
+- [ ] Place asserts all over the program
 - [ ] PT meta counter debug increment/F4/etc system
 - [ ] Furnace Test
 - [ ] BxDF Test
