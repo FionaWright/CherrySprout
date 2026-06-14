@@ -13,11 +13,12 @@ public:
     void SetRotation(XMFLOAT2 pitchYaw);
     void SetRotation(float pitch, float yaw);
     void Rotate(float deltaYaw, float deltaPitch);
-    void RotateYaw(float radians);
-    void RotatePitch(float radians);
     void GetBasis(XMFLOAT3& right, XMFLOAT3& up, XMFLOAT3& forward) const;
 
-    XMFLOAT3 GetPosition() const { return m_pos; }
+    [[nodiscard]] XMFLOAT3 GetPosition() const { return m_pos; }
+    [[nodiscard]] float GetPitch() const { return m_pitch; }
+    [[nodiscard]] float GetYaw() const { return m_yaw; }
+
     void SetPosition(const XMFLOAT3& pos) { m_pos = pos; }
     void AddPosition(const XMFLOAT3 offset) { m_pos.x += offset.x; m_pos.y += offset.y; m_pos.z += offset.z; }
 

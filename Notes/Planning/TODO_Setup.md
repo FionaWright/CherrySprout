@@ -17,4 +17,4 @@ Setting up the project to be able to begin new work
 - [ ] Create a test that will make sure the framerate never drops dramatically in the future (2000+ for a lambert cube should be realistic)
 - [x] Materials
 - [x] Set up texture loading in SceneLoaderUSD and bindless sampling
-- [ ] Make sure Release mode works
+- [x] Make sure Release mode works

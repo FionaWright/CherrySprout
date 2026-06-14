@@ -332,6 +332,7 @@ ComPtr<ID3D12GraphicsCommandList> D3D::GetAvailableCmdList(const D3D12_COMMAND_L
     else
     {
         commandAllocator = CreateAllocator(type);
+        CherryPrint("Allocator Created!");
     }
 
     if (!queue.CommandListPool.empty())
@@ -344,6 +345,7 @@ ComPtr<ID3D12GraphicsCommandList> D3D::GetAvailableCmdList(const D3D12_COMMAND_L
     else
     {
         cmdList = CreateCmdList(commandAllocator.Get(), type);
+        CherryPrint("CmdList Created!");
     }
 
     // Associate the command allocator with the command list so that it can be
@@ -410,8 +412,9 @@ void D3D::Present()
 UINT64 D3D::Signal(const D3D12_COMMAND_LIST_TYPE type)
 {
     CommandQueue& queue = getQueue(type);
-    const UINT64 value = ++queue.NextFenceValue;
+    const UINT64 value = queue.NextFenceValue;
     V(queue.Queue->Signal(queue.Fence.Get(), value));
+    queue.NextFenceValue++;
     return value;
 }
 

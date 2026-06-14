@@ -435,6 +435,17 @@ void Greenhouse::RenderGUI()
             else
                 m_scheduledSnapshotPT = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
         }
+
+        if (ImGui::Button("Print Camera Location"))
+        {
+            const float posX = m_cameraController.GetCamera().GetPosition().x;
+            const float posY = m_cameraController.GetCamera().GetPosition().y;
+            const float posZ = m_cameraController.GetCamera().GetPosition().z;
+            CherryPrint(".CameraPosition = {" << std::to_string(posX) << ", " << std::to_string(posY) << ", " << std::to_string(posZ) << "},");
+            const float pitch = m_cameraController.GetCamera().GetPitch();
+            const float yaw = m_cameraController.GetCamera().GetYaw();
+            CherryPrint(".CameraPitchYaw = {" << std::to_string(pitch) << ", " << std::to_string(yaw) << "},");
+        }
 #endif
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
