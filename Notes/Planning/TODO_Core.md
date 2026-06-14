@@ -2,12 +2,18 @@
 
 The main important tasks for the project
 
-- [ ] Direct light sampling for point lights (NEE)
+- [ ] BxDF Evaluate()
+- [ ] Shadow Rays (Output occlusion in fixed direction to test it)
+- [ ] CDF Pre-processing
+- [ ] Env Map NEE
+- [ ] Confirm by RMSE test that it is faster
+- [ ] Alias Tables
 - [ ] USD Lights loading 
-- [ ] Punctual lights buffer
-- [ ] Multiple point lights + CDF pre-proc
-- [ ] Directional light sampling and any others I might want
-- [ ] Emissive light sampling
+- [ ] Point Light NEE
+- [ ] Dir Light NEE
+- [ ] Combine different light types for MIS
+- [ ] Emissive NEE
+
 - [ ] RIS
 - [ ] GRIS
 - [ ] ReSTIR DI

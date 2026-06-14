@@ -26,6 +26,10 @@ StructuredBuffer<Material>                  gMegaBufferMaterials    : register(t
 
 Texture2D<float4>                           gTexEnvMap              : register(t5, REGISTER_SPACE_DEFAULT);
 
+Texture2D<float>                            gEnvMapCdfConditional   : register(t6, REGISTER_SPACE_DEFAULT);
+Texture2D<float>                            gEnvMapPmfConditional   : register(t7, REGISTER_SPACE_DEFAULT);
+Texture1D<float>                            gEnvMapCdfMarginal      : register(t8, REGISTER_SPACE_DEFAULT);
+
 // =================== T Registers (Scene Textures) ==============================================================
 
 Texture2D<float4>                           gSceneTextures[]        : register(t0, REGISTER_SPACE_SCENE_TEXTURES);
