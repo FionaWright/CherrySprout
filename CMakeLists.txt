@@ -44,6 +44,7 @@ set_target_properties(client PROPERTIES
 )
 
 include(cmake/Assets.cmake)
+include(cmake/Options.cmake)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
     target_compile_definitions(client PUBLIC SOURCE_DIR="${CMAKE_SOURCE_DIR}")

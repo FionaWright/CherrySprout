@@ -21,6 +21,12 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(OPEN_USD_DIR ${CMAKE_BINARY_DIR}/SceneLoaderUSD/OpenUSD)
 set(OPEN_USD_DIR_BUILD ${OPEN_USD_DIR}/Build)
 
+if (USD_DEBUG)
+    set(BUILD_VARIANT debug)
+else()
+    set(BUILD_VARIANT release)
+endif()
+
 if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
     ExternalProject_Add(USD_EP
             GIT_REPOSITORY https://github.com/PixarAnimationStudios/OpenUSD.git
@@ -37,7 +43,7 @@ if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
                 -u
                 <SOURCE_DIR>/build_scripts/build_usd.py
                 -vvv
-                --build-variant debug # TODO
+                --build-variant ${BUILD_VARIANT}
                 --build-monolithic
                 --no-examples
                 --no-tutorials
@@ -106,8 +112,6 @@ target_link_libraries(SceneLoaderUSD PUBLIC
         usd_m
         tbb
         tbb_malloc
-        #Schlwapi.lib
-        #Dbghelp.lib
 )
 
 # -------------- SCENE LOADER COPY FILES  -------------

@@ -132,7 +132,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     {
         const Object& obj = scene->CPU.Objects[i];
 
-        GPU_SCOPE(cmdList, obj.DebugName);
+        //GPU_SCOPE(cmdList, obj.DebugName);
 
         const XMMATRIX M = XMMatrixSet(
             obj.M[0], obj.M[1], obj.M[2], obj.M[3],

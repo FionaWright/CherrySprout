@@ -21,6 +21,8 @@ void EnvironmentMap::CreateCubemapResource(ID3D12Device* device)
 
 void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, const float rotation)
 {
+    CherryPrint("EnvMap Initializing...");
+
     UploadHeap uploadHeap = {};
     size_t maxRequiredUploadHeapSize = Align(sizeof(CbvPanoToEA), 256);
 
@@ -80,6 +82,8 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
+
+    CherryPrint("EnvMap Initialized");
 }
 
 void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)

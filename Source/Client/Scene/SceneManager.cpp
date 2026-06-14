@@ -52,6 +52,8 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 
 void SceneManager::UploadScene(D3D* d3d)
 {
+    CherryPrint("Uploading Scene...");
+
     CherryAssert(m_gpuDataDirty);
 
     const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertexCount * sizeof(Vertex);
@@ -105,6 +107,8 @@ void SceneManager::UploadScene(D3D* d3d)
     m_uploadHeap = {};
 
     m_gpuDataDirty = false;
+
+    CherryPrint("Scene Uploaded");
 }
 
 void SceneManager::AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const

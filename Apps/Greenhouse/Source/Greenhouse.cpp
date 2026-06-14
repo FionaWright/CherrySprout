@@ -21,14 +21,16 @@ void Greenhouse::Init(D3D* d3d)
 {
     App::Init(d3d);
 
+    CherryPrint("Initializing Greenhouse...");
+
     m_currentSceneIdx = 0;
     Config::SetUIntFromArg(&m_currentSceneIdx, "--scene");
     Config::SetUIntFromArg(reinterpret_cast<uint32_t*>(&m_config.RenderBackend), "--backend");
 
     size_t maxCbvRequiredSize = 0;
     {
-        std::cout << "Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize() << std::endl;
-        std::cout << "Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize() << std::endl;
+        CherryPrint("Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize());
+        CherryPrint("Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize());
         maxCbvRequiredSize += std::max(m_pathTracer.TotalCbvRequiredSize(), m_forward.TotalCbvRequiredSize());
         maxCbvRequiredSize += EnvironmentMap::GetCbvRequiredSize();
     }
@@ -58,6 +60,8 @@ void Greenhouse::Init(D3D* d3d)
 
     m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
     m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
+
+    CherryPrint("Greenhouse Initialized");
 }
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)

@@ -1,16 +1,15 @@
 #ifndef H_HELPER_H
 #define H_HELPER_H
 
-
-#ifdef _DEBUG
-#define CherryPrint(str) std::cout << str << std::endl
+#ifdef CHERRY_PRINT_ENABLED
+#   define CherryPrint(str) std::cout << str << std::endl
 #else
-#define CherryPrint(str)
+#   define CherryPrint(str)
 #endif
 
 inline void CherryAssert(const bool expr, const char* message = nullptr)
 {
-#ifdef _DEBUG
+#ifdef CHERRY_ASSERT_ENABLED
     if (!expr)
     {
         if (message)

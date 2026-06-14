@@ -21,6 +21,8 @@
 
 Engine::Engine(App* app, const HWND hWnd, const UINT windowWidth, const UINT windowHeight)
 {
+    CherryPrint("Initializing Engine...");
+
     m_d3d = std::make_unique<D3D>();
     m_d3d->Init(windowWidth, windowHeight);
 
@@ -34,6 +36,8 @@ Engine::Engine(App* app, const HWND hWnd, const UINT windowWidth, const UINT win
     }
 
     Gui::Init(hWnd, m_d3d->GetDevice(), 3);
+
+    CherryPrint("Engine Initialized");
 }
 
 void Engine::Frame()

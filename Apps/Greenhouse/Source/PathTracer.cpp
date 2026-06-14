@@ -19,6 +19,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     IRenderBackend::Init(d3d, heap, uploadHeapCBV);
 
+    CherryPrint("Initializing Path-Tracer...");
+
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
 
@@ -63,6 +65,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, numUAV, true, &sampler, 1);
 
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, s_defaultBxdfMode);
+
+    CherryPrint("Path-Tracer Initialized");
 }
 
 void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap)
@@ -70,6 +74,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap);
 
     {
+        CherryPrint("PT: Building RTAS");
+
         // Note: Direct queue is required as you can't transition from D3D12_RESOURCE_STATE_INDEX_BUFFER in a compute queue. Buffer may be left in that state from previous rasterization passes
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
@@ -84,6 +90,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
         d3d->Flush();
+
+        CherryPrint("PT: RTAS Built");
     }
 
     m_descriptorSet.Init         (heap, true);

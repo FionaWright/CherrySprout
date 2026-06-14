@@ -13,7 +13,7 @@ target_compile_options(Greenhouse PRIVATE
         $<$<CONFIG:Debug>:/Zi /Od /RTC1>
 )
 
-target_link_libraries(Greenhouse PRIVATE client)
+target_link_libraries(Greenhouse PRIVATE client ProjectOptions)
 set_target_properties(Greenhouse PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON

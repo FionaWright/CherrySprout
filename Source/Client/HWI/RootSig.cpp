@@ -49,6 +49,7 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
 {
     // Assume CBV, SRV order
     std::vector<CD3DX12_ROOT_PARAMETER1> params;
+    std::vector<CD3DX12_DESCRIPTOR_RANGE1> ranges;
 
     if (rootConstants)
     {
@@ -65,42 +66,42 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
     {
         int baseRegister = rootConstants ? rootConstants->RegisterIdx + 1 : 0;
 
-        CD3DX12_DESCRIPTOR_RANGE1 range;
-        range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, baseRegister);
+        ranges.emplace_back();
+        ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, numCBV, baseRegister);
 
         CD3DX12_ROOT_PARAMETER1 param;
-        param.InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
+        param.InitAsDescriptorTable(1, &ranges.back(), D3D12_SHADER_VISIBILITY_ALL);
         params.emplace_back(param);
     }
 
     std::vector<CD3DX12_DESCRIPTOR_RANGE1> srvRanges;
     if (numSRV > 0)
     {
-        CD3DX12_DESCRIPTOR_RANGE1 range;
-        range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0);
+        ranges.emplace_back();
+        ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0);
 
         CD3DX12_ROOT_PARAMETER1 param;
-        param.InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
+        param.InitAsDescriptorTable(1, &ranges.back(), D3D12_SHADER_VISIBILITY_ALL);
         params.emplace_back(param);
     }
 
     if (hasSceneTextures)
     {
-        CD3DX12_DESCRIPTOR_RANGE1 range;
-        range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+        ranges.emplace_back();
+        ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
         CD3DX12_ROOT_PARAMETER1 param;
-        param.InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
+        param.InitAsDescriptorTable(1, &ranges.back(), D3D12_SHADER_VISIBILITY_ALL);
         params.emplace_back(param);
     }
 
     if (numUAV > 0)
     {
-        CD3DX12_DESCRIPTOR_RANGE1 range;
-        range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numUAV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+        ranges.emplace_back();
+        ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numUAV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
         CD3DX12_ROOT_PARAMETER1 param;
-        param.InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_ALL);
+        param.InitAsDescriptorTable(1, &ranges.back(), D3D12_SHADER_VISIBILITY_ALL);
         params.emplace_back(param);
     }
 
