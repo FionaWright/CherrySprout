@@ -147,8 +147,5 @@ void Skybox::GenerateIrradianceMap(ID3D12GraphicsCommandList* cmdList, const Hea
     cmdList->SetPipelineState(m_shaderGenIrr.GetPSO());
     m_dsGenIrr.SetDescriptorTables_Compute(cmdList);
 
-    const uint32_t groupWidth = (m_texIrradianceIBL.GetDesc().Width + 7) / 8;
-    const uint32_t groupHeight = (m_texIrradianceIBL.GetDesc().Height + 7) / 8;
-
-    cmdList->Dispatch(groupWidth, groupHeight, 1);
+    DispatchOverTexture(cmdList, 8, m_texIrradianceIBL.GetDesc().Width, m_texIrradianceIBL.GetDesc().Height);
 }

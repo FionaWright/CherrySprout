@@ -75,9 +75,7 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
         m_dsPanoToEA.SetDescriptorTables_Compute(cmdList);
     }
 
-    const uint32_t groupSizeX = (m_ea.GetDesc().Width + 15) / 16;
-    const uint32_t groupSizeY = (m_ea.GetDesc().Height + 15) / 16;
-    cmdList->Dispatch(groupSizeX, groupSizeY, 1);
+    DispatchOverTexture(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
 
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);

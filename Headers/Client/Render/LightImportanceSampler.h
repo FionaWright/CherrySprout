@@ -13,7 +13,7 @@ class D3D;
 class LightImportanceSampler
 {
 public:
-    void BuildEnvMapDistributions(D3D* d3d, ID3D12GraphicsCommandList* cmdList, D12Resource* envMap);
+    void BuildEnvMapDistributions(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, D12Resource* envMap);
 
 private:
     void initializeResources(const D3D* d3d, Heap* heap, const D12Resource* envMap);

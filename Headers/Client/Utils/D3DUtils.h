@@ -201,4 +201,12 @@ inline D3D12_COMPUTE_PIPELINE_STATE_DESC CreateComputePipelineDesc(ID3D12RootSig
     return desc;
 }
 
+inline void DispatchOverTexture(ID3D12GraphicsCommandList* cmdList, const uint32_t threadCount, const uint32_t width, const uint32_t height = 0, const uint32_t depth = 0)
+{
+    const uint32_t groupX = width  == 0 ? 1 : (width  + (threadCount-1)) / threadCount;
+    const uint32_t groupY = height == 0 ? 1 : (height + (threadCount-1)) / threadCount;
+    const uint32_t groupZ = depth  == 0 ? 1 : (depth  + (threadCount-1)) / threadCount;
+    cmdList->Dispatch(groupX, groupY, groupZ);
+}
+
 #endif

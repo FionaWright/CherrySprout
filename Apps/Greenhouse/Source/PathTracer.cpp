@@ -133,11 +133,11 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
         cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
 
-        m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
-
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
         d3d->Flush();
+
+        m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
     }
 #endif
 }
@@ -196,9 +196,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
     constexpr uint32_t THREAD_COUNTS = 16;
-    const uint32_t groupX = (Config::GetSystem().RtvWidth + (THREAD_COUNTS-1)) / THREAD_COUNTS;
-    const uint32_t groupY = (Config::GetSystem().RtvHeight + (THREAD_COUNTS-1)) / THREAD_COUNTS;
-    cmdList->Dispatch(groupX, groupY, 1);
+    DispatchOverTexture(cmdList, THREAD_COUNTS, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
     // Copy to RTV
     {

@@ -194,9 +194,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
                 set.SetDescriptorTables_Compute(cmdList);
 
                 constexpr uint32_t THREAD_COUNTS = 16;
-                const uint32_t groupX = (accum->GetDesc().Width + (THREAD_COUNTS-1)) / THREAD_COUNTS;
-                const uint32_t groupY = (accum->GetDesc().Height + (THREAD_COUNTS-1)) / THREAD_COUNTS;
-                cmdList->Dispatch(groupX, groupY, 1);
+                DispatchOverTexture(cmdList, THREAD_COUNTS, accum->GetDesc().Width, accum->GetDesc().Height);
             }
             V(cmdList->Close());
             d3d->ExecuteCommandList(cmdList);
