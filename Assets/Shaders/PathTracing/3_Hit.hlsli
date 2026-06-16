@@ -20,8 +20,16 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
     float3 wo = -ray.Direction;
 
     float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;
+    float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
 
     L_sample = beta * hitInfo.Li;
+
+    // TODO in a loose order:
+    // Switch to Lambert until proven working for that
+    // Test direct lighting only with no indirect and no MIS (weight=0?)
+    // Add MIS weight handling in the Miss() function. Might require carrying information from the previous ray
+    // Implement Evaluate for PBR
+    // Double check beta *= f is correct. Should it not be divided by the pdf?
 
     BxDF bxdf;
 
@@ -34,15 +42,13 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         float pdf_env;
         SampleEnvMapCdf(u1, u2, wi_env, pdf_env);
 
-        float3 shadowOrigin = hitPos + wi_env * EPSILON;
-
         bool occluded;
-        TraceShadowRay(shadowOrigin, wi_env, occluded);
+        TraceShadowRay(nextOrigin, wi_env, occluded);
 
         if (!occluded)
         {
             float2 uv = EaSphereToSquare(wi_env);
-            float3 L_indirect = saturate(gTexEnvMap.Sample(gSampler, uv).rgb);
+            float3 L_direct = gTexEnvMap.Sample(gSampler, uv).rgb;
 
             float3 f_bxdf;
             float pdf_bxdf;
@@ -50,8 +56,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
             float weight = PowerHeuristic(pdf_env, pdf_bxdf);
 
-            float NdL = dot(hitInfo.Ns_ff, wi_env);
-            L_sample += beta * L_indirect * weight * NdL * f_bxdf / pdf_env;
+            float NdL = dot(hitInfo.Ns_ff, wi_env); // TODO: Need to max/abs?
+            L_sample += beta * L_direct * weight * NdL * f_bxdf / pdf_env;
         }
     }
 
@@ -68,7 +74,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
     DBG_OUTPUT3(wi,                                L_w);
 
     ray.Direction = wi;
-    ray.Origin = hitPos + hitInfo.Ng_ff * EPSILON;
+    ray.Origin = nextOrigin;
 }
 
 #endif

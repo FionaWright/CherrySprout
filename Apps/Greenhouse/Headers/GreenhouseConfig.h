@@ -9,7 +9,7 @@ struct PathTracerConfig
 {
     uint32_t SPP = 1;
     uint32_t MaxRayDepth = 8;
-    uint32_t MaxShadowRayDepth = 8;
+    uint32_t MaxShadowRayDepth = 1; // Transmission unsupported for shadow rays for now
     uint32_t MaxFrameNumber = 0;
     uint32_t RussianRouletteMinBounces = 1;
 
