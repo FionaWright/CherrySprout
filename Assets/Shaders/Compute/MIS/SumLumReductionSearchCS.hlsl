@@ -11,15 +11,15 @@ RWStructuredBuffer<float> gSumLum : register(u0);
 groupshared float localSumLum[WARP_SIZE];
 
 [numthreads(WARP_SIZE_1D, WARP_SIZE_1D, 1)]
-void CSMain(uint3 DTid : SV_DispatchThreadID)
+void CSMain(
+    uint3 DTid : SV_DispatchThreadID,
+    uint3 GTid : SV_GroupThreadID,
+    uint3 Gid  : SV_GroupID)
 {
     uint2 dim;
     gTex.GetDimensions(dim.x, dim.y);
 
-    float2 texelSize = 1.0f / dim;
-
-    uint2 threadID = fmod(DTid.xy, WARP_SIZE_1D);
-    uint threadIdx = threadID.y * WARP_SIZE_1D + threadID.x;
+    uint threadIdx = GTid.y * WARP_SIZE_1D + GTid.x;
 
     float sumLum = 0.0f;
 
@@ -28,9 +28,12 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         [unroll]
         for (int x = 0; x < BLOCK_SIZE; x++)
         {
-            float2 uvXY = float2(DTid.xy * BLOCK_SIZE) + float2(x, y);
-            float3 color = gTex.Load(int3(uvXY, 0)).rgb;
+            uint2 pixel = DTid.xy * BLOCK_SIZE + uint2(x, y);
 
+            if (pixel.x > dim.x || pixel.y > dim.y)
+                continue;
+
+            float3 color = gTex.Load(uint3(pixel, 0)).rgb;
             float lum = Luminance(color);
             sumLum += lum;
         }
@@ -47,10 +50,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     }
 
     // Assuming square texture
-    uint numThreadGroups = dim.x / THREAD_GROUP_COVERAGE;
-
-    uint2 groupID = DTid.xy / WARP_SIZE_1D;
-    uint outputIdx = groupID.y * numThreadGroups + groupID.x;
+    uint groupsX = (dim.x + THREAD_GROUP_COVERAGE - 1) / THREAD_GROUP_COVERAGE;
+    uint outputIdx = Gid.y * groupsX + Gid.x;
 
     gSumLum[outputIdx] = sumLum;
 }

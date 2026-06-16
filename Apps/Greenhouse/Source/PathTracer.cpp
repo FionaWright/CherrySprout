@@ -229,7 +229,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
-    m_rootSig.SmartInit(device, 1, 6, numUAV, true, &sampler, 1);
+    m_rootSig.SmartInit(device, 1, numSRV, numUAV, true, &sampler, 1);
 
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));

@@ -2,6 +2,7 @@
 
 #include "Render/LightImportanceSampler.h"
 
+#include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
 #include "HWI/UploadHeap.h"
@@ -23,44 +24,45 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
 
         // 9x9 * 32x32 = 288x288
         constexpr float c_blockSize = 288.0f;
-        const float fWidth = static_cast<float>(w);
-        const float fHeight = static_cast<float>(h);
-        const float maxDim = std::max(fWidth, fHeight);
-        const size_t numThreadGroups1D = std::ceil(maxDim / c_blockSize);
-        const size_t bufferNumElements = numThreadGroups1D * numThreadGroups1D;
+        const float maxDim = std::max(static_cast<float>(w), static_cast<float>(h));
+        const size_t bufferNumElements = (maxDim + c_blockSize - 1) / c_blockSize;
         const size_t bufferSize = bufferNumElements * sizeof(float);
-        const size_t numFloats = bufferSize / sizeof(float);
 
         m_setSumLum.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
-        m_setSumLum.SetUAV_Buffer(d3d->GetDevice(), 0, &m_envMapSumLumBufferRW, numFloats, sizeof(float));
+        m_setSumLum.SetUAV_Buffer(d3d->GetDevice(), 0, &m_envMapSumLumBufferRW, bufferNumElements, sizeof(float));
 
         d3d->Flush();
         {
             const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
             const auto cmdList = cmdListPtr.Get();
 
-            heap->Bind(cmdList);
-            cmdList->SetComputeRootSignature(m_rootSigSrvUav.Get());
-            cmdList->SetPipelineState(m_pipelineSumLum.GetPSO());
-            m_setSumLum.SetDescriptorTables_Compute(cmdList);
-            m_setSumLum.TransitionAllSRVToShaderResource(cmdList);
-            m_envMapSumLumBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            {
+                GPU_SCOPE(cmdList, "CDF: EnvMap Sum of Luminance Reduction Search");
 
-            m_envMapSumLumBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-            m_envMapSumLumBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+                m_envMapSumLumBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-            cmdList->CopyBufferRegion(m_envMapSumLumBufferReadback.GetResource(), 0, m_envMapSumLumBufferRW.GetResource(), 0, bufferSize);
+                heap->Bind(cmdList);
+                cmdList->SetComputeRootSignature(m_rootSigSrvUav.Get());
+                cmdList->SetPipelineState(m_pipelineSumLum.GetPSO());
+                m_setSumLum.TransitionAllSRVToShaderResource(cmdList);
+                m_setSumLum.SetDescriptorTables_Compute(cmdList);
 
-            cmdList->Dispatch(numThreadGroups1D, numThreadGroups1D, 1);
+                DispatchOverTexture(cmdList, c_blockSize, w, h);
+
+                m_envMapSumLumBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+                m_envMapSumLumBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+                cmdList->CopyBufferRegion(m_envMapSumLumBufferReadback.GetResource(), 0, m_envMapSumLumBufferRW.GetResource(), 0, bufferSize);\
+            }
+
             V(cmdList->Close());
             d3d->ExecuteCommandList(cmdList);
         }
         d3d->Flush();
 
-        std::vector<float> buff(numFloats);
+        std::vector<float> buff(bufferNumElements);
         m_envMapSumLumBufferReadback.Readback(buff.data());
 
-        for (int i = 0; i < numFloats; i++)
+        for (int i = 0; i < bufferNumElements; i++)
         {
             totalLuminance += buff[i];
         }
@@ -74,48 +76,56 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
 
     // PMF Pass
     {
+        GPU_SCOPE(cmdList, "EnvMap PMF");
+
         m_setPmf.AddCBV(d3d->GetDevice(), sizeof(float), &uploadHeap);
         m_setPmf.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
         m_setPmf.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapPmf, m_envMapPmf.GetDesc().Format);
 
         m_setPmf.UpdateCBV(0, &totalLuminance);
+        m_envMapPmf.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigPmf.Get());
         cmdList->SetPipelineState(m_pipelinePmf.GetPSO());
-        m_setPmf.SetDescriptorTables_Compute(cmdList);
         m_setPmf.TransitionAllSRVToShaderResource(cmdList);
-        m_envMapPmf.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_setPmf.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, envMap->GetDesc().Width, envMap->GetDesc().Height);
     }
 
     // CDF Conditional Pass
     {
+        GPU_SCOPE(cmdList, "EnvMap CDF Conditional");
+
         m_setCdfConditional.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_envMapPmf, m_envMapPmf.GetDesc().Format);
         m_setCdfConditional.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapCdfConditional, m_envMapCdfConditional.GetDesc().Format);
+
+        m_envMapCdfConditional.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigSrvUav.Get());
         cmdList->SetPipelineState(m_pipelineCdfConditional.GetPSO());
-        m_setCdfConditional.SetDescriptorTables_Compute(cmdList);
         m_setCdfConditional.TransitionAllSRVToShaderResource(cmdList);
-        m_envMapCdfConditional.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_setCdfConditional.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 64, m_envMapPmf.GetDesc().Width);
     }
 
     // CDF Marginal Pass
     {
+        GPU_SCOPE(cmdList, "EnvMap CDF Marginal");
+
         m_setCdfMarginal.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_envMapCdfConditional, m_envMapCdfConditional.GetDesc().Format);
         m_setCdfMarginal.SetUAV_Tex1D(d3d->GetDevice(), 0, &m_envMapCdfMarginal, m_envMapCdfMarginal.GetDesc().Format);
+
+        m_envMapCdfMarginal.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigSrvUav.Get());
         cmdList->SetPipelineState(m_pipelineCdfMarginal.GetPSO());
-        m_setCdfMarginal.SetDescriptorTables_Compute(cmdList);
         m_setCdfMarginal.TransitionAllSRVToShaderResource(cmdList);
-        m_envMapCdfMarginal.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_setCdfMarginal.SetDescriptorTables_Compute(cmdList);
 
         cmdList->Dispatch(1, 1, 1);
     }
@@ -149,11 +159,8 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, Heap* heap, con
 
     // 9x9 * 32x32 = 288x288
     constexpr float c_blockSize = 288.0f;
-    const float fWidth = static_cast<float>(w);
-    const float fHeight = static_cast<float>(h);
-    const float maxDim = std::max(fWidth, fHeight);
-    const size_t numThreadGroups1D = std::ceil(maxDim / c_blockSize);
-    const size_t bufferNumElements = numThreadGroups1D * numThreadGroups1D;
+    const float maxDim = std::max(static_cast<float>(w), static_cast<float>(h));
+    const size_t bufferNumElements = (maxDim + c_blockSize - 1) / c_blockSize;
     const size_t bufferSize = bufferNumElements * sizeof(float);
 
     m_envMapSumLumBufferRW.         Init_Buffer("Env Map Sum Luminance Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

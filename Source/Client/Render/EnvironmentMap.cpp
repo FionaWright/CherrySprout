@@ -26,7 +26,7 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
     UploadHeap uploadHeap = {};
     size_t maxRequiredUploadHeapSize = Align(sizeof(CbvPanoToEA), 256);
 
-    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
     const auto cmdList = cmdListPtr.Get();
 
     m_rotation = rotation;
@@ -37,6 +37,8 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
     // Initialize Panoramic
     if (m_currentPanoFilepath != filePath)
     {
+        GPU_SCOPE(cmdList, "Upload Pano Map");
+
         const std::string fullPath = FileHelper::GetAssetTextureFullPath(("EnvMaps/" + filePath).c_str());
 
         ScratchImage scratchImage;
@@ -66,6 +68,8 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
     }
 
     {
+        GPU_SCOPE(cmdList, "Compute EA Map");
+
         m_pano.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -76,6 +80,8 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
     }
 
     DispatchOverTexture(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
+
+    m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
@@ -118,6 +124,8 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
     }
 
     {
+        GPU_SCOPE(cmdList, "Cubemap Initialization");
+
         m_pano.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         m_cubemap.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
