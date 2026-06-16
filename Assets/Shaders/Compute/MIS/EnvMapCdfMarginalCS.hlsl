@@ -4,7 +4,7 @@ RWTexture1D<float> gCDFMarginal  : register(u0);
 [numthreads(1,1,1)]
 void CSMain(uint3 _ : SV_DispatchThreadID)
 {
-    uint dim;
+    uint2 dim;
     gCDFConditional.GetDimensions(dim.x, dim.y);
 
     uint y = dim.y - 1;

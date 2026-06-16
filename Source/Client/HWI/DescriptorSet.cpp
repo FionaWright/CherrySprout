@@ -113,6 +113,20 @@ void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D1
     SetSRV(device, srvIdx, d12Resource, desc, debugName);
 }
 
+void DescriptorSet::SetSRV_Tex1D(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format)
+{
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+    desc.Format = format;
+    desc.Texture2D.MipLevels = d12Resource ? d12Resource->GetDesc().MipLevels : 1;
+    desc.Texture2D.MostDetailedMip = 0;
+    desc.Texture2D.PlaneSlice = 0;
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+    const char* debugName = d12Resource && Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
+    SetSRV(device, srvIdx, d12Resource, desc, debugName);
+}
+
 void DescriptorSet::SetSRV_Buffer(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource,
                                   const uint32_t numElements, const size_t stride)
 {
@@ -193,7 +207,7 @@ void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, const D1
     }
 }
 
-void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, DXGI_FORMAT format)
+void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, const DXGI_FORMAT format)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -204,7 +218,18 @@ void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, co
     SetUAV(device, uavIdx, d12Resource, desc);
 }
 
-void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, D12Resource* d12Resource,
+void DescriptorSet::SetUAV_Tex1D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, const DXGI_FORMAT format)
+{
+    D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+    desc.Format = format;
+    desc.Texture2D.MipSlice = 0;
+    desc.Texture2D.PlaneSlice = 0;
+
+    SetUAV(device, uavIdx, d12Resource, desc);
+}
+
+void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource,
                                   const uint32_t numElements, const size_t stride)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};

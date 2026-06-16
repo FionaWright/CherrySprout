@@ -47,6 +47,7 @@ public:
     void AddSRV(ID3D12Device* device, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName);
     void SetSRV(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName = nullptr);
     void SetSRV_Tex2D(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format);
+    void SetSRV_Tex1D(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format);
     void SetSRV_Buffer(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, uint32_t numElements, size_t stride);
     void SetSRV_RTAS(ID3D12Device* device, uint32_t srvIdx, const D12Resource* d12Resource);
 
@@ -55,7 +56,8 @@ public:
     void AddUAV(ID3D12Device* device, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
     void SetUAV(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
     void SetUAV_Tex2D(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, DXGI_FORMAT format);
-    void SetUAV_Buffer(ID3D12Device* device, uint32_t uavIdx, D12Resource* d12Resource, uint32_t numElements,
+    void SetUAV_Tex1D(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, DXGI_FORMAT format);
+    void SetUAV_Buffer(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, uint32_t numElements,
                        size_t stride);
 
     void SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const;

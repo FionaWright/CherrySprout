@@ -10,8 +10,12 @@ class UploadHeap;
 class D12Resource
 {
 public:
-    D12Resource() {}
-    D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState, const D3D12_RESOURCE_DESC& desc);
+    D12Resource()
+    {
+    }
+
+    D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState,
+                const D3D12_RESOURCE_DESC& desc);
 
     void Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
               const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr,
@@ -20,6 +24,9 @@ public:
                      D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false,
                      D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
     void Init_Tex2D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth,
+                    DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+                    D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
+    void Init_Tex1D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth,
                     DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
                     D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
     void Init_Upload(const char* name, ID3D12Device* device, size_t uploadBufferSize);

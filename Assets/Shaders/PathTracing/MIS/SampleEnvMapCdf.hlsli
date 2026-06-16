@@ -6,16 +6,21 @@
 
 #include "PathTracing/MIS/BinarySearch.hlsli"
 
-void SampleEnvMapCdf(float u1, float u2, out float3 wi_env, out float pdf_env);
+void SampleEnvMapCdf(float u1, float u2, out float3 wi_env, out float pdf_env)
 {
+    uint2 dim;
+    gTexEnvMap.GetDimensions(dim.x, dim.y);
+
     uint y = BinarySearch (gEnvMapCdfMarginal,       u1);
     uint x = BinarySearchY(gEnvMapCdfConditional, y, u2);
 
-    wi_env = normalize(EaSquareToSphere(x, y));
+    float2 uv = uint2(x, y) / float2(dim);
+    wi_env = normalize(EaSquareToSphere(uv));
 
-    float N = gTexEnvMap.GetDimensions().x * gTexEnvMap.GetDimensions().y;
+    float N = dim.x * dim.y;
 
-    pdf_env = gEnvMapPdfConditional[uint2(x,y)] * 4 * PI / N;
+    // TODO: Write a comment explaining the 4 pi / N thing in detail
+    pdf_env = gEnvMapPmfConditional[uint2(x,y)] * 4 * PI / N;
 }
 
 #endif

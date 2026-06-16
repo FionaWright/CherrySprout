@@ -21,9 +21,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     CherryPrint("Initializing Path-Tracer...");
 
-    D3D12_STATIC_SAMPLER_DESC sampler = {};
-    InitializeSamplerLinearClamp(&sampler);
-
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -50,28 +47,22 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
-    uint32_t numUAV = 2;
-
 #ifdef _DEBUG
     {
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
         m_gpuErrorInfoRW.Init_Buffer("Error Info R/W", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
         m_gpuErrorInfoReadback.Init_Buffer("Error Info Readback", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        numUAV++;
     }
 #endif
-
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 6, numUAV, true, &sampler, 1);
 
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, s_defaultBxdfMode);
 
     CherryPrint("Path-Tracer Initialized");
 }
 
-void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap)
+void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler)
 {
-    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap);
+    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler);
 
     {
         CherryPrint("PT: Building RTAS");
@@ -111,6 +102,13 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
     m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
+
+    if (lightImportanceSampler->IsInitialized())
+    {
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 6, lightImportanceSampler->GetEnvMapPmf(), lightImportanceSampler->GetEnvMapPmf()->GetDesc().Format);
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 7, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
+        m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), 8, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
+    }
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -220,6 +218,19 @@ void PathTracer::UnreserveData()
 
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const BxdfMode& bxdfMode)
 {
+    uint32_t numSRV = 6;
+    uint32_t numUAV = 2;
+#ifdef _DEBUG
+    numUAV++; // gDbgBufferErrorInfo
+#endif
+
+    if (GetPathTracerFeatureFlag(featureFlags, eFeature_DirectLighting))
+        numSRV += 3; // gEnvMapCdfConditional, gEnvMapPmfConditional, gEnvMapCdfMarginal
+
+    D3D12_STATIC_SAMPLER_DESC sampler = {};
+    InitializeSamplerLinearClamp(&sampler);
+    m_rootSig.SmartInit(device, 1, 6, numUAV, true, &sampler, 1);
+
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));

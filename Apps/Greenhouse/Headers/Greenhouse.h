@@ -9,6 +9,7 @@
 #include "HWI/Pipeline.h"
 #include "Render/CameraController.h"
 #include "Render/EnvironmentMap.h"
+#include "Render/LightImportanceSampler.h"
 #include "Scene/SceneManager.h"
 #include "System/App.h"
 
@@ -21,7 +22,9 @@ struct GreenHouseRenderInfo
     XMMATRIX InvP;
     Scene* Scene;
     Heap* Heap;
+
     EnvironmentMap* EnvironmentMap;
+    LightImportanceSampler* LightImportanceSampler;
 
     bool EnvMapDirty = false;
 
@@ -57,6 +60,7 @@ private:
 
     SceneManager m_sceneManager;
     EnvironmentMap m_envMap;
+    LightImportanceSampler m_lightImportanceSampler;
 
     PathTracer m_pathTracer = {};
     Forward m_forward;

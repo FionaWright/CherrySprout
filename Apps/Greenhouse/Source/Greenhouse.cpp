@@ -47,6 +47,7 @@ void Greenhouse::Init(D3D* d3d)
     m_renderInfo.BackendConfig = &m_config.RenderBackendConfig;
     m_renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
     m_renderInfo.EnvironmentMap = &m_envMap;
+    m_renderInfo.LightImportanceSampler = &m_lightImportanceSampler;
 
     if (!d3d->GetRayTracingSupported())
     {
@@ -62,6 +63,19 @@ void Greenhouse::Init(D3D* d3d)
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
+    bool loadSceneDataIntoRenderBackend = false;
+
+    if (m_envMapDirty)
+    {
+        m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
+    }
+
+    if (!m_lightImportanceSampler.IsInitialized() && GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_DirectLighting))
+    {
+        m_lightImportanceSampler.BuildEnvMapDistributions(d3d, &m_heap, m_envMap.GetEA());
+        loadSceneDataIntoRenderBackend = true;
+    }
+
     if (m_renderBackendDirty)
     {
         m_uploadHeapCBV.FlushData();
@@ -102,14 +116,9 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
     }
 
-    if (m_envMapDirty)
+    if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || loadSceneDataIntoRenderBackend)
     {
-        m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
-    }
-
-    if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath))
-    {
-        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap);
+        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler);
     }
 
     if (m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f))

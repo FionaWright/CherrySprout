@@ -23,6 +23,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
     L_sample = beta * hitInfo.Li;
 
+    BxDF bxdf;
+
     if (FEATURE_ENABLED(DirectLighting))
     {
         float u1 = Rand01(rngInfo);
@@ -40,29 +42,25 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         if (!occluded)
         {
             float2 uv = EaSphereToSquare(wi_env);
-            L_indirect = saturate(gTexEnvMap.Sample(gSampler, uv).rgb);
+            float3 L_indirect = saturate(gTexEnvMap.Sample(gSampler, uv).rgb);
 
             float3 f_bxdf;
             float pdf_bxdf;
             bxdf.Evaluate(rngInfo, hitInfo, wo, wi_env, f_bxdf, pdf_bxdf);
 
-            weight = PowerHeuristic(pdf_env, pdf_bxdf);
+            float weight = PowerHeuristic(pdf_env, pdf_bxdf);
 
-            float NdL = dot(N, wi_env);
+            float NdL = dot(hitInfo.Ns_ff, wi_env);
             L_sample += beta * L_indirect * weight * NdL * f_bxdf / pdf_env;
         }
     }
 
-    if (FEATURE_ENABLED(IndirectLighting))
-    {
-        float3 wi;
-        float3 f;
-        float pdf;
+    float3 wi;
+    float3 f;
+    float pdf;
 
-        BxDF bxdf;
-        bxdf.Sample(rngInfo, hitInfo, wo, wi, f, pdf);
-        beta *= f;
-    }
+    bxdf.Sample(rngInfo, hitInfo, wo, wi, f, pdf);
+    beta *= f;
 
     DBG_OUTPUT3(f,                                 f);
     DBG_OUTPUT1(pdf,                               PDF);

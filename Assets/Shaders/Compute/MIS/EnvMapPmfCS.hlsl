@@ -4,7 +4,12 @@
 Texture2D<float4> gEnvMap : register(t0);
 RWTexture2D<float> gPMF  : register(u0);
 
-ConstantBuffer<float> gSumLuminance : register(b0);
+struct CbvSumLuminance
+{
+    float TotalLuminance;
+};
+
+ConstantBuffer<CbvSumLuminance> gCbv : register(b0);
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -17,5 +22,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float3 color = gEnvMap.Load(int3(DTid.xy, 0)).rgb;
 
-    gOut[DTid.xy] = Luminance(color) / gSumLuminance;
+    gPMF[DTid.xy] = Luminance(color) / gCbv.TotalLuminance;
 }

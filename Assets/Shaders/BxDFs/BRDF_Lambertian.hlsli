@@ -24,6 +24,7 @@ void BxDF::Sample(
 void BxDF::Evaluate(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
+    float3 wo,
     float3 wi,
 
     out float3 f,

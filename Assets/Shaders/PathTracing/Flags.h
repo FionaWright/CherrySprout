@@ -23,9 +23,7 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_AlphaTesting,
     Idx_GlassMaterials,
 
-    Idx_IndirectLighting,
     Idx_DirectLighting,
-
     Idx_Anisotropy,
 
     INTERNAL_FEATURE_COUNT
@@ -51,9 +49,7 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
     eFeature_AlphaTesting               = 1u << __FEATURE_IDX(AlphaTesting),
     eFeature_GlassMaterials             = 1u << __FEATURE_IDX(GlassMaterials),
 
-    eFeature_IndirectLighting           = 1u << __FEATURE_IDX(IndirectLighting),
     eFeature_DirectLighting             = 1u << __FEATURE_IDX(DirectLighting),
-
     eFeature_Anisotropy                 = 1u << __FEATURE_IDX(Anisotropy),
 
     FEATURE_COUNT = (hlsl::uint)Internal_PathTracerFeatureIndex::INTERNAL_FEATURE_COUNT
@@ -114,9 +110,7 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Alpha Testing",
     "Glass materials",
 
-    "Indirect Lighting",
     "Direct Lighting",
-
     "Anisotropy",
 };
 static const char* s_debugFlagNames[DEBUG_COUNT] = {

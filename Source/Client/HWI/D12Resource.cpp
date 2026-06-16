@@ -62,6 +62,23 @@ void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint3
     Init(name, device, desc, initialState);
 }
 
+void D12Resource::Init_Tex1D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, DXGI_FORMAT format,
+                             const D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initialState)
+{
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Format = format;
+    desc.MipLevels = 1;
+    desc.DepthOrArraySize = depth;
+    desc.Flags = flags;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    Init(name, device, desc, initialState);
+}
+
 void D12Resource::Init_Upload(const char* name, ID3D12Device* device, const size_t uploadBufferSize)
 {
     m_desc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);

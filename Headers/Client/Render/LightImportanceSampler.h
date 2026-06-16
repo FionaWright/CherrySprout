@@ -13,7 +13,12 @@ class D3D;
 class LightImportanceSampler
 {
 public:
-    void BuildEnvMapDistributions(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, D12Resource* envMap);
+    void BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap);
+    bool IsInitialized() const { return m_envMapCdfMarginal.IsInitialized(); }
+
+    D12Resource* GetEnvMapPmf() { return &m_envMapPmf; }
+    D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
+    D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
 
 private:
     void initializeResources(const D3D* d3d, Heap* heap, const D12Resource* envMap);

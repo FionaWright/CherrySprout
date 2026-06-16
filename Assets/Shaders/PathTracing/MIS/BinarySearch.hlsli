@@ -1,8 +1,11 @@
 #ifndef H_BINARY_SEARCH_H
 #define H_BINARY_SEARCH_H
 
-uint BinarySearch(Texture1D<float> cdf, uint size, float u)
+uint BinarySearch(Texture1D<float> cdf, float u)
 {
+    uint size;
+    cdf.GetDimensions(size);
+
     uint left = 0;
     uint right = size - 1;
 
@@ -23,8 +26,12 @@ uint BinarySearch(Texture1D<float> cdf, uint size, float u)
     return left;
 }
 
-uint BinarySearchX(Texture2D<float> cdf, uint y, uint size, float u)
+uint BinarySearchX(Texture2D<float> cdf, uint y, float u)
 {
+    uint size, _;
+    cdf.GetDimensions(size, _);
+    DBG_ASSERT_EQ(size, _,      CDF_SQUARE_ENV_MAP);
+
     uint left = 0;
     uint right = size - 1;
 
@@ -47,8 +54,12 @@ uint BinarySearchX(Texture2D<float> cdf, uint y, uint size, float u)
     return left;
 }
 
-uint BinarySearchY(Texture2D<float> cdf, uint x, uint size, float u)
+uint BinarySearchY(Texture2D<float> cdf, uint x, float u)
 {
+    uint size, _;
+    cdf.GetDimensions(size, _);
+    DBG_ASSERT_EQ(size, _,      CDF_SQUARE_ENV_MAP);
+
     uint left = 0;
     uint right = size - 1;
 
