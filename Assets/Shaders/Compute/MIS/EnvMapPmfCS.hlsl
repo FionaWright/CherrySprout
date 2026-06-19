@@ -20,7 +20,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (DTid.x >= dim.x || DTid.y >= dim.y)
         return;
 
-    float3 color = gEnvMap.Load(int3(DTid.xy, 0)).rgb;
+    float3 color = gEnvMap.Load(uint3(DTid.xy, 0)).rgb;
 
     gPMF[DTid.xy] = Luminance(color) / gCbv.TotalLuminance;
 }

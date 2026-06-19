@@ -21,7 +21,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     for (int x = 0; x < dim.x; x++)
     {
-        rollingSum += gPMF.Load(int3(x, y, 0));
+        rollingSum += gPMF.Load(uint3(x, y, 0));
         gCDF[int2(x,y)] = rollingSum;
     }
 }

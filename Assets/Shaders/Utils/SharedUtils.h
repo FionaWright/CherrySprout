@@ -109,7 +109,7 @@ inline hlsl::float3 CubemapCubeToSphere(hlsl::uint face, hlsl::float2 uv)
     return normalize(d);
 }
 
-inline float Luminance(hlsl::float3 color)
+inline float Luminance(const hlsl::float3 color)
 {
     return dot(color, hlsl::float3(0.2126,0.7152,0.0722));
 }

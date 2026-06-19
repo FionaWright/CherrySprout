@@ -147,7 +147,7 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
 
 void EnvironmentMap::initResources(ID3D12Device* device)
 {
-    m_ea.Init_Tex2D("Equal-Area Envmap", device, 4096, 4096, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_ea.Init_Tex2D("Equal-Area Envmap", device, 4096, 4096, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     D3D12_STATIC_SAMPLER_DESC sampler;
     InitializeSamplerLinearClamp(&sampler);

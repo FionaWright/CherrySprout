@@ -2,18 +2,18 @@ Texture2D<float> gCDFConditional : register(t0);
 RWTexture1D<float> gCDFMarginal  : register(u0);
 
 [numthreads(1,1,1)]
-void CSMain(uint3 _ : SV_DispatchThreadID)
+void CSMain()
 {
     uint2 dim;
     gCDFConditional.GetDimensions(dim.x, dim.y);
 
-    uint y = dim.y - 1;
+    uint x = dim.x - 1;
 
     float rollingSum = 0.0f;
 
-    for (int x = 0; x < dim.x; x++)
+    for (int y = 0; y < dim.y; y++)
     {
-        rollingSum += gCDFConditional.Load(int3(x, y, 0));
-        gCDFMarginal[x] = rollingSum;
+        rollingSum += gCDFConditional.Load(uint3(x, y, 0));
+        gCDFMarginal[y] = rollingSum;
     }
 }

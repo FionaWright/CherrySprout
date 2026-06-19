@@ -29,9 +29,12 @@ private:
     D12Resource m_envMapCdfConditional;
     D12Resource m_envMapCdfMarginal;
 
-    RootSig m_rootSigSrvUav, m_rootSigPmf;
-    DescriptorSet m_setSumLum, m_setPmf, m_setCdfConditional, m_setCdfMarginal;
-    Pipeline m_pipelineSumLum, m_pipelinePmf, m_pipelineCdfConditional, m_pipelineCdfMarginal;
+    RootSig m_rootSigSrvUav, m_rootSigPmf, m_rootSigCdfMarginalNormalize;
+    DescriptorSet m_setSumLum, m_setPmf, m_setCdfConditional, m_setCdfMarginal, m_setCdfMarginalNormalize;
+    Pipeline m_pipelineSumLum, m_pipelinePmf, m_pipelineCdfConditional, m_pipelineCdfMarginal, m_pipelineCdfMarginalNormalize;
+
+    size_t m_sumLumGroupsX = 0, m_sumLumGroupsY = 0;
+    size_t m_sumLumBufferNumElements = 0, m_sumLumBufferSize = 0;
 };
 
 #endif
