@@ -278,8 +278,27 @@ void PathTracer::RenderGUI_ErrorInfo()
         ImGui::Text("%s: ", s_debugIdList[dbgId]);
         ImGui::SetItemTooltip("%s: ", s_debugIdList[dbgId]);
 
-        ImGui::Text(" EXPR=%i, NAN=%i, INF=%i", m_cpuErrorInfo[dbgId].ExprCounter, m_cpuErrorInfo[dbgId].NaNCounter, m_cpuErrorInfo[dbgId].InfCounter);
-        ImGui::SetItemTooltip(" EXPR=%i, NAN=%i, INF=%i", m_cpuErrorInfo[dbgId].ExprCounter, m_cpuErrorInfo[dbgId].NaNCounter, m_cpuErrorInfo[dbgId].InfCounter);
+        if (m_cpuErrorInfo[dbgId].ExprCounter > 0)
+        {
+            ImGui::Text(" EXPR=%i", m_cpuErrorInfo[dbgId].ExprCounter);
+            ImGui::SetItemTooltip(" EXPR=%i", m_cpuErrorInfo[dbgId].ExprCounter);
+
+            ImGui::Text(" V1=(%f, %f, %f, %f)", m_cpuErrorInfo[dbgId].Value1.x, m_cpuErrorInfo[dbgId].Value1.y,m_cpuErrorInfo[dbgId].Value1.z, m_cpuErrorInfo[dbgId].Value1.w);
+            ImGui::Text(" V2=(%f, %f, %f, %f)", m_cpuErrorInfo[dbgId].Value2.x, m_cpuErrorInfo[dbgId].Value2.y,m_cpuErrorInfo[dbgId].Value2.z, m_cpuErrorInfo[dbgId].Value2.w);
+            ImGui::Text(" V3=(%f, %f, %f, %f)", m_cpuErrorInfo[dbgId].Value3.x, m_cpuErrorInfo[dbgId].Value3.y,m_cpuErrorInfo[dbgId].Value3.z, m_cpuErrorInfo[dbgId].Value3.w);
+        }
+
+        if (m_cpuErrorInfo[dbgId].NaNCounter > 0)
+        {
+            ImGui::Text(" NAN=%i",m_cpuErrorInfo[dbgId].NaNCounter);
+            ImGui::SetItemTooltip(" NAN=%i",m_cpuErrorInfo[dbgId].NaNCounter);
+        }
+
+        if (m_cpuErrorInfo[dbgId].InfCounter > 0)
+        {
+            ImGui::Text(" INF=%i", m_cpuErrorInfo[dbgId].InfCounter);
+            ImGui::SetItemTooltip(" INF=%i", m_cpuErrorInfo[dbgId].InfCounter);
+        }
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
     ImGui::Spacing();

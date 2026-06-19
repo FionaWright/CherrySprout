@@ -11,6 +11,8 @@ void SampleEnvMapCdf(float u1, float u2, out float3 wi_env, out float pdf_env)
     uint2 dim;
     gTexEnvMap.GetDimensions(dim.x, dim.y);
 
+    DBG_ASSERT_LT(gEnvMapCdfMarginal[dim.x - 1], 1.0f + EPSILON,        CDF_ADD_TO_ONE);
+
     uint y = BinarySearch (gEnvMapCdfMarginal,       u1);
     uint x = BinarySearchY(gEnvMapCdfConditional, y, u2);
 

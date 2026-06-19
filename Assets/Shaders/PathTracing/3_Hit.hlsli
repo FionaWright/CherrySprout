@@ -45,6 +45,10 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         bool occluded;
         TraceShadowRay(nextOrigin, wi_env, occluded);
 
+        DBG_OUTPUT3(wi_env,       NEE_L_w);
+        DBG_OUTPUT1(pdf_env,      NEE_PDF);
+        DBG_OUTPUT1(occluded,     NEE_Occluded);
+
         if (!occluded)
         {
             float2 uv = EaSphereToSquare(wi_env);
@@ -54,10 +58,13 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
             float pdf_bxdf;
             bxdf.Evaluate(rngInfo, hitInfo, wo, wi_env, f_bxdf, pdf_bxdf);
 
-            float weight = PowerHeuristic(pdf_env, pdf_bxdf);
+            float m = PowerHeuristic(pdf_env, pdf_bxdf);
 
             float NdL = dot(hitInfo.Ns_ff, wi_env); // TODO: Need to max/abs?
-            L_sample += beta * L_direct * weight * NdL * f_bxdf / pdf_env;
+            L_sample += beta * L_direct * m * NdL * f_bxdf / pdf_env;
+
+            DBG_OUTPUT3(L_direct,     NEE_L_Direct);
+            DBG_OUTPUT1(m,            NEE_MIS_Weight);
         }
     }
 

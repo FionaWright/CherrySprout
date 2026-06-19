@@ -5,8 +5,8 @@ RWStructuredBuffer<float> gSumLum : register(u0);
 
 #define BLOCK_SIZE              9
 #define WARP_SIZE_1D            32
-#define WARP_SIZE               WARP_SIZE_1D*WARP_SIZE_1D
-#define THREAD_GROUP_COVERAGE   WARP_SIZE_1D*BLOCK_SIZE
+#define WARP_SIZE               (WARP_SIZE_1D*WARP_SIZE_1D)
+#define THREAD_GROUP_COVERAGE   (WARP_SIZE_1D*BLOCK_SIZE)
 
 groupshared float localSumLum[WARP_SIZE];
 
@@ -14,12 +14,11 @@ groupshared float localSumLum[WARP_SIZE];
 void CSMain(
     uint3 DTid : SV_DispatchThreadID,
     uint3 GTid : SV_GroupThreadID,
+    uint threadIdx : SV_GroupIndex,
     uint3 Gid  : SV_GroupID)
 {
     uint2 dim;
     gTex.GetDimensions(dim.x, dim.y);
-
-    uint threadIdx = GTid.y * WARP_SIZE_1D + GTid.x;
 
     float sumLum = 0.0f;
 
@@ -30,7 +29,7 @@ void CSMain(
         {
             uint2 pixel = DTid.xy * BLOCK_SIZE + uint2(x, y);
 
-            if (pixel.x > dim.x || pixel.y > dim.y)
+            if (pixel.x >= dim.x || pixel.y >= dim.y)
                 continue;
 
             float3 color = gTex.Load(uint3(pixel, 0)).rgb;

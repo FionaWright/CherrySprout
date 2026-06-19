@@ -22,10 +22,10 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
         const size_t w = envMap->GetDesc().Width;
         const size_t h = envMap->GetDesc().Height;
 
-        // 9x9 * 32x32 = 288x288
-        constexpr float c_blockSize = 288.0f;
-        const float maxDim = std::max(static_cast<float>(w), static_cast<float>(h));
-        const size_t bufferNumElements = (maxDim + c_blockSize - 1) / c_blockSize;
+        constexpr uint32_t blockCoverage = 32 * 9;
+        const uint32_t groupsX = (w + blockCoverage - 1) / blockCoverage;
+        const uint32_t groupsY = (h + blockCoverage - 1) / blockCoverage;
+        const size_t bufferNumElements = groupsX * groupsY;
         const size_t bufferSize = bufferNumElements * sizeof(float);
 
         m_setSumLum.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
@@ -47,7 +47,7 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
                 m_setSumLum.TransitionAllSRVToShaderResource(cmdList);
                 m_setSumLum.SetDescriptorTables_Compute(cmdList);
 
-                DispatchOverTexture(cmdList, c_blockSize, w, h);
+                cmdList->Dispatch(groupsX, groupsY, 1);
 
                 m_envMapSumLumBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
                 m_envMapSumLumBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -157,10 +157,10 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, Heap* heap, con
     const size_t w = envMap->GetDesc().Width;
     const size_t h = envMap->GetDesc().Height;
 
-    // 9x9 * 32x32 = 288x288
-    constexpr float c_blockSize = 288.0f;
-    const float maxDim = std::max(static_cast<float>(w), static_cast<float>(h));
-    const size_t bufferNumElements = (maxDim + c_blockSize - 1) / c_blockSize;
+    constexpr uint32_t blockCoverage = 32 * 9;
+    const uint32_t groupsX = (w + blockCoverage - 1) / blockCoverage;
+    const uint32_t groupsY = (h + blockCoverage - 1) / blockCoverage;
+    const size_t bufferNumElements = groupsX * groupsY;
     const size_t bufferSize = bufferNumElements * sizeof(float);
 
     m_envMapSumLumBufferRW.         Init_Buffer("Env Map Sum Luminance Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

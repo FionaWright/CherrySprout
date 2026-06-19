@@ -1,6 +1,8 @@
 #ifndef H_BINARY_SEARCH_H
 #define H_BINARY_SEARCH_H
 
+#include "Utils/Debug/Assert.hlsli"
+
 uint BinarySearch(Texture1D<float> cdf, float u)
 {
     uint size;

@@ -28,6 +28,7 @@ static const char* s_debugIdList[] = {
     CREATE_ID(BxDF_PBR_GLASS_SPEC_F     , "BxDF_PBR Trans Specular Lobe: f invalid")
 
     CREATE_ID(CDF_SQUARE_ENV_MAP        , "Equal-Area EnvMap must be square")
+    CREATE_ID(CDF_ADD_TO_ONE            , "CDF must end in one")
 
 };
 
