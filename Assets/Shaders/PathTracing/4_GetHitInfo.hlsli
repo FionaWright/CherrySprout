@@ -109,8 +109,6 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
 
-    //DBG_OUTPUT3_FORCE(gSceneTextures[hitInfo.Mat.TexIdxAlbedo].Sample(gSampler, hitInfo.UV).rgb);
-
     DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
     DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);
     DBG_OUTPUT2(barycentrics,                                                             Barycentrics);

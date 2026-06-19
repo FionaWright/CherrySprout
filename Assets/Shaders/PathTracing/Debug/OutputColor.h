@@ -147,7 +147,7 @@ static float3 gDebugValue = NAN;
 #    define DBG_OUTPUT2(value, idx) DBG_OUTPUT3(float3(value, 0), idx)
 #    define DBG_OUTPUT1(value, idx) DBG_OUTPUT3(value.xxx, idx)
 
-#    define DBG_OUTPUT3_FORCE(value) { gDebugValueFound = true; gDebugValue = value; return; }
+#    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; return; }
 
 #    define DBG_OUTPUT_SET(output) { output = gDebugValue; }
 
@@ -155,7 +155,7 @@ static float3 gDebugValue = NAN;
 #    define DBG_OUTPUT3(value, idx)
 #    define DBG_OUTPUT2(value, idx)
 #    define DBG_OUTPUT1(value, idx)
-#    define DBG_OUTPUT3_FORCE(value)
+#    define DBG_FORCE_OUTPUT3(value)
 #    define DBG_OUTPUT_SET(output)
 
 #endif

@@ -103,6 +103,9 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
             m_setCdfConditional.SetDescriptorTables_Compute(cmdList);
 
             DispatchOverTexture(cmdList, 64, m_envMapPmf.GetDesc().Width);
+
+            const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfConditional.GetResource());
+            cmdList->ResourceBarrier(1, &uavBarrier);
         }
 
         // CDF Marginal Pass
@@ -126,6 +129,25 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
             cmdList->ResourceBarrier(1, &uavBarrier);
         }
 
+        // CDF Conditional Normalize Pass
+        {
+            GPU_SCOPE(cmdList, "EnvMap CDF Conditional Normalize");
+
+            m_setCdfConditionalNormalize.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapCdfConditional, m_envMapCdfConditional.GetDesc().Format);
+
+            m_envMapCdfConditional.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+            heap->Bind(cmdList);
+            cmdList->SetComputeRootSignature(m_rootSigCdfNormalize.Get());
+            cmdList->SetPipelineState(m_pipelineCdfConditionalNormalize.GetPSO());
+            m_setCdfConditionalNormalize.SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverTexture(cmdList, 64, m_envMapCdfConditional.GetDesc().Width);
+
+            const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfConditional.GetResource());
+            cmdList->ResourceBarrier(1, &uavBarrier);
+        }
+
         // CDF Marginal Normalize Pass
         {
             GPU_SCOPE(cmdList, "EnvMap CDF Marginal Normalize");
@@ -135,9 +157,8 @@ void LightImportanceSampler::BuildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
             m_envMapCdfMarginal.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
             heap->Bind(cmdList);
-            cmdList->SetComputeRootSignature(m_rootSigCdfMarginalNormalize.Get());
+            cmdList->SetComputeRootSignature(m_rootSigCdfNormalize.Get());
             cmdList->SetPipelineState(m_pipelineCdfMarginalNormalize.GetPSO());
-            m_setCdfMarginalNormalize.TransitionAllSRVToShaderResource(cmdList);
             m_setCdfMarginalNormalize.SetDescriptorTables_Compute(cmdList);
 
             DispatchOverTexture(cmdList, 64, m_envMapCdfMarginal.GetDesc().Width);
@@ -161,7 +182,7 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, Heap* heap, con
     // Root Sigs
     m_rootSigSrvUav.                     SmartInit(d3d->GetDevice(), 0, 1, 1);
     m_rootSigPmf.                        SmartInit(d3d->GetDevice(), 1, 1, 1);
-    m_rootSigCdfMarginalNormalize.       SmartInit(d3d->GetDevice(), 0, 0, 1);
+    m_rootSigCdfNormalize.               SmartInit(d3d->GetDevice(), 0, 0, 1);
 
     // Sets
     m_setSumLum.                         Init(heap);
@@ -169,13 +190,15 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, Heap* heap, con
     m_setCdfConditional.                 Init(heap);
     m_setCdfMarginal.                    Init(heap);
     m_setCdfMarginalNormalize.           Init(heap);
+    m_setCdfConditionalNormalize.        Init(heap);
 
     // Pipelines
     m_pipelineSumLum.                    InitCompute(d3d->GetDevice(), "Compute/MIS/SumLumReductionSearchCS.hlsl", m_rootSigSrvUav.Get());
     m_pipelinePmf.                       InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapPmfCS.hlsl", m_rootSigPmf.Get());
     m_pipelineCdfConditional.            InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfConditionalCS.hlsl", m_rootSigSrvUav.Get());
     m_pipelineCdfMarginal.               InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfMarginalCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineCdfMarginalNormalize.      InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfMarginalNormalizeCS.hlsl", m_rootSigCdfMarginalNormalize.Get());
+    m_pipelineCdfMarginalNormalize.      InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfMarginalNormalizeCS.hlsl", m_rootSigCdfNormalize.Get());
+    m_pipelineCdfConditionalNormalize.   InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfConditionalNormalizeCS.hlsl", m_rootSigCdfNormalize.Get());
 
     const size_t w = envMap->GetDesc().Width;
     const size_t h = envMap->GetDesc().Height;
