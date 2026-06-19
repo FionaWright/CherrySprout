@@ -224,7 +224,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
     numUAV++; // gDbgBufferErrorInfo
 #endif
 
-    if (GetPathTracerFeatureFlag(featureFlags, eFeature_DirectLighting))
+    if (GetPathTracerFeatureFlag(featureFlags, eFeature_NEE))
         numSRV += 3; // gEnvMapCdfConditional, gEnvMapPmfConditional, gEnvMapCdfMarginal
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};

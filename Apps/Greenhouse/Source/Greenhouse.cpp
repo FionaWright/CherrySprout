@@ -66,7 +66,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
     }
 
-    if (!m_lightImportanceSampler.IsInitialized() && GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_DirectLighting))
+    if (!m_lightImportanceSampler.IsInitialized() && GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_NEE))
     {
         m_lightImportanceSampler.BuildEnvMapDistributions(d3d, &m_heap, m_envMap.GetEA());
         loadSceneDataIntoRenderBackend = true;

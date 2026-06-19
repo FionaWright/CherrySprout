@@ -19,8 +19,8 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
     if (Input::IsMouseRight() && !mouseOverGUI)
     {
         XMFLOAT2 deltaMouse = Input::GetMousePosDelta();
-        deltaMouse.x *= m_rotationSpeed * deltaTime_ms;
-        deltaMouse.y *= m_rotationSpeed * deltaTime_ms;
+        deltaMouse.x *= m_rotationSpeed;
+        deltaMouse.y *= m_rotationSpeed;
         m_camera.Rotate(deltaMouse.x, deltaMouse.y);
 
         changed = deltaMouse.x != 0 || deltaMouse.y != 0;
@@ -29,12 +29,10 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
     XMFLOAT3 right, up, forward;
     m_camera.GetBasis(right, up, forward);
 
-    const float speedPerFramePan = m_speedPan * deltaTime_ms;
-
     if (Input::IsMouseMiddle() && !mouseOverGUI)
     {
         XMFLOAT2 deltaMouse = Input::GetMousePosDelta();
-        const float panSpeed = speedPerFramePan;
+        const float panSpeed = m_speedPan;
         deltaMouse.x *= -panSpeed;
         deltaMouse.y *= panSpeed;
 
@@ -52,7 +50,7 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
 
     float forwardScalar = 0.0f;
     if (!mouseOverGUI)
-        forwardScalar = Input::GetMouseWheelDelta() * m_speedScroll * deltaTime_ms;
+        forwardScalar = Input::GetMouseWheelDelta() * m_speedScroll;
 
     const float speedPerFrameWASD = m_speedWASD * deltaTime_ms;
 

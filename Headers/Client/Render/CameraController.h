@@ -19,10 +19,10 @@ public:
 
 private:
     Camera m_camera;
-    float m_speedScroll = 500.0f;
-    float m_speedPan = 8.0f;
+    float m_speedScroll = 5.0f;
+    float m_speedPan = 0.02f;
     float m_speedWASD = 1.0f;
-    float m_rotationSpeed = 10.0f;
+    float m_rotationSpeed = 0.01f;
 };
 
 #endif //PT_CAMERACONTROLLER_H

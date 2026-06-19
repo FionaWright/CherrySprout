@@ -23,7 +23,7 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_AlphaTesting,
     Idx_GlassMaterials,
 
-    Idx_DirectLighting,
+    Idx_NEE,
     Idx_Anisotropy,
 
     INTERNAL_FEATURE_COUNT
@@ -49,7 +49,7 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
     eFeature_AlphaTesting               = 1u << __FEATURE_IDX(AlphaTesting),
     eFeature_GlassMaterials             = 1u << __FEATURE_IDX(GlassMaterials),
 
-    eFeature_DirectLighting             = 1u << __FEATURE_IDX(DirectLighting),
+    eFeature_NEE                        = 1u << __FEATURE_IDX(NEE),
     eFeature_Anisotropy                 = 1u << __FEATURE_IDX(Anisotropy),
 
     FEATURE_COUNT = (hlsl::uint)Internal_PathTracerFeatureIndex::INTERNAL_FEATURE_COUNT
@@ -110,7 +110,7 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
     "Alpha Testing",
     "Glass materials",
 
-    "Direct Lighting",
+    "NEE",
     "Anisotropy",
 };
 static const char* s_debugFlagNames[DEBUG_COUNT] = {
@@ -133,7 +133,7 @@ static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<Path
         eFeature_EnvironmentMap |
         eFeature_NormalMaps |
         eFeature_GlassMaterials |
-        eFeature_DirectLighting |
+        eFeature_NEE |
         eFeature_RussianRoulette
     );
 

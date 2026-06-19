@@ -12,7 +12,7 @@
 #include "PathTracing/MIS/TraceShadowRay.hlsli"
 #include "PathTracing/MIS/PowerHeuristic.hlsli"
 
-void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo)
+void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathState, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo)
 {
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
@@ -25,15 +25,14 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
     L_sample = beta * hitInfo.Li;
 
     // TODO in a loose order:
-    // Switch to Lambert until proven working for that
-    // Test direct lighting only with no indirect and no MIS (weight=0?)
-    // Add MIS weight handling in the Miss() function. Might require carrying information from the previous ray
     // Implement Evaluate for PBR
-    // Double check beta *= f is correct. Should it not be divided by the pdf?
+    // Separate f from pdf in the BxDF. Divide beta by the throughput explicitly
+    // Refactor NEE sampling into functions/files
+    // Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
 
     BxDF bxdf;
 
-    if (FEATURE_ENABLED(DirectLighting))
+    if (FEATURE_ENABLED(NEE) && FEATURE_ENABLED(EnvironmentMap))
     {
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
@@ -43,6 +42,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         float pdf_env;
         SampleEnvMapCdf(u1, u2, uv_env, wi_env, pdf_env);
 
+        float NdL = dot(hitInfo.Ns_ff, wi_env);
+
         bool occluded;
         TraceShadowRay(nextOrigin, wi_env, occluded);
 
@@ -50,7 +51,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         DBG_OUTPUT1(pdf_env,      NEE_PDF);
         DBG_OUTPUT1(occluded,     NEE_Occluded);
 
-        if (!occluded)
+        if (!occluded && NdL >= 0)
         {
             float3 L_direct = gTexEnvMap.Sample(gSampler, uv_env).rgb;
 
@@ -60,8 +61,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
             float m = PowerHeuristic(pdf_env, pdf_bxdf);
 
-            float NdL = dot(hitInfo.Ns_ff, wi_env); // TODO: Need to max/abs?
-            L_sample += beta * L_direct * m * NdL * f_bxdf / pdf_env;
+            L_sample += beta * L_direct * m * max(0, NdL) * f_bxdf / pdf_env;
 
             DBG_OUTPUT3(L_direct,     NEE_L_Direct);
             DBG_OUTPUT1(m,            NEE_MIS_Weight);
@@ -79,6 +79,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
     bxdf.Sample(rngInfo, hitInfo, wo, wi, f, pdf);
     beta *= f;
+
+    pathState.LastBxdfPdf = pdf;
 
     DBG_OUTPUT3(f,                                 f);
     DBG_OUTPUT1(pdf,                               PDF);

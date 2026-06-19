@@ -1,14 +1,24 @@
 #ifndef H_MISS_H
 #define H_MISS_H
 
-float3 Miss(float3 origin, float3 direction, uint bounceIdx)
+float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bounceIdx)
 {
     float3 Li = float3(0, 0, 0);
 
     if (FEATURE_ENABLED(EnvironmentMap))
     {
         float2 uv = EaSphereToSquare(direction);
-        Li += gTexEnvMap.Sample(gSampler, uv).rgb;
+        float3 Le = gTexEnvMap.Sample(gSampler, uv).rgb;
+
+        // TODO: Shouldn't be run if previous BxDF used specular lobe either
+        if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0)
+        {
+            float pdf_env = GetEnvMapPdf(uv);
+            float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env);
+            Le *= m;
+        }
+
+        Li += Le;
     }
 
     if (FEATURE_ENABLED(DirectionalLight) && bounceIdx >= 1)
