@@ -38,9 +38,10 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
 
+        float2 uv_env;
         float3 wi_env;
         float pdf_env;
-        SampleEnvMapCdf(u1, u2, wi_env, pdf_env);
+        SampleEnvMapCdf(u1, u2, uv_env, wi_env, pdf_env);
 
         bool occluded;
         TraceShadowRay(nextOrigin, wi_env, occluded);
@@ -51,8 +52,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
         if (!occluded)
         {
-            float2 uv = EaSphereToSquare(wi_env);
-            float3 L_direct = gTexEnvMap.Sample(gSampler, uv).rgb;
+            float3 L_direct = gTexEnvMap.Sample(gSampler, uv_env).rgb;
 
             float3 f_bxdf;
             float pdf_bxdf;
@@ -65,6 +65,11 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout float3 L_sample, 
 
             DBG_OUTPUT3(L_direct,     NEE_L_Direct);
             DBG_OUTPUT1(m,            NEE_MIS_Weight);
+        }
+        else
+        {
+            DBG_OUTPUT1(0,            NEE_L_Direct);
+            DBG_OUTPUT1(0,            NEE_MIS_Weight);
         }
     }
 
