@@ -80,8 +80,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     bxdf.Sample(rngInfo, hitInfo, wo, wi, f, pdf);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-
-    beta *= f * max(0, NdL) / max(1e-6, pdf);
+    beta *= f * abs(NdL) / max(1e-6, pdf);
 
     pathState.LastBxdfPdf = pdf;
 

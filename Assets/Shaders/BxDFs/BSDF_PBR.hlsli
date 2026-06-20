@@ -145,7 +145,6 @@ void TransmissiveLobe(
     f = (1 - F) * D * G * hitInfo.Mat.TransmissionColor;
     f *= (abs(VdH) / abs(NdV)) * (abs(LdH) / abs(NdL));
     f *= eta2;
-    //f *= NdL;
     f /= max(1e-6, denom2);
 }
 
