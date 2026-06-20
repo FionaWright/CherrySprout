@@ -1,6 +1,8 @@
 #ifndef H_BRDF_LAMBERTIAN_H
 #define H_BRDF_LAMBERTIAN_H
 
+#include "BxDFs/Lobes/LambertianLobe.hlsli"
+
 void BxDF::Sample(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
@@ -11,14 +13,11 @@ void BxDF::Sample(
     out float pdf
 )
 {
-    float u1 = Rand01(rngInfo);
-    float u2 = Rand01(rngInfo);
+    float3 L_s;
 
-    wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
+    LambertianLobe_Sample(rngInfo, hitInfo, L_s, f, pdf);
 
-    float NdL = dot(hitInfo.Ns_ff, wi);
-    f = hitInfo.Mat.Albedo.rgb / PI;
-    pdf = NdL / PI;
+    wi = hitInfo.SFrame.ToWorld(L_s);
 }
 
 void BxDF::Evaluate(
@@ -31,9 +30,7 @@ void BxDF::Evaluate(
     out float pdf
 )
 {
-    float NdL = dot(hitInfo.Ns_ff, wi);
-    f = hitInfo.Mat.Albedo.rgb / PI;
-    pdf = NdL / PI;
+    LambertianLobe_Evaluate(rngInfo, hitInfo, wi, f, pdf);
 }
 
 #endif
