@@ -26,6 +26,8 @@ enum class Internal_PathTracerFeatureIndex : hlsl::uint
     Idx_NEE,
     Idx_Anisotropy,
 
+    Idx_FireflyThreshold,
+
     INTERNAL_FEATURE_COUNT
 };
 #define __FEATURE_IDX(x) (hlsl::uint)Internal_PathTracerFeatureIndex::Idx_##x
@@ -51,6 +53,8 @@ enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
 
     eFeature_NEE                        = 1u << __FEATURE_IDX(NEE),
     eFeature_Anisotropy                 = 1u << __FEATURE_IDX(Anisotropy),
+
+    eFeature_FireflyThreshold           = 1u << __FEATURE_IDX(FireflyThreshold),
 
     FEATURE_COUNT = (hlsl::uint)Internal_PathTracerFeatureIndex::INTERNAL_FEATURE_COUNT
 };
@@ -112,6 +116,8 @@ static const char* s_featureFlagNames[FEATURE_COUNT] = {
 
     "NEE",
     "Anisotropy",
+
+    "Firefly Threshold",
 };
 static const char* s_debugFlagNames[DEBUG_COUNT] = {
     "Furnace Test",
@@ -134,6 +140,7 @@ static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<Path
         eFeature_NormalMaps |
         eFeature_GlassMaterials |
         eFeature_NEE |
+        eFeature_FireflyThreshold |
         eFeature_RussianRoulette
     );
 

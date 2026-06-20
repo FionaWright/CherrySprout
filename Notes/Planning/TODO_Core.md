@@ -2,7 +2,7 @@
 
 The main important tasks for the project
 
-- [ ] BxDF Evaluate()
+- [x] BxDF Evaluate()
 - [x] Shadow Rays (Output occlusion in fixed direction to test it)
 - [x] CDF Pre-processing
 - [x] Env Map NEE

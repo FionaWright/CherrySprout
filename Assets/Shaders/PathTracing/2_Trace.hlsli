@@ -34,6 +34,13 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
         {
             float3 L_sample = beta * Miss(pathState, ray.Origin, ray.Direction, i);
 
+            if (FEATURE_ENABLED(FireflyThreshold))
+            {
+                float L_lum = Luminance(L_sample);
+                if (L_lum > gSettings.FireflyThreshold)
+                    L_sample *= gSettings.FireflyThreshold / L_lum;
+            }
+
             Lo += L_sample;
             break;
         }
@@ -43,6 +50,13 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
 
         if (beta.x <= 0 && beta.y <= 0 && beta.z <= 0)
             break;
+
+        if (FEATURE_ENABLED(FireflyThreshold))
+        {
+            float L_lum = Luminance(L_sample);
+            if (L_lum > gSettings.FireflyThreshold)
+                L_sample *= gSettings.FireflyThreshold / L_lum;
+        }
 
         Lo += L_sample;
 
