@@ -17,7 +17,7 @@ void BxDF::Sample(
     wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-    f = hitInfo.Mat.Albedo.rgb;
+    f = hitInfo.Mat.Albedo.rgb / PI;
     pdf = NdL / PI;
 }
 
@@ -32,7 +32,7 @@ void BxDF::Evaluate(
 )
 {
     float NdL = dot(hitInfo.Ns_ff, wi);
-    f = hitInfo.Mat.Albedo.rgb;
+    f = hitInfo.Mat.Albedo.rgb / PI;
     pdf = NdL / PI;
 }
 

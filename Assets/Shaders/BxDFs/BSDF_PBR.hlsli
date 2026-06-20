@@ -18,7 +18,7 @@ void DiffuseLobe(
 
     float NdL = SSpaceCosTheta(L_s);
     pdf = NdL / PI;
-    f = hitInfo.Mat.Albedo.rgb * (1.0 - hitInfo.Mat.Metallic);
+    f = hitInfo.Mat.Albedo.rgb * (1.0 - hitInfo.Mat.Metallic) / PI;
 
     DBG_OUTPUT1(0,                F);
     DBG_OUTPUT1(0,                G);
@@ -55,8 +55,10 @@ void SpecularLobe(
 
     float3 F = F_Schlick(VdH, F0);
     float D = mm.D(H_s);
-    float G = mm.G2(L_s, V_s);
+    float G = mm.G2(NdL, NdV);
     pdf = mm.PDF(D, H_s, V_s);
+
+    pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
 
     DBG_OUTPUT3(F,                F);
     DBG_OUTPUT1(G,                G);
@@ -71,7 +73,7 @@ void SpecularLobe(
     }
 
     float3 specularBrdf = (D * G * F) / max(1e-6, 4 * NdV * NdL);
-    f = specularBrdf * NdL / max(1e-6, pdf);
+    f = specularBrdf;
 }
 
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
@@ -94,49 +96,57 @@ void TransmissiveLobe(
 
     L_s = refract(-V_s, H_s, eta);
 
+    if (false && all(L_s == 0))
+    {
+        pdf = 0;
+        f = 0;
+        return;
+    }
+
     float VdH = dot(H_s, V_s);
     float LdH = dot(L_s, H_s);
     float NdL = SSpaceCosTheta(L_s);
     float NdV = SSpaceCosTheta(V_s);
     float NdH = SSpaceCosTheta(H_s);
 
+    if (LdH * VdH >= 0)
+    {
+        pdf = 1;
+        f = 0;
+        L_s = N_s;
+        return;
+    }
+
     float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, abs(VdH));
     float D = mm.D(H_s);
-    float G = mm.G2(abs(L_s), V_s);
+    float G = mm.G2(abs(NdL), abs(NdV));
     float mmPdf = mm.PDF(D, H_s, V_s);
 
     DBG_OUTPUT1(F,                F);
     DBG_OUTPUT1(G,                G);
 
-    //float denom = nCurrent * VdH + nNext * LdH;
-    //float denom2 = denom * denom;
-    //float factor = abs(VdH * LdH) / max(1e-6f, denom2) / max(1e-6f, abs(NdL * NdV));
-    //pdf = D * NdH * abs(LdH) / max(1e-6f, denom2);
-
-    float denom = LdH + VdH / eta;
+    float denom = nCurrent * VdH + nNext * LdH;
     float denom2 = denom * denom;
-    float k = abs(VdH) / denom2;
+    float jacobian = nNext * nNext * abs(LdH) / max(1e-6, denom2);
 
-    pdf = k * mmPdf;
-
-    f = (1 - F);
+    pdf = jacobian * mmPdf;
 
     // TODO
     //if (!hitInfo.IsEntering)
     //    f *= exp(-sigmaA * hitInfo.RayT);
 
-    // TODO
-    if (hitInfo.Mat.Roughness < EPSILON)
+    // TODO: Wrong
+    if (false && hitInfo.Mat.Roughness < EPSILON)
     {
-        f *= eta;
+        f = (1 - F) * eta;
         return;
     }
 
-    // TODO: Explodes. Need more debug systems
-    float eval = D * G * abs(LdH  * VdH / max(1e-6, NdV * denom2));
-
-    f *= eta2 * hitInfo.Mat.TransmissionColor;
-    //f *= eval * hitInfo.Mat.TransmissionColor;
+    f = (1 - F) * D * G * hitInfo.Mat.TransmissionColor;
+    f *= (abs(VdH) / abs(NdV)) * (abs(LdH) / abs(NdL));
+    f *= eta2;
+    //f *= NdL;
+    f /= max(1e-6, denom2);
 }
 
 bool IsReflect(inout RngInfo rngInfo, float iorCurrent, float iorNext, float NdV, out float reflectProb)
@@ -208,8 +218,6 @@ void BxDF::Sample(
         float iorCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
 
-        hitInfo.Mat.Metallic = 1.0f;
-
         DBG_ASSERT_ZERO(hitInfo.Mat.Metallic, NO_METAL_GLASS);
         DBG_ASSERT_ZERO(hitInfo.Li          , NO_EMISSIVE_GLASS);
 
@@ -220,16 +228,13 @@ void BxDF::Sample(
         {
             SpecularLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, u1, u2, F0, L_s, f, pdf);
             pdf *= reflectProb;
-            f /= max(1e-6, reflectProb);
 
             DBG_ASSERT_VALUE(f, BxDF_PBR_GLASS_SPEC_F);
         }
         else
         {
-            H_s *= Sign(VdH); // TODO: ?
             TransmissiveLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, iorCurrent, iorNext, u1, u2, L_s, f, pdf);
             pdf *= 1.0f - reflectProb;
-            f /= max(1e-6, 1.0f - reflectProb);
         }
 
         wi = hitInfo.SFrame.ToWorld(L_s);
@@ -243,13 +248,11 @@ void BxDF::Sample(
     {
         SpecularLobe(rngInfo, hitInfo, mm, V_s, N_s, H_s, u1, u2, F0, L_s, f, pdf);
         pdf *= specProb;
-        f /= max(1e-6, specProb);
     }
     else
     {
         DiffuseLobe(rngInfo, hitInfo, u1, u2, L_s, f, pdf);
         pdf *= 1.0f - specProb;
-        f /= max(1e-6, 1.0 - specProb);
     }
 
     wi = hitInfo.SFrame.ToWorld(L_s);

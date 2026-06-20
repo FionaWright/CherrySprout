@@ -42,26 +42,23 @@ float MicrofacetModel::D(float3 H)
     return a2 / max(1e-6, PI * denominator * denominator);
 }
 
-float MicrofacetModel::G1(float3 W)
+float MicrofacetModel::G1(float NdW)
 {
     float a2 = m_alpha * m_alpha;
-    float NdW = W.z;
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
     return saturate(2 * NdW / max(1e-6, denom));
 }
 
-float MicrofacetModel::G2(float3 L, float3 V)
+float MicrofacetModel::G2(float NdL, float NdV)
 {
-    return G1(L) * G1(V);
+    return G1(NdL) * G1(NdV);
 }
 
 float MicrofacetModel::PDF(float D, float3 H, float3 V)
 {
     float NdH = H.z;
-    float VdH = dot(V, H);
-
-    return D * NdH / (4.0f * max(1e-6, VdH));
+    return D * NdH;
 }
 
 #endif

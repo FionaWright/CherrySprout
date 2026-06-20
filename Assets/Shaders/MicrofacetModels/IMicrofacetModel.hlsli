@@ -6,8 +6,8 @@ float RoughnessToAlpha(float roughness);
 float3 Sample(float u1, float u2);
 
 float D(float3 H);
-float G1(float3 W);
-float G2(float3 L, float3 V);
+float G1(float NdW);
+float G2(float NdL, float NdV);
 
 float PDF(float D, float3 H, float3 V);
 

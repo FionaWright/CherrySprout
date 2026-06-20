@@ -3,10 +3,11 @@
 The main important tasks for the project
 
 - [ ] BxDF Evaluate()
-- [ ] Shadow Rays (Output occlusion in fixed direction to test it)
-- [ ] CDF Pre-processing
-- [ ] Env Map NEE
+- [x] Shadow Rays (Output occlusion in fixed direction to test it)
+- [x] CDF Pre-processing
+- [x] Env Map NEE
 - [ ] Confirm by RMSE test that it is faster
+- [ ] Confirm there's no bias with new mean test
 - [ ] Shadow Ray transmission handling ?
 - [ ] Alias Tables
 - [ ] USD Lights loading 

@@ -17,14 +17,15 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Python executor
 - [ ] Path visualizer
 - [x] Debug Info Output (Make it better)
-- [ ] RMSE Tester
 - [ ] Variance reduction per frame-time test
 - [x] PT Assert based system inspired by Viggo
 - [ ] Place asserts all over the program
 - [ ] PT meta counter debug increment/F4/etc system
 - [ ] Debug quick input bools/floats/etc
 - [ ] Furnace Test
+- [ ] RMSE Test
 - [ ] BxDF Test
+- [ ] Mean Test
 
 ## BxDF Test Explained
 
