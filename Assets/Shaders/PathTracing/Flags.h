@@ -73,7 +73,8 @@ enum class Internal_PathTracerDebugIndex : hlsl::uint
     Idx_ForceReflect,
     Idx_ForceRefract,
 
-    Idx_BxdfTest,
+    Idx_BxdfTestRevaluate,
+    Idx_BxdfTestHemisphere,
 
     INTERNAL_DEBUG_COUNT
 };
@@ -95,7 +96,8 @@ enum PathTracerDebugFlags : DEBUG_FLAG_TYPE
     eDebug_ForceReflect                 = 1u << __DBG_IDX(ForceReflect),
     eDebug_ForceRefract                 = 1u << __DBG_IDX(ForceRefract),
 
-    eDebug_BxdfTest                     = 1u << __DBG_IDX(BxdfTest),
+    eDebug_BxdfTestRevaluate            = 1u << __DBG_IDX(BxdfTestRevaluate),
+    eDebug_BxdfTestHemisphere           = 1u << __DBG_IDX(BxdfTestHemisphere),
 
     DEBUG_COUNT = (hlsl::uint)Internal_PathTracerDebugIndex::INTERNAL_DEBUG_COUNT
 };
@@ -136,7 +138,8 @@ static const char* s_debugFlagNames[DEBUG_COUNT] = {
     "Force Reflect",
     "Force Refract",
 
-    "BxDF Test",
+    "BxDF Test (Revaluate)",
+    "BxDF Test (Hemisphere)",
 };
 
 static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(

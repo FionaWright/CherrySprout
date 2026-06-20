@@ -178,75 +178,91 @@ void BxDF::Evaluate(
 
         float reflectProb = GetReflectProb(iorCurrent, iorNext, VdH);
 
-        {
-            float3 f_spec;
-            float pdf_spec;
-            SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_spec, pdf_spec);
+        float3 f_trans = 0;
+        float pdf_trans = 0;
 
-            pdf_spec *= hitInfo.Mat.TransmissionFactor;
-            pdf_spec *= reflectProb;
+        {
+            float3 f_reflect;
+            float pdf_reflect;
+            SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_reflect, pdf_reflect);
+
+            //f_reflect *= reflectProb;
+            pdf_reflect *= reflectProb;
 
             if (DEBUG_ENABLED(ForceRefract))
-                f_spec = 0.0f;
+                f_reflect = 0.0f;
 
-            f += f_spec;
-            pdf += pdf_spec;
+            f_trans += f_reflect;
+            pdf_trans += pdf_reflect;
 
             DBG_ASSERT_VALUE(f, BxDF_PBR_GLASS_SPEC_F);
         }
 
         {
-            float3 f_trans;
-            float pdf_trans;
-            TransmissiveLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, iorCurrent, iorNext, f_trans, pdf_trans);
+            float3 f_refract;
+            float pdf_refract;
+            TransmissiveLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, iorCurrent, iorNext, f_refract, pdf_refract);
 
-            pdf_trans *= hitInfo.Mat.TransmissionFactor;
-            pdf_trans *= 1.0f - reflectProb;
+            //f_refract *= 1.0f - reflectProb;
+            pdf_refract *= 1.0f - reflectProb;
 
             if (DEBUG_ENABLED(ForceReflect))
-                f_trans = 0.0f;
+                f_refract = 0.0f;
 
-            f += f_trans;
-            pdf += pdf_trans;
+            f_trans += f_refract;
+            pdf_trans += pdf_refract;
         }
+
+        f_trans *= hitInfo.Mat.TransmissionFactor;
+        pdf_trans *= hitInfo.Mat.TransmissionFactor;
+
+        f += f_trans;
+        pdf += pdf_trans;
     }
 
     float specProb = GetSpecularProb(VdH, F0);
 
+    float3 f_opaque = 0;
+    float pdf_opaque = 0;
     {
-        float3 f_spec;
-        float pdf_spec;
-        SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_spec, pdf_spec);
+        {
+            float3 f_spec;
+            float pdf_spec;
+            SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_spec, pdf_spec);
 
-        pdf_spec *= specProb;
+            pdf_spec *= specProb;
 
-        if (DEBUG_ENABLED(ForceDiffuse))
-            f_spec = 0.0f;
+            if (DEBUG_ENABLED(ForceDiffuse))
+                f_spec = 0.0f;
 
-        if (FEATURE_ENABLED(GlassMaterials))
-            pdf_spec *= 1.0f - hitInfo.Mat.TransmissionFactor;
+            f_opaque += f_spec;
+            pdf_opaque += pdf_spec;
+        }
 
-        f += f_spec;
-        pdf += pdf_spec;
+        {
+            float3 f_diff;
+            float pdf_diff;
+            LambertianLobe_Evaluate(hitInfo, wi, f_diff, pdf_diff);
+
+            f_diff *= (1.0 - hitInfo.Mat.Metallic);
+            pdf_diff *= 1.0f - specProb;
+
+            if (DEBUG_ENABLED(ForceSpecular))
+                f_diff = 0.0f;
+
+            f_opaque += f_diff;
+            pdf_opaque += pdf_diff;
+        }
     }
 
+    if (FEATURE_ENABLED(GlassMaterials))
     {
-        float3 f_diff;
-        float pdf_diff;
-        LambertianLobe_Evaluate(hitInfo, wi, f_diff, pdf_diff);
-
-        f_diff *= (1.0 - hitInfo.Mat.Metallic);
-        pdf_diff *= 1.0f - specProb;
-
-        if (DEBUG_ENABLED(ForceSpecular))
-            f_diff = 0.0f;
-
-        if (FEATURE_ENABLED(GlassMaterials))
-            pdf_diff *= 1.0f - hitInfo.Mat.TransmissionFactor;
-
-        f += f_diff;
-        pdf += pdf_diff;
+        f_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;
+        pdf_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;
     }
+
+    f += f_opaque;
+    pdf += pdf_opaque;
 }
 
 #endif

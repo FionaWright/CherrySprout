@@ -45,7 +45,7 @@ void Core(uint2 pixelCoord)
         }
         pixelUV *= gSettings.TexelSize;
 
-        if (DEBUG_ENABLED(BxdfTest) && pixelUV.x < 0.5f)
+        if ((DEBUG_ENABLED(BxdfTestRevaluate) || DEBUG_ENABLED(BxdfTestHemisphere)) && pixelUV.x < 0.5f)
         {
             pixelUV.x = 1 - pixelUV.x;
             gRunBxdfTestForPixel = true;

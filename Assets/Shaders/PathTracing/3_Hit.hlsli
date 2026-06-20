@@ -75,7 +75,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     float3 f;
     float pdf;
 
-    if (DEBUG_ENABLED(BxdfTest) && gRunBxdfTestForPixel)
+    if (DEBUG_ENABLED(BxdfTestHemisphere) && gRunBxdfTestForPixel)
     {
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
@@ -86,6 +86,11 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
         float NdL = dot(hitInfo.Ns_ff, wi);
         pdf = NdL / PI;
+    }
+    else if (DEBUG_ENABLED(BxdfTestRevaluate) && gRunBxdfTestForPixel)
+    {
+        bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f, pdf);
+        bxdf.Evaluate(hitInfo, wo, wi, f, pdf);
     }
     else
     {

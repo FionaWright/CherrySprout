@@ -81,6 +81,8 @@ void TransmissiveLobe_Evaluate(
     float eta = nCurrent / nNext;
     float eta2 = eta * eta;
 
+    //H_s = normalize(nCurrent * V_s + nNext * L_s);
+
     if (all(L_s == 0))
     {
         pdf = 0;
