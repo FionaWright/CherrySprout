@@ -19,7 +19,6 @@ struct BxDF
     );
 
     void Evaluate(
-        inout RngInfo rngInfo,
         HitInfo hitInfo,
         float3 wo,
         float3 wi,

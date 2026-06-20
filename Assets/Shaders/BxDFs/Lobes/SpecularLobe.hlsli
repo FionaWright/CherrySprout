@@ -2,7 +2,7 @@
 #define H_BRDF_SPECULAR_LOBE_H
 
 void SpecularLobe_Sample(
-        inout RngInfo rngInfo,  HitInfo hitInfo,       MicrofacetModel mm,
+        HitInfo hitInfo,       MicrofacetModel mm,
         float3 V_s,             float3 N_s,            float3 H_s,
 
         float3 F0,
@@ -52,7 +52,7 @@ void SpecularLobe_Sample(
 }
 
 void SpecularLobe_Evaluate(
-        inout RngInfo rngInfo,  HitInfo hitInfo,       MicrofacetModel mm,
+        HitInfo hitInfo,       MicrofacetModel mm,
         float3 V_s,             float3 N_s,            float3 H_s,          float3 L_s,
 
         float3 F0,
@@ -78,8 +78,8 @@ void SpecularLobe_Evaluate(
     float3 F = F_Schlick(VdH, F0);
     float D = mm.D(H_s);
     float G = mm.G2(NdL, NdV);
-    pdf = mm.PDF(D, H_s, V_s);
 
+    pdf = mm.PDF(D, H_s, V_s);
     pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
 
     DBG_OUTPUT3(F,                F);

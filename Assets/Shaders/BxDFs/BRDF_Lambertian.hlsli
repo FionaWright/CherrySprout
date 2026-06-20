@@ -22,7 +22,6 @@ void BxDF::Sample(
 }
 
 void BxDF::Evaluate(
-    inout RngInfo rngInfo,
     HitInfo hitInfo,
     float3 wo,
     float3 wi,
@@ -31,7 +30,7 @@ void BxDF::Evaluate(
     out float pdf
 )
 {
-    LambertianLobe_Evaluate(rngInfo, hitInfo, wi, f, pdf);
+    LambertianLobe_Evaluate(hitInfo, wi, f, pdf);
 }
 
 #endif

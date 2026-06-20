@@ -4,7 +4,7 @@
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
 
 void TransmissiveLobe_Sample(
-        inout RngInfo rngInfo,  HitInfo hitInfo,        MicrofacetModel mm,
+        HitInfo hitInfo,        MicrofacetModel mm,
         float3 V_s,             float3 N_s,             float3 H_s,
         float nCurrent,         float nNext,
 
@@ -70,7 +70,7 @@ void TransmissiveLobe_Sample(
 }
 
 void TransmissiveLobe_Evaluate(
-        inout RngInfo rngInfo,  HitInfo hitInfo,        MicrofacetModel mm,
+        HitInfo hitInfo,        MicrofacetModel mm,
         float3 V_s,             float3 N_s,             float3 H_s,         float3 L_s,
         float nCurrent,         float nNext,
 
@@ -80,10 +80,6 @@ void TransmissiveLobe_Evaluate(
 {
     float eta = nCurrent / nNext;
     float eta2 = eta * eta;
-
-    // Recompute H_s, L_s
-    //H_s = normalize(nCurrent * V_s + nNext * L_s);
-    //L_s = refract(-V_s, H_s, eta);
 
     if (all(L_s == 0))
     {

@@ -49,6 +49,20 @@ void InitializeMM(
 #endif
 }
 
+void InitializeMM(
+    inout MicrofacetModel mm,
+    float roughness,
+    float3 V)
+{
+#ifdef NDF_TYPE_GGX
+#   ifdef SAMPLE_VISIBLE_NORMALS
+#       error
+#   else
+    mm.Init(roughness);
+#   endif
+#endif
+}
+
 void InitializeMMAniso(
     inout MicrofacetModel mm,
     HitInfo hitInfo)

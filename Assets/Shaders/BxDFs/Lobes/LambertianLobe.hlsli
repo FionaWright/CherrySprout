@@ -25,7 +25,6 @@ void LambertianLobe_Sample(
 }
 
 void LambertianLobe_Evaluate(
-        inout RngInfo rngInfo,
         HitInfo hitInfo,
         float3 wi,
 

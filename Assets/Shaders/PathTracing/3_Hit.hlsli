@@ -55,7 +55,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
             float3 f_bxdf;
             float pdf_bxdf;
-            bxdf.Evaluate(rngInfo, hitInfo, wo, wi_env, f_bxdf, pdf_bxdf);
+            bxdf.Evaluate(hitInfo, wo, wi_env, f_bxdf, pdf_bxdf);
 
             float m = PowerHeuristic(pdf_env, pdf_bxdf);
 
@@ -79,8 +79,13 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     {
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
-        wi = RandHemisphereUniformWorld(u1, u2, hitInfo.SFrame);
-        bxdf.Evaluate(rngInfo, hitInfo, wo, wi, f, pdf);
+        wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
+
+        float bxdfPdf; // Discarded
+        bxdf.Evaluate(hitInfo, wo, wi, f, bxdfPdf);
+
+        float NdL = dot(hitInfo.Ns_ff, wi);
+        pdf = NdL / PI;
     }
     else
     {
