@@ -7,6 +7,7 @@ struct PathState
 {
     float LastBxdfPdf;
     uint RaySegmentIdx;
+    bool LastRayDiracDelta;
 };
 
 #include "PathTracing/3_Hit.hlsli"
@@ -22,8 +23,9 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
     float3 beta = float3(1, 1, 1);
 
     PathState pathState;
+    pathState.LastRayDiracDelta = false;
 
-    for (uint i = 0; i <= gSettings.MaxRayDepth; i++)
+    for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
         q.Proceed();
@@ -44,6 +46,8 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
             Lo += L_sample;
             break;
         }
+
+        pathState.LastRayDiracDelta = false;
 
         float3 L_sample;
         Hit(q, ray, pathState, L_sample, beta, rngInfo);

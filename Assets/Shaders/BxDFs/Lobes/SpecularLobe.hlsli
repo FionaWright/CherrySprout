@@ -26,7 +26,6 @@ void SpecularLobe_Sample(
 
     float NdV = SSpaceCosTheta(V_s);
     float NdL = SSpaceCosTheta(L_s);
-    float NdH = SSpaceCosTheta(H_s);
     float VdH = dot(H_s, V_s);
 
     float3 F = F_Schlick(VdH, F0);
@@ -74,7 +73,6 @@ void SpecularLobe_Evaluate(
 
     float NdV = SSpaceCosTheta(V_s);
     float NdL = SSpaceCosTheta(L_s);
-    float NdH = SSpaceCosTheta(H_s);
     float VdH = dot(H_s, V_s);
 
     float3 F = F_Schlick(VdH, F0);

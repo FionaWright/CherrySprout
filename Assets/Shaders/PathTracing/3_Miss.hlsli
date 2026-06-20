@@ -10,8 +10,7 @@ float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bou
         float2 uv = EaSphereToSquare(direction);
         float3 Le = gTexEnvMap.Sample(gSampler, uv).rgb;
 
-        // TODO: Shouldn't be run if previous BxDF used specular lobe either
-        if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0)
+        if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayDiracDelta)
         {
             float pdf_env = GetEnvMapPdf(uv);
             float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env);

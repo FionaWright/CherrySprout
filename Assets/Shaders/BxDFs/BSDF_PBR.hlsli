@@ -40,6 +40,7 @@ bool IsSpecular(inout RngInfo rngInfo, float NdV, float3 F0, out float specProb)
 
 void BxDF::Sample(
     inout RngInfo rngInfo,
+    inout PathState pathState,
     HitInfo hitInfo,
     float3 wo,
 
@@ -109,6 +110,9 @@ void BxDF::Sample(
     if (isSpecular)
     {
         SpecularLobe_Sample(rngInfo, hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf);
+
+        if (pdf == 1.0f)
+            pathState.LastRayDiracDelta = true;
 
         pdf *= specProb;
     }
@@ -193,7 +197,7 @@ void BxDF::Evaluate(
     }
     else
     {
-        LambertianLobe_Evaluate(rngInfo, hitInfo, L_s, f, pdf);
+        LambertianLobe_Evaluate(rngInfo, hitInfo, wi, f, pdf);
 
         f *= (1.0 - hitInfo.Mat.Metallic);
         pdf *= 1.0f - specProb;

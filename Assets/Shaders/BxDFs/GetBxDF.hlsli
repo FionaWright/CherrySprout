@@ -9,6 +9,7 @@ struct BxDF
 {
     void Sample(
         inout RngInfo rngInfo,
+        inout PathState pathState,
         HitInfo hitInfo,
         float3 wo,
 

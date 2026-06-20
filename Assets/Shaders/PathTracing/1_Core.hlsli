@@ -1,6 +1,8 @@
 #ifndef H_CORE_H
 #define H_CORE_H
 
+static bool gRunBxdfTestForPixel = false;
+
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/2_Trace.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
@@ -42,6 +44,12 @@ void Core(uint2 pixelCoord)
             pixelUV += jitter;
         }
         pixelUV *= gSettings.TexelSize;
+
+        if (DEBUG_ENABLED(BxdfTest) && pixelUV.x < 0.5f)
+        {
+            pixelUV.x = 1 - pixelUV.x;
+            gRunBxdfTestForPixel = true;
+        }
 
         float2 ndc = RemapUtoS(pixelUV);
         ndc.y = -ndc.y;

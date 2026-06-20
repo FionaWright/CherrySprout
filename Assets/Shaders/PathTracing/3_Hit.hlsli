@@ -25,8 +25,6 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     L_sample = beta * hitInfo.Li;
 
     // TODO in a loose order:
-    // Implement Evaluate for PBR
-    // Separate f from pdf in the BxDF. Divide beta by the throughput explicitly
     // Refactor NEE sampling into functions/files
     // Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
 
@@ -77,7 +75,17 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     float3 f;
     float pdf;
 
-    bxdf.Sample(rngInfo, hitInfo, wo, wi, f, pdf);
+    if (DEBUG_ENABLED(BxdfTest) && gRunBxdfTestForPixel)
+    {
+        float u1 = Rand01(rngInfo);
+        float u2 = Rand01(rngInfo);
+        wi = RandHemisphereUniformWorld(u1, u2, hitInfo.SFrame);
+        bxdf.Evaluate(rngInfo, hitInfo, wo, wi, f, pdf);
+    }
+    else
+    {
+        bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f, pdf);
+    }
 
     float NdL = dot(hitInfo.Ns_ff, wi);
     beta *= f * abs(NdL) / max(1e-6, pdf);
