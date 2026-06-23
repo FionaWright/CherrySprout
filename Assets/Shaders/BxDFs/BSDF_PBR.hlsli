@@ -23,6 +23,7 @@ float GetReflectProb(float iorCurrent, float iorNext, float NdV)
     return reflectProb;
 }
 
+// TODO: Apparently using VdH can reduce variance here, although in my case it causes artifacts in the revaluate test
 float GetSpecularProb(float NdV, float3 F0)
 {
     float3 F_select = F_Schlick(NdV, F0);
@@ -67,6 +68,8 @@ void BxDF::Sample(
     float3 H_s = mm.Sample(u1, u2);
     float VdH = dot(H_s, V_s);
 
+    DBG_ASSERT_VALUE(H_s,                        BxDF_PBR_H_S);
+
     DBG_OUTPUT3(H_s,                             H_s);
     DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     H_w);
     DBG_OUTPUT1(mm.m_alpha,                      Alpha);
@@ -87,19 +90,27 @@ void BxDF::Sample(
             float reflectProb = GetReflectProb(iorCurrent, iorNext, VdH);
             bool isReflect = Rand01(rngInfo) < reflectProb;
 
+            DBG_OUTPUT1(reflectProb,                      ReflectProb);
+
             if (isReflect)
             {
                 SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf);
 
                 pdf *= reflectProb;
 
-                DBG_ASSERT_VALUE(f, BxDF_PBR_GLASS_SPEC_F);
+                DBG_ASSERT_VALUE(f,         BxDF_PBR_GLASS_SPEC_F);
+                DBG_ASSERT_VALUE(pdf,       BxDF_PBR_GLASS_SPEC_PDF);
+                DBG_ASSERT_VALUE(L_s,       BxDF_PBR_GLASS_SPEC_L_S);
             }
             else
             {
                 TransmissiveLobe_Sample(hitInfo, mm, V_s, N_s, H_s, iorCurrent, iorNext, L_s, f, pdf);
 
                 pdf *= 1.0f - reflectProb;
+
+                DBG_ASSERT_VALUE(f,         BxDF_PBR_GLASS_REFRACT_F);
+                DBG_ASSERT_VALUE(pdf,       BxDF_PBR_GLASS_REFRACT_PDF);
+                DBG_ASSERT_VALUE(L_s,       BxDF_PBR_GLASS_REFRACT_L_S);
             }
 
             pdf *= hitInfo.Mat.TransmissionFactor;
@@ -109,8 +120,10 @@ void BxDF::Sample(
         }
     }
 
-    float specProb = GetSpecularProb(VdH, F0);
+    float specProb = GetSpecularProb(NdV, F0);
     bool isSpecular = Rand01(rngInfo) < specProb;
+
+    DBG_OUTPUT1(specProb,                      SpecProb);
 
     if (isSpecular)
     {
@@ -120,13 +133,21 @@ void BxDF::Sample(
             pathState.LastRayDiracDelta = true;
 
         pdf *= specProb;
+
+        DBG_ASSERT_VALUE(f,           BxDF_PBR_SPEC_F);
+        DBG_ASSERT_VALUE(pdf,         BxDF_PBR_SPEC_PDF);
+        DBG_ASSERT_VALUE(L_s,         BxDF_PBR_SPEC_L_S);
     }
     else
     {
-        LambertianLobe_Sample(rngInfo, hitInfo, L_s, f, pdf);
+        LambertianLobe_Sample(hitInfo, u1, u2, L_s, f, pdf);
 
         f *= (1.0 - hitInfo.Mat.Metallic);
         pdf *= 1.0f - specProb;
+
+        DBG_ASSERT_VALUE(f,           BxDF_PBR_DIFF_F);
+        DBG_ASSERT_VALUE(pdf,         BxDF_PBR_Diff_PDF);
+        DBG_ASSERT_VALUE(L_s,         BxDF_PBR_Diff_L_S);
     }
 
     if (FEATURE_ENABLED(GlassMaterials))
@@ -178,6 +199,8 @@ void BxDF::Evaluate(
 
         float reflectProb = GetReflectProb(iorCurrent, iorNext, VdH);
 
+        DBG_OUTPUT1(reflectProb,                      ReflectProb);
+
         float3 f_trans = 0;
         float pdf_trans = 0;
 
@@ -186,7 +209,6 @@ void BxDF::Evaluate(
             float pdf_reflect;
             SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_reflect, pdf_reflect);
 
-            //f_reflect *= reflectProb;
             pdf_reflect *= reflectProb;
 
             if (DEBUG_ENABLED(ForceRefract))
@@ -195,7 +217,8 @@ void BxDF::Evaluate(
             f_trans += f_reflect;
             pdf_trans += pdf_reflect;
 
-            DBG_ASSERT_VALUE(f, BxDF_PBR_GLASS_SPEC_F);
+            DBG_ASSERT_VALUE(f_reflect,         BxDF_PBR_GLASS_SPEC_F);
+            DBG_ASSERT_VALUE(pdf_reflect,       BxDF_PBR_GLASS_SPEC_PDF);
         }
 
         {
@@ -203,7 +226,6 @@ void BxDF::Evaluate(
             float pdf_refract;
             TransmissiveLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, iorCurrent, iorNext, f_refract, pdf_refract);
 
-            //f_refract *= 1.0f - reflectProb;
             pdf_refract *= 1.0f - reflectProb;
 
             if (DEBUG_ENABLED(ForceReflect))
@@ -211,6 +233,9 @@ void BxDF::Evaluate(
 
             f_trans += f_refract;
             pdf_trans += pdf_refract;
+
+            DBG_ASSERT_VALUE(f_refract,         BxDF_PBR_GLASS_REFRACT_F);
+            DBG_ASSERT_VALUE(pdf_refract,       BxDF_PBR_GLASS_REFRACT_PDF);
         }
 
         f_trans *= hitInfo.Mat.TransmissionFactor;
@@ -220,7 +245,9 @@ void BxDF::Evaluate(
         pdf += pdf_trans;
     }
 
-    float specProb = GetSpecularProb(VdH, F0);
+    float specProb = GetSpecularProb(NdV, F0);
+
+    DBG_OUTPUT1(specProb,                      SpecProb);
 
     float3 f_opaque = 0;
     float pdf_opaque = 0;
@@ -237,12 +264,15 @@ void BxDF::Evaluate(
 
             f_opaque += f_spec;
             pdf_opaque += pdf_spec;
+
+            DBG_ASSERT_VALUE(f_spec,           BxDF_PBR_SPEC_F);
+            DBG_ASSERT_VALUE(pdf_spec,         BxDF_PBR_SPEC_PDF);
         }
 
         {
             float3 f_diff;
             float pdf_diff;
-            LambertianLobe_Evaluate(hitInfo, wi, f_diff, pdf_diff);
+            LambertianLobe_Evaluate(hitInfo, L_s, f_diff, pdf_diff);
 
             f_diff *= (1.0 - hitInfo.Mat.Metallic);
             pdf_diff *= 1.0f - specProb;
@@ -252,6 +282,9 @@ void BxDF::Evaluate(
 
             f_opaque += f_diff;
             pdf_opaque += pdf_diff;
+
+            DBG_ASSERT_VALUE(f_diff,           BxDF_PBR_DIFF_F);
+            DBG_ASSERT_VALUE(pdf_diff,         BxDF_PBR_Diff_PDF);
         }
     }
 

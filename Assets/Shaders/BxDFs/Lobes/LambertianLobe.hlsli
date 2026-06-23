@@ -2,17 +2,14 @@
 #define H_BRDF_LAMBERTIAN_LOBE_H
 
 void LambertianLobe_Sample(
-        inout RngInfo rngInfo,
         HitInfo hitInfo,
+        float u1, float u2,
 
         out float3 L_s,
         out float3 f,
         out float pdf
     )
 {
-    float u1 = Rand01(rngInfo);
-    float u2 = Rand01(rngInfo);
-
     L_s = RandHemisphereCosineSSpace(u1, u2);
 
     float NdL = SSpaceCosTheta(L_s);
@@ -26,13 +23,13 @@ void LambertianLobe_Sample(
 
 void LambertianLobe_Evaluate(
         HitInfo hitInfo,
-        float3 wi,
+        float3 L_s,
 
         out float3 f,
         out float pdf
     )
 {
-    float NdL = dot(hitInfo.Ns_ff, wi);
+    float NdL = SSpaceCosTheta(L_s);
     f = hitInfo.Mat.Albedo.rgb / PI;
     pdf = NdL / PI;
 }

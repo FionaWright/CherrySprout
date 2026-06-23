@@ -53,4 +53,6 @@ void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)         
 
 #define DBG_ASSERT_RANGE(min, v, max, dbgID)     if (DEBUG_ENABLED(Asserts))     dbgAssert(min, v, max, min <= v && v <= max, dbgID);
 
+#define DBG_ASSERT_APPROX(v1, v2, threshold, dbgID)  if (DEBUG_ENABLED(Asserts))     dbgAssert(v1, v2, 0, all(abs(v1 - v2) <= threshold), dbgID);
+
 #endif

@@ -14,9 +14,11 @@ void BxDF::Sample(
     out float pdf
 )
 {
-    float3 L_s;
+    float u1 = Rand01(rngInfo);
+    float u2 = Rand01(rngInfo);
 
-    LambertianLobe_Sample(rngInfo, hitInfo, L_s, f, pdf);
+    float3 L_s;
+    LambertianLobe_Sample(hitInfo, u1, u2, L_s, f, pdf);
 
     wi = hitInfo.SFrame.ToWorld(L_s);
 }
@@ -30,7 +32,8 @@ void BxDF::Evaluate(
     out float pdf
 )
 {
-    LambertianLobe_Evaluate(hitInfo, wi, f, pdf);
+    float3 L_s = hitInfo.SFrame.ToLocal(wi);
+    LambertianLobe_Evaluate(hitInfo, L_s, f, pdf);
 }
 
 #endif

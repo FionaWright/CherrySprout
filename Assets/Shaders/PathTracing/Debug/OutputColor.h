@@ -53,6 +53,8 @@ enum class DebugOutputIndex : hlsl::uint
     eDebugOutput_F,
     eDebugOutput_f,
     eDebugOutput_PDF,
+    eDebugOutput_SpecProb,
+    eDebugOutput_ReflectProb,
 
     // NEE:
     eDebugOutput_NEE_L_w,
@@ -115,6 +117,8 @@ static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputInde
     "F",
     "f",
     "PDF",
+    "Specular Probability",
+    "Reflect Probability",
 
     // NEE
     "NEE L_w",
@@ -151,12 +155,15 @@ static float3 gDebugValue = NAN;
 
 #    define DBG_OUTPUT_SET(output) { output = gDebugValue; }
 
+#    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }
+
 #else
 #    define DBG_OUTPUT3(value, idx)
 #    define DBG_OUTPUT2(value, idx)
 #    define DBG_OUTPUT1(value, idx)
 #    define DBG_FORCE_OUTPUT3(value)
 #    define DBG_OUTPUT_SET(output)
+#    define DBG_OUTPUT_RESET()
 
 #endif
 

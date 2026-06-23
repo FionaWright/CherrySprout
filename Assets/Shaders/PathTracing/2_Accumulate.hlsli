@@ -9,7 +9,7 @@
 
 float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)
 {
-    float3 accumColor = gSettings.FrameIdx == 0 ? 0 : gTexAccumulation.Load(pixelCoord).rgb;
+    float3 accumColor = gSettings.FrameIdx == 0 || !FEATURE_ENABLED(Accumulation) ? 0 : gTexAccumulation.Load(pixelCoord).rgb;
 
     if (DEBUG_ENABLED(NaNTests))
     {

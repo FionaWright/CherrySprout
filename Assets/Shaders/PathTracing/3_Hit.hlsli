@@ -89,8 +89,16 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     }
     else if (DEBUG_ENABLED(BxdfTestRevaluate) && gRunBxdfTestForPixel)
     {
-        bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f, pdf);
+        float3 f_sample;
+        float pdf_sample;
+        bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f_sample, pdf_sample);
+
+        if (pathState.RaySegmentIdx == 0)
+            DBG_OUTPUT_RESET();
         bxdf.Evaluate(hitInfo, wo, wi, f, pdf);
+
+        DBG_ASSERT_APPROX(f_sample, f, 0.2, REVALUATE_F);
+        DBG_ASSERT_APPROX(pdf_sample, pdf, 0.2, REVALUATE_PDF);
     }
     else
     {
