@@ -36,7 +36,7 @@ A uniform distribution corresponds to $p_j(X_j) = \dfrac{1}{|\Omega|}$
 
 Each halving of noise magnitude requires 4x the samples. It's usually better to make the density $p$ match $f$. 
 
-Uppercase = Random Variables
+Uppercase = Random Variables  
 Lowercase = Traditional Variables
 
 Estimators are RVs so the value may not match the integral, however provided the samples cover $\Omega$ it will be unbiased. e.g. $E[\langle I \rangle] = I$  
@@ -493,6 +493,10 @@ If $Y = T(X)$:
 $p_Y(Y) = \dfrac{p_X(X)}{|T'(X)|}$  
 $W_Y = W_X |T'(x)|$  
 
+Shift mapping is always needed for spatial reuse, and only needed for temporal reuse when objects or the camera moves
+
+ReSTIR DI does NOT need shift mappings if it only uses light sampling. This is because the sample lives in light space, not camera path space. (NOT SURE ABOUT THIS, CHECK)
+
 ### Reconnection Shift
 
 Maps a path to another pixel, reconnecting the deterministic beginning to the same $x_2$, retaining all free vertices.  
@@ -544,4 +548,51 @@ Evaluate $W_Y$
 
 If a shift mapping fails then $w_i = 0$  
 
-Continue from pg 32. MIS between domains  
+#### MIS between Domains
+
+Computing $m_i$ is more complicated due to the shifts.  
+The target functions $\hat p_i$ are defined for each $\Omega_i$ and cannot be used with $Y_i \in \Omega$  
+
+To get $p_{Y_i}(y)$ from only $p_{X_i}$ and $T_i$:  
+$p_{Y_i}(y) = p_{X_i}(T_i^{-1}(y)) \cdot |T_i^{-1}\ '(y)|$   
+If the PDFs are known, you can use this for the balance heuristic  
+
+Let $\hat p_i$ be a proxy for $p_{X_i}$  
+Let $\hat p_{\leftarrow i}(y)$ be what we want for MIS  
+$\hat p_{\leftarrow}(y) = \hat p_i (T_i^{-1}(y)) \cdot | T_i^{-1}\ ' (y)|$  
+$y \not \in T_i(supp(X_i)) \to \hat p_{\leftarrow i}(y) = 0$  
+Return 0 if $y$ cannot be shifted back into $\Omega_i$, or if $x_i = T_i^{-1}(y)$ has zero PDF  
+
+$m_i(y) = \dfrac{c_i \hat p_{\leftarrow i}(y)}{\sum c_j p_{\leftarrow j}(y)}$  
+
+Call $\hat p_{\leftarrow i}$ `pHatFrom(i, y)` in code
+
+![alt text]({BFD27D16-9348-46CB-8726-F09C23C9074C}.png)
+
+```cpp
+float pHatFrom(uint i, Type y_i)
+{
+    Type x_i = InverseShift(i, y_i);
+    float J_xi = JacobianDetInverseShift(i, y_i);
+
+    if (x_i != NULL)
+        return Target(x_i) * J_xi;
+    return 0;
+}
+
+float GenBalanceHeuristic(uint i, Type y_i, Type x_i, float c_i, float J_yi)
+{
+    float pHatFromI = Target(i, x_i) / J_yi;
+
+    float m_num = c_i * pHatFromI;
+    float m_den = 0;
+    for (int j = 0; j < M; j++)
+    {
+        m_den += c_j * pHatFrom(j, y_i);
+    }
+    return m_num / m_den;
+}
+```
+
+## ReSTIR PT
+
