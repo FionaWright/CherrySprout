@@ -9,6 +9,10 @@ RIS Talbot:
 
 What is RIS:
     https://cwyman.org/blogs/introToReSTIR/introToRIS.md.html
+    https://intro-to-restir.cwyman.org/ 
+
+Less math-heavy ReSTIR introduction:
+    https://interplayoflight.wordpress.com/2023/12/17/a-gentler-introduction-to-restir/
 
 GRIS:
     https://dl.acm.org/doi/10.1145/3528223.3530158
