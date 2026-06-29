@@ -34,4 +34,14 @@ void LambertianLobe_Evaluate(
     pdf = NdL / PI;
 }
 
+void LambertianLobe_Pdf(
+        float3 L_s,
+
+        out float pdf
+    )
+{
+    float NdL = SSpaceCosTheta(L_s);
+    pdf = NdL / PI;
+}
+
 #endif

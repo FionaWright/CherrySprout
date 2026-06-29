@@ -18,7 +18,7 @@ void SpecularLobe_Sample(
     if (L_s.z <= 0.0f)
     {
         f = 0.0f;
-        pdf = 0.0f;
+        pdf = 1.0f;
         DBG_OUTPUT1(0,                F);
         DBG_OUTPUT1(0,                G);
         return;
@@ -65,7 +65,7 @@ void SpecularLobe_Evaluate(
     if (L_s.z <= 0.0f)
     {
         f = 0.0f;
-        pdf = 0.0f;
+        pdf = 1.0f;
         DBG_OUTPUT1(0,                F);
         DBG_OUTPUT1(0,                G);
         return;
@@ -95,6 +95,34 @@ void SpecularLobe_Evaluate(
 
     float3 specularBrdf = (D * G * F) / max(1e-6, 4 * NdV * NdL);
     f = specularBrdf;
+}
+
+void SpecularLobe_Pdf(
+        HitInfo hitInfo,       MicrofacetModel mm,
+        float3 V_s,            float3 H_s,          float3 L_s,
+
+        out float pdf
+    )
+{
+    // Terminate ray if wi ends up inside surface
+    if (L_s.z <= 0.0f)
+    {
+        pdf = 1.0f;
+        return;
+    }
+
+    float VdH = dot(H_s, V_s);
+
+    float D = mm.D(H_s);
+    pdf = mm.PDF(D, H_s, V_s);
+    pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
+
+    // Dirac Delta
+    if (hitInfo.Mat.Roughness < EPSILON)
+    {
+        pdf = 1;
+        return;
+    }
 }
 
 #endif

@@ -11,32 +11,29 @@
 
 float GetReflectProb(float iorCurrent, float iorNext, float NdV)
 {
-    float reflectProb = Fresnel_Dielectric_Unpolarized(iorCurrent, iorNext, abs(NdV));
-
     if (DEBUG_ENABLED(ForceReflect))
-        reflectProb = 1.0f;
+        return 1.0f;
     else if (CheckTIR(iorCurrent, iorNext, abs(NdV)))
-        reflectProb = 1.0f;
+        return 1.0f;
     else if (DEBUG_ENABLED(ForceRefract))
-        reflectProb = 0.0f;
+        return 0.0f;
 
-    return reflectProb;
+    return Fresnel_Dielectric_Unpolarized(iorCurrent, iorNext, abs(NdV));
 }
 
-// TODO: Apparently using VdH can reduce variance here, although in my case it causes artifacts in the revaluate test
 float GetSpecularProb(float NdV, float3 F0)
 {
+    if (DEBUG_ENABLED(ForceSpecular))
+        return 1.0f;
+    else if (DEBUG_ENABLED(ForceDiffuse))
+        return 0.0f;
+
+    return 0.5f;
+
     float3 F_select = F_Schlick(NdV, F0);
 
     float specProb = Luminance(F_select); // kS
-    specProb = clamp(specProb, 0.05f, 0.95f);
-
-    if (DEBUG_ENABLED(ForceSpecular))
-        specProb = 1.0f;
-    else if (DEBUG_ENABLED(ForceDiffuse))
-        specProb = 0.0f;
-
-    return specProb;
+    return clamp(specProb, 0.05f, 0.95f);
 }
 
 void BxDF::Sample(
@@ -257,10 +254,9 @@ void BxDF::Evaluate(
             float pdf_spec;
             SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_spec, pdf_spec);
 
+            if (DEBUG_ENABLED(ForceDiffuse) || DEBUG_ENABLED(ForceSpecular))
+                f_spec *= specProb;
             pdf_spec *= specProb;
-
-            if (DEBUG_ENABLED(ForceDiffuse))
-                f_spec = 0.0f;
 
             f_opaque += f_spec;
             pdf_opaque += pdf_spec;
@@ -275,10 +271,9 @@ void BxDF::Evaluate(
             LambertianLobe_Evaluate(hitInfo, L_s, f_diff, pdf_diff);
 
             f_diff *= (1.0 - hitInfo.Mat.Metallic);
+            if (DEBUG_ENABLED(ForceDiffuse) || DEBUG_ENABLED(ForceSpecular))
+                f_diff *= 1.0f - specProb;
             pdf_diff *= 1.0f - specProb;
-
-            if (DEBUG_ENABLED(ForceSpecular))
-                f_diff = 0.0f;
 
             f_opaque += f_diff;
             pdf_opaque += pdf_diff;

@@ -22,10 +22,14 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Place asserts all over the program
 - [ ] PT meta counter debug increment/F4/etc system
 - [ ] Debug quick input bools/floats/etc
+- [ ] Path dumper
+- [ ] Automatic path dumper + visualizer on assertion error
 - [ ] Furnace Test
 - [ ] RMSE Test
-- [ ] BxDF Test
-- [ ] Mean Test
+- [x] BxDF Test
+- [ ] Mean Test (With/Without NEE should have same average value)
+
+- [ ] Pass both BxDF tests with PBR
 
 ## BxDF Test Explained
 
