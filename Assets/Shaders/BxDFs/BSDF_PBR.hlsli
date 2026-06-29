@@ -28,8 +28,6 @@ float GetSpecularProb(float NdV, float3 F0)
     else if (DEBUG_ENABLED(ForceDiffuse))
         return 0.0f;
 
-    return 0.5f;
-
     float3 F_select = F_Schlick(NdV, F0);
 
     float specProb = Luminance(F_select); // kS
