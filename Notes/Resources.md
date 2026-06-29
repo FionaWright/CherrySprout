@@ -11,9 +11,6 @@ What is RIS:
     https://cwyman.org/blogs/introToReSTIR/introToRIS.md.html
     https://intro-to-restir.cwyman.org/ 
 
-Less math-heavy ReSTIR introduction:
-    https://interplayoflight.wordpress.com/2023/12/17/a-gentler-introduction-to-restir/
-
 GRIS:
     https://dl.acm.org/doi/10.1145/3528223.3530158
 
@@ -55,6 +52,18 @@ ReSTIR Control Variates:
 
 Faster Robust ReSTIR:
     https://research.nvidia.com/labs/rtr/publication/lin2026restirptenhanced/
+
+Area ReSTIR:
+    https://graphics.cs.utah.edu/research/projects/area-restir/
+
+Decorrelating ReSTIR Samplers via MCMC Mutations:
+    https://dl.acm.org/doi/10.1145/3629166 
+
+Reservoir Splatting:
+    https://dl.acm.org/doi/10.1145/3721238.3730646
+
+Multi-Layer Reservoir Splatting:
+    https://graphics.cs.utah.edu/research/projects/multi-layer-restir/
 
 ## Misc
 

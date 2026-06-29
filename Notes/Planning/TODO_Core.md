@@ -17,8 +17,11 @@ The main important tasks for the project
 - [ ] Emissive NEE
 
 - [ ] RIS
-- [ ] GRIS
 - [ ] ReSTIR DI
+- [ ] Research path guiding
+- [ ] Shift Mapping
 - [ ] ReSTIR GI
+- [ ] GRIS ?
+- [ ] ReSTIR PT
 
 Don't forget lots of testing, plotting, analysis, etc
