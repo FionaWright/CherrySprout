@@ -93,12 +93,16 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
         float pdf_sample;
         bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f_sample, pdf_sample);
 
-        if (pathState.RaySegmentIdx == 0)
+        if (pathState.LastRayDiracDelta)
+        {
+            f = f_sample;
+            pdf = pdf_sample;
+        }
+        else
+        {
             DBG_OUTPUT_RESET();
-
-        bxdf.Evaluate(hitInfo, wo, wi, f, pdf);
-        //f = f_sample;
-        //pdf = pdf_sample;
+            bxdf.Evaluate(hitInfo, wo, wi, f, pdf);
+        }
 
         DBG_ASSERT_APPROX(f_sample, f, 5, REVALUATE_F);
         DBG_ASSERT_APPROX(pdf_sample, pdf, 5, REVALUATE_PDF);

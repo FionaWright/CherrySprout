@@ -91,7 +91,10 @@ void BxDF::Sample(
 
             if (isReflect)
             {
-                SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf);
+                bool isDiracDelta;
+                SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf, isDiracDelta);
+
+                pathState.LastRayDiracDelta = isDiracDelta;
 
                 pdf *= reflectProb;
 
@@ -124,10 +127,10 @@ void BxDF::Sample(
 
     if (isSpecular)
     {
-        SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf);
+        bool isDiracDelta;
+        SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf, isDiracDelta);
 
-        if (pdf == 1.0f)
-            pathState.LastRayDiracDelta = true;
+        pathState.LastRayDiracDelta = isDiracDelta;
 
         pdf *= specProb;
 
