@@ -60,7 +60,7 @@ enum class DebugOutputIndex : hlsl::uint
     eDebugOutput_NEE_L_w,
     eDebugOutput_NEE_PDF,
     eDebugOutput_NEE_Occluded,
-    eDebugOutput_NEE_L_Direct,
+    eDebugOutput_NEE_Le,
     eDebugOutput_NEE_MIS_Weight,
 
     eCount
@@ -124,7 +124,7 @@ static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputInde
     "NEE L_w",
     "NEE PDF",
     "NEE Occluded",
-    "NEE L_Direct",
+    "NEE Le",
     "NEE MIS Weight",
 };
 

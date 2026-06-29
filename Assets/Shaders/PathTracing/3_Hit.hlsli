@@ -8,9 +8,9 @@
 
 #include "Utils/RandomDirection.h"
 
-#include "PathTracing/MIS/SampleEnvMapCdf.hlsli"
-#include "PathTracing/MIS/TraceShadowRay.hlsli"
-#include "PathTracing/MIS/PowerHeuristic.hlsli"
+#include "PathTracing/NEE/SampleEnvMapCdf.hlsli"
+#include "PathTracing/NEE/TraceShadowRay.hlsli"
+#include "PathTracing/NEE/SampleLight.hlsli"
 
 void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathState, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo)
 {
@@ -25,50 +25,15 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     L_sample = beta * hitInfo.Li;
 
     // TODO in a loose order:
-    // Refactor NEE sampling into functions/files
     // Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
 
     BxDF bxdf;
 
     if (FEATURE_ENABLED(NEE) && FEATURE_ENABLED(EnvironmentMap))
     {
-        float u1 = Rand01(rngInfo);
-        float u2 = Rand01(rngInfo);
-
-        float2 uv_env;
-        float3 wi_env;
-        float pdf_env;
-        SampleEnvMapCdf(u1, u2, uv_env, wi_env, pdf_env);
-
-        float NdL = dot(hitInfo.Ns_ff, wi_env);
-
-        bool occluded;
-        TraceShadowRay(nextOrigin, wi_env, occluded);
-
-        DBG_OUTPUT3(wi_env,       NEE_L_w);
-        DBG_OUTPUT1(pdf_env,      NEE_PDF);
-        DBG_OUTPUT1(occluded,     NEE_Occluded);
-
-        if (!occluded && NdL >= 0)
-        {
-            float3 L_direct = gTexEnvMap.Sample(gSampler, uv_env).rgb;
-
-            float3 f_bxdf;
-            float pdf_bxdf;
-            bxdf.Evaluate(hitInfo, wo, wi_env, f_bxdf, pdf_bxdf);
-
-            float m = PowerHeuristic(pdf_env, pdf_bxdf);
-
-            L_sample += beta * L_direct * m * max(0, NdL) * f_bxdf / pdf_env;
-
-            DBG_OUTPUT3(L_direct,     NEE_L_Direct);
-            DBG_OUTPUT1(m,            NEE_MIS_Weight);
-        }
-        else
-        {
-            DBG_OUTPUT1(0,            NEE_L_Direct);
-            DBG_OUTPUT1(0,            NEE_MIS_Weight);
-        }
+        float3 lightRadiance;
+        SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, beta, lightRadiance);
+        L_sample += lightRadiance;
     }
 
     float3 wi;

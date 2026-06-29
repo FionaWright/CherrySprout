@@ -1,6 +1,8 @@
 #ifndef H_MISS_H
 #define H_MISS_H
 
+#include "PathTracing/MIS.hlsli"
+
 float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bounceIdx)
 {
     float3 Li = float3(0, 0, 0);
