@@ -50,6 +50,23 @@ float4 SampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV);
 }
 
+void ApplyMaterialTextures(inout HitInfo hitInfo)
+{
+    float4 albedoSample = SampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
+    float roughnessSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
+    float metallicSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
+    //float3 emissionSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
+
+    if (true) // TODO
+        albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
+
+    hitInfo.Mat.Albedo.rgb *= albedoSample.rgb;
+    hitInfo.Mat.Roughness *= roughnessSample;
+    hitInfo.Mat.Metallic *= metallicSample;
+
+    hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
+}
+
 void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 {
     uint instanceIdx = q.CommittedInstanceIndex();
@@ -95,19 +112,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
-    float4 albedoSample = SampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
-    if (true) // TODO
-        albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
-    hitInfo.Mat.Albedo.rgb *= albedoSample.rgb;
-
-    //float3 emissionSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
-
-    float roughnessSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
-    float metallicSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
-    hitInfo.Mat.Roughness *= roughnessSample;
-    hitInfo.Mat.Metallic *= metallicSample;
-
-    hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
+    ApplyMaterialTextures(hitInfo);
 
     DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
     DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);

@@ -13,7 +13,7 @@ ConstantBuffer<CbvRestirSettings> gRestirSettings : register(b1);
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    uint pixelCoord = DTid.xy;
+    uint2 pixelCoord = DTid.xy;
 
     if (pixelCoord.x > gSettings.Dimensions.x || pixelCoord.y > gSettings.Dimensions.y)
         return;
@@ -25,8 +25,16 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     HitInfo hitInfo;
     bool isMiss;
-    ConstructFirstHitFromGBuffer(pixelCoord, hitInfo, isMiss);
-    float3 wo = 0; // TODO
+    ConstructFirstHitFromGBuffer(gSettings.CameraPositionWorld, pixelCoord, hitInfo, isMiss);
+
+    float3 rayOrigin;
+    float3 rayDirection;
+    GetPrimaryRay(
+        rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        pixelCoord, gSettings.InvV, gSettings.InvP,
+        gSettings.DofFocalDist, gSettings.DofLensRadius,
+        rayOrigin, rayDirection);
+    float3 wo = -rayOrigin;
 
     ReservoirDI reservoir = CreateReservoir();
 
