@@ -31,9 +31,34 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
     if (FEATURE_ENABLED(NEE) && FEATURE_ENABLED(EnvironmentMap))
     {
-        float3 lightRadiance;
-        SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, beta, lightRadiance);
-        L_sample += lightRadiance;
+        float3 E_direct = 0;
+        if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
+        {
+            uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
+            ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+
+            float3 wi = normalize(reservoir.Y.ScaledDirection);
+            float NdL = max(0, dot(wi, hitInfo.Ns_ff));
+            if (reservoir.Confidence > 0 && NdL > 0)
+            {
+                bool occluded;
+                TraceShadowRay(nextOrigin, wi, occluded);
+
+                if (!occluded)
+                {
+                    float W_Y = reservoir.W_Y / reservoir.Confidence; // ?
+                    E_direct = f_bxdf * reservoir.Y.Radiance * NdL * W_Y;
+                }
+            }
+        }
+        else
+        {
+            float3 wi_env;
+            float distance; // Discarded
+            SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, E_direct, wi_env, distance);
+        }
+        // TODO: Share shadow ray handling for both out here
+        L_sample += E_direct * beta;
     }
 
     float3 wi;

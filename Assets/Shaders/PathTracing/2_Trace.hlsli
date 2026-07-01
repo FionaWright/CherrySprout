@@ -62,7 +62,7 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
                 L_sample *= gSettings.FireflyThreshold / L_lum;
         }
 
-        Lo += L_sample;
+        Lo += L_sample; // TODO: Should the L_sample * beta be moved out here? 
 
         if (FEATURE_ENABLED(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
         {

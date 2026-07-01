@@ -2,15 +2,6 @@
 #define H_RIS_H
 
 template<typename T>
-T Generate(); // Abstract
-
-template<typename T>
-void Target(T X_i); // Abstract
-
-template<typename T>
-void PDF(T X_i); // Abstract
-
-template<typename T>
 bool ReservoirUpdate(
     inout RngInfo rngInfo,
     inout Reservoir<T> reservoir,
@@ -60,7 +51,7 @@ float RestirMis(T X_i, uint M)
 }
 
 template<typename T>
-void ReSTIR_GenCandidates(
+void WRS(
     inout RngInfo rngInfo,
     inout Reservoir<T> reservoir,
     uint M,
@@ -69,13 +60,14 @@ void ReSTIR_GenCandidates(
 {
     for (uint i = 0; i < M; i++)
     {
-        T X_i = Generate<T>();
+        T X_i = Generate(rngInfo);
 
         float pHat = Target(X_i);
-        float m_i = RestirMis(X_i, M);
+        //float m_i = RestirMis(X_i, M);
         float W_X_i = 1.0f / PDF(X_i);
 
-        float w_i = pHat * m_i * W_X_i;
+        //float w_i = pHat * m_i * W_X_i;
+        float w_i = pHat * W_X_i;
         float c_i = 1;
 
         ReservoirUpdate(rngInfo, reservoir, X_i, m_i, w_i, c_i);

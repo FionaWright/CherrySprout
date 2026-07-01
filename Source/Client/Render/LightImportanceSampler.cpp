@@ -193,12 +193,12 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, Heap* heap, con
     m_setCdfConditionalNormalize.        Init(heap);
 
     // Pipelines
-    m_pipelineSumLum.                    InitCompute(d3d->GetDevice(), "Compute/MIS/SumLumReductionSearchCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelinePmf.                       InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapPmfCS.hlsl", m_rootSigPmf.Get());
-    m_pipelineCdfConditional.            InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfConditionalCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineCdfMarginal.               InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfMarginalCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineCdfMarginalNormalize.      InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfMarginalNormalizeCS.hlsl", m_rootSigCdfNormalize.Get());
-    m_pipelineCdfConditionalNormalize.   InitCompute(d3d->GetDevice(), "Compute/MIS/EnvMapCdfConditionalNormalizeCS.hlsl", m_rootSigCdfNormalize.Get());
+    m_pipelineSumLum.                    InitCompute(d3d->GetDevice(), "Compute/NEE/SumLumReductionSearchCS.hlsl", m_rootSigSrvUav.Get());
+    m_pipelinePmf.                       InitCompute(d3d->GetDevice(), "Compute/NEE/EnvMapPmfCS.hlsl", m_rootSigPmf.Get());
+    m_pipelineCdfConditional.            InitCompute(d3d->GetDevice(), "Compute/NEE/EnvMapCdfConditionalCS.hlsl", m_rootSigSrvUav.Get());
+    m_pipelineCdfMarginal.               InitCompute(d3d->GetDevice(), "Compute/NEE/EnvMapCdfMarginalCS.hlsl", m_rootSigSrvUav.Get());
+    m_pipelineCdfMarginalNormalize.      InitCompute(d3d->GetDevice(), "Compute/NEE/EnvMapCdfMarginalNormalizeCS.hlsl", m_rootSigCdfNormalize.Get());
+    m_pipelineCdfConditionalNormalize.   InitCompute(d3d->GetDevice(), "Compute/NEE/EnvMapCdfConditionalNormalizeCS.hlsl", m_rootSigCdfNormalize.Get());
 
     const size_t w = envMap->GetDesc().Width;
     const size_t h = envMap->GetDesc().Height;

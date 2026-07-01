@@ -17,3 +17,4 @@ FLAG_PROCESS(NEE)
 FLAG_PROCESS(Anisotropy)
 
 FLAG_PROCESS(FireflyThreshold)
+FLAG_PROCESS(RestirDI)
