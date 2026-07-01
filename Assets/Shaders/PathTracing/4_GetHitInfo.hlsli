@@ -8,23 +8,7 @@
 #include "Utils/Debug/Palette.hlsli"
 #include "PathTracing/Debug/OutputColorMacros.hlsli"
 
-struct HitInfo
-{
-    Material Mat;
-
-    float3 Ng_ff;
-    float3 Ns_ff;
-    ShadingFrame SFrame;
-
-    float3 Li;
-
-    float2 AnisoDir;
-    float AnisoStrength;
-
-    float2 UV;
-    bool IsEntering;
-    float RayT;
-};
+#include "PathTracing/HitInfo.h"
 
 float SampleTexture1(HitInfo hitInfo, int idx, float fallback)
 {

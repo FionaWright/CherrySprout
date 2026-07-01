@@ -1,14 +1,16 @@
 #ifndef H_GET_PRIMARY_RAY_H
 #define H_GET_PRIMARY_RAY_H
 
-#if (DEBUG_ENABLED(BxdfTestRevaluate) || DEBUG_ENABLED(BxdfTestHemisphere))
+#include "Utils/Random.h"
+#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "Utils/HlslUtils.hlsli"
+
 static bool gRunBxdfTestForPixel = false;
-#endif
 
 void GetPrimaryRay(
     inout RngInfo rngInfo,
     float3 cameraPos,
-    float2 texelSize;
+    float2 texelSize,
     uint2 pixelCoord,
 
     float4x4 invV,

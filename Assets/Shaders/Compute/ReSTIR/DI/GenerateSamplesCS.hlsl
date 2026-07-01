@@ -27,15 +27,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     bool isMiss;
     ConstructFirstHitFromGBuffer(gSettings.CameraPositionWorld, pixelCoord, hitInfo, isMiss);
 
-    float3 rayOrigin;
-    float3 rayDirection;
-    GetPrimaryRay(
-        rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
-        pixelCoord, gSettings.InvV, gSettings.InvP,
-        gSettings.DofFocalDist, gSettings.DofLensRadius,
-        rayOrigin, rayDirection);
-    float3 wo = -rayOrigin;
-
     ReservoirDI reservoir = CreateReservoir();
 
     if (isMiss)
@@ -44,7 +35,22 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
     }
 
-    WRS(rngInfo, reservoir, gRestirSettings.NumCandidates, gRestirSettings.ConfidenceCap);
+    float3 rayOrigin;
+    float3 rayDirection;
+    GetPrimaryRay(
+        rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        pixelCoord, gSettings.InvV, gSettings.InvP,
+        gSettings.DofFocalDist, gSettings.DofLensRadius,
+        rayOrigin, rayDirection);
+
+    float3 hitPos = rayOrigin + rayDirection * hitInfo.RayT;
+
+    LightSampleSelectionInfo info;
+    info.Dir_wo = -rayDirection;
+    info.HitInfo = hitInfo;
+    info.HitPosOffset = hitPos + hitInfo.Ns_ff * EPSILON;
+
+    WRS(rngInfo, reservoir, gRestirSettings.NumCandidates, gRestirSettings.ConfidenceCap, info);
 
     gReservoirBuffer[reservoirIdx] = reservoir;
 }

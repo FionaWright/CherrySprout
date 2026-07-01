@@ -8,11 +8,14 @@
 
 #include "Utils/RandomDirection.h"
 
-#include "PathTracing/NEE/SampleEnvMapCdf.hlsli"
-#include "PathTracing/NEE/TraceShadowRay.hlsli"
-#include "PathTracing/NEE/SampleLight.hlsli"
+#   include "PathTracing/NEE/SampleEnvMapCdf.hlsli"
+#   include "PathTracing/NEE/TraceShadowRay.hlsli"
+#   include "PathTracing/NEE/SampleLight.hlsli"
 
-void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathState, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo)
+#   include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#   include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+
+void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathState, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo, uint2 pixelCoord)
 {
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
@@ -37,7 +40,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
             uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
             ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
 
-            float3 wi = normalize(reservoir.Y.ScaledDirection);
+            float3 wi = reservoir.Y.Direction;
             float NdL = max(0, dot(wi, hitInfo.Ns_ff));
             if (reservoir.Confidence > 0 && NdL > 0)
             {
@@ -46,6 +49,10 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
                 if (!occluded)
                 {
+                    float3 f_bxdf;
+                    float pdf_bxdf;
+                    bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+
                     float W_Y = reservoir.W_Y / reservoir.Confidence; // ?
                     E_direct = f_bxdf * reservoir.Y.Radiance * NdL * W_Y;
                 }
@@ -54,8 +61,8 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
         else
         {
             float3 wi_env;
-            float distance; // Discarded
-            SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, E_direct, wi_env, distance);
+            float pdf_env;
+            SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, E_direct, pdf_env, wi_env);
         }
         // TODO: Share shadow ray handling for both out here
         L_sample += E_direct * beta;

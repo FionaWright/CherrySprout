@@ -7,6 +7,8 @@
 #include "Scene/InstanceData.h"
 #include "Utils/Debug/DebugStructs.h"
 
+#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+
 #define REGISTER_SPACE_DEFAULT            space0
 #define REGISTER_SPACE_SCENE_TEXTURES     space1
 #define REGISTER_SPACE_DEBUG              space2
@@ -40,6 +42,7 @@ Texture2D<float4>                           gSceneTextures[]        : register(t
 
 RWTexture2D<float4>                         gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
 RWTexture2D<float4>                         gTexOutput              : register(u1, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ReservoirDI>             gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
 
 // =================== U Registers (Debug) =======================================================================
 

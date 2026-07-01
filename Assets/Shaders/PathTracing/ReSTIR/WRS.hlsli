@@ -50,21 +50,22 @@ float RestirMis(T X_i, uint M)
     return 1 / M; // TODO
 }
 
-template<typename T>
+template<typename T, typename TInfo>
 void WRS(
     inout RngInfo rngInfo,
     inout Reservoir<T> reservoir,
     uint M,
-    uint ConfidenceCap
+    uint ConfidenceCap,
+    TInfo tInfo
 )
 {
     for (uint i = 0; i < M; i++)
     {
-        T X_i = Generate(rngInfo);
+        T X_i = Generate(rngInfo, tInfo);
 
-        float pHat = Target(X_i);
+        float pHat = Target(X_i, tInfo);
         //float m_i = RestirMis(X_i, M);
-        float W_X_i = 1.0f / PDF(X_i);
+        float W_X_i = 1.0f / PDF(X_i, tInfo);
 
         //float w_i = pHat * m_i * W_X_i;
         float w_i = pHat * W_X_i;

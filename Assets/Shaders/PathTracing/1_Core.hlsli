@@ -2,9 +2,9 @@
 #define H_CORE_H
 
 #include "PathTracing/Buffers.hlsli"
+#include "PathTracing/2_GetPrimaryRay.hlsli"
 #include "PathTracing/2_Trace.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
-#include "PathTracing/2_GetPrimaryRay.hlsli"
 
 #include "Utils/Random.h"
 #include "Utils/HlslUtils.hlsli"
@@ -38,7 +38,7 @@ void Core(uint2 pixelCoord)
             gSettings.DofFocalDist, gSettings.DofLensRadius,
             ray.Origin, ray.Direction);
 
-        colorSum += Trace(ray, rngInfo);
+        colorSum += Trace(ray, rngInfo, pixelCoord);
     }
 
     colorSum /= float(gSettings.SPP);

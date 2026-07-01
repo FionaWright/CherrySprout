@@ -15,7 +15,7 @@ struct PathState
 
 #include "Utils/Random.h"
 
-float3 Trace(RayDesc ray, inout RngInfo rngInfo)
+float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
 {
     RayQuery<RAY_FLAGS> q;
 
@@ -50,7 +50,7 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
         pathState.LastRayDiracDelta = false;
 
         float3 L_sample;
-        Hit(q, ray, pathState, L_sample, beta, rngInfo);
+        Hit(q, ray, pathState, L_sample, beta, rngInfo, pixelCoord);
 
         if (beta.x <= 0 && beta.y <= 0 && beta.z <= 0)
             break;
@@ -62,7 +62,7 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo)
                 L_sample *= gSettings.FireflyThreshold / L_lum;
         }
 
-        Lo += L_sample; // TODO: Should the L_sample * beta be moved out here? 
+        Lo += L_sample; // TODO: Should the L_sample * beta be moved out here?
 
         if (FEATURE_ENABLED(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
         {

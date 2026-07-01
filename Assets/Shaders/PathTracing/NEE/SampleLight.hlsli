@@ -12,8 +12,7 @@ void SampleLight(
     float3 nextOrigin,
     out float3 lightRadiance,
     out float pdf,
-    out float3 wi,
-    out float distance
+    out float3 wi
 )
 {
     float u1 = Rand01(rngInfo);

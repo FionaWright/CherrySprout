@@ -5,6 +5,10 @@
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
 #include "BxDFs/BxDFMode.h"
 
+struct RngInfo;
+struct PathState;
+struct HitInfo;
+
 struct BxDF
 {
     void Sample(

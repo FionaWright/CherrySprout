@@ -44,15 +44,15 @@ bool IsInf4(float4 x)
     return IsInf(x.x) || IsInf(x.y) || IsInf(x.z) || IsInf(x.w);
 }
 
-float3 GetNaNVisualizerColor(uint2 pixelCoord)
+float3 GetNaNVisualizerColor(uint2 pixelCoord, uint frameIdx, uint2 frameDimensions)
 {
-    uint x = gSettings.FrameIdx / 10 + pixelCoord.x + pixelCoord.y * gSettings.FrameDimensions.x;
+    uint x = frameIdx / 10 + pixelCoord.x + pixelCoord.y * frameDimensions.x;
     return float3(1, (x / 4) % 8 == 0, 1);
 }
 
-float3 GetInfVisualizerColor(uint2 pixelCoord)
+float3 GetInfVisualizerColor(uint2 pixelCoord, uint frameIdx, uint2 frameDimensions)
 {
-    uint x = pixelCoord.x + pixelCoord.y * gSettings.FrameDimensions.x - gSettings.FrameIdx / 10;
+    uint x = pixelCoord.x + pixelCoord.y * frameDimensions.x - frameIdx / 10;
     return float3(0, (x / 4) % 8 == 0, 1);
 }
 
