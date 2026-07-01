@@ -12,7 +12,7 @@
 #include "HWI/RtasBuilder.h"
 #include "HWI/Pipeline.h"
 #include "Utils/CBVs.h"
-#include "PathTracing/Flags.h"
+#include "PathTracing/Flags/MethodsCpp.h"
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 

@@ -2,7 +2,7 @@
 #define H_DBG_OUTPUT_COLOR_H
 
 #include "Utils/HlslGlue.h"
-#include "PathTracing/Flags.h"
+#include "PathTracing/Flags/Flags.h"
 
 enum class DebugOutputIndex : hlsl::uint
 {

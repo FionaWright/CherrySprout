@@ -8,10 +8,10 @@ template<typename T>
 void Target(T X_i); // Abstract
 
 template<typename T>
-void UnbiasedContribution(T X_i); // Abstract
+void PDF(T X_i); // Abstract
 
 template<typename T>
-void ReservoirUpdate(
+bool ReservoirUpdate(
     inout RngInfo rngInfo,
     inout Reservoir<T> reservoir,
     T X_i,
@@ -28,7 +28,9 @@ void ReservoirUpdate(
     if (r < norm_w_i)
     {
         reservoir.Y = X_i;
+        return true;
     }
+    return false;
 }
 
 template<typename T>
@@ -71,7 +73,7 @@ void ReSTIR_GenCandidates(
 
         float pHat = Target(X_i);
         float m_i = RestirMis(X_i, M);
-        float W_X_i = UnbiasedContribution(X_i);
+        float W_X_i = 1.0f / PDF(X_i);
 
         float w_i = pHat * m_i * W_X_i;
         float c_i = 1;

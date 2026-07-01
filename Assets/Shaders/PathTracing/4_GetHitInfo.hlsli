@@ -3,7 +3,7 @@
 
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/HlslUtils.hlsli"
-#include "PathTracing/Flags.h"
+#include "PathTracing/Flags/MethodsHlsl.h"
 
 #include "Utils/Debug/Palette.hlsli"
 #include "PathTracing/Debug/OutputColor.h"

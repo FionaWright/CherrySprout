@@ -2,8 +2,8 @@
 #define H_GREENHOUSE_CONFIG_H
 
 #include "BxDFs/BxDFMode.h"
-#include "PathTracing/Flags.h"
 #include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Flags/MethodsCpp.h"
 
 struct PathTracerConfig
 {

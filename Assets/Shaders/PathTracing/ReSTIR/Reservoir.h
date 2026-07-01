@@ -5,10 +5,11 @@ template<typename T>
 struct Reservoir
 {
     T Y;
-    float W_Y;
 
+    float W_Y;
     float WeightSum;
     float Confidence;
+    float padding;
 };
 
 template<typename T>

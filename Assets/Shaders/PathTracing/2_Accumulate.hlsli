@@ -2,7 +2,7 @@
 #define H_ACCUMULATE_H
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/Flags.h"
+#include "PathTracing/Flags/MethodsHlsl.h"
 
 #include "Utils/Debug/NaNTests.hlsli"
 #include "Utils/Constants.h"
@@ -29,6 +29,11 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)
 
     if (!FEATURE_ENABLED(Accumulation))
         return color;
+
+//#if FEATURE_ENABLED(Accumulation)
+//#else
+//    return color;
+//#endif
 
     float accumFrameCount = (float)gSettings.FrameIdx;
     float totalFrames = accumFrameCount + 1.0f;
