@@ -236,6 +236,18 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
     compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
 
+    for (int i = 0; i < FEATURE_COUNT; i++)
+    {
+        const hlsl::uint flagValue = 1u << i;
+        compileArgs.emplace_back("-DFEATURE_FLAG_VALUE_" + std::string(s_featureFlagNames[i]) + "=" + std::to_string(flagValue));
+    }
+
+    for (int i = 0; i < DEBUG_COUNT; i++)
+    {
+        const hlsl::uint flagValue = 1u << i;
+        compileArgs.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
+    }
+
     if (debugOutputIdx != DebugOutputIndex::eDebugOutput_Disabled)
         compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));
 

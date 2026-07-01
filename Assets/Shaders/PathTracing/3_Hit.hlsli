@@ -2,7 +2,7 @@
 #define H_HIT_H
 
 #include "PathTracing/4_GetHitInfo.hlsli"
-#include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Debug/OutputColorMacros.hlsli"
 
 #include "BxDFs/GetBxDF.hlsli"
 

@@ -7,7 +7,7 @@
 
 #include "PathTracing/Flags/Flags.h"
 
-static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(
+static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(
         eFeature_Jitter |
         eFeature_Accumulation |
         eFeature_EnvironmentMap |
@@ -19,48 +19,60 @@ static constexpr PathTracerFeatureFlags s_defaultFeatureFlags = static_cast<Path
     );
 
 #ifdef _DEBUG
-static constexpr PathTracerDebugFlags s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
+static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_NaNTests |
         eDebug_Asserts
     );
 #else
-static constexpr PathTracerDebugFlags s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(0);
+static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(0);
 #endif
 
 inline bool GetPathTracerFeatureFlag(const PathTracerFeatureFlags state, const PathTracerFeatureFlags flag)
 {
-    return bool(state & flag);
+    return static_cast<bool>(state & flag);
 }
 
 inline bool GetPathTracerFeatureFlag(const int state, const PathTracerFeatureFlags flag)
 {
-    return bool(state & flag);
+    return static_cast<bool>(state & flag);
+}
+
+inline bool GetPathTracerFeatureFlagAtIndex(const PathTracerFeatureFlags state, const int index)
+{
+    const int flag = 1u << index;
+    return static_cast<bool>(state & flag);
 }
 
 inline bool GetPathTracerDebugFlag(const PathTracerDebugFlags state, const PathTracerDebugFlags flag)
 {
-    return bool(state & flag);
+    return static_cast<bool>(state & flag);
 }
 
 inline bool GetPathTracerDebugFlag(const int state, const PathTracerDebugFlags flag)
 {
-    return bool(state & flag);
+    return static_cast<bool>(state & flag);
+}
+
+inline bool GetPathTracerDebugFlagAtIndex(const PathTracerDebugFlags state, const int index)
+{
+    const int flag = 1u << index;
+    return static_cast<bool>(state & flag);
 }
 
 inline void SetPathTracerFeatureFlag(PathTracerFeatureFlags& state, const PathTracerFeatureFlags flag, const bool enabled)
 {
     if (enabled)
-        state = PathTracerFeatureFlags(state | flag);
+        state = static_cast<PathTracerFeatureFlags>(state | flag);
     else if (GetPathTracerFeatureFlag(state, flag))
-        state = PathTracerFeatureFlags(state ^ flag);
+        state = static_cast<PathTracerFeatureFlags>(state ^ flag);
 }
 
 inline void SetPathTracerDebugFlag(PathTracerDebugFlags& state, const PathTracerDebugFlags flag, const bool enabled)
 {
     if (enabled)
-        state = PathTracerDebugFlags(state | flag);
+        state = static_cast<PathTracerDebugFlags>(state | flag);
     else if (GetPathTracerDebugFlag(state, flag))
-        state = PathTracerDebugFlags(state ^ flag);
+        state = static_cast<PathTracerDebugFlags>(state ^ flag);
 }
 
 #endif

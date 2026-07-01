@@ -3,10 +3,10 @@
 
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/HlslUtils.hlsli"
-#include "PathTracing/Flags/MethodsHlsl.h"
+#include "PathTracing/Flags/MethodsHlsl.hlsli"
 
 #include "Utils/Debug/Palette.hlsli"
-#include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Debug/OutputColorMacros.hlsli"
 
 struct HitInfo
 {
