@@ -64,6 +64,8 @@ struct Material
         TexIdxSheenColor            = -1;
         TexIdxSheenRoughness        = -1;
         TexIdxTransmissionFactor          = -1;
+
+        p = {};
     }
 #endif
 };

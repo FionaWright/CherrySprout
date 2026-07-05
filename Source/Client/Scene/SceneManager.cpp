@@ -32,7 +32,7 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
         return;
     }
 
-    const LoadUSDFunc LoadUSD =
+    const auto LoadUSD =
         reinterpret_cast<LoadUSDFunc>(
             GetProcAddress(dll, "LoadUSD"));
 
@@ -47,6 +47,9 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 
     FreeLibrary(dll);
 
+    CherryAssert(m_scene.CPU.MegaBufferPunctualLightsCount > 0);
+    CherryAssert(m_scene.CPU.MegaBufferMaterialsCount > 0);
+
     m_gpuDataDirty = true;
 }
 
@@ -59,15 +62,18 @@ void SceneManager::UploadScene(D3D* d3d)
     const size_t megaBufferVertexBytes = m_scene.CPU.MegaBufferVertexCount * sizeof(Vertex);
     const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndexCount * sizeof(uint32_t);
     const size_t megaBufferMaterialsBytes = m_scene.CPU.MegaBufferMaterialsCount * sizeof(Material);
+    const size_t megaBufferPunctualBytes = m_scene.CPU.MegaBufferPunctualLightsCount * sizeof(PunctualLight);
 
     m_scene.GPU.MegaBufferVertex.Init_Buffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
     m_scene.GPU.MegaBufferIndex.Init_Buffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
     m_scene.GPU.MegaBufferMaterials.Init_Buffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
+    m_scene.GPU.MegaBufferPunctualLights.Init_Buffer("Mega Buffer Punctual Lights", d3d->GetDevice(), megaBufferPunctualBytes);
 
     size_t uploadHeapRequiredSize = 0;
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferVertex.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferIndex.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferMaterials.GetIntermediateSize(), 512);
+    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferPunctualLights.GetIntermediateSize(), 512);
 
     const size_t textureCount = m_scene.CPU.TextureFilepathCount;
     std::vector<ScratchImage> scratchImages(textureCount);
@@ -85,24 +91,24 @@ void SceneManager::UploadScene(D3D* d3d)
     m_uploadHeap = {};
     m_uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
-    // Upload Data
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+    const auto cmdList = cmdListPtr.Get();
     {
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
-        const auto cmdList = cmdListPtr.Get();
+        GPU_SCOPE(cmdList, "Upload Scene Data");
 
-        m_scene.GPU.MegaBufferIndex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
-        m_scene.GPU.MegaBufferMaterials.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
-        m_scene.GPU.MegaBufferVertex.UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
+        m_scene.GPU.MegaBufferIndex.            UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
+        m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
+        m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
+        m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
 
         for (int i = 0; i < textureCount; i++)
         {
             TextureLoader::UploadTexture(cmdList, &m_uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
         }
-
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
     }
+    V(cmdList->Close());
+    d3d->ExecuteCommandList(cmdList);
+    d3d->Flush();
 
     m_uploadHeap = {};
 

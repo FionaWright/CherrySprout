@@ -9,6 +9,7 @@
 #include "imgui.h"
 #include "Debug/GPUEventScoped.h"
 #include "../../../Assets/Shaders/Utils/CBVs.h"
+#include "Scene/InstanceData.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/ConstantsCpp.h"
 #include "Utils/D3DUtils.h"

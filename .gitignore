@@ -9,3 +9,6 @@ out/*
 
 Snapshots/*
 !Snapshots/.gitkeep
+
+Assets/Scenes/USD/GitIgnored/*
+!Assets/Scenes/USD/GitIgnored/.gitkeep

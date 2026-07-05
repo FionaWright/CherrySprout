@@ -8,7 +8,7 @@
 #include "Importer.h"
 #include "Processor.h"
 
-void LoadUSD(const char* usdPath, float sceneScale, SceneCPU* scene)
+void LoadUSD(const char* usdPath, const float sceneScale, SceneCPU* scene)
 {
     std::cout << "Scene Loader USD: " << usdPath << std::endl;
 

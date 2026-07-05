@@ -20,9 +20,9 @@ void Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps
                             D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs)
 {
 #if defined(_DEBUG)
-    constexpr ShaderCompileFlags compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
+    constexpr auto compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
 #else
-    constexpr ShaderCompileFlags compileFlags = static_cast<ShaderCompileFlags>(0);
+    constexpr auto compileFlags = static_cast<ShaderCompileFlags>(0);
 #endif
 
     m_pso = nullptr;
@@ -54,9 +54,9 @@ void Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_P
                            const std::vector<std::string>& compileArgs)
 {
 #if defined(_DEBUG)
-    constexpr ShaderCompileFlags compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
+    constexpr auto compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
 #else
-    constexpr ShaderCompileFlags compileFlags = static_cast<ShaderCompileFlags>(0);
+    constexpr auto compileFlags = static_cast<ShaderCompileFlags>(0);
 #endif
 
     const std::string csPath = FileHelper::GetAssetShaderFullPath(cs);

@@ -5,6 +5,7 @@
 #include "Scenes.h"
 #include "HWI/D3D.h"
 #include "Scene/SceneManager.h"
+#include "System/FileHelper.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
@@ -18,6 +19,16 @@ void Greenhouse::Init(D3D* d3d)
     App::Init(d3d);
 
     CherryPrint("Initializing Greenhouse...");
+
+    for (int i = s_sceneConfigs.size() - 1; i >= 0; i--)
+    {
+        const std::string fullpath = FileHelper::GetAssetFullPath(s_sceneConfigs[i].Filepath.c_str());
+        if (!std::filesystem::exists(fullpath))
+        {
+            CherryPrint("[WARNING] Scene not found: " << fullpath);
+            s_sceneConfigs.erase(s_sceneConfigs.begin() + i);
+        }
+    }
 
     m_currentSceneIdx = 0;
     Config::SetUIntFromArg(&m_currentSceneIdx, "--scene");
@@ -63,13 +74,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_envMapDirty)
     {
-        m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
-    }
-
-    if (!m_lightImportanceSampler.IsInitialized() && GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_NEE))
-    {
-        m_lightImportanceSampler.BuildEnvMapDistributions(d3d, &m_heap, m_envMap.GetEA());
-        loadSceneDataIntoRenderBackend = true;
+        m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0); // TODO
     }
 
     if (m_renderBackendDirty)
@@ -105,11 +110,16 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneDirty = false;
     }
 
-    // Upload Scene
     if (m_sceneManager.IsGpuDataDirty())
     {
         m_sceneManager.UploadScene(d3d);
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
+    }
+
+    if (!m_lightImportanceSampler.IsInitialized() && GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_NEE))
+    {
+        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene());
+        loadSceneDataIntoRenderBackend = true;
     }
 
     if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || loadSceneDataIntoRenderBackend)

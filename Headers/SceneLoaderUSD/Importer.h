@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Scene/Material.h"
+#include "Scene/PunctualLight.h"
 #include "Scene/Vertex.h"
 
 namespace SceneLoaderUSD
@@ -29,6 +30,7 @@ namespace SceneLoaderUSD
     {
         std::vector<ImporterObject> Objects;
         std::vector<Material> Materials;
+        std::vector<PunctualLight> PunctualLights;
         std::vector<const char*> TextureFilePaths;
     };
 

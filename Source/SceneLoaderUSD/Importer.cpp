@@ -22,6 +22,7 @@
 #include <iostream>
 #include <ostream>
 
+#include "ExtractLight.h"
 #include "Material/ExtractMaterial.h"
 #include "ExtractMesh.h"
 
@@ -68,7 +69,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         }
     }
 
-    pxr::GfMatrix4d globalXform;
+    pxr::GfMatrix4d globalXform{};
     globalXform.SetScale(sceneScale);
 
     const pxr::Usd_PrimFlagsPredicate predicate = pxr::UsdPrimIsActive && pxr::UsdPrimIsDefined && !pxr::UsdPrimIsAbstract;
@@ -98,6 +99,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         if (prim.IsInPrototype() || prim.IsInstanceProxy())
             continue;
 
+        // TODO: prim.IsInstance()
+
         if (prim.IsA<pxr::UsdGeomMesh>())
         {
             ImporterObject obj = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
@@ -107,7 +110,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
         if (prim.HasAPI<pxr::UsdLuxLightAPI>())
         {
-            // TODO
+            PunctualLight light = ExtractLight(prim, xformCache);
+            context.PunctualLights.emplace_back(light);
             continue;
         }
     }

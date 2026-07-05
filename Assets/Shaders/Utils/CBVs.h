@@ -80,4 +80,10 @@ struct CbvForward
     hlsl::float3 _;
 };
 
+struct CbvTotalLuminances
+{
+    float EnvMapTotalLuminance;
+    float PunctualTotalLuminance;
+};
+
 #endif

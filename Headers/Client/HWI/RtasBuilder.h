@@ -11,6 +11,7 @@
 #include "D12Resource.h"
 #include "UploadHeap.h"
 #include "Scene/Scene.h"
+#include "Scene/InstanceData.h"
 
 struct BlasEntry
 {

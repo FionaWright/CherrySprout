@@ -77,11 +77,11 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
         cmdList->SetComputeRootSignature(m_rootSigPanoToEA.Get());
         cmdList->SetPipelineState(m_pipelinePanoToEA.GetPSO());
         m_dsPanoToEA.SetDescriptorTables_Compute(cmdList);
+
+        DispatchOverTexture(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
+
+        m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
-
-    DispatchOverTexture(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
-
-    m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);

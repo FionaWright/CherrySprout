@@ -5,6 +5,7 @@
 #include "System/pch.h"
 #include "HWI/RtasBuilder.h"
 
+#include "Scene/InstanceData.h"
 #include "Utils/Helper.h"
 
 void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene)

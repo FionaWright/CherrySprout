@@ -5,6 +5,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] PBR BSDF from CherryPip
 - [x] Environment maps
 - [x] Glass
+- [ ] Env Map GUI 
 
 - [x] Hot reloading
 - [x] Root constants support
@@ -19,7 +20,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] Debug Info Output (Make it better)
 - [ ] Variance reduction per frame-time test
 - [x] PT Assert based system inspired by Viggo
-- [ ] Place asserts all over the program
+- [x] Place asserts all over the program
 - [ ] PT meta counter debug increment/F4/etc system
 - [ ] Debug quick input bools/floats/etc
 - [ ] Path dumper

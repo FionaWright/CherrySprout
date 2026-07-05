@@ -26,10 +26,10 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
 
     size_t totalVertexCount = 0;
     size_t totalIndexCount = 0;
-    for (size_t i = 0; i < importerContext.Objects.size(); i++)
+    for (const auto & object : importerContext.Objects)
     {
-        totalVertexCount += importerContext.Objects[i].Vertices.size();
-        totalIndexCount += importerContext.Objects[i].Indices.size();
+        totalVertexCount += object.Vertices.size();
+        totalIndexCount += object.Indices.size();
     }
     scene->MegaBufferVertex = new Vertex[totalVertexCount];
     scene->MegaBufferIndex = new uint32_t[totalIndexCount];
@@ -67,6 +67,19 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
 
     assert(totalVertexCount == scene->MegaBufferVertexCount);
     assert(totalIndexCount == scene->MegaBufferIndexCount);
+
+    if (importerContext.PunctualLights.empty())
+    {
+        scene->MegaBufferPunctualLightsCount = 1;
+        scene->MegaBufferPunctualLights = new PunctualLight[1];
+        scene->MegaBufferPunctualLights[0] = PunctualLight();
+    }
+    else
+    {
+        scene->MegaBufferPunctualLightsCount = importerContext.PunctualLights.size();
+        scene->MegaBufferPunctualLights = new PunctualLight[importerContext.PunctualLights.size()];
+        memcpy(scene->MegaBufferPunctualLights, importerContext.PunctualLights.data(), importerContext.PunctualLights.size() * sizeof(PunctualLight));
+    }
 
     std::cout << "Scene processed" << std::endl;
 }

@@ -5,12 +5,9 @@
 #ifndef CHERRYSPROUT_SCENE_CPU_H
 #define CHERRYSPROUT_SCENE_CPU_H
 
-#include <string>
-#include <vector>
-
 #include "Scene/Vertex.h"
-#include "Scene/InstanceData.h"
 #include "Scene/Material.h"
+#include "Scene/PunctualLight.h"
 
 struct Object
 {
@@ -45,7 +42,8 @@ struct SceneCPU
     Material* MegaBufferMaterials = nullptr;
     size_t MegaBufferMaterialsCount = 0;
 
-    // TODO: MegaBufferPunctualLights
+    PunctualLight* MegaBufferPunctualLights = nullptr;
+    size_t MegaBufferPunctualLightsCount = 0;
 };
 
 #endif //CHERRYSPROUT_SCENE_CPU_H

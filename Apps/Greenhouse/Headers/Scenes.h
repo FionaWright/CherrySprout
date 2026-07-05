@@ -34,6 +34,20 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPosition = {-0.114393, 0.159540, -0.291603},
         .CameraPitchYaw = {0.251301, 0.375632},
     },
+
+    {
+        .Name = "LightTest",
+        .Filepath = "Scenes/USD/LightTest/LightTest.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+    },
+
+    {
+        .Name = "Living Room",
+        .Filepath = "Scenes/USD/GitIgnored/LivingRoom/Modernes Wohnzimmer.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+    },
 };
 
 #endif

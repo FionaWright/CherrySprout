@@ -1,6 +1,3 @@
-#include "Utils/SharedUtils.h"
-#include "Utils/CBVs.h"
-
 RWTexture2D<float> gCDF  : register(u0);
 
 [numthreads(64,1,1)]

@@ -9,3 +9,7 @@ Stuff in the repo that I don't like
 - [ ] Remove usage of NPM? Apparately is basically just a trojan installer 
 
 - [ ] Try out [[assume]]
+
+- [ ] Pre-compile shaders. Use pre-compiled at init, run-time compile on change
+
+- [ ] SceneLoaderUSD FreeScene

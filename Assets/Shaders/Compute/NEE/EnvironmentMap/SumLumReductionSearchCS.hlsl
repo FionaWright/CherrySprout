@@ -34,9 +34,7 @@ void CSMain(
 
             float3 color = gTex.Load(uint3(pixel, 0)).rgb;
             float lum = Luminance(color);
-            //sumLum += lum;
-            sumLum += color.r;
-            //sumLum += 1;
+            sumLum += lum;
         }
 
     localSumLum[threadIdx] = sumLum;
