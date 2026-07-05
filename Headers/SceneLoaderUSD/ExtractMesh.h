@@ -26,6 +26,7 @@
 
 #pragma warning(pop)
 
+#include "ExtractGeometry.h"
 #include "Importer.h"
 #include "SceneLoaderUSD.h"
 
@@ -33,264 +34,8 @@
 
 namespace SceneLoaderUSD
 {
-    struct VertexHasher
+    inline bool doFlip(const pxr::UsdPrim& prim, const pxr::GfMatrix4d& xform)
     {
-        size_t operator()(const Vertex& v) const
-        {
-            size_t h = 0;
-
-            auto hashCombine = [&](size_t value)
-            {
-                h ^= value + 0x9e3779b9 + (h << 6) + (h >> 2);
-            };
-
-            hashCombine(std::hash<float>{}(v.Position.x));
-            hashCombine(std::hash<float>{}(v.Position.y));
-            hashCombine(std::hash<float>{}(v.Position.z));
-
-            hashCombine(std::hash<float>{}(v.Normal.x));
-            hashCombine(std::hash<float>{}(v.Normal.y));
-            hashCombine(std::hash<float>{}(v.Normal.z));
-
-            hashCombine(std::hash<float>{}(v.UV.x));
-            hashCombine(std::hash<float>{}(v.UV.y));
-
-            return h;
-        }
-    };
-
-    inline void ExtractGeometry(const pxr::UsdPrim& prim, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-                                const bool flip)
-    {
-        pxr::UsdGeomMesh mesh(prim);
-        pxr::VtArray<pxr::GfVec3f> points;
-        mesh.GetPointsAttr().Get(&points);
-
-        pxr::VtArray<int> faceVertexCounts;
-        mesh.GetFaceVertexCountsAttr().Get(&faceVertexCounts);
-
-        pxr::VtArray<int> faceVertexIndices;
-        mesh.GetFaceVertexIndicesAttr().Get(&faceVertexIndices);
-
-        pxr::VtArray<pxr::GfVec3f> normals;
-        mesh.GetNormalsAttr().Get(&normals);
-        pxr::TfToken normalsInterp = mesh.GetNormalsInterpolation();
-
-        pxr::UsdGeomPrimvarsAPI primvarsAPI(prim);
-        pxr::UsdGeomPrimvar stPrimvar = primvarsAPI.GetPrimvar(pxr::TfToken("st"));
-
-        pxr::VtArray<pxr::GfVec2f> uvs;
-        pxr::VtArray<int> uvIndices;
-        pxr::TfToken uvInterp;
-        bool hasUV = false;
-
-        if (stPrimvar && stPrimvar.IsDefined())
-        {
-            stPrimvar.Get(&uvs);
-            stPrimvar.Get(&uvIndices);
-            uvInterp = stPrimvar.GetInterpolation();
-            hasUV = !uvs.empty();
-        }
-
-        struct PxrVertex
-        {
-            pxr::GfVec3f Position;
-            pxr::GfVec3f Normal;
-            pxr::GfVec2f UV;
-        };
-
-        std::vector<pxr::GfVec3d> sumNormals(points.size(), pxr::GfVec3d(0, 0, 0));
-        std::vector<bool> hasExplicitNormals(points.size(), false);
-
-        const size_t maxVertexCount = faceVertexIndices.size(); // Assuming all faces are quads
-        std::vector<PxrVertex> pxrVertices(maxVertexCount);
-
-        const int normalsCount = static_cast<int>(normals.size());
-
-        int currVertexIndex = 0;
-
-        for (size_t faceIdx = 0; faceIdx < faceVertexCounts.size(); ++faceIdx)
-        {
-            const int verticesInFace = faceVertexCounts[faceIdx];
-
-            for (int v = 0; v < verticesInFace; ++v)
-            {
-                const int pvIdx = currVertexIndex + v;
-                const int ptIdx = faceVertexIndices[pvIdx];
-
-                pxrVertices.at(pvIdx).Position = points[ptIdx];
-
-                if (hasUV)
-                {
-                    int uvIdx = -1;
-                    if (uvInterp == pxr::UsdGeomTokens->faceVarying)
-                    {
-                        uvIdx = uvIndices.empty() ? pvIdx : uvIndices[pvIdx];
-                    }
-                    else if (uvInterp == pxr::UsdGeomTokens->vertex)
-                    {
-                        uvIdx = uvIndices.empty() ? ptIdx : uvIndices[pvIdx];
-                    }
-
-                    if (uvIdx >= 0 && uvIdx < uvs.size())
-                        pxrVertices.at(pvIdx).UV = uvs[uvIdx];
-                }
-
-                if (!normals.empty() && normalsInterp == pxr::UsdGeomTokens->faceVarying)
-                {
-                    if (pvIdx < normalsCount)
-                    {
-                        pxrVertices.at(pvIdx).Normal = normals[pvIdx];
-                        hasExplicitNormals.at(ptIdx) = true;
-                    }
-                }
-                else if (!normals.empty() && (normalsInterp == pxr::UsdGeomTokens->vertex || normalsInterp ==
-                    pxr::UsdGeomTokens->varying))
-                {
-                    if (ptIdx < normalsCount)
-                    {
-                        pxrVertices.at(pvIdx).Normal = normals[ptIdx];
-                        hasExplicitNormals.at(ptIdx) = true;
-                    }
-                }
-            }
-
-            const int v0 = currVertexIndex + 0;
-            const int v1 = currVertexIndex + 1;
-            const int v2 = currVertexIndex + 2;
-
-            pxr::GfVec3f e1 = pxrVertices[v1].Position - pxrVertices[v0].Position;
-            pxr::GfVec3f e2 = pxrVertices[v2].Position - pxrVertices[v0].Position;
-            pxr::GfVec3d faceN = pxr::GfCross(e1, e2);
-
-            if (!flip)
-                faceN = -faceN;
-
-            for (int v = 0; v < verticesInFace; ++v)
-            {
-                const int pvIdx = currVertexIndex + v;
-                const int ptIdx = faceVertexIndices[pvIdx];
-                if (!hasExplicitNormals.at(ptIdx))
-                {
-                    sumNormals.at(ptIdx) += faceN;
-                }
-            }
-
-            currVertexIndex += verticesInFace;
-        }
-
-        currVertexIndex = 0;
-
-        std::unordered_map<Vertex, uint32_t, VertexHasher> vertexLookup;
-        vertexLookup.reserve(maxVertexCount);
-
-        for (size_t faceIdx = 0; faceIdx < faceVertexCounts.size(); ++faceIdx)
-        {
-            const int verticesInFace = faceVertexCounts[faceIdx];
-
-            for (int v = 1; v + 1 < verticesInFace; ++v)
-            {
-                int v1 = flip ? v + 1 : v;
-                int v2 = flip ? v : v + 1;
-                for (int vi : {0, v1, v2})
-                {
-                    const int pvIdx = currVertexIndex + vi;
-                    const int ptIdx = faceVertexIndices[pvIdx];
-
-                    const PxrVertex pxrv = pxrVertices.at(pvIdx);
-
-                    Vertex vertex;
-                    memcpy(&vertex.Position, &pxrv.Position, sizeof(float) * 3);
-                    memcpy(&vertex.UV, &pxrv.UV, sizeof(float) * 2);
-
-                    pxr::GfVec3d N;
-                    if (hasExplicitNormals.at(ptIdx))
-                    {
-                        N = pxrv.Normal;
-                    }
-                    else
-                    {
-                        N = sumNormals.at(ptIdx);
-                    }
-                    N.Normalize();
-
-                    vertex.Normal = {(float)N[0], (float)N[1], (float)N[2]};
-
-#if RH_TO_LH
-                    vertex.Position.z = -vertex.Position.z;
-                    vertex.Normal.z = -vertex.Normal.z;
-#endif
-
-                    auto it = vertexLookup.find(vertex);
-
-                    if (it != vertexLookup.end())
-                    {
-                        indices.emplace_back(it->second);
-                        continue;
-                    }
-
-                    const uint32_t newIndex =
-                        static_cast<uint32_t>(vertices.size());
-
-                    vertices.emplace_back(vertex);
-                    vertexLookup.emplace(vertex, newIndex);
-
-                    indices.emplace_back(newIndex);
-                }
-            }
-
-            currVertexIndex += verticesInFace;
-        }
-    }
-
-    static bool TryExtractBoundMaterialIdx(const pxr::UsdPrim& prim,
-                                           const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx)
-    {
-        pxr::UsdShadeMaterial boundMat;
-
-        if (prim.HasAPI<pxr::UsdShadeMaterialBindingAPI>())
-        {
-            boundMat = pxr::UsdShadeMaterialBindingAPI(prim).ComputeBoundMaterial(pxr::UsdShadeTokens->full);
-        }
-
-        if (!boundMat)
-        {
-            const pxr::UsdRelationship relationship = prim.GetRelationship(pxr::TfToken("material:binding"));
-
-            if (relationship)
-            {
-                pxr::SdfPathVector targets;
-                relationship.GetTargets(&targets);
-                if (!targets.empty())
-                {
-                    const pxr::UsdPrim primMat = prim.GetStage()->GetPrimAtPath(targets[0]);
-                    if (primMat)
-                        boundMat = pxr::UsdShadeMaterial(primMat);
-                }
-            }
-        }
-
-        if (boundMat)
-        {
-            const std::string& path = boundMat.GetPrim().GetPath().GetString();
-            const auto it = matPathToIdxMap.find(path);
-            if (it != matPathToIdxMap.end())
-            {
-                matIdx = static_cast<int>(it->second);
-                return true;
-            }
-        }
-
-        matIdx = -1;
-        return false;
-    }
-
-    inline ImporterObject ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
-                                      const std::unordered_map<std::string, size_t>& matPathToIdxMap,
-                                      const pxr::GfMatrix4d& globalXForm)
-    {
-        pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
-
         double det;
         const pxr::GfMatrix3d rotation = xform.ExtractRotationMatrix();
         rotation.GetInverse(&det);
@@ -300,34 +45,84 @@ namespace SceneLoaderUSD
         pxr::UsdGeomMesh(prim).GetOrientationAttr().Get(&orientationToken);
         const bool flipFromOrientation = orientationToken == pxr::UsdGeomTokens->leftHanded;
 
-        const bool flip = !(flipFromOrientation ^ flipFromTransform); // Why do I need to negate?
+        const bool flip = !(flipFromOrientation ^ flipFromTransform); // TODO: Why do I need to negate?
+        return flip;
+    }
 
-        ImporterObject obj;
-        ExtractGeometry(prim, obj.Vertices, obj.Indices, flip);
+    inline std::vector<ImporterObject> ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
+                                      const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const pxr::GfMatrix4d& globalXForm)
+    {
+        pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
+        const bool flip = doFlip(prim, xform);
 
-#if RH_TO_LH
-        const pxr::GfMatrix4d flipXform(
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, -1, 0,
-            0, 0, 0, 1);
-        xform = flipXform * xform * flipXform;
-#endif
+        xform = xform * globalXForm;
+        //xform = globalXForm * xform;
 
-        xform = globalXForm * xform;
+        const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip);
+        std::vector<ImporterObject> objects;
 
-        for (int r = 0; r < 4; r++)
-            for (int c = 0; c < 4; c++)
+        for (int i = 0; i < buffers.Indices2D.size(); i++)
+        {
+            ImporterObject obj;
+            obj.Name = prim.GetName().GetString();
+            obj.Vertices = buffers.Vertices;
+            obj.Indices = buffers.Indices2D[i];
+            obj.MaterialIndex = buffers.MaterialIndices[i];
+
+            for (int r = 0; r < 4; r++)
+                for (int c = 0; c < 4; c++)
+                {
+                    const int j = r * 4 + c;
+                    obj.M[j] = static_cast<float>(xform[r][c]);
+                }
+
+            objects.emplace_back(std::move(obj));
+        }
+
+        return objects;
+    }
+
+    inline std::vector<ImporterObject> ExtractInstance(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
+                                      const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const pxr::GfMatrix4d& globalXForm)
+    {
+        std::vector<ImporterObject> objects;
+
+        const pxr::UsdPrim prototype = prim.GetPrototype();
+
+        pxr::GfMatrix4d instanceXForm = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
+        instanceXForm = globalXForm * instanceXForm;
+
+        const bool flip = doFlip(prim, instanceXForm);
+
+        for (const pxr::UsdPrim& childPrim : pxr::UsdPrimRange(prototype))
+        {
+            if (!childPrim.IsA<pxr::UsdGeomMesh>())
+                continue;
+
+            const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip);
+
+            for (int i = 0; i < buffers.Indices2D.size(); i++)
             {
-                const int i = r * 4 + c;
-                obj.M[i] = static_cast<float>(xform[r][c]);
+                ImporterObject obj;
+                obj.Name = prim.GetName().GetString();
+                obj.Vertices = buffers.Vertices;
+                obj.Indices = buffers.Indices2D[i];
+                obj.MaterialIndex = buffers.MaterialIndices[i];
+
+                for (int r = 0; r < 4; r++)
+                    for (int c = 0; c < 4; c++)
+                    {
+                        const int j = r * 4 + c;
+                        obj.M[j] = static_cast<float>(instanceXForm[r][c]);
+                    }
+
+                objects.emplace_back(std::move(obj));
             }
+        }
 
-        TryExtractBoundMaterialIdx(prim, matPathToIdxMap, obj.MaterialIndex);
-
-        obj.Name = prim.GetName().GetString();
-
-        return obj;
+        return objects;
     }
 
     inline void ExtractPointInstancer(ImporterContext* ctx, const pxr::UsdStageRefPtr& stage, const pxr::UsdPrim& prim,
@@ -363,8 +158,9 @@ namespace SceneLoaderUSD
                 if (!childPrim.IsA<pxr::UsdGeomMesh>())
                     continue;
 
-                ImporterObject obj = ExtractMesh(childPrim, xformCache, matPathToIdxMap, globalXForm);
-                objects.emplace_back(std::move(obj));
+                std::vector<ImporterObject> objectsVec = ExtractMesh(childPrim, xformCache, matPathToIdxMap, globalXForm);
+                for (int i = 0; i < objectsVec.size(); i++)
+                    objects.emplace_back(std::move(objectsVec[i]));
             }
 
             protoObjects.emplace_back(std::move(objects));
@@ -390,15 +186,6 @@ namespace SceneLoaderUSD
 
             pxr::GfMatrix4d instanceXForm = S * R * T;
             instanceXForm = instanceXForm * instancerXForm;
-
-#if RH_TO_LH
-            const pxr::GfMatrix4d flip(
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, -1, 0,
-                0, 0, 0, 1);
-            instanceXForm = flip * instanceXForm * flip;
-#endif
 
             instanceXForm = globalXForm * instanceXForm;
 

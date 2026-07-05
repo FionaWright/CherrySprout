@@ -69,8 +69,19 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         }
     }
 
-    pxr::GfMatrix4d globalXform{};
-    globalXform.SetScale(sceneScale);
+    pxr::GfMatrix4d ToYUp(1.0), RhToLh(1.0), SceneScale(1.0);
+    SceneScale.SetScale(sceneScale);
+
+    const pxr::TfToken upAxis = pxr::UsdGeomGetStageUpAxis(stage);
+    if (upAxis == pxr::UsdGeomTokens->z)
+    {
+        pxr::GfRotation rot(pxr::GfVec3d(1, 0, 0), -90.0f);
+        ToYUp.SetRotate(rot);
+    }
+
+    //RhToLh.SetScale(pxr::GfVec3d(1, 1, -1));
+
+    pxr::GfMatrix4d globalXform = SceneScale * RhToLh * ToYUp;
 
     const pxr::Usd_PrimFlagsPredicate predicate = pxr::UsdPrimIsActive && pxr::UsdPrimIsDefined && !pxr::UsdPrimIsAbstract;
     for (const pxr::UsdPrim& prim : stage->Traverse(predicate))
@@ -99,12 +110,19 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         if (prim.IsInPrototype() || prim.IsInstanceProxy())
             continue;
 
-        // TODO: prim.IsInstance()
+        if (prim.IsInstance())
+        {
+            std::vector<ImporterObject> objects = ExtractInstance(prim, xformCache, matPathToIdxMap, globalXform);
+            for (int i = 0; i < objects.size(); ++i)
+                context.Objects.emplace_back(std::move(objects[i]));
+            continue;
+        }
 
         if (prim.IsA<pxr::UsdGeomMesh>())
         {
-            ImporterObject obj = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
-            context.Objects.emplace_back(std::move(obj));
+            std::vector<ImporterObject> objects = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
+            for (int i = 0; i < objects.size(); ++i)
+                context.Objects.emplace_back(std::move(objects[i]));
             continue;
         }
 

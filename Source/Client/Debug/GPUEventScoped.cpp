@@ -6,6 +6,8 @@
 
 #include "Debug/GPUEventScoped.h"
 
+#include "Utils/Helper.h"
+
 #ifdef _DEBUG
 #   include <WinPixEventRuntime/pix3.h>
 #endif

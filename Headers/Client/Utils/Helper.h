@@ -3,8 +3,10 @@
 
 #ifdef CHERRY_PRINT_ENABLED
 #   define CherryPrint(str) std::cout << str << std::endl
+#   define CherryPrintW(str) std::wcout << str << std::endl
 #else
 #   define CherryPrint(str)
+#   define CherryPrintW(str)
 #endif
 
 inline void CherryAssert(const bool expr, const char* message = nullptr)
@@ -17,6 +19,9 @@ inline void CherryAssert(const bool expr, const char* message = nullptr)
         else
             throw std::exception(std::string("Assertion failed!").c_str());
     }
+#else
+    [[assume(expr)]]; // C++23
+    __assume(expr);   // Pre-C++23
 #endif
 }
 
@@ -24,7 +29,7 @@ inline std::string wstringToString(const std::wstring& wstr)
 {
     if (wstr.empty()) return {};
 
-    int size = WideCharToMultiByte(
+    const int size = WideCharToMultiByte(
         CP_UTF8, 0,
         wstr.data(), (int)wstr.size(),
         nullptr, 0,
