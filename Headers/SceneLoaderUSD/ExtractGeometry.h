@@ -29,8 +29,6 @@
 #include "Importer.h"
 #include "SceneLoaderUSD.h"
 
-#define RH_TO_LH 1
-
 namespace SceneLoaderUSD
 {
     struct VertexHasher
@@ -250,7 +248,7 @@ namespace SceneLoaderUSD
             pxr::GfVec3f e2 = pxrVertices[v2].Position - pxrVertices[v0].Position;
             pxr::GfVec3d faceN = pxr::GfCross(e1, e2);
 
-            if (!flip)
+            if (flip)
                 faceN = -faceN;
 
             for (int v = 0; v < verticesInFace; ++v)
@@ -307,11 +305,6 @@ namespace SceneLoaderUSD
                     N.Normalize();
 
                     vertex.Normal = {(float)N[0], (float)N[1], (float)N[2]};
-
-#if RH_TO_LH
-                    vertex.Position.z = -vertex.Position.z;
-                    vertex.Normal.z = -vertex.Normal.z;
-#endif
 
                     auto it = vertexLookup.find(vertex);
 

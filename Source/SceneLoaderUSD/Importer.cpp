@@ -69,7 +69,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         }
     }
 
-    pxr::GfMatrix4d ToYUp(1.0), RhToLh(1.0), SceneScale(1.0);
+    pxr::GfMatrix4d ToYUp(1.0), SceneScale(1.0);
     SceneScale.SetScale(sceneScale);
 
     const pxr::TfToken upAxis = pxr::UsdGeomGetStageUpAxis(stage);
@@ -79,9 +79,10 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         ToYUp.SetRotate(rot);
     }
 
-    //RhToLh.SetScale(pxr::GfVec3d(1, 1, -1));
+    pxr::GfMatrix4d RhToLh(1.0);
+    RhToLh.SetDiagonal(pxr::GfVec4d(1, 1, -1, 1));
 
-    pxr::GfMatrix4d globalXform = SceneScale * RhToLh * ToYUp;
+    pxr::GfMatrix4d globalXform = SceneScale * ToYUp * RhToLh;
 
     const pxr::Usd_PrimFlagsPredicate predicate = pxr::UsdPrimIsActive && pxr::UsdPrimIsDefined && !pxr::UsdPrimIsAbstract;
     for (const pxr::UsdPrim& prim : stage->Traverse(predicate))

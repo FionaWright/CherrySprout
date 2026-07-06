@@ -37,8 +37,6 @@
 #include "Importer.h"
 #include "SceneLoaderUSD.h"
 
-#define RH_TO_LH 1
-
 namespace SceneLoaderUSD
 {
     inline PunctualLight ExtractLight(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache)

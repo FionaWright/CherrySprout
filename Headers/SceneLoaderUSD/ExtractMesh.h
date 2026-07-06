@@ -30,34 +30,29 @@
 #include "Importer.h"
 #include "SceneLoaderUSD.h"
 
-#define RH_TO_LH 1
-
 namespace SceneLoaderUSD
 {
     inline bool doFlip(const pxr::UsdPrim& prim, const pxr::GfMatrix4d& xform)
     {
-        double det;
-        const pxr::GfMatrix3d rotation = xform.ExtractRotationMatrix();
-        rotation.GetInverse(&det);
+        const double det = xform.GetDeterminant3();
         const bool flipFromTransform = det < 0;
 
         pxr::TfToken orientationToken;
         pxr::UsdGeomMesh(prim).GetOrientationAttr().Get(&orientationToken);
-        const bool flipFromOrientation = orientationToken == pxr::UsdGeomTokens->leftHanded;
+        const bool flipFromOrientation = orientationToken == pxr::UsdGeomTokens->leftHanded;;
 
-        const bool flip = !(flipFromOrientation ^ flipFromTransform); // TODO: Why do I need to negate?
+        const bool flip = flipFromOrientation ^ flipFromTransform;
         return flip;
     }
 
     inline std::vector<ImporterObject> ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
                                       const std::unordered_map<std::string, size_t>& matPathToIdxMap,
-                                      const pxr::GfMatrix4d& globalXForm)
+                                      const pxr::GfMatrix4d& globalXFormTransform)
     {
         pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
-        const bool flip = doFlip(prim, xform);
+        xform = xform * globalXFormTransform;
 
-        xform = xform * globalXForm;
-        //xform = globalXForm * xform;
+        const bool flip = doFlip(prim, xform);
 
         const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip);
         std::vector<ImporterObject> objects;
@@ -92,7 +87,7 @@ namespace SceneLoaderUSD
         const pxr::UsdPrim prototype = prim.GetPrototype();
 
         pxr::GfMatrix4d instanceXForm = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
-        instanceXForm = globalXForm * instanceXForm;
+        instanceXForm = instanceXForm * globalXForm;
 
         const bool flip = doFlip(prim, instanceXForm);
 
@@ -187,7 +182,7 @@ namespace SceneLoaderUSD
             pxr::GfMatrix4d instanceXForm = S * R * T;
             instanceXForm = instanceXForm * instancerXForm;
 
-            instanceXForm = globalXForm * instanceXForm;
+            instanceXForm = instanceXForm * globalXForm;
 
             for (const auto& obj : protoObjects[protoIdx])
             {

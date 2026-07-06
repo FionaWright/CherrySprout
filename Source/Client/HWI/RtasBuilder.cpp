@@ -35,12 +35,14 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         const Object& obj = scene->CPU.Objects[i];
         const D12Resource& blasResult = m_blasList[i].Result;
 
-        const XMMATRIX M = XMMatrixSet(
+        XMMATRIX M = XMMatrixSet(
             obj.M[0], obj.M[1], obj.M[2], obj.M[3],
             obj.M[4], obj.M[5], obj.M[6], obj.M[7],
             obj.M[8], obj.M[9], obj.M[10], obj.M[11],
             obj.M[12], obj.M[13], obj.M[14], obj.M[15]
             );
+
+        //M = XMMatrixTranspose(M);
 
         const XMMATRIX MTI = XMMatrixTranspose(XMMatrixInverse(nullptr, M));
 
