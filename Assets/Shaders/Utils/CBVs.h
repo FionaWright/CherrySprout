@@ -80,6 +80,12 @@ struct CbvForward
     hlsl::float3 _;
 };
 
+struct CbvGBufferPrePass_PerInstance
+{
+    hlsl::float4x4 M, MTI;
+    hlsl::uint InstanceIdx;
+};
+
 struct CbvTotalLuminances
 {
     float EnvMapTotalLuminance;

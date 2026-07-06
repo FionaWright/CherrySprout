@@ -22,6 +22,8 @@ static const char* s_debugIdList[] = {
 
 #endif
 
+    // TODO: Use a single param and convert MY_DEBUG_ID -> "My Debug Id" ?
+
     CREATE_ID(NO_METAL_GLASS            , "Transmissive material is metal")
     CREATE_ID(NO_EMISSIVE_GLASS         , "Transmissive material is emissive")
 

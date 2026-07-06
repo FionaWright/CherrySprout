@@ -20,8 +20,6 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
 
     buildEnvMapDistributions(d3d, heap, envMap);
 
-    return;
-
     // Punctual PMF Pass
     {
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -59,7 +57,6 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
     for (const float lum : buff)
     {
         CherryAssert(!std::isnan(lum));
-
         m_punctualTotalLuminance += lum;
     }
 
