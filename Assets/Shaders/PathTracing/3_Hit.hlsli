@@ -20,12 +20,12 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     HitInfo hitInfo;
     GetHitInfo(q, hitInfo);
 
-    float3 wo = -ray.Direction;
-
     float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;
     float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
 
     L_sample = beta * hitInfo.Li;
+
+    float3 wo = -ray.Direction;
 
     // TODO in a loose order:
     // Perform average luminance tests between with/without NEE. Should be equal. Set up python executor

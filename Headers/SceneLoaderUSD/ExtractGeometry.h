@@ -84,6 +84,8 @@ namespace SceneLoaderUSD
         }
     }
 
+    #define DEFAULT_FALLBACK_MATERIAL_IDX 0
+
     static bool TryExtractBoundMaterialIdx(const pxr::UsdPrim& prim,
                                            const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx)
     {
@@ -122,7 +124,7 @@ namespace SceneLoaderUSD
             }
         }
 
-        matIdx = -1;
+        matIdx = DEFAULT_FALLBACK_MATERIAL_IDX;
         return false;
     }
 

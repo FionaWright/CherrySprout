@@ -32,10 +32,11 @@
 
 namespace SceneLoaderUSD
 {
-    inline bool doFlip(const pxr::UsdPrim& prim, const pxr::GfMatrix4d& xform)
+    inline bool doFlip(const pxr::UsdPrim& prim, const pxr::GfMatrix4d& xform, const pxr::GfMatrix4d& globalXForm)
     {
         const double det = xform.GetDeterminant3();
-        const bool flipFromTransform = det < 0;
+        const double detGlobal = globalXForm.GetDeterminant3();
+        const bool flipFromTransform = (det * detGlobal) < 0;
 
         pxr::TfToken orientationToken;
         pxr::UsdGeomMesh(prim).GetOrientationAttr().Get(&orientationToken);
@@ -47,12 +48,12 @@ namespace SceneLoaderUSD
 
     inline std::vector<ImporterObject> ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
                                       const std::unordered_map<std::string, size_t>& matPathToIdxMap,
-                                      const pxr::GfMatrix4d& globalXFormTransform)
+                                      const pxr::GfMatrix4d& globalXForm)
     {
         pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
-        xform = xform * globalXFormTransform;
+        xform = xform * globalXForm;
 
-        const bool flip = doFlip(prim, xform);
+        const bool flip = doFlip(prim, xform, globalXForm);
 
         const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip);
         std::vector<ImporterObject> objects;
@@ -89,7 +90,7 @@ namespace SceneLoaderUSD
         pxr::GfMatrix4d instanceXForm = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
         instanceXForm = instanceXForm * globalXForm;
 
-        const bool flip = doFlip(prim, instanceXForm);
+        const bool flip = doFlip(prim, instanceXForm, globalXForm);
 
         for (const pxr::UsdPrim& childPrim : pxr::UsdPrimRange(prototype))
         {

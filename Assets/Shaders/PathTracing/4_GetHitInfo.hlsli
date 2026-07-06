@@ -10,9 +10,11 @@
 
 #include "PathTracing/HitInfo.h"
 
+#define NO_TEXTURE -1
+
 float SampleTexture1(HitInfo hitInfo, int idx, float fallback)
 {
-    if (idx == -1)
+    if (idx == NO_TEXTURE)
         return fallback;
 
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).r;
@@ -20,7 +22,7 @@ float SampleTexture1(HitInfo hitInfo, int idx, float fallback)
 
 float3 SampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
 {
-    if (idx == -1)
+    if (idx == NO_TEXTURE)
         return fallback;
 
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).rgb;
@@ -28,7 +30,7 @@ float3 SampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
 
 float4 SampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
 {
-    if (idx == -1)
+    if (idx == NO_TEXTURE)
         return fallback;
 
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV);
@@ -61,6 +63,17 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.RayT = q.CommittedRayT();
 
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
+
+    if (DEBUG_ENABLED(NaNTests))
+    {
+        if (instance.MaterialIndex == -1)
+        {
+            hitInfo.Ns_ff = NAN;
+            hitInfo.Mat.Albedo = NAN;
+            return;
+        }
+    }
+
     hitInfo.Mat = gMegaBufferMaterials[instance.MaterialIndex];
 
     uint primitiveOffset = instance.MegaBufferOffsetIndex / 3; // TODO: Put primitiveOffset in instanceData?
@@ -82,7 +95,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     float3 Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
     Ns = normalize(mul((float3x3)instance.MTI, Ns));
 
-    if (FEATURE_ENABLED(NormalMaps))
+    if (FEATURE_ENABLED(NormalMaps) && hitInfo.Mat.TexIdxNormal != NO_TEXTURE)
     {
         float3 bumpSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0));
         bumpSample = RemapUtoS(bumpSample);
@@ -92,7 +105,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
         Ns = bumpFrame.ToWorld(bumpSample);
     }
 
-    hitInfo.Ng_ff = hitInfo.IsEntering ? Ng : -Ng;
+    hitInfo.Ng_ff = hitInfo.IsEntering ? -Ng : Ng;
     hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 

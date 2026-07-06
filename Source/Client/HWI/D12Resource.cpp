@@ -85,14 +85,6 @@ void D12Resource::Init_Upload(const char* name, ID3D12Device* device, const size
     Init(name, device, m_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD));
 }
 
-// TODO: Remove once I no longer need it for reference
-// void D12Resource::InitRTAS(const char* name, ID3D12Device* device, const size_t size,
-//                              const D3D12_RESOURCE_FLAGS flags)
-// {
-//     m_desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
-//     Init(name, device, m_desc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
-// }
-
 void D12Resource::UploadBuffer(ID3D12GraphicsCommandList* cmdList, UploadHeap* uploadHeap, const void* pData,
                              const size_t totalBytes)
 {
@@ -186,4 +178,17 @@ UINT64 D12Resource::GetIntermediateSize() const
 {
     const UINT numSubresources = m_desc.MipLevels * m_desc.DepthOrArraySize;
     return GetRequiredIntermediateSize(m_resource.Get(), 0, numSubresources);
+}
+
+void D12Resource::Release()
+{
+    m_resource = nullptr;
+    m_currentState = D3D12_RESOURCE_STATE_COMMON;
+    m_name = "";
+    m_desc = {};
+    m_uploadBufferAssignedOffset = 0;
+
+#ifdef _DEBUG
+    m_initialized = false;
+#endif
 }

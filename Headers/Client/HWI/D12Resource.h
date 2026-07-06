@@ -46,6 +46,7 @@ public:
     void Readback(void* dst) const;
 
     UINT64 GetIntermediateSize() const;
+    void Release();
     bool IsInitialized() const { return m_resource != nullptr; }
 
     ID3D12Resource* GetResource() const { return m_resource.Get(); }
@@ -65,7 +66,7 @@ private:
     size_t m_uploadBufferAssignedOffset = 0;
 
 #ifdef _DEBUG
-    std::string m_name;
+    std::string m_name = "";
     bool m_initialized = false;
 #endif
 };

@@ -132,6 +132,8 @@ void BxDF::Sample(
 
         pdf *= specProb;
 
+        pdf = NAN;
+
         DBG_ASSERT_VALUE(f,           BxDF_PBR_SPEC_F);
         DBG_ASSERT_VALUE(pdf,         BxDF_PBR_SPEC_PDF);
         DBG_ASSERT_VALUE(L_s,         BxDF_PBR_SPEC_L_S);

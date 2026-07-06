@@ -38,6 +38,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
     if (!stage)
         throw std::runtime_error("USD file does not exist");
 
+    context.Materials.emplace_back(Material()); // Assign default fallback material for objects missing materials
+
     std::unordered_map<std::string, size_t> matPathToIdxMap;
     for (const pxr::UsdPrim& prim : stage->Traverse())
     {

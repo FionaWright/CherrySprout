@@ -123,6 +123,15 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
     if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_Asserts))
     {
         d3d->Flush();
+
+        if (m_scheduleClearErrors)
+        {
+            constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
+            m_gpuErrorInfoRW.Release();
+            m_gpuErrorInfoRW.Init_Buffer("Error Info R/W", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
+            m_scheduleClearErrors = false;
+        }
+
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
 
@@ -150,7 +159,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     // Fill Settings
     {
-        CbvPathTracingSettings settings;
+        CbvPathTracingSettings settings{};
         XMStoreFloat4x4(&settings.InvP, renderInfo.InvP);
         XMStoreFloat4x4(&settings.InvV, renderInfo.InvV);
         settings.FrameIdx = m_frameIdx;
@@ -315,7 +324,9 @@ void PathTracer::RenderGUI_ErrorInfo()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
     ImGui::Spacing();
-
     ImGui::PopStyleColor();
+
+    if (ImGui::Button("Clear Assertions"))
+        m_scheduleClearErrors = true;
 }
 #endif

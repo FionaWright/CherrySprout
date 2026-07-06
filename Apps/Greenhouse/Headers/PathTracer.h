@@ -56,6 +56,7 @@ private:
 #ifdef _DEBUG
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;
     DebugErrorInfo m_cpuErrorInfo[_countof(s_debugIdList)] = {};
+    bool m_scheduleClearErrors = false;
 #endif
 };
 
