@@ -9,19 +9,19 @@
 #include "Utils/Helper.h"
 #include "System/Config.h"
 
-void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescriptors, const D3D12_DESCRIPTOR_HEAP_TYPE type)
+void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescriptors, const size_t numSceneTextureDescriptors, const D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     m_name = name;
     m_type = type;
     m_descriptorIncSize = device->GetDescriptorHandleIncrementSize(m_type);
-    m_heapSize = numDescriptors;
+    m_heapSize = numDescriptors + numSceneTextureDescriptors;
 
-    m_baseSceneTextures = static_cast<size_t>(static_cast<float>(m_heapSize) * 0.65f);
-    m_currentHeapIndexSceneTextures = m_baseSceneTextures; // Should I give more control to the user?
+    m_baseSceneTextures = numDescriptors;
+    m_currentHeapIndexSceneTextures = m_baseSceneTextures;
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = m_type;
-    desc.NumDescriptors = numDescriptors;
+    desc.NumDescriptors = m_heapSize;
     desc.Flags = m_type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     desc.NodeMask = 0;
 
@@ -31,16 +31,15 @@ void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescript
 #ifdef _DEBUG
     if (Config::GetSystem().DebugHeapEnabled)
     {
-        m_debugDescriptorNames.resize(m_baseSceneTextures);
-        m_debugDescriptorNamesBindless.resize(m_heapSize - m_baseSceneTextures);
+        m_debugDescriptorNames.resize(numDescriptors);
+        m_debugDescriptorNamesBindless.resize(numSceneTextureDescriptors);
     }
 #endif
 }
 
 CD3DX12_CPU_DESCRIPTOR_HANDLE Heap::GetDescriptorHandleAtIndex(const uint32_t idx) const
 {
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_heapResource->GetCPUDescriptorHandleForHeapStart(), idx,
-                                                   m_descriptorIncSize);
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_heapResource->GetCPUDescriptorHandleForHeapStart(), idx, m_descriptorIncSize);
 }
 
 uint32_t Heap::GetNextDescriptorIdx(const char* debugName)
@@ -94,7 +93,7 @@ uint32_t Heap::AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* reso
 
     device->CreateShaderResourceView(resource->GetResource(), &desc, handle);
 
-    uint32_t normalizedIdx = idx - GetBindlessTexBase();
+    const uint32_t normalizedIdx = idx - GetBindlessTexBase();
     return normalizedIdx;
 }
 

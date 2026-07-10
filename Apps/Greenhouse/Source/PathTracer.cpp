@@ -22,6 +22,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     CherryPrint("Initializing Path-Tracer...");
 
+    m_gbufferPrePass.Init(d3d, heap, uploadHeapCBV);
+
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -156,6 +158,11 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
+
+    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_OutputColor))
+    {
+        m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, renderInfo.V, renderInfo.P);
+    }
 
     // Fill Settings
     {

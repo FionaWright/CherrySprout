@@ -13,7 +13,8 @@ using Microsoft::WRL::ComPtr;
 class Heap
 {
 public:
-    void Init(const char* name, ID3D12Device* device, size_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    void Init(const char* name, ID3D12Device* device, size_t numDescriptors, size_t numSceneTextureDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE
+              type);
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorHandleAtIndex(uint32_t idx) const;
     uint32_t GetNextDescriptorIdx(const char* debugName = nullptr);
 

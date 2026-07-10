@@ -32,6 +32,13 @@ Texture2D<float>                            gEnvMapPmfConditional   : register(t
 Texture2D<float>                            gEnvMapCdfConditional   : register(t7, REGISTER_SPACE_DEFAULT);
 Texture1D<float>                            gEnvMapCdfMarginal      : register(t8, REGISTER_SPACE_DEFAULT);
 
+#if DEBUG_ENABLED(OutputColor)
+Texture2D<uint>                             gGBufferMaterialIdx     : register(t9, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                           gGBufferNormals     : register(t10, REGISTER_SPACE_DEFAULT);
+Texture2D<float>                            gGBufferDepth     : register(t10, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                           gGBufferUvMv     : register(t10, REGISTER_SPACE_DEFAULT);
+#endif
+
 // =================== T Registers (Scene Textures) ==============================================================
 
 Texture2D<float4>                           gSceneTextures[]        : register(t0, REGISTER_SPACE_SCENE_TEXTURES);

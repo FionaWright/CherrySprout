@@ -42,8 +42,9 @@ void Greenhouse::Init(D3D* d3d)
         maxCbvRequiredSize += EnvironmentMap::GetCbvRequiredSize();
     }
 
-    constexpr size_t numDescriptors = 20000; // TODO: Handle this properly
-    m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    constexpr size_t numDescriptors = 10000; // TODO: Handle this properly
+    constexpr size_t numSceneTextureDescriptors = 5000;
+    m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, numSceneTextureDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
 
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);

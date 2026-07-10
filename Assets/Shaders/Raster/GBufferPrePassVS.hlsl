@@ -1,4 +1,5 @@
 #include "Utils/CBVs.h"
+#include "Scene/InstanceData.h"
 
 struct VsIn
 {

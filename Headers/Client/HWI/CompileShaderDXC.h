@@ -104,10 +104,10 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
         args.push_back(L"-WX");
 
 #ifdef CHERRY_PRINT_ENABLED
-    std::cout << "Compiling Shader: ";
+    std::cout << "\nCompiling Shader: " << filePath ;
     for (const auto& arg : args)
-        std::cout << wstringToString(arg) << " ";
-    std::cout << std::endl;
+        std::cout << " " << wstringToString(arg);
+    std::cout << "\n" << std::endl;
 #endif
 
     if (FAILED(compiler->Compile(&buffer, args.data(), args.size(), includeHandler.Get(), IID_PPV_ARGS(&result))))

@@ -5,6 +5,7 @@
 #ifndef CHERRYSPROUT_PATHTRACER_H
 #define CHERRYSPROUT_PATHTRACER_H
 
+#include "GBufferPrePass.h"
 #include "IRenderBackend.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
@@ -45,6 +46,7 @@ public:
 
 private:
     RtasBuilder m_rtasBuilder;
+    GBufferPrePass m_gbufferPrePass;
 
     uint32_t m_frameIdx = 0;
 

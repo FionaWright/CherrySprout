@@ -45,8 +45,8 @@ void D12Resource::Init_Buffer(const char* name, ID3D12Device* device, const size
     Init(name, device, m_desc, initialState, nullptr, heapProp);
 }
 
-void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, DXGI_FORMAT format,
-                             const D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initialState)
+void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, const DXGI_FORMAT format,
+                             const D3D12_RESOURCE_FLAGS flags, const D3D12_RESOURCE_STATES initialState, const XMFLOAT4* clearValue)
 {
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -59,7 +59,15 @@ void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint3
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
 
-    Init(name, device, desc, initialState);
+    D3D12_CLEAR_VALUE d12ClearValue;
+
+    if (clearValue)
+    {
+        memcpy(&d12ClearValue.Color, clearValue, sizeof(float) * 4);
+        d12ClearValue.Format = format;
+    }
+
+    Init(name, device, desc, initialState, clearValue ? &d12ClearValue : nullptr);
 }
 
 void D12Resource::Init_Tex1D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, DXGI_FORMAT format,
