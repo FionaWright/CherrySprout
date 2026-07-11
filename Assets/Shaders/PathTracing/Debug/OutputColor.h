@@ -9,6 +9,11 @@ enum class DebugOutputIndex : hlsl::uint
 
     // Core:
     eDebugOutput_RNG,
+    eDebugOutput_GBufferMatIdx,
+    eDebugOutput_GBufferNormals,
+    eDebugOutput_GBufferDepth,
+    eDebugOutput_GBufferUv,
+    eDebugOutput_GBufferMv,
 
     // GetHitInfo:
     eDebugOutput_InstanceIdx,
@@ -73,6 +78,11 @@ static const char* s_debugOutputIdxNames[static_cast<hlsl::uint>(DebugOutputInde
 
     // Core
     "RNG",
+    "GBuffer Material Idx",
+    "GBuffer Normals",
+    "GBuffer Depth",
+    "GBuffer UV",
+    "GBuffer MV",
 
     // GetHitInfo
     "Instance Index",

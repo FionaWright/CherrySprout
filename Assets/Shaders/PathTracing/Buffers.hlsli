@@ -8,6 +8,7 @@
 #include "Utils/Debug/DebugStructs.h"
 
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/Flags/MethodsHlsl.hlsli"
 
 #define REGISTER_SPACE_DEFAULT            space0
 #define REGISTER_SPACE_SCENE_TEXTURES     space1
@@ -34,9 +35,9 @@ Texture1D<float>                            gEnvMapCdfMarginal      : register(t
 
 #if DEBUG_ENABLED(OutputColor)
 Texture2D<uint>                             gGBufferMaterialIdx     : register(t9, REGISTER_SPACE_DEFAULT);
-Texture2D<float4>                           gGBufferNormals     : register(t10, REGISTER_SPACE_DEFAULT);
-Texture2D<float>                            gGBufferDepth     : register(t10, REGISTER_SPACE_DEFAULT);
-Texture2D<float4>                           gGBufferUvMv     : register(t10, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                           gGBufferNormals         : register(t10, REGISTER_SPACE_DEFAULT);
+Texture2D<float>                            gGBufferDepth           : register(t11, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                           gGBufferUvMv            : register(t12, REGISTER_SPACE_DEFAULT);
 #endif
 
 // =================== T Registers (Scene Textures) ==============================================================

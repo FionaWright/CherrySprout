@@ -27,7 +27,7 @@ void SampleLight(
     TraceShadowRay(nextOrigin, wi, occluded);
 
     DBG_OUTPUT3(wi,           NEE_L_w);
-    DBG_OUTPUT1(pdf,      NEE_PDF);
+    DBG_OUTPUT1(pdf,          NEE_PDF);
     DBG_OUTPUT1(occluded,     NEE_Occluded);
 
     if (!occluded && NdL >= 0) // TODO: Move NDL earlier

@@ -112,6 +112,11 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 7, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
         m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), 8, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
     }
+
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 9, m_gbufferPrePass.GetGBufferMaterialIdx(), m_gbufferPrePass.GetGBufferMaterialIdx()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 10, m_gbufferPrePass.GetGBufferNormals(), m_gbufferPrePass.GetGBufferNormals()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferDepth(), m_gbufferPrePass.GetGBufferDepth()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, m_gbufferPrePass.GetGBufferUvMv(), m_gbufferPrePass.GetGBufferUvMv()->GetDesc().Format);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -159,9 +164,14 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_OutputColor))
+    if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugFlags))
     {
         m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, renderInfo.V, renderInfo.P);
+
+        m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
     // Fill Settings
@@ -233,6 +243,11 @@ void PathTracer::UnreserveData()
 
 }
 
+bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const
+{
+    return GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor);
+}
+
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const BxdfMode& bxdfMode)
 {
     uint32_t numSRV = 6;
@@ -243,6 +258,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 
     if (GetPathTracerFeatureFlag(featureFlags, eFeature_NEE))
         numSRV += 3; // gEnvMapCdfConditional, gEnvMapPmfConditional, gEnvMapCdfMarginal
+
+    if (GBufferRequired(featureFlags, debugFlags))
+        numSRV += 4;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
