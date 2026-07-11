@@ -32,7 +32,7 @@ public:
     void UnreserveData() override;
     bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const;
     void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags,
-                        const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const BxdfMode& bxdfMode);
+                        const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, int debugOutputChosenRayDepth, const BxdfMode& bxdfMode);
     void Reset();
 
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }

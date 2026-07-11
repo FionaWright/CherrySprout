@@ -31,6 +31,7 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
         q.Proceed();
 
         pathState.RaySegmentIdx = i;
+        DBG_SET_CURRENT_RAY_DEPTH(i);
 
         if (q.CommittedStatus() != COMMITTED_TRIANGLE_HIT)
         {

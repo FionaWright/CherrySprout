@@ -177,6 +177,11 @@ void Greenhouse::RenderGUI()
         {
             ImGui::Text("Debug Outputs:");
             ImGui::Indent(IM_GUI_INDENTATION);
+
+            ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugOutputChosenRayDepth);
+            m_ptPipelineDirty |= ImGui::IsItemDeactivatedAfterEdit();
+            m_config.PathTracerConfig.DebugOutputChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugOutputChosenRayDepth);
+
             if (ImGui::BeginTable("Debug Outputs", 2))
             {
                 static int e = static_cast<int>(m_config.PathTracerConfig.DebugOutputIdx);

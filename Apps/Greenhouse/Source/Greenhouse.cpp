@@ -149,6 +149,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
             m_config.PathTracerConfig.FeatureFlags,
             m_config.PathTracerConfig.DebugFlags,
             m_config.PathTracerConfig.DebugOutputIdx,
+            m_config.PathTracerConfig.DebugOutputChosenRayDepth,
             m_config.PathTracerConfig.BxdfMode);
         m_ptPipelineDirty = false;
     }

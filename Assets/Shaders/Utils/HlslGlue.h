@@ -89,6 +89,12 @@ namespace hlsl
         uint32_t z;
         uint32_t w;
     } uint4;
+
+    typedef struct int2
+    {
+        int x;
+        int y;
+    } int2;
 }
 
 #define GLUE_IN(T)

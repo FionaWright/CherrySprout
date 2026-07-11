@@ -11,6 +11,9 @@ struct DebugErrorInfo
     hlsl::float4 Value1;
     hlsl::float4 Value2;
     hlsl::float4 Value3;
+
+    hlsl::uint2 PixelCoord;
+    hlsl::uint FrameIndex;
 };
 
 #endif

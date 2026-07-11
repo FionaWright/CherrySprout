@@ -18,9 +18,11 @@ struct PathTracerConfig
     float DofLensRadius = 0.003f;
 
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
+    BxdfMode                   BxdfMode         = s_defaultBxdfMode;
+
     PathTracerDebugFlags       DebugFlags       = s_defaultDebugFlags;
     DebugOutputIndex           DebugOutputIdx   = s_defaultOutputIndex;
-    BxdfMode                   BxdfMode         = s_defaultBxdfMode;
+    int                        DebugOutputChosenRayDepth = -1;
 };
 
 struct ForwardConfig

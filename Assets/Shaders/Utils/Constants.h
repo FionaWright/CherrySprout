@@ -5,7 +5,7 @@
 
 #ifndef __cplusplus
 
-#define UINT_MAX            4294967296.0
+#define UINT_MAX            4294967295
 
 #define NAN                 asfloat(0x7FC00000)
 

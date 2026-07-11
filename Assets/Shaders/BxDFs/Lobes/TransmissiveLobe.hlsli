@@ -38,7 +38,7 @@ void TransmissiveLobe_Sample(
         return;
     }
 
-    float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, abs(VdH));
+    float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, saturate(abs(VdH)));
     float D = mm.D(H_s);
     float G = mm.G2(abs(NdL), abs(NdV));
     float mmPdf = mm.PDF(D, H_s, V_s);
@@ -48,7 +48,7 @@ void TransmissiveLobe_Sample(
 
     float denom = nCurrent * VdH + nNext * LdH;
     float denom2 = denom * denom;
-    float jacobian = nNext * nNext * abs(LdH) / max(1e-6, denom2);
+    float jacobian = nNext * nNext * abs(LdH) / max(1e-6f, denom2);
 
     pdf = jacobian * mmPdf;
 

@@ -116,6 +116,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     DBG_OUTPUT2(barycentrics,                                                             Barycentrics);
     DBG_OUTPUT3(Ns,                                                                       Normals);
     DBG_OUTPUT3(hitInfo.Ns_ff,                                                            NormalShadedFF);
+    DBG_OUTPUT3(Ng,                                                                       NormalGeometric);
     DBG_OUTPUT3(hitInfo.Ng_ff,                                                            NormalGeometricFF);
     DBG_OUTPUT3(hitInfo.SFrame.T,                                                         Tangent);
     DBG_OUTPUT3(hitInfo.SFrame.B,                                                         Bitangent);

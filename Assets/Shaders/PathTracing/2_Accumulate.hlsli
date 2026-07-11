@@ -9,7 +9,27 @@
 
 float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)
 {
-    float3 accumColor = gSettings.FrameIdx == 0 || !FEATURE_ENABLED(Accumulation) ? 0 : gTexAccumulation.Load(pixelCoord).rgb;
+    bool isAccumUninit = gSettings.FrameIdx == 0 || !FEATURE_ENABLED(Accumulation);
+    float3 accumColor = isAccumUninit ? 0 : gTexAccumulation.Load(pixelCoord).rgb;
+
+    // Instead of averaging samples, replace the accum value whenever a valid one is found
+    // Useful for when chosen ray depth > 0 and many debug outputs will often return NAN
+    if (DEBUG_ENABLED(OutputColor) && DEBUG_ENABLED(OutputColorFindAny))
+    {
+        if (isAccumUninit || (IsNaN3(accumColor) && IsNaN3(color)))
+        {
+            gTexAccumulation[pixelCoord].rgb = NAN;
+            return GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
+        }
+
+        if (IsNaN3(color))
+            return accumColor;
+
+        gTexAccumulation[pixelCoord].rgb = color;
+        if (!IsNaN3(accumColor))
+            color = (color + accumColor) / 2.0f; // We can't average over the total number of samples as accumFrameCount is different per-pixel, so we average 2 samples
+        return color;
+    }
 
     if (DEBUG_ENABLED(NaNTests))
     {

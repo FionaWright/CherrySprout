@@ -58,7 +58,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     }
 #endif
 
-    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, s_defaultBxdfMode);
+    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, -1, s_defaultBxdfMode);
 
     CherryPrint("Path-Tracer Initialized");
 }
@@ -248,7 +248,7 @@ bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, con
     return GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor);
 }
 
-void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const BxdfMode& bxdfMode)
+void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const int debugOutputChosenRayDepth, const BxdfMode& bxdfMode)
 {
     uint32_t numSRV = 6;
     uint32_t numUAV = 2;
@@ -283,8 +283,11 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
         compileArgs.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
     }
 
-    if (debugOutputIdx != DebugOutputIndex::eDebugOutput_Disabled)
+    if (GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor))
+    {
         compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));
+        compileArgs.emplace_back("-DDEBUG_CHOSEN_RAY_DEPTH=" + std::to_string(debugOutputChosenRayDepth));
+    }
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
@@ -324,28 +327,44 @@ void PathTracer::RenderGUI_ErrorInfo()
         const uint32_t dbgId = errors[i];
         ImGui::Text("%s: ", s_debugIdList[dbgId]);
         ImGui::SetItemTooltip("%s: ", s_debugIdList[dbgId]);
-
-        if (m_cpuErrorInfo[dbgId].ExprCounter > 0)
+        ImGui::Indent(IM_GUI_INDENTATION);
         {
-            ImGui::Text(" EXPR=%u", m_cpuErrorInfo[dbgId].ExprCounter);
-            ImGui::SetItemTooltip(" EXPR=%u", m_cpuErrorInfo[dbgId].ExprCounter);
+            ImGui::Text("PixelCoord: (%i, %i)", m_cpuErrorInfo[dbgId].PixelCoord.x, m_cpuErrorInfo[dbgId].PixelCoord.y);
+            ImGui::Text("FrameIndex: %i", m_cpuErrorInfo[dbgId].FrameIndex);
 
-            ImGui::Text(" V1=(%f, %f, %f, %f)", m_cpuErrorInfo[dbgId].Value1.x, m_cpuErrorInfo[dbgId].Value1.y,m_cpuErrorInfo[dbgId].Value1.z, m_cpuErrorInfo[dbgId].Value1.w);
-            ImGui::Text(" V2=(%f, %f, %f, %f)", m_cpuErrorInfo[dbgId].Value2.x, m_cpuErrorInfo[dbgId].Value2.y,m_cpuErrorInfo[dbgId].Value2.z, m_cpuErrorInfo[dbgId].Value2.w);
-            ImGui::Text(" V3=(%f, %f, %f, %f)", m_cpuErrorInfo[dbgId].Value3.x, m_cpuErrorInfo[dbgId].Value3.y,m_cpuErrorInfo[dbgId].Value3.z, m_cpuErrorInfo[dbgId].Value3.w);
-        }
+            if (m_cpuErrorInfo[dbgId].ExprCounter > 0)
+            {
+                ImGui::Text("EXPR=%u", m_cpuErrorInfo[dbgId].ExprCounter);
+                ImGui::SetItemTooltip("EXPR=%u", m_cpuErrorInfo[dbgId].ExprCounter);
 
-        if (m_cpuErrorInfo[dbgId].NaNCounter > 0)
-        {
-            ImGui::Text(" NAN=%u",m_cpuErrorInfo[dbgId].NaNCounter);
-            ImGui::SetItemTooltip(" NAN=%u",m_cpuErrorInfo[dbgId].NaNCounter);
-        }
+                ImGui::Indent(IM_GUI_INDENTATION);
+                auto printValue = [&](const char* name, const XMFLOAT4& value)
+                {
+                    if (value.x == value.y && value.x == value.z && value.x == value.w)
+                        ImGui::Text("%s=(%f)", name, value.x);
+                    else
+                        ImGui::Text("%s=(%f, %f, %f, %f)", name, value.x, value.y, value.z, value.w);
+                };
 
-        if (m_cpuErrorInfo[dbgId].InfCounter > 0)
-        {
-            ImGui::Text(" INF=%u", m_cpuErrorInfo[dbgId].InfCounter);
-            ImGui::SetItemTooltip(" INF=%u", m_cpuErrorInfo[dbgId].InfCounter);
+                printValue("V1", m_cpuErrorInfo[dbgId].Value1);
+                printValue("V2", m_cpuErrorInfo[dbgId].Value2);
+                printValue("V3", m_cpuErrorInfo[dbgId].Value3);
+                ImGui::Unindent(IM_GUI_INDENTATION);
+            }
+
+            if (m_cpuErrorInfo[dbgId].NaNCounter > 0)
+            {
+                ImGui::Text("NAN=%u",m_cpuErrorInfo[dbgId].NaNCounter);
+                ImGui::SetItemTooltip(" NAN=%u",m_cpuErrorInfo[dbgId].NaNCounter);
+            }
+
+            if (m_cpuErrorInfo[dbgId].InfCounter > 0)
+            {
+                ImGui::Text("INF=%u", m_cpuErrorInfo[dbgId].InfCounter);
+                ImGui::SetItemTooltip(" INF=%u", m_cpuErrorInfo[dbgId].InfCounter);
+            }
         }
+        ImGui::Unindent(IM_GUI_INDENTATION);
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
     ImGui::Spacing();

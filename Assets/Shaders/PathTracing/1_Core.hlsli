@@ -11,6 +11,8 @@
 
 void Core(uint2 pixelCoord)
 {
+    DBG_ASSERT_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
+
     if (gSettings.IsMaxFramesReached) // TODO: Make this cleaner?
     {
         float3 average = gTexAccumulation[pixelCoord].rgb;

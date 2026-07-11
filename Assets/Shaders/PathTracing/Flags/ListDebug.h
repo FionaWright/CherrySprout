@@ -1,5 +1,5 @@
-FLAG_PROCESS(FurnaceTest)
 FLAG_PROCESS(OutputColor)
+FLAG_PROCESS(OutputColorFindAny)
 
 FLAG_PROCESS(NaNTests)
 FLAG_PROCESS(Asserts)
@@ -12,3 +12,5 @@ FLAG_PROCESS(ForceRefract)
 
 FLAG_PROCESS(BxdfTestRevaluate)
 FLAG_PROCESS(BxdfTestHemisphere)
+
+FLAG_PROCESS(FurnaceTest)
