@@ -277,8 +277,9 @@ namespace SceneLoaderUSD
         {
             for (int v = 1; v + 1 < verticesInFace; ++v)
             {
-                int v1 = flip ? v + 1 : v;
-                int v2 = flip ? v : v + 1;
+                bool flipWinding = !flip; // TODO
+                int v1 = flipWinding ? v + 1 : v;
+                int v2 = flipWinding ? v : v + 1;
 
                 FaceInfo faceInfo;
                 faceInfo.faceIdx = faceIdx;

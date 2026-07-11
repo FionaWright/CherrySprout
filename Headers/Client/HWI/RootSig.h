@@ -15,8 +15,20 @@ public:
 
     ID3D12RootSignature* Get() const { return m_rootSignature.Get(); }
 
+    int GetParamIndexSRV() const { return m_paramIdxSRV; }
+    int GetParamIndexCBV() const { return m_paramIdxCBV; }
+    int GetParamIndexUAV() const { return m_paramIdxUAV; }
+    int GetParamIndexRootConstants() const { return m_paramIdxRootConstants; }
+    int GetParamIndexSceneTextures() const { return m_paramIdxSceneTextures; }
+
 private:
     ComPtr<ID3D12RootSignature> m_rootSignature;
+
+    int m_paramIdxSRV = -1;
+    int m_paramIdxCBV = -1;
+    int m_paramIdxUAV = -1;
+    int m_paramIdxRootConstants = -1;
+    int m_paramIdxSceneTextures = -1;
 };
 
 

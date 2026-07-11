@@ -60,6 +60,8 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
 
     if (rootConstants)
     {
+        m_paramIdxRootConstants = params.size();
+
         CD3DX12_ROOT_PARAMETER1 param;
         param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         param.Constants.ShaderRegister = rootConstants->RegisterIdx;
@@ -71,6 +73,8 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
 
     if (numCBV > 0)
     {
+        m_paramIdxCBV = params.size();
+
         int baseRegister = rootConstants ? rootConstants->RegisterIdx + 1 : 0;
 
         ranges.emplace_back();
@@ -84,6 +88,8 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
     std::vector<CD3DX12_DESCRIPTOR_RANGE1> srvRanges;
     if (numSRV > 0)
     {
+        m_paramIdxSRV = params.size();
+
         ranges.emplace_back();
         ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numSRV, 0, 0);
 
@@ -94,6 +100,8 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
 
     if (hasSceneTextures)
     {
+        m_paramIdxSceneTextures = params.size();
+
         ranges.emplace_back();
         ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
@@ -104,6 +112,8 @@ void RootSig::SmartInit(ID3D12Device* device, const UINT numCBV, const UINT numS
 
     if (numUAV > 0)
     {
+        m_paramIdxUAV = params.size();
+
         ranges.emplace_back();
         ranges.back().Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numUAV, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 

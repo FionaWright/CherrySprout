@@ -25,19 +25,17 @@ VsOut VSMain(VsIn input)
 {
     VsOut output;
 
-    output.normal = normalize(mul((float3x3)gInfo.MTI, (float3)input.normal));
-    output.uv = input.uv;
+    InstanceData instanceData = gMegaBufferInstanceData[gInfo.InstanceIdx];
 
     float4 pos = float4(input.position, 1.0f);
-    float4 worldPos = mul(gInfo.M, pos);
+    float4 worldPos = mul(instanceData.M, pos);
 
     pos = mul(gMatricesVP.V, worldPos);
     output.position = mul(gMatricesVP.P, pos);
 
     output.uv = input.uv;
-    output.normal = normalize(mul((float3x3)gInfo.MTI, input.normal));
+    output.normal = normalize(mul((float3x3)instanceData.MTI, input.normal));
 
-    InstanceData instanceData = gMegaBufferInstanceData[gInfo.InstanceIdx];
     output.materialIdx = instanceData.MaterialIndex;
 
     return output;

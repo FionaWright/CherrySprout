@@ -26,6 +26,7 @@ struct GraphicsPipelineEntry
 
     Pipeline* Ptr;
     D3D12_GRAPHICS_PIPELINE_STATE_DESC Desc;
+    std::vector<D3D12_INPUT_ELEMENT_DESC> InputLayout;
     std::vector<std::string> CompileArgs;
 };
 

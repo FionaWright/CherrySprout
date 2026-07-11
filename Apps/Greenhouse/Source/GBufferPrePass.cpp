@@ -137,8 +137,6 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
         cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     }
 
-    heap->Bind(cmdList);
-
     scene->GPU.MegaBufferInstanceData.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     scene->GPU.MegaBufferMaterials.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
@@ -162,7 +160,9 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
 
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
-        heap->BindSceneTextures_Graphics(cmdList);
+        heap->Bind(cmdList);
+        heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
+        m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
     }
 
     CbvMatrices_VP matricesVP = {};
@@ -178,20 +178,8 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
 
         //GPU_SCOPE(cmdList, obj.DebugName);
 
-        const XMMATRIX M = XMMatrixSet(
-            obj.M[0], obj.M[1], obj.M[2], obj.M[3],
-            obj.M[4], obj.M[5], obj.M[6], obj.M[7],
-            obj.M[8], obj.M[9], obj.M[10], obj.M[11],
-            obj.M[12], obj.M[13], obj.M[14], obj.M[15]
-        );
-
         perInstance.InstanceIdx = i;
-
-        XMStoreFloat4x4(&perInstance.M, M);
-        XMStoreFloat4x4(&perInstance.MTI, XMMatrixTranspose(XMMatrixInverse(nullptr, M)));
         m_rootConstants.Bind_Graphics(cmdList, &perInstance);
-
-        m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
 
         cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset,
                                       obj.MegaBufferVertexOffset, 0);

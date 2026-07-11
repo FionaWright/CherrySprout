@@ -82,8 +82,8 @@ struct CbvForward
 
 struct CbvGBufferPrePass_PerInstance
 {
-    hlsl::float4x4 M, MTI;
     hlsl::uint InstanceIdx;
+    hlsl::float3 p;
 };
 
 struct CbvTotalLuminances

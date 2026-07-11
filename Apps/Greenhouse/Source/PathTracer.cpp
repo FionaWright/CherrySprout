@@ -217,7 +217,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     cmdList->SetComputeRootSignature(m_rootSig.Get());
     cmdList->SetPipelineState(m_pipeline.GetPSO());
     heap->Bind(cmdList);
-    heap->BindSceneTextures_Compute(cmdList);
+    heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
     m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
     constexpr uint32_t THREAD_COUNTS = 16;

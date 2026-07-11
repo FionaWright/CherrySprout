@@ -111,16 +111,16 @@ void Heap::Bind(ID3D12GraphicsCommandList* cmdList) const
     cmdList->SetDescriptorHeaps(1, &heap);
 }
 
-void Heap::BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList) const
+void Heap::BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList, const uint32_t paramIdx) const
 {
     const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), GetBindlessTexBase(), GetIncrementSize());
-    cmdList->SetGraphicsRootDescriptorTable(2, bindlessHandle);
+    cmdList->SetGraphicsRootDescriptorTable(paramIdx, bindlessHandle);
 }
 
-void Heap::BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList) const
+void Heap::BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList, const uint32_t paramIdx) const
 {
     const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), GetBindlessTexBase(), GetIncrementSize());
-    cmdList->SetComputeRootDescriptorTable(2, bindlessHandle);
+    cmdList->SetComputeRootDescriptorTable(paramIdx, bindlessHandle);
 }
 
 void Heap::PrintHeapInfo() const

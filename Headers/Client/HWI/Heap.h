@@ -24,8 +24,8 @@ public:
     [[nodiscard]] uint32_t GetBindlessTexBase() const { return m_baseSceneTextures; }
 
     void Bind(ID3D12GraphicsCommandList* cmdList) const;
-    void BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList) const;
-    void BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList) const;
+    void BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList, uint32_t paramIdx) const;
+    void BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList, uint32_t paramIdx) const;
     void PrintHeapInfo() const;
 
     [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const { return m_heapResource->GetCPUDescriptorHandleForHeapStart(); }

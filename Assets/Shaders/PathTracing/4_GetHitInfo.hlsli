@@ -106,7 +106,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     }
 
     hitInfo.Ng_ff = hitInfo.IsEntering ? -Ng : Ng;
-    hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
+    hitInfo.Ns_ff = hitInfo.IsEntering ? -Ns : Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
     ApplyMaterialTextures(hitInfo);
@@ -114,6 +114,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
     DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);
     DBG_OUTPUT2(barycentrics,                                                             Barycentrics);
+    DBG_OUTPUT3(Ns,                                                                       Normals);
     DBG_OUTPUT3(hitInfo.Ns_ff,                                                            NormalShadedFF);
     DBG_OUTPUT3(hitInfo.Ng_ff,                                                            NormalGeometricFF);
     DBG_OUTPUT3(hitInfo.SFrame.T,                                                         Tangent);

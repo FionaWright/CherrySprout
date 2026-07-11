@@ -39,7 +39,13 @@ void HotReloader::TrackGraphicsPipeline(const char* vsID, const char* psID, Pipe
         }
     }
 
-    GraphicsPipelineEntry entry = {vsEntry, psEntry, ptr, desc, compileArgs};
+    std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
+    for (int i = 0; i < desc.InputLayout.NumElements; i++)
+    {
+        inputLayout.emplace_back(desc.InputLayout.pInputElementDescs[i]);
+    }
+
+    GraphicsPipelineEntry entry = {vsEntry, psEntry, ptr, desc, inputLayout, compileArgs};
     s_graphicsPipelines.emplace_back(entry);
 
     CherryPrint("Hot Reloader Tracking Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
@@ -116,6 +122,8 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
             continue;
 
         CherryPrint("Hot Reloading Graphics Pipeline: " << entry.VertexEntry.ID << ", " << entry.PixelEntry.ID);
+
+        entry.Desc.InputLayout.pInputElementDescs = entry.InputLayout.data();
 
         entry.Ptr->InitGraphics(d3d->GetDevice(), entry.VertexEntry.ID.c_str(),
                                 entry.PixelEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
