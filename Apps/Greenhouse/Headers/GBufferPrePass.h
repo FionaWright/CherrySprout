@@ -13,6 +13,12 @@ struct Scene;
 class D3D;
 class Heap;
 
+#define GBUFFER_FORMAT_MAT_IDX      DXGI_FORMAT_R8_UINT
+#define GBUFFER_FORMAT_NORMALS      DXGI_FORMAT_R10G10B10A2_UNORM // TODO: Change to Rg16f
+#define GBUFFER_FORMAT_UV_MV        DXGI_FORMAT_R16G16B16A16_FLOAT
+#define GBUFFER_FORMAT_DEPTH        DXGI_FORMAT_D32_FLOAT
+#define GBUFFER_FORMAT_DEPTH_SRV    DXGI_FORMAT_R32_FLOAT
+
 class GBufferPrePass
 {
 public:
@@ -26,11 +32,14 @@ public:
 
 private:
     uint32_t createRTV(ID3D12Device* device, const D12Resource* resource);
+    uint32_t createDSV(ID3D12Device* device, const D12Resource* resource);
 
     Heap m_heapRTV;
+    Heap m_heapDSV;
     uint32_t m_heapIdxMatIdx = 0;
     uint32_t m_heapIdxNormals = 0;
     uint32_t m_heapIdxUvMv = 0;
+    uint32_t m_heapIdxDepth = 0;
     std::vector<XMFLOAT4> m_rtvClearValues;
 
     D12Resource m_gbufferTexMaterialIdx;

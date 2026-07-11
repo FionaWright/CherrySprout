@@ -115,7 +115,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 9, m_gbufferPrePass.GetGBufferMaterialIdx(), m_gbufferPrePass.GetGBufferMaterialIdx()->GetDesc().Format);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 10, m_gbufferPrePass.GetGBufferNormals(), m_gbufferPrePass.GetGBufferNormals()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferDepth(), m_gbufferPrePass.GetGBufferDepth()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, m_gbufferPrePass.GetGBufferUvMv(), m_gbufferPrePass.GetGBufferUvMv()->GetDesc().Format);
 }
 

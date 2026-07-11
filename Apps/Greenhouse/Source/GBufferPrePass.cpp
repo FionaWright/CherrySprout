@@ -12,14 +12,9 @@
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
-#define GBUFFER_FORMAT_MAT_IDX DXGI_FORMAT_R8_UINT
-#define GBUFFER_FORMAT_NORMALS DXGI_FORMAT_R10G10B10A2_UNORM // TODO: Change to Rg16f
-#define GBUFFER_FORMAT_UV_MV   DXGI_FORMAT_R16G16B16A16_FLOAT
-#define GBUFFER_FORMAT_DEPTH   DXGI_FORMAT_R32_FLOAT
-
 uint32_t GBufferPrePass::createRTV(ID3D12Device* device, const D12Resource* resource)
 {
-    D3D12_RENDER_TARGET_VIEW_DESC desc;
+    D3D12_RENDER_TARGET_VIEW_DESC desc{};
     desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
     desc.Format = resource->GetDesc().Format;
     desc.Texture2D.MipSlice = 0;
@@ -29,6 +24,21 @@ uint32_t GBufferPrePass::createRTV(ID3D12Device* device, const D12Resource* reso
     const auto handle = m_heapRTV.GetDescriptorHandleAtIndex(heapIdx);
 
     device->CreateRenderTargetView(resource->GetResource(), &desc, handle);
+
+    return heapIdx;
+}
+
+uint32_t GBufferPrePass::createDSV(ID3D12Device* device, const D12Resource* resource)
+{
+    D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
+    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    desc.Format = GBUFFER_FORMAT_DEPTH;
+    desc.Texture2D.MipSlice = 0;
+
+    const uint32_t heapIdx = m_heapDSV.GetNextDescriptorIdx(resource->GetName());
+    const auto handle = m_heapDSV.GetDescriptorHandleAtIndex(heapIdx);
+
+    device->CreateDepthStencilView(resource->GetResource(), &desc, handle);
 
     return heapIdx;
 }
@@ -46,7 +56,7 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_gbufferTexMaterialIdx.Init_Tex2D("GBuffer Material Idx", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_MAT_IDX, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[0]);
     m_gbufferTexNormals.Init_Tex2D("GBuffer Normals", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_NORMALS, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[1]);
     m_gbufferTexUvMv.Init_Tex2D("GBuffer UV + MV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_UV_MV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[2]);
-    m_gbufferTexDepth.Init_Tex2D("GBuffer Depth", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_DEPTH, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+    m_gbufferTexDepth.Init_Depth2D("GBuffer Depth", d3d->GetDevice(), w, h, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 #define NUM_RENDER_TARGETS 3
 
@@ -54,6 +64,9 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_heapIdxMatIdx = createRTV(d3d->GetDevice(), &m_gbufferTexMaterialIdx);
     m_heapIdxNormals = createRTV(d3d->GetDevice(), &m_gbufferTexNormals);
     m_heapIdxUvMv = createRTV(d3d->GetDevice(), &m_gbufferTexUvMv);
+
+    m_heapDSV.Init("GBuffer Pre-Pass Heap DSV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    m_heapIdxDepth = createDSV(d3d->GetDevice(), &m_gbufferTexDepth);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -105,6 +118,7 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
         m_gbufferTexMaterialIdx.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferTexNormals.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferTexUvMv.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        m_gbufferTexDepth.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {
             m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxMatIdx),
@@ -112,7 +126,7 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
             m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxUvMv),
         };
 
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth);
         cmdList->OMSetRenderTargets(_countof(rtvs), rtvs, FALSE, &dsvHandle);
 
         for (int i = 0; i < _countof(rtvs); i++)
@@ -120,7 +134,7 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
             cmdList->ClearRenderTargetView(rtvs[i], reinterpret_cast<FLOAT*>(&m_rtvClearValues[i]), 1, &scissorRect);
         }
 
-        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     }
 
     heap->Bind(cmdList);

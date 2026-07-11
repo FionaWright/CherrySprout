@@ -60,7 +60,6 @@ void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint3
     desc.SampleDesc.Quality = 0;
 
     D3D12_CLEAR_VALUE d12ClearValue;
-
     if (clearValue)
     {
         memcpy(&d12ClearValue.Color, clearValue, sizeof(float) * 4);
@@ -68,6 +67,27 @@ void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint3
     }
 
     Init(name, device, desc, initialState, clearValue ? &d12ClearValue : nullptr);
+}
+
+void D12Resource::Init_Depth2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height,
+                             const D3D12_RESOURCE_FLAGS flags, const D3D12_RESOURCE_STATES initialState)
+{
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    desc.MipLevels = 1;
+    desc.DepthOrArraySize = 1;
+    desc.Flags = flags | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    D3D12_CLEAR_VALUE d12ClearValue;
+    d12ClearValue.DepthStencil = { 1, 0 };
+    d12ClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+
+    Init(name, device, desc, initialState, &d12ClearValue);
 }
 
 void D12Resource::Init_Tex1D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, DXGI_FORMAT format,
