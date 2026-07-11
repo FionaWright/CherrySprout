@@ -136,7 +136,7 @@ void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #ifdef _DEBUG
-    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_Asserts))
+    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Asserts))
     {
         d3d->Flush();
 
@@ -164,12 +164,14 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
     }
 
-#define PATH_DUMP_UPDATE_COOLDOWN 1000
+#define PATH_DUMP_UPDATE_COOLDOWN 300
 
-    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_PathDumper))
+    const bool scheduledRun = m_scheduledRunState == ScheduledRunState::eReadbackPathDump;
+    const bool needPathDump = m_isPathDumpAutomatic || scheduledRun;
+    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper) && needPathDump)
     {
         static int s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
-        if (s_pathDumpTimer > 0)
+        if (s_pathDumpTimer > 0 && !scheduledRun)
         {
             s_pathDumpTimer--;
             return;
@@ -192,6 +194,14 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         d3d->Flush();
 
         m_pathDumpBufferReadback.Readback(&m_cpuPathDump);
+
+        m_dumpedPathPixelCoords = scheduledRun ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
+        m_dumpedPathFrameIdx = scheduledRun ? m_scheduledRunFrameIdx : m_frameIdx;
+        m_dumpedPathCameraPosition = scheduledRun ? m_scheduledRunCameraPosition : renderInfo.Camera->GetPosition();
+        m_dumpedPathViewMatrix = scheduledRun ? m_scheduledRunViewMatrix : renderInfo.Camera->GetViewMatrix();
+
+        if (scheduledRun)
+            m_scheduledRunState = ScheduledRunState::eDisplay;
     }
 #endif
 }
@@ -203,9 +213,15 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugFlags))
+    XMMATRIX V = renderInfo.V;
+#ifdef _DEBUG
+    if (m_scheduledRunState == ScheduledRunState::eRunFrame)
+        V = m_scheduledRunViewMatrix;
+#endif
+
+    if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo.Flags))
     {
-        m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, renderInfo.V, renderInfo.P);
+        m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, V, renderInfo.P);
 
         m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -220,6 +236,22 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         XMStoreFloat4x4(&settings.InvV, renderInfo.InvV);
         settings.FrameIdx = m_frameIdx;
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
+
+#ifdef _DEBUG
+        if (m_scheduledRunState == ScheduledRunState::eRunFrame)
+        {
+            settings.FrameIdx = m_scheduledRunFrameIdx;
+            settings.CameraPositionWorld = m_scheduledRunCameraPosition;
+            XMStoreFloat4x4(&settings.InvV, XMMatrixInverse(nullptr, m_scheduledRunViewMatrix));
+
+            // TODO: Make chosen pixel coord a CBV value to avoid recompilation
+            SetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_Accumulation, false);
+            d3d->Flush();
+            UpdatePipeline(d3d->GetDevice(), renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo, renderInfo.PathTracerConfig->BxdfMode);
+
+            m_scheduledRunState = ScheduledRunState::eReadbackPathDump;
+        }
+#endif
 
         settings.MaxRayDepth = renderInfo.PathTracerConfig->MaxRayDepth;
         settings.MaxShadowRayDepth = renderInfo.PathTracerConfig->MaxShadowRayDepth;
@@ -253,14 +285,19 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-    cmdList->SetComputeRootSignature(m_rootSig.Get());
-    cmdList->SetPipelineState(m_pipeline.GetPSO());
-    heap->Bind(cmdList);
-    heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
-    m_descriptorSet.SetDescriptorTables_Compute(cmdList);
+#ifdef _DEBUG
+    if (m_scheduledRunState != ScheduledRunState::eDisplay)
+#endif
+    {
+        cmdList->SetComputeRootSignature(m_rootSig.Get());
+        cmdList->SetPipelineState(m_pipeline.GetPSO());
+        heap->Bind(cmdList);
+        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
+        m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
-    constexpr uint32_t THREAD_COUNTS = 16;
-    DispatchOverTexture(cmdList, THREAD_COUNTS, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        constexpr uint32_t THREAD_COUNTS = 16;
+        DispatchOverTexture(cmdList, THREAD_COUNTS, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+    }
 
     // Copy to RTV
     {
@@ -331,9 +368,11 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 
     if (outputColorEnabled || pathDumpEnabled)
     {
+        const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : debugInfo.ChosenPixelCoords;
+
         compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugInfo.OutputColorIdx)));
         compileArgs.emplace_back("-DDEBUG_CHOSEN_RAY_DEPTH=" + std::to_string(debugInfo.ChosenRayDepth));
-        compileArgs.emplace_back("-DDEBUG_CHOSEN_PIXEL_COORDS=uint2(" + std::to_string(debugInfo.ChosenPixelCoords.x) + "," + std::to_string(debugInfo.ChosenPixelCoords.y) + ")");
+        compileArgs.emplace_back("-DDEBUG_CHOSEN_PIXEL_COORDS=uint2(" + std::to_string(chosenPixelCoords.x) + "," + std::to_string(chosenPixelCoords.y) + ")");
     }
 #endif
 
@@ -346,18 +385,39 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 void PathTracer::Reset()
 {
     m_frameIdx = 0;
+
+#ifdef _DEBUG
+    if (m_scheduledRunState == ScheduledRunState::eDisplay)
+        m_scheduledRunState = ScheduledRunState::eIdle;
+#endif
 }
 
 #ifdef _DEBUG
 void PathTracer::RenderGUI_DebugInfo(const PathTracerConfig& config)
 {
-    if (GetPathTracerDebugFlag(config.DebugFlags, eDebug_PathDumper))
+    if (GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper))
     {
         if (ImGui::CollapsingHeader("Path Dump"))
         {
             ImGui::Indent(IM_GUI_INDENTATION);
 
-            ImGui::Text("Pixel Coord: (%i, %i)", config.DebugChosenPixelCoord.x, config.DebugChosenPixelCoord.y);
+            if (!m_isPathDumpAutomatic && ImGui::Button("Enable Automatic Path Dump"))
+                m_isPathDumpAutomatic = true;
+
+            ImGui::Text("Pixel Coord:     (%i, %i)", m_dumpedPathPixelCoords.x, m_dumpedPathPixelCoords.y);
+            ImGui::Text("Frame Index:     %i", m_dumpedPathFrameIdx);
+            ImGui::Text("Camera Position: (%f, %f, %f)", m_dumpedPathCameraPosition.x, m_dumpedPathCameraPosition.y, m_dumpedPathCameraPosition.z);
+
+            if (ImGui::Button("Re-Run Path"))
+            {
+                m_scheduledRunState = ScheduledRunState::eRunFrame;
+                m_isPathDumpAutomatic = false;
+
+                m_scheduledRunPixelCoords = m_dumpedPathPixelCoords;
+                m_scheduledRunFrameIdx = m_dumpedPathFrameIdx;
+                m_scheduledRunCameraPosition = m_dumpedPathCameraPosition;
+                m_scheduledRunViewMatrix = m_dumpedPathViewMatrix;
+            }
 
             const size_t maxRayDepth = std::min(config.MaxRayDepth, static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH));
             for (int i = 0; i < maxRayDepth; i++)
@@ -404,13 +464,16 @@ void PathTracer::RenderGUI_DebugInfo(const PathTracerConfig& config)
                             ImGui::Text("(%.3f, %.3f, %.3f)", v.x, v.y, v.z);
                         };
 
-                        RowInt("Ray Segment", m_cpuPathDump[i].PathState.RaySegmentIdx);
+                        RowInt("Ray Segment", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
                         RowInt("Dirac Delta", m_cpuPathDump[i].PathState.LastRayDiracDelta);
                         RowFloat("Last PDF", m_cpuPathDump[i].PathState.LastBxdfPdf);
 
                         for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
                         {
-                            RowFloat3(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j]);
+                            if (m_cpuPathDump[i].DebugOutputs.Float3List[j].x == m_cpuPathDump[i].DebugOutputs.Float3List[j].y && m_cpuPathDump[i].DebugOutputs.Float3List[j].x == m_cpuPathDump[i].DebugOutputs.Float3List[j].z)
+                                RowFloat(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j].x);
+                            else
+                                RowFloat3(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j]);
                         }
 
                         ImGui::EndTable();
@@ -425,7 +488,7 @@ void PathTracer::RenderGUI_DebugInfo(const PathTracerConfig& config)
         }
     }
 
-    if (!GetPathTracerDebugFlag(config.DebugFlags, eDebug_Asserts))
+    if (!GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_Asserts))
         return;
 
     std::vector<uint32_t> errors;
@@ -437,7 +500,7 @@ void PathTracer::RenderGUI_DebugInfo(const PathTracerConfig& config)
         }
     }
 
-    if (errors.size() == 0)
+    if (errors.empty())
         return;
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(224/255., 82/255., 110/255., 255));

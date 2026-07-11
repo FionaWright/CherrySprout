@@ -19,24 +19,14 @@
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 
+class Camera;
+struct PathTracingDebugInfo;
 struct PathTracerConfig;
 enum class BxdfMode : hlsl::uint;
 enum class DebugOutputIndex : hlsl::uint;
 struct TimeArgs;
 
 #define PATH_DUMP_MAX_RAY_DEPTH 32
-
-constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
-
-struct PathTracingDebugInfo
-{
-#ifdef _DEBUG
-    PathTracerDebugFlags Flags = s_defaultDebugFlags;
-    DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
-    int ChosenRayDepth = -1;
-    hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
-#endif
-};
 
 class PathTracer final : public IRenderBackend
 {
@@ -78,7 +68,26 @@ private:
     bool m_scheduleClearErrors = false;
 
     RayDump m_cpuPathDump[PATH_DUMP_MAX_RAY_DEPTH] = {};
+    hlsl::uint2 m_dumpedPathPixelCoords = {};
+    uint32_t m_dumpedPathFrameIdx = 0;
+    XMFLOAT3 m_dumpedPathCameraPosition = {};
+    XMMATRIX m_dumpedPathViewMatrix = {};
     D12Resource m_pathDumpBufferRW, m_pathDumpBufferReadback;
+    bool m_isPathDumpAutomatic = true;
+
+    enum class ScheduledRunState
+    {
+        eIdle,
+        eRunFrame,
+        eReadbackPathDump,
+        eDisplay
+    };
+
+    hlsl::uint2 m_scheduledRunPixelCoords = {};
+    uint32_t m_scheduledRunFrameIdx = 0;
+    XMFLOAT3 m_scheduledRunCameraPosition = {};
+    XMMATRIX m_scheduledRunViewMatrix = {};
+    ScheduledRunState m_scheduledRunState = ScheduledRunState::eIdle;
 #endif
 };
 

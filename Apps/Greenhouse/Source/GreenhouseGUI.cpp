@@ -67,7 +67,7 @@ void Greenhouse::RenderGUI()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
-    static_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_DebugInfo(m_config.PathTracerConfig);
+    dynamic_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_DebugInfo(m_config.PathTracerConfig);
 
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);
@@ -90,9 +90,9 @@ void Greenhouse::RenderGUI()
             {
                 static int e = static_cast<int>(m_config.PathTracerConfig.BxdfMode);
                 int c = 0;
-                for (int i = 0; i < static_cast<int>(BxdfMode::eCount); i++)
+                for (auto & s_bxdfName : s_bxdfNames)
                 {
-                    m_ptPipelineDirty |= ImGui::RadioButton(s_bxdfNames[i], &e, c++);
+                    m_ptPipelineDirty |= ImGui::RadioButton(s_bxdfName, &e, c++);
                 }
                 m_config.PathTracerConfig.BxdfMode = static_cast<BxdfMode>(e);
             }
@@ -156,9 +156,9 @@ void Greenhouse::RenderGUI()
                 ImGui::TableNextColumn();
 
                 const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
-                bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, flag);
+                bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
                 m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
-                SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, flag, isEnabled);
+                SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, isEnabled);
 
                 ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
             }
@@ -167,21 +167,21 @@ void Greenhouse::RenderGUI()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-        if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
-            m_config.PathTracerConfig.DebugOutputIdx = DebugOutputIndex::eDebugOutput_Disabled;
+        if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
+            m_config.PathTracerConfig.DebugInfo.OutputColorIdx = DebugOutputIndex::eDebugOutput_Disabled;
 
-        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_OutputColor))
+        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
         {
             ImGui::Text("Debug Outputs:");
             ImGui::Indent(IM_GUI_INDENTATION);
 
-            ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugOutputChosenRayDepth);
+            ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
             m_ptPipelineDirty |= ImGui::IsItemDeactivatedAfterEdit();
-            m_config.PathTracerConfig.DebugOutputChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugOutputChosenRayDepth);
+            m_config.PathTracerConfig.DebugInfo.ChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
 
             if (ImGui::BeginTable("Debug Outputs", 2))
             {
-                static int e = static_cast<int>(m_config.PathTracerConfig.DebugOutputIdx);
+                static int e = static_cast<int>(m_config.PathTracerConfig.DebugInfo.OutputColorIdx);
                 int c = 1;
                 for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
                 {
@@ -189,7 +189,7 @@ void Greenhouse::RenderGUI()
                     m_ptPipelineDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
                     ImGui::SetItemTooltip("%s", s_debugOutputIdxNames[i]);
                 }
-                m_config.PathTracerConfig.DebugOutputIdx = static_cast<DebugOutputIndex>(e);
+                m_config.PathTracerConfig.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::EndTable();

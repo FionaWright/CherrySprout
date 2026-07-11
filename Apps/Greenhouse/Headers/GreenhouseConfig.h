@@ -6,6 +6,18 @@
 #include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Flags/MethodsCpp.h"
 
+constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
+
+struct PathTracingDebugInfo
+{
+#ifdef _DEBUG
+    PathTracerDebugFlags Flags = s_defaultDebugFlags;
+    DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
+    int ChosenRayDepth = -1;
+    hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
+#endif
+};
+
 struct PathTracerConfig
 {
     uint32_t SPP = 1;
@@ -21,10 +33,7 @@ struct PathTracerConfig
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
 
-    PathTracerDebugFlags       DebugFlags       = s_defaultDebugFlags;
-    DebugOutputIndex           DebugOutputIdx   = s_defaultOutputIndex;
-    int                        DebugOutputChosenRayDepth = -1;
-    hlsl::uint2                DebugChosenPixelCoord = s_defaultChosenPixelIdx;
+    PathTracingDebugInfo       DebugInfo        = {};
 };
 
 struct ForwardConfig
