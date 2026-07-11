@@ -96,6 +96,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_sceneDirty)
     {
+        d3d->Flush();
+
         m_sceneManager.UnreserveData();
 
         const SceneConfig& sceneConfig = s_sceneConfigs.at(m_currentSceneIdx);
