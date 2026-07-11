@@ -1,6 +1,9 @@
 #ifndef H_DEBUG_STRUCTS_H
 #define H_DEBUG_STRUCTS_H
+
+#include "PathTracing/Structs.h"
 #include "Utils/HlslGlue.h"
+#include "PathTracing/Debug/OutputColor.h"
 
 struct DebugErrorInfo
 {
@@ -14,6 +17,12 @@ struct DebugErrorInfo
 
     hlsl::uint2 PixelCoord;
     hlsl::uint FrameIndex;
+};
+
+struct RayDump
+{
+    DebugOutputStruct DebugOutputs;
+    PathState PathState;
 };
 
 #endif

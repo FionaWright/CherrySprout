@@ -7,9 +7,7 @@
 #include "Utils/Debug/NaNTests.hlsli"
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/Constants.h"
-
-static uint2 gPixelCoord = uint2(UINT_MAX, UINT_MAX);
-static uint gFrameIndex = UINT_MAX;
+#include "PathTracing/Debug/Globals.hlsli"
 
 void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
 {
@@ -45,20 +43,18 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
     if (updateInf)
         InterlockedAdd(gDbgBufferErrorInfo[dbgID].InfCounter, 1);
 
-    if (updatedAny && gFrameIndex != UINT_MAX && gPixelCoord.x != UINT_MAX && gPixelCoord.y != UINT_MAX)
+    if (updatedAny && gDebugFrameIndex != UINT_MAX && gDebugPixelCoord.x != UINT_MAX && gDebugPixelCoord.y != UINT_MAX)
     {
         uint _;
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.x, gPixelCoord.x, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.y, gPixelCoord.y, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].FrameIndex, gFrameIndex, _);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.x, gDebugPixelCoord.x, _);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.y, gDebugPixelCoord.y, _);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].FrameIndex, gDebugFrameIndex, _);
     }
 }
 
 void dbgAssert(float3 v1, float3 v2, float3 v3, bool3 expr, uint dbgID)          { dbgAssert(v1.xyzz, v2.xyzz, v3.xyzz, expr.xyzz, dbgID); }
 void dbgAssert(float2 v1, float2 v2, float2 v3, bool2 expr, uint dbgID)          { dbgAssert(v1.xyyy, v2.xyyy, v3.xyyy, expr.xyyy, dbgID); }
 void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)          { dbgAssert(v1.xxxx, v2.xxxx, v3.xxxx, expr.xxxx, dbgID); }
-
-#define DBG_ASSERT_SET_PIXEL_INFO(pixelCoord, frameIndex) { gPixelCoord = pixelCoord; gFrameIndex = frameIndex; }
 
 #define DBG_ASSERT_EXPR(expr, dbgID)                  dbgAssert(0, 0, 0, expr, dbgID);
 #define DBG_ASSERT_VALUE(v,    dbgID)                 dbgAssert(v, 0, 0, 1, dbgID);
@@ -78,7 +74,6 @@ void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)         
 
 #else
 
-#define DBG_ASSERT_SET_PIXEL_COORD(pixelCoord)
 #define DBG_ASSERT_EXPR(expr, dbgID)
 #define DBG_ASSERT_VALUE(v,    dbgID)
 #define DBG_ASSERT_EQ(v1, v2, dbgID)

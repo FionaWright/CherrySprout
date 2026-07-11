@@ -75,4 +75,8 @@ inline void SetPathTracerDebugFlag(PathTracerDebugFlags& state, const PathTracer
         state = static_cast<PathTracerDebugFlags>(state ^ flag);
 }
 
+// HLSL macros:
+#define FEATURE_ENABLED(flag) false
+#define DEBUG_ENABLED(flag)   false
+
 #endif

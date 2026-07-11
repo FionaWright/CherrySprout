@@ -1,9 +1,9 @@
-#ifndef H_HIT_INFO_H
-#define H_HIT_INFO_H
-
-#include "Scene/Material.h"
+#ifndef H_PATH_TRACING_STRUCTS_H
+#define H_PATH_TRACING_STRUCTS_H
 
 #include "Utils/HlslGlue.h"
+
+#include "Scene/Material.h"
 #include "Utils/Math/ShadingFrame.h"
 
 struct HitInfo
@@ -22,6 +22,13 @@ struct HitInfo
     hlsl::float2 UV;
     bool IsEntering;
     float RayT;
+};
+
+struct PathState
+{
+    float LastBxdfPdf;
+    hlsl::uint RaySegmentIdx;
+    bool LastRayDiracDelta;
 };
 
 #endif

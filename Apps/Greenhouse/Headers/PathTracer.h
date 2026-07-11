@@ -7,19 +7,36 @@
 
 #include "GBufferPrePass.h"
 #include "IRenderBackend.h"
+#include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Heap.h"
 #include "HWI/RootSig.h"
 #include "HWI/RtasBuilder.h"
 #include "HWI/Pipeline.h"
+#include "PathTracing/Debug/OutputColor.h"
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags/MethodsCpp.h"
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 
+struct PathTracerConfig;
 enum class BxdfMode : hlsl::uint;
 enum class DebugOutputIndex : hlsl::uint;
 struct TimeArgs;
+
+#define PATH_DUMP_MAX_RAY_DEPTH 32
+
+constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
+
+struct PathTracingDebugInfo
+{
+#ifdef _DEBUG
+    PathTracerDebugFlags Flags = s_defaultDebugFlags;
+    DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
+    int ChosenRayDepth = -1;
+    hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
+#endif
+};
 
 class PathTracer final : public IRenderBackend
 {
@@ -31,8 +48,7 @@ public:
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override;
     bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const;
-    void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags,
-                        const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, int debugOutputChosenRayDepth, const BxdfMode& bxdfMode);
+    void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode);
     void Reset();
 
     size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
@@ -42,7 +58,7 @@ public:
     uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
 #ifdef _DEBUG
-    void RenderGUI_ErrorInfo();
+    void RenderGUI_DebugInfo(const PathTracerConfig& config);
 #endif
 
 private:
@@ -60,6 +76,9 @@ private:
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;
     DebugErrorInfo m_cpuErrorInfo[_countof(s_debugIdList)] = {};
     bool m_scheduleClearErrors = false;
+
+    RayDump m_cpuPathDump[PATH_DUMP_MAX_RAY_DEPTH] = {};
+    D12Resource m_pathDumpBufferRW, m_pathDumpBufferReadback;
 #endif
 };
 

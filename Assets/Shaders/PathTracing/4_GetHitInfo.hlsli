@@ -8,11 +8,11 @@
 #include "Utils/Debug/Palette.hlsli"
 #include "PathTracing/Debug/OutputColorMacros.hlsli"
 
-#include "PathTracing/HitInfo.h"
+#include "PathTracing/Structs.h"
 
 #define NO_TEXTURE -1
 
-float SampleTexture1(HitInfo hitInfo, int idx, float fallback)
+float sampleTexture1(HitInfo hitInfo, int idx, float fallback)
 {
     if (idx == NO_TEXTURE)
         return fallback;
@@ -20,7 +20,7 @@ float SampleTexture1(HitInfo hitInfo, int idx, float fallback)
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).r;
 }
 
-float3 SampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
+float3 sampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
 {
     if (idx == NO_TEXTURE)
         return fallback;
@@ -28,7 +28,7 @@ float3 SampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
     return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).rgb;
 }
 
-float4 SampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
+float4 sampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
 {
     if (idx == NO_TEXTURE)
         return fallback;
@@ -38,10 +38,10 @@ float4 SampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
 
 void ApplyMaterialTextures(inout HitInfo hitInfo)
 {
-    float4 albedoSample = SampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
-    float roughnessSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
-    float metallicSample = SampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
-    //float3 emissionSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
+    float4 albedoSample = sampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
+    float roughnessSample = sampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
+    float metallicSample = sampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
+    //float3 emissionSample = sampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
 
     if (true) // TODO
         albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
@@ -97,7 +97,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     if (FEATURE_ENABLED(NormalMaps) && hitInfo.Mat.TexIdxNormal != NO_TEXTURE)
     {
-        float3 bumpSample = SampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0));
+        float3 bumpSample = sampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0));
         bumpSample = RemapUtoS(bumpSample);
         bumpSample.y = -bumpSample.y; // DX-convention
 
@@ -122,11 +122,11 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     DBG_OUTPUT3(hitInfo.SFrame.B,                                                         Bitangent);
     DBG_OUTPUT2(hitInfo.UV,                                                               UV);
 
-    DBG_OUTPUT3(SampleTexture3(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1),                     TexAlbedo);
-    DBG_OUTPUT3(SampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0)),       TexNormal);
-    DBG_OUTPUT3(SampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1),                   TexEmissive);
-    DBG_OUTPUT1(SampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1),                  TexRoughness);
-    DBG_OUTPUT1(SampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0),                   TexMetallic);
+    DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxAlbedo, NAN),                     TexAlbedo);
+    DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, NAN),                     TexNormal);
+    DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, NAN),                   TexEmissive);
+    DBG_OUTPUT1(sampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, NAN),                  TexRoughness);
+    DBG_OUTPUT1(sampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, NAN),                   TexMetallic);
 
     DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,                                                   Albedo);
     DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                                                     Opacity);

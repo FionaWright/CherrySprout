@@ -1,6 +1,7 @@
 #ifndef H_GREENHOUSE_CONFIG_H
 #define H_GREENHOUSE_CONFIG_H
 
+#include "PathTracer.h"
 #include "BxDFs/BxDFMode.h"
 #include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Flags/MethodsCpp.h"
@@ -23,6 +24,7 @@ struct PathTracerConfig
     PathTracerDebugFlags       DebugFlags       = s_defaultDebugFlags;
     DebugOutputIndex           DebugOutputIdx   = s_defaultOutputIndex;
     int                        DebugOutputChosenRayDepth = -1;
+    hlsl::uint2                DebugChosenPixelCoord = s_defaultChosenPixelIdx;
 };
 
 struct ForwardConfig

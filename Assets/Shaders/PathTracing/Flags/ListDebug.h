@@ -14,3 +14,4 @@ FLAG_PROCESS(BxdfTestRevaluate)
 FLAG_PROCESS(BxdfTestHemisphere)
 
 FLAG_PROCESS(FurnaceTest)
+FLAG_PROCESS(PathDumper)

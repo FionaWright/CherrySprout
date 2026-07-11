@@ -2,7 +2,7 @@
 #define H_RESTIR_DI_STRUCTS_H
 
 #include "Utils/HlslGlue.h"
-#include "PathTracing/HitInfo.h"
+#include "PathTracing/Structs.h"
 
 #include "PathTracing/ReSTIR/Reservoir.h"
 

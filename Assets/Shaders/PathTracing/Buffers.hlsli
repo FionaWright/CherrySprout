@@ -33,7 +33,7 @@ Texture2D<float>                            gEnvMapPmfConditional   : register(t
 Texture2D<float>                            gEnvMapCdfConditional   : register(t7, REGISTER_SPACE_DEFAULT);
 Texture1D<float>                            gEnvMapCdfMarginal      : register(t8, REGISTER_SPACE_DEFAULT);
 
-#if DEBUG_ENABLED(OutputColor)
+#if DEBUG_ENABLED(OutputColor) || DEBUG_ENABLED(PathDumper)
 Texture2D<uint>                             gGBufferMaterialIdx     : register(t9, REGISTER_SPACE_DEFAULT);
 Texture2D<float4>                           gGBufferNormals         : register(t10, REGISTER_SPACE_DEFAULT);
 Texture2D<float>                            gGBufferDepth           : register(t11, REGISTER_SPACE_DEFAULT);
@@ -50,12 +50,18 @@ Texture2D<float4>                           gSceneTextures[]        : register(t
 
 RWTexture2D<float4>                         gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
 RWTexture2D<float4>                         gTexOutput              : register(u1, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<ReservoirDI>             gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
+//RWStructuredBuffer<ReservoirDI>             gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
 
 // =================== U Registers (Debug) =======================================================================
 
 // TODO: Handle register spaces properly in root sig
+#if DEBUG_ENABLED(Asserts)
 RWStructuredBuffer<DebugErrorInfo>          gDbgBufferErrorInfo     : register(u2, REGISTER_SPACE_DEFAULT);
+#endif
+
+#if DEBUG_ENABLED(PathDumper)
+RWStructuredBuffer<RayDump>                 gPathDump               : register(u3, REGISTER_SPACE_DEFAULT);
+#endif
 
 // =================== S Registers ===============================================================================
 

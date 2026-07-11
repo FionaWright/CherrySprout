@@ -3,15 +3,10 @@
 
 #define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
 
-struct PathState
-{
-    float LastBxdfPdf;
-    uint RaySegmentIdx;
-    bool LastRayDiracDelta;
-};
-
+#include "PathTracing/Structs.h"
 #include "PathTracing/3_Hit.hlsli"
 #include "PathTracing/3_Miss.hlsli"
+#include "PathTracing/Debug/PathDumper.hlsli"
 
 #include "Utils/Random.h"
 
@@ -52,6 +47,8 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
 
         float3 L_sample;
         Hit(q, ray, pathState, L_sample, beta, rngInfo, pixelCoord);
+
+        DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (beta.x <= 0 && beta.y <= 0 && beta.z <= 0)
             break;

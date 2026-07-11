@@ -29,6 +29,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
     // TODO in a loose order:
     // Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
+    // Make mocks for NEE and restir so the include files can be ignored when disabled
 
     BxDF bxdf;
 
@@ -37,6 +38,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
         float3 E_direct = 0;
         if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
         {
+#if FEATURE_ENABLED(RestirDI)
             uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
             ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
 
@@ -57,6 +59,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
                     E_direct = f_bxdf * reservoir.Y.Radiance * NdL * W_Y;
                 }
             }
+#endif
         }
         else
         {

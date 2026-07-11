@@ -67,10 +67,7 @@ void Greenhouse::RenderGUI()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
-    if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugFlags, eDebug_Asserts))
-    {
-        static_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_ErrorInfo();
-    }
+    static_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_DebugInfo(m_config.PathTracerConfig);
 
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);

@@ -8,13 +8,14 @@
 #include "Greenhouse.h"
 #include "imgui.h"
 #include "Debug/GPUEventScoped.h"
-#include "../../../Assets/Shaders/Utils/CBVs.h"
+#include "Utils/CBVs.h"
 #include "Scene/InstanceData.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/ConstantsCpp.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 #include "Utils/Debug/DebugID.h"
+#include "Utils/Debug/DebugStructs.h"
 
 void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
@@ -53,12 +54,19 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 #ifdef _DEBUG
     {
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
-        m_gpuErrorInfoRW.Init_Buffer("Error Info R/W", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
-        m_gpuErrorInfoReadback.Init_Buffer("Error Info Readback", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
+        m_gpuErrorInfoRW.Init_Buffer("Error Info (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
+        m_gpuErrorInfoReadback.Init_Buffer("Error Info (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
+    }
+
+    {
+        constexpr size_t bufferSize = sizeof(RayDump) * PATH_DUMP_MAX_RAY_DEPTH;
+        m_pathDumpBufferRW.Init_Buffer("Path Dump Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_pathDumpBufferReadback.Init_Buffer("Path Dump Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
 #endif
 
-    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, s_defaultDebugFlags, s_defaultOutputIndex, -1, s_defaultBxdfMode);
+    constexpr PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
+    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, debugInfo, s_defaultBxdfMode);
 
     CherryPrint("Path-Tracer Initialized");
 }
@@ -97,6 +105,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 
 #ifdef _DEBUG
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 3, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -153,6 +162,36 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         d3d->Flush();
 
         m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
+    }
+
+#define PATH_DUMP_UPDATE_COOLDOWN 1000
+
+    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugFlags, eDebug_PathDumper))
+    {
+        static int s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
+        if (s_pathDumpTimer > 0)
+        {
+            s_pathDumpTimer--;
+            return;
+        }
+        s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
+
+        d3d->Flush();
+
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        const auto cmdList = cmdListPtr.Get();
+
+        m_pathDumpBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        m_pathDumpBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        constexpr size_t bufferSize = PATH_DUMP_MAX_RAY_DEPTH * sizeof(RayDump);
+        cmdList->CopyBufferRegion(m_pathDumpBufferReadback.GetResource(), 0, m_pathDumpBufferRW.GetResource(), 0, bufferSize);
+
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
+
+        m_pathDumpBufferReadback.Readback(&m_cpuPathDump);
     }
 #endif
 }
@@ -245,21 +284,27 @@ void PathTracer::UnreserveData()
 
 bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const
 {
-    return GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor);
+    return GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor) || GetPathTracerDebugFlag(debugFlags, eDebug_PathDumper);
 }
 
-void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags, const DebugOutputIndex& debugOutputIdx, const int debugOutputChosenRayDepth, const BxdfMode& bxdfMode)
+void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)
 {
     uint32_t numSRV = 6;
     uint32_t numUAV = 2;
 #ifdef _DEBUG
-    numUAV++; // gDbgBufferErrorInfo
+    const bool outputColorEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_OutputColor);
+    const bool assertsEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_Asserts);
+    const bool pathDumpEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_PathDumper);
+    if (assertsEnabled)
+        numUAV++; // gDbgBufferErrorInfo
+    if (pathDumpEnabled)
+        numUAV++; // gPathDump
 #endif
 
     if (GetPathTracerFeatureFlag(featureFlags, eFeature_NEE))
         numSRV += 3; // gEnvMapCdfConditional, gEnvMapPmfConditional, gEnvMapCdfMarginal
 
-    if (GBufferRequired(featureFlags, debugFlags))
+    if (GBufferRequired(featureFlags, debugInfo.Flags))
         numSRV += 4;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
@@ -268,7 +313,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
-    compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugFlags));
+    compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
     compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
 
     for (int i = 0; i < FEATURE_COUNT; i++)
@@ -277,17 +322,20 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
         compileArgs.emplace_back("-DFEATURE_FLAG_VALUE_" + std::string(s_featureFlagNames[i]) + "=" + std::to_string(flagValue));
     }
 
+#ifdef _DEBUG
     for (int i = 0; i < DEBUG_COUNT; i++)
     {
         const hlsl::uint flagValue = 1u << i;
         compileArgs.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
     }
 
-    if (GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor))
+    if (outputColorEnabled || pathDumpEnabled)
     {
-        compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugOutputIdx)));
-        compileArgs.emplace_back("-DDEBUG_CHOSEN_RAY_DEPTH=" + std::to_string(debugOutputChosenRayDepth));
+        compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugInfo.OutputColorIdx)));
+        compileArgs.emplace_back("-DDEBUG_CHOSEN_RAY_DEPTH=" + std::to_string(debugInfo.ChosenRayDepth));
+        compileArgs.emplace_back("-DDEBUG_CHOSEN_PIXEL_COORDS=uint2(" + std::to_string(debugInfo.ChosenPixelCoords.x) + "," + std::to_string(debugInfo.ChosenPixelCoords.y) + ")");
     }
+#endif
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
@@ -301,8 +349,85 @@ void PathTracer::Reset()
 }
 
 #ifdef _DEBUG
-void PathTracer::RenderGUI_ErrorInfo()
+void PathTracer::RenderGUI_DebugInfo(const PathTracerConfig& config)
 {
+    if (GetPathTracerDebugFlag(config.DebugFlags, eDebug_PathDumper))
+    {
+        if (ImGui::CollapsingHeader("Path Dump"))
+        {
+            ImGui::Indent(IM_GUI_INDENTATION);
+
+            ImGui::Text("Pixel Coord: (%i, %i)", config.DebugChosenPixelCoord.x, config.DebugChosenPixelCoord.y);
+
+            const size_t maxRayDepth = std::min(config.MaxRayDepth, static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH));
+            for (int i = 0; i < maxRayDepth; i++)
+            {
+                const std::string label = std::string("Ray ") + std::to_string(i);
+
+                if (ImGui::TreeNode(label.c_str()))
+                {
+                    ImGui::Indent(IM_GUI_INDENTATION/2);
+
+                    if (ImGui::BeginTable((label + "##table").c_str(), 2,
+                                          ImGuiTableFlags_Borders |
+                                          ImGuiTableFlags_RowBg |
+                                          ImGuiTableFlags_SizingFixedFit))
+                    {
+                        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+                        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, 220.0f);
+                        ImGui::TableHeadersRow();
+
+                        auto RowInt = [](const char* key, const int value)
+                        {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted(key);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%d", value);
+                        };
+
+                        auto RowFloat = [](const char* key, const float value)
+                        {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted(key);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%.6f", value);
+                        };
+
+                        auto RowFloat3 = [](const char* key, const hlsl::float3& v)
+                        {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted(key);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("(%.3f, %.3f, %.3f)", v.x, v.y, v.z);
+                        };
+
+                        RowInt("Ray Segment", m_cpuPathDump[i].PathState.RaySegmentIdx);
+                        RowInt("Dirac Delta", m_cpuPathDump[i].PathState.LastRayDiracDelta);
+                        RowFloat("Last PDF", m_cpuPathDump[i].PathState.LastBxdfPdf);
+
+                        for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
+                        {
+                            RowFloat3(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j]);
+                        }
+
+                        ImGui::EndTable();
+                    }
+
+                    ImGui::Unindent(IM_GUI_INDENTATION/2);
+                    ImGui::TreePop();
+                }
+            }
+
+            ImGui::Unindent(IM_GUI_INDENTATION);
+        }
+    }
+
+    if (!GetPathTracerDebugFlag(config.DebugFlags, eDebug_Asserts))
+        return;
+
     std::vector<uint32_t> errors;
     for (int i = 0; i < _countof(m_cpuErrorInfo); i++)
     {

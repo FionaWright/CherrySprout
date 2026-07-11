@@ -2,7 +2,7 @@
 #define H_PBR_H
 
 #include "Utils/Math/Fresnel.hlsli"
-#include "Utils/Debug/Assert.hlsli"
+#include "PathTracing/Debug/Assert.hlsli"
 #include "MicrofacetModels/GetMM.hlsli"
 
 #include "BxDFs/Lobes/LambertianLobe.hlsli"

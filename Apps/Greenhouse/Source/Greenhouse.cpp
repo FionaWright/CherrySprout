@@ -145,12 +145,13 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_ptPipelineDirty)
     {
-        m_pathTracer.UpdatePipeline(d3d->GetDevice(),
-            m_config.PathTracerConfig.FeatureFlags,
-            m_config.PathTracerConfig.DebugFlags,
-            m_config.PathTracerConfig.DebugOutputIdx,
-            m_config.PathTracerConfig.DebugOutputChosenRayDepth,
-            m_config.PathTracerConfig.BxdfMode);
+        PathTracingDebugInfo debugInfo{};
+        debugInfo.Flags = m_config.PathTracerConfig.DebugFlags;
+        debugInfo.OutputColorIdx = m_config.PathTracerConfig.DebugOutputIdx;
+        debugInfo.ChosenRayDepth = m_config.PathTracerConfig.DebugOutputChosenRayDepth;
+        debugInfo.ChosenPixelCoords = m_config.PathTracerConfig.DebugChosenPixelCoord;
+
+        m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, debugInfo, m_config.PathTracerConfig.BxdfMode);
         m_ptPipelineDirty = false;
     }
 
