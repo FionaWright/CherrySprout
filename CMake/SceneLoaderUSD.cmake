@@ -23,8 +23,10 @@ set(OPEN_USD_DIR_BUILD ${OPEN_USD_DIR}/Build)
 
 if (USD_DEBUG)
     set(BUILD_VARIANT debug)
+    set(TBB_DEBUG_BYPRODUCT "${OPEN_USD_DIR_BUILD}/lib/tbb_debug.lib")
 else()
     set(BUILD_VARIANT release)
+    set(TBB_DEBUG_BYPRODUCT )
 endif()
 
 if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
@@ -61,6 +63,7 @@ if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
                 "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib"
                 "${OPEN_USD_DIR_BUILD}/lib/tbb.lib"
                 "${OPEN_USD_DIR_BUILD}/lib/tbbmalloc.lib"
+                ${TBB_DEBUG_BYPRODUCT}
     )
 endif()
 
