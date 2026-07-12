@@ -57,6 +57,8 @@ void Core(uint2 pixelCoord)
     if (true)
         average = pow(average, 1.0f/2.2f);
 
+    DBG_PATH_DUMP_HIGHLIGHT(average);
+
     gTexOutput[pixelCoord].rgb = average;
 }
 

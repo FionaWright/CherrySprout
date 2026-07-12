@@ -7,6 +7,7 @@
 #include "Scene/SceneManager.h"
 #include "System/FileHelper.h"
 #include "System/HighResolutionClock.h"
+#include "System/Input.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
@@ -135,6 +136,22 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_renderInfo.V = m_cameraController.GetViewMatrix();
         m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
         m_ptFrameDirty = true;
+    }
+
+    if (Input::IsMouseLeftDown())
+    {
+        XMFLOAT2 mousePos = Input::GetMousePos();
+        mousePos.x -= static_cast<float>(Config::GetSystem().WindowAppGuiWidth);
+
+        if (mousePos.x > 0 &&
+            mousePos.y > 0 &&
+            mousePos.x < static_cast<float>(Config::GetSystem().RtvWidth) &&
+            mousePos.y < static_cast<float>(Config::GetSystem().RtvHeight))
+        {
+            m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.x = static_cast<uint32_t>(mousePos.x);
+            m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.y = static_cast<uint32_t>(mousePos.y);
+            m_ptPipelineDirty = true;
+        }
     }
 
     if (m_ptFrameDirty)

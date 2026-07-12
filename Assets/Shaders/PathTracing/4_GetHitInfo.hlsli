@@ -121,6 +121,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     DBG_OUTPUT3(hitInfo.SFrame.T,                                                         Tangent);
     DBG_OUTPUT3(hitInfo.SFrame.B,                                                         Bitangent);
     DBG_OUTPUT2(hitInfo.UV,                                                               UV);
+    DBG_OUTPUT1(hitInfo.IsEntering,                                                       IsEntering);
 
     DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxAlbedo, NAN),                     TexAlbedo);
     DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, NAN),                     TexNormal);
