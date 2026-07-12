@@ -124,6 +124,17 @@ void D3D::Init(const size_t width, const size_t height)
         ComPtr<IDXGIAdapter1> hardwareAdapter;
         getHardwareAdapter(factory.Get(), &hardwareAdapter);
 
+        DXGI_ADAPTER_DESC1 desc{};
+        hardwareAdapter->GetDesc1(&desc);
+        std::wcout
+            << L"Hardware Adaptor Information:\n"
+            << L"GPU: " << desc.Description << L'\n'
+            << L"Vendor ID: 0x" << std::hex << desc.VendorId << std::dec << L'\n'
+            << L"Device ID: 0x" << std::hex << desc.DeviceId << std::dec << L'\n'
+            << L"Dedicated VRAM: "
+            << (desc.DedicatedVideoMemory / (1024 * 1024))
+            << L" MB\n";
+
         V(D3D12CreateDevice(
             hardwareAdapter.Get(),
             D3D_FEATURE_LEVEL_12_1,

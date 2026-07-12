@@ -37,7 +37,7 @@ private:
     bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
 #endif
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if _DEBUG
     std::string m_scheduledSnapshotRTV = "";
     bool m_snapshotterIsPng = true;
 #endif

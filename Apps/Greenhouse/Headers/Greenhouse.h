@@ -71,7 +71,7 @@ private:
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if _DEBUG
     std::string m_scheduledSnapshotPT = "";
 #endif
 };
