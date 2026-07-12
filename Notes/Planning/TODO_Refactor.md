@@ -13,3 +13,5 @@ Stuff in the repo that I don't like
 - [ ] Pre-compile shaders. Use pre-compiled at init, run-time compile on change
 
 - [ ] SceneLoaderUSD FreeScene
+
+- [ ] Delete OpenUSD build dir after extracting stuff? It's like 10GB

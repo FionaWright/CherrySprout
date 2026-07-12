@@ -28,7 +28,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [ ] Debug quick input bools/floats/etc
 - [x] Path dumper
 - [x] Automatic path dumper on assertion error
-- [ ] Path dumper click pixel + highlight
+- [x] Path dumper click pixel + highlight
 - [ ] Visualizer on path dump 
 - [ ] Furnace Test
 - [ ] RMSE Test

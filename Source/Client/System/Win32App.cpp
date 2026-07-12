@@ -99,6 +99,9 @@ LRESULT CALLBACK Win32App::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LP
     if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
         return true;
 
+    static uint32_t framesSinceResize = 10000;
+    static uint32_t resizeWidth, resizeHeight;
+
     switch (message)
     {
     case WM_SYSKEYDOWN:
@@ -160,8 +163,8 @@ LRESULT CALLBACK Win32App::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
     case WM_SIZE:
         {
-            const UINT width = LOWORD(lParam);
-            const UINT height = HIWORD(lParam);
+            resizeWidth = LOWORD(lParam);
+            resizeHeight = HIWORD(lParam);
 
             if (wParam == SIZE_MINIMIZED)
             {
@@ -176,15 +179,23 @@ LRESULT CALLBACK Win32App::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LP
                 // Window was resized/restored.
             }
 
-            if (width == 0 || height == 0)
+            if (resizeWidth == 0 || resizeHeight == 0)
                 break;
 
-            ms_engine->OnResize(width, height);
+            framesSinceResize = 0;
         }
         break;
 
     case WM_PAINT:
-        ms_engine->Frame();
+        {
+            if (framesSinceResize == 60)
+            {
+                ms_engine->OnResize(resizeWidth, resizeHeight);
+            }
+            framesSinceResize++;
+
+            ms_engine->Frame();
+        }
         return 0;
 
     case WM_DESTROY:
