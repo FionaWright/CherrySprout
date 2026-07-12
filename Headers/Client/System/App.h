@@ -18,6 +18,7 @@ public:
     virtual void PostUpdate(D3D* d3d) = 0;
     virtual void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList) = 0;
     virtual void RenderGUI() = 0;
+    virtual void OnResize(uint32_t width, uint32_t height) = 0;
 
     [[nodiscard]] bool GetIsInitialized() const { return m_initialized; }
 

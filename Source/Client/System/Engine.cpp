@@ -168,3 +168,14 @@ void Engine::CalculateFPS(const double deltaTime_s)
         m_fpsTimeSinceUpdate100ms = 0.0;
     }
 }
+
+void Engine::OnResize(const uint32_t width, const uint32_t height) const
+{
+    Config::GetSystem().RtvWidth = (width - Config::GetSystem().WindowAppGuiWidth) - Config::GetSystem().WindowEngineGuiWidth;
+    Config::GetSystem().RtvHeight = height;
+
+    m_d3d->Flush();
+
+    m_d3d->InitFrameResources(width, height);
+    m_app->OnResize(width, height);
+}

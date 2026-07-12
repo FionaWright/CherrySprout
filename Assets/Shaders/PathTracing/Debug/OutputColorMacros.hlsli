@@ -1,13 +1,14 @@
 #ifndef H_OUTPUT_COLOR_MACROS_H
 #define H_OUTPUT_COLOR_MACROS_H
 
-#include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
-#include "PathTracing/Debug/OutputColorRemap.h"
 
 #if DEBUG_ENABLED(OutputColor)
+
+#include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Debug/OutputColorRemap.h"
 
 void dbgOutput3(float3 value)
 {

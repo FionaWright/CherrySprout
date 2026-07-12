@@ -188,3 +188,11 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
                                       obj.MegaBufferVertexOffset, 0);
     }
 }
+
+void GBufferPrePass::UnreserveData()
+{
+    m_gbufferTexMaterialIdx.Release();
+    m_gbufferTexNormals.Release();
+    m_gbufferTexUvMv.Release();
+    m_gbufferTexDepth.Release();
+}

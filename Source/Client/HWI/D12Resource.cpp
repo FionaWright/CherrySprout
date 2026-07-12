@@ -222,3 +222,11 @@ void D12Resource::Release()
     m_initialized = false;
 #endif
 }
+
+void D12Resource::Reset()
+{
+    m_resource.Reset();
+#ifdef _DEBUG
+    m_initialized = false;
+#endif
+}

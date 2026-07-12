@@ -50,6 +50,7 @@ public:
 
     UINT64 GetIntermediateSize() const;
     void Release();
+    void Reset();
     bool IsInitialized() const { return m_resource != nullptr; }
 
     ID3D12Resource* GetResource() const { return m_resource.Get(); }

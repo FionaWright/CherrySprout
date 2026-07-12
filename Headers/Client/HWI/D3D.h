@@ -44,6 +44,8 @@ public:
                                              static_cast<int>(m_frameIndex), m_rtvDescriptorSize);
     }
 
+    void InitFrameResources(uint32_t width, uint32_t height);
+
     ID3D12Resource* GetCurrDSV() const { return m_depthStencilBuffer.Get(); }
     D3D12_CPU_DESCRIPTOR_HANDLE GetDsvHeapStart() const { return m_dsvHeap->GetCPUDescriptorHandleForHeapStart(); }
     UINT GetDsvDescriptorSize() const { return m_dsvDescriptorSize; }
@@ -66,6 +68,7 @@ private:
     // Pipeline objects.
     ComPtr<IDXGISwapChain3> m_swapChain;
     ComPtr<ID3D12Device> m_device;
+    ComPtr<IDXGIFactory4> m_factory;
 
     D12Resource m_rtvs[NUM_FRAMES_IN_FLIGHT];
     ComPtr<ID3D12Resource> m_depthStencilBuffer;

@@ -68,7 +68,11 @@ void SpecularLobe_Evaluate(
         out float pdf
     )
 {
-    if (L_s.z <= 0.0f)
+    float NdV = SSpaceCosTheta(V_s);
+    float NdL = SSpaceCosTheta(L_s);
+    float VdH = dot(H_s, V_s);
+
+    if (L_s.z <= 0.0f || VdH >= 1.0f)
     {
         f = 0.0f;
         pdf = 1.0f;
@@ -76,10 +80,6 @@ void SpecularLobe_Evaluate(
         DBG_OUTPUT1(0,                G);
         return;
     }
-
-    float NdV = SSpaceCosTheta(V_s);
-    float NdL = SSpaceCosTheta(L_s);
-    float VdH = dot(H_s, V_s);
 
     float3 F = F_Schlick(VdH, F0);
     float D = mm.D(H_s);

@@ -20,6 +20,8 @@ public:
     void RenderGUI();
     void CalculateFPS(double deltaTime_s);
 
+    void OnResize(uint32_t width, uint32_t height) const;
+
 private:
     App* m_app;
 

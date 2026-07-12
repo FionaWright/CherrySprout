@@ -42,6 +42,7 @@ public:
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList) override;
     void PostUpdate(D3D* d3d) override;
     void RenderGUI() override;
+    void OnResize(uint32_t width, uint32_t height) override;
 
 private:
     bool pathTracingFeatureEnabled(PathTracerFeatureFlags flag) const;

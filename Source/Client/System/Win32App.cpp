@@ -158,6 +158,31 @@ LRESULT CALLBACK Win32App::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LP
         }
         break;
 
+    case WM_SIZE:
+        {
+            const UINT width = LOWORD(lParam);
+            const UINT height = HIWORD(lParam);
+
+            if (wParam == SIZE_MINIMIZED)
+            {
+                // Window was minimized.
+            }
+            else if (wParam == SIZE_MAXIMIZED)
+            {
+                // Window was maximized.
+            }
+            else if (wParam == SIZE_RESTORED)
+            {
+                // Window was resized/restored.
+            }
+
+            if (width == 0 || height == 0)
+                break;
+
+            ms_engine->OnResize(width, height);
+        }
+        break;
+
     case WM_PAINT:
         ms_engine->Frame();
         return 0;

@@ -6,7 +6,6 @@
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
 
 #include "Utils/Debug/Palette.hlsli"
-#include "PathTracing/Debug/OutputColorMacros.hlsli"
 
 #include "PathTracing/Structs.h"
 

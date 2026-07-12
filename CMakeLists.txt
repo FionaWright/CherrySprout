@@ -56,6 +56,8 @@ target_compile_definitions(client PUBLIC BUILD_DIR="${CMAKE_BINARY_DIR}")
 set(USD_BIN_DIR ${CMAKE_BINARY_DIR}/SceneLoaderUSD/bin)
 file(MAKE_DIRECTORY "${USD_BIN_DIR}")
 
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Snapshots")
+
 include(CMake/SceneLoaderUSD.cmake)
 
 add_subdirectory(Apps)

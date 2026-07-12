@@ -17,6 +17,7 @@ void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescript
     m_heapSize = numDescriptors + numSceneTextureDescriptors;
 
     m_baseSceneTextures = numDescriptors;
+    m_currentHeapIndex = 0;
     m_currentHeapIndexSceneTextures = m_baseSceneTextures;
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};

@@ -340,7 +340,17 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
 void PathTracer::UnreserveData()
 {
-
+    m_output.Release();
+    m_accum.Release();
+    m_gbufferPrePass.UnreserveData();
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    m_gpuErrorInfoRW.Release();
+    m_gpuErrorInfoReadback.Release();
+    m_pathDumpBufferRW.Release();
+    m_pathDumpBufferReadback.Release();
+#endif
+    m_isInitialized = false;
+    m_currentlyLoadedScene = "";
 }
 
 bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo) const

@@ -105,13 +105,12 @@ void D3D::Init(const size_t width, const size_t height)
     }
 #endif
 
-    ComPtr<IDXGIFactory4> factory;
-    V(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
+    V(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&m_factory)));
 
     if (m_useWarpDevice)
     {
         ComPtr<IDXGIAdapter> warpAdapter;
-        V(factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
+        V(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
 
         V(D3D12CreateDevice(
             warpAdapter.Get(),
@@ -122,7 +121,7 @@ void D3D::Init(const size_t width, const size_t height)
     else
     {
         ComPtr<IDXGIAdapter1> hardwareAdapter;
-        getHardwareAdapter(factory.Get(), &hardwareAdapter, true);
+        getHardwareAdapter(m_factory.Get(), &hardwareAdapter, true);
 
         DXGI_ADAPTER_DESC1 desc{};
         hardwareAdapter->GetDesc1(&desc);
@@ -142,19 +141,14 @@ void D3D::Init(const size_t width, const size_t height)
         ));
     }
 
-    ComPtr<IDXGIFactory4> factory4;
-    HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory4));
-    BOOL allowTearing = FALSE;
+    ComPtr<IDXGIFactory5> factory5;
+    HRESULT hr = m_factory.As(&factory5);
     if (SUCCEEDED(hr))
     {
-        ComPtr<IDXGIFactory5> factory5;
-        hr = factory4.As(&factory5);
-        if (SUCCEEDED(hr))
-        {
-            hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
-        }
+        BOOL allowTearing = FALSE;
+        hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+        m_tearingSupport = SUCCEEDED(hr) && allowTearing;
     }
-    m_tearingSupport = SUCCEEDED(hr) && allowTearing;
 
 #ifdef _DEBUG
     if (SUCCEEDED(m_device.As(&m_infoQueue)))
@@ -197,33 +191,6 @@ void D3D::Init(const size_t width, const size_t height)
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
     V(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueueCopy.Queue)));
 
-    // Describe and create the swap chain.
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = NUM_FRAMES_IN_FLIGHT;
-    swapChainDesc.Width = width;
-    swapChainDesc.Height = height;
-    swapChainDesc.Format = Config::GetRender().RtvFormat;
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.Flags = m_tearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-
-    ComPtr<IDXGISwapChain1> swapChain;
-    V(factory->CreateSwapChainForHwnd(
-        m_commandQueueDirect.Queue.Get(), // Swap chain needs the queue so that it can force a flush on it.
-        Win32App::GetHwnd(),
-        &swapChainDesc,
-        nullptr,
-        nullptr,
-        &swapChain
-    ));
-
-    // This sample does not support fullscreen transitions.
-    V(factory->MakeWindowAssociation(Win32App::GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
-
-    V(swapChain.As(&m_swapChain));
-    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-
     // Create descriptor heaps.
     {
         // Describe and create a render target view (RTV) descriptor heap.
@@ -244,6 +211,82 @@ void D3D::Init(const size_t width, const size_t height)
         m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
+    InitFrameResources(width, height);
+
+    // Create synchronization objects and wait until assets have been uploaded to the GPU.
+    {
+        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueDirect.Fence)));
+        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueCompute.Fence)));
+        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueCopy.Fence)));
+
+        // Create an event handle to use for frame synchronization.
+        m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        if (m_fenceEvent == nullptr)
+        {
+            V(HRESULT_FROM_WIN32(GetLastError()));
+        }
+    }
+
+    for (int i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
+        m_frameBufferFences[i] = 0;
+
+    CherryPrint("D3D Initialized");
+}
+
+ComPtr<ID3D12GraphicsCommandList> D3D::CreateCmdList(ID3D12CommandAllocator* allocator,
+                                                     const D3D12_COMMAND_LIST_TYPE type) const
+{
+    ComPtr<ID3D12GraphicsCommandList> cmdList = nullptr;
+    V(m_device->CreateCommandList(0, type, allocator, nullptr, IID_PPV_ARGS(&cmdList)));
+
+    return cmdList;
+}
+
+void D3D::InitFrameResources(uint32_t width, uint32_t height)
+{
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+    swapChainDesc.BufferCount = NUM_FRAMES_IN_FLIGHT;
+    swapChainDesc.Width = width;
+    swapChainDesc.Height = height;
+    swapChainDesc.Format = Config::GetRender().RtvFormat;
+    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.Flags = m_tearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
+    if (!m_swapChain)
+    {
+        ComPtr<IDXGISwapChain1> swapChain;
+        V(m_factory->CreateSwapChainForHwnd(
+            m_commandQueueDirect.Queue.Get(), // Swap chain needs the queue so that it can force a flush on it.
+            Win32App::GetHwnd(),
+            &swapChainDesc,
+            nullptr,
+            nullptr,
+            &swapChain
+        ));
+        // This sample does not support fullscreen transitions.
+        V(m_factory->MakeWindowAssociation(Win32App::GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
+        V(swapChain.As(&m_swapChain));
+    }
+    else
+    {
+        for (int i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
+        {
+            m_rtvs[i].Reset();
+        }
+        m_depthStencilBuffer.Reset();
+
+        V(m_swapChain->ResizeBuffers(
+            NUM_FRAMES_IN_FLIGHT,
+            width,
+            height,
+            Config::GetRender().RtvFormat,
+            m_tearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0));
+    }
+
+    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+
     // Create frame resources.
     {
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
@@ -256,7 +299,7 @@ void D3D::Init(const size_t width, const size_t height)
                                                             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
-        // Create a RTV for each frame.
+        // Create an RTV for each frame.
         for (UINT n = 0; n < NUM_FRAMES_IN_FLIGHT; n++)
         {
             ComPtr<ID3D12Resource> rtvResource;
@@ -289,34 +332,6 @@ void D3D::Init(const size_t width, const size_t height)
         m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc, dsvHandle);
         dsvHandle.Offset(1, m_dsvDescriptorSize);
     }
-
-    // Create synchronization objects and wait until assets have been uploaded to the GPU.
-    {
-        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueDirect.Fence)));
-        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueCompute.Fence)));
-        V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_commandQueueCopy.Fence)));
-
-        // Create an event handle to use for frame synchronization.
-        m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        if (m_fenceEvent == nullptr)
-        {
-            V(HRESULT_FROM_WIN32(GetLastError()));
-        }
-    }
-
-    for (int i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
-        m_frameBufferFences[i] = 0;
-
-    CherryPrint("D3D Initialized");
-}
-
-ComPtr<ID3D12GraphicsCommandList> D3D::CreateCmdList(ID3D12CommandAllocator* allocator,
-                                                     const D3D12_COMMAND_LIST_TYPE type) const
-{
-    ComPtr<ID3D12GraphicsCommandList> cmdList = nullptr;
-    V(m_device->CreateCommandList(0, type, allocator, nullptr, IID_PPV_ARGS(&cmdList)));
-
-    return cmdList;
 }
 
 ComPtr<ID3D12CommandAllocator> D3D::CreateAllocator(const D3D12_COMMAND_LIST_TYPE type) const

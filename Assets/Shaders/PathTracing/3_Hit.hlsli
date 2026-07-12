@@ -1,9 +1,9 @@
 #ifndef H_HIT_H
 #define H_HIT_H
 
-#include "PathTracing/4_GetHitInfo.hlsli"
 #include "PathTracing/Debug/OutputColorMacros.hlsli"
 
+#include "PathTracing/4_GetHitInfo.hlsli"
 #include "BxDFs/GetBxDF.hlsli"
 
 #include "Utils/RandomDirection.h"

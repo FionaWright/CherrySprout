@@ -120,7 +120,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
     }
 
-    if (!m_lightImportanceSampler.IsInitialized() && GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_NEE))
+    if (!m_lightImportanceSampler.IsInitialized() && pathTracingFeatureEnabled(eFeature_NEE))
     {
         m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene());
         loadSceneDataIntoRenderBackend = true;
@@ -260,4 +260,10 @@ bool Greenhouse::pathTracingFeatureEnabled(const PathTracerFeatureFlags flag) co
         return false;
 
     return GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
+}
+
+void Greenhouse::OnResize(uint32_t width, uint32_t height)
+{
+    m_renderBackendDirty = true;
+    m_ptFrameDirty = true;
 }
