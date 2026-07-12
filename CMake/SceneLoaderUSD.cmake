@@ -8,8 +8,13 @@ if(MSVC)
     include(CMake/MsvcFlags.cmake)
 endif()
 
+set(IS_DEBUG FALSE)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
+    set(IS_DEBUG TRUE)
+endif()
+
 set(USD_DEBUG 0)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(IS_DEBUG)
     set(USD_DEBUG 1)
 endif()
 
