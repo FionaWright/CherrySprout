@@ -4,6 +4,7 @@
 #include "PathTracer.h"
 #include "BxDFs/BxDFMode.h"
 #include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Debug/OutputColorRemap.h"
 #include "PathTracing/Flags/MethodsCpp.h"
 
 constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
@@ -13,6 +14,7 @@ struct PathTracingDebugInfo
 #ifdef _DEBUG
     PathTracerDebugFlags Flags = s_defaultDebugFlags;
     DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
+    DebugOutputColorRemap OutputColorRemap = s_defaultOutputColorRemap;
     int ChosenRayDepth = -1;
     hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
 #endif

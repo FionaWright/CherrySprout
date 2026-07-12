@@ -5,6 +5,7 @@
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
+#include "PathTracing/Debug/OutputColorRemap.h"
 
 #if DEBUG_ENABLED(OutputColor)
 
@@ -26,6 +27,8 @@ void dbgOutput3(float3 value)
 
     if (DEBUG_CHOSEN_RAY_DEPTH != -1 && DEBUG_CHOSEN_RAY_DEPTH != gDebugCurrentRayDepth)
         return;
+
+    DBG_OUTPUT_COLOR_REMAP(value);
 
     gDebugValueFound = true;
     gDebugValue = value;

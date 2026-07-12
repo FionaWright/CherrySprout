@@ -168,7 +168,10 @@ void Greenhouse::RenderGUI()
         ImGui::Spacing();
 
         if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
+        {
             m_config.PathTracerConfig.DebugInfo.OutputColorIdx = DebugOutputIndex::eDebugOutput_Disabled;
+            m_config.PathTracerConfig.DebugInfo.OutputColorRemap = DebugOutputColorRemap::eNone;
+        }
 
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
         {
@@ -178,6 +181,31 @@ void Greenhouse::RenderGUI()
             ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
             m_ptPipelineDirty |= ImGui::IsItemDeactivatedAfterEdit();
             m_config.PathTracerConfig.DebugInfo.ChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
+
+            ImGui::Text("Remap:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            if (ImGui::BeginTable("Debug Output Color Remaps", 3))
+            {
+                const auto remapAsUint = static_cast<uint32_t>(m_config.PathTracerConfig.DebugInfo.OutputColorRemap);
+                for (int i = 0; i < _countof(s_debugOutputColorRemapNames); i++)
+                {
+                    ImGui::TableNextColumn();
+
+                    const uint32_t flag = 1 << i;
+                    bool isEnabled = remapAsUint & flag;
+                    const bool prevIsEnabled = isEnabled;
+                    m_ptPipelineDirty |= ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
+
+                    if (isEnabled)
+                        m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint | flag);
+                    else if (prevIsEnabled)
+                        m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint ^ flag);
+
+                    ImGui::SetItemTooltip("%s", s_debugOutputColorRemapNames[i]);
+                }
+                ImGui::EndTable();
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
 
             if (ImGui::BeginTable("Debug Outputs", 2))
             {

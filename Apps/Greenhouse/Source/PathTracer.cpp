@@ -371,6 +371,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
         compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugInfo.OutputColorIdx)));
         compileArgs.emplace_back("-DDEBUG_CHOSEN_RAY_DEPTH=" + std::to_string(debugInfo.ChosenRayDepth));
         compileArgs.emplace_back("-DDEBUG_CHOSEN_PIXEL_COORDS=uint2(" + std::to_string(chosenPixelCoords.x) + "," + std::to_string(chosenPixelCoords.y) + ")");
+        compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR_REMAP=" + std::to_string(static_cast<uint32_t>(debugInfo.OutputColorRemap)));
     }
 #endif
 
