@@ -43,9 +43,13 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
         return;
     }
 
+    CherryPrint("Loading scene...: " << fullpath);
     LoadUSD(fullpath.c_str(), sceneScale, &m_scene.CPU);
+    CherryPrint("Loaded scene: " << fullpath);
 
+    CherryPrint("Freeing SceneLoaderUSD DLL...");
     FreeLibrary(dll);
+    CherryPrint("Freed SceneLoaderUSD DLL");
 
     CherryAssert(m_scene.CPU.MegaBufferPunctualLightsCount > 0);
     CherryAssert(m_scene.CPU.MegaBufferMaterialsCount > 0);

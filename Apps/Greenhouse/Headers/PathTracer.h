@@ -45,9 +45,9 @@ public:
     D12Resource* GetTexOutput() { return &m_output; }
     D12Resource* GetTexAccum() { return &m_accum; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
-    [[nodiscard]] bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const;
+    [[nodiscard]] bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo) const;
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     void RenderGUI_DebugInfo(PathTracerConfig& config);
 #endif
 
@@ -62,7 +62,7 @@ private:
     DescriptorSet m_descriptorSet;
     D12Resource m_output, m_accum;
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;
     DebugErrorInfo m_cpuErrorInfo[_countof(s_debugIdList)] = {};
     bool m_scheduleClearErrors = false;

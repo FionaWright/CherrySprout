@@ -15,9 +15,15 @@ inline void CherryAssert(const bool expr, const char* message = nullptr)
     if (!expr)
     {
         if (message)
+        {
+            CherryPrint("Assertion failed: '" << message << "'");
             throw std::exception((std::string("Assertion failed: '") + message + "'\n").c_str());
+        }
         else
+        {
+            CherryPrint("Assertion failed!");
             throw std::exception(std::string("Assertion failed!").c_str());
+        }
     }
 #else
     [[assume(expr)]]; // C++23

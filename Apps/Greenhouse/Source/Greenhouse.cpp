@@ -138,6 +138,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_ptFrameDirty = true;
     }
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (Input::IsMouseLeftDown())
     {
         XMFLOAT2 mousePos = Input::GetMousePos();
@@ -153,6 +154,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
             m_ptPipelineDirty = true;
         }
     }
+#endif
 
     if (m_ptFrameDirty)
     {

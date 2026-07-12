@@ -32,9 +32,12 @@ private:
     std::vector<float> m_fpsGuiQueue;
 
     // GUI State:
+
 #ifdef _DEBUG
     bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
+#endif
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
     std::string m_scheduledSnapshotRTV = "";
     bool m_snapshotterIsPng = true;
 #endif

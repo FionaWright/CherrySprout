@@ -11,7 +11,7 @@ constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
 
 struct PathTracingDebugInfo
 {
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     PathTracerDebugFlags Flags = s_defaultDebugFlags;
     DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
     DebugOutputColorRemap OutputColorRemap = s_defaultOutputColorRemap;

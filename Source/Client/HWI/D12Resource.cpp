@@ -212,7 +212,9 @@ void D12Resource::Release()
 {
     m_resource = nullptr;
     m_currentState = D3D12_RESOURCE_STATE_COMMON;
+#ifdef _DEBUG
     m_name = "";
+#endif
     m_desc = {};
     m_uploadBufferAssignedOffset = 0;
 

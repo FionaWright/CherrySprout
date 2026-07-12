@@ -83,6 +83,9 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
     const size_t vertexByteOffset = object->MegaBufferVertexOffset * sizeof(Vertex);
     const size_t indexByteOffset = object->MegaBufferIndexOffset * sizeof(uint32_t);
 
+    CherryAssert(vertexBuffer);
+    CherryAssert(vertexBuffer->GetGPUVirtualAddress());
+
     geomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress() + vertexByteOffset;
     geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
     geomDesc.Triangles.VertexCount = object->MegaBufferVertexCount;

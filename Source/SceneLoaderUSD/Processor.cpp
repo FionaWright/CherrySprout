@@ -39,7 +39,7 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
     for (size_t i = 0; i < scene->ObjectCount; i++)
     {
         const ImporterObject& impObj = importerContext.Objects[i];
-        Object obj;
+        Object obj{};
 
 #ifdef _DEBUG
         // TODO
@@ -73,6 +73,7 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
         scene->MegaBufferPunctualLightsCount = 1;
         scene->MegaBufferPunctualLights = new PunctualLight[1];
         scene->MegaBufferPunctualLights[0] = PunctualLight();
+        std::cout << "No punctual lights in scene, added dummy" << std::endl;
     }
     else
     {

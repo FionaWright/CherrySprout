@@ -99,7 +99,6 @@ void Engine::RenderGUI()
         {
             m_hotReloaderPendingCompute = true;
         }
-
         ImGui::Spacing();
 
         ImGui::Checkbox("(LDR) Snapshot is PNG", &m_snapshotterIsPng);
@@ -110,9 +109,9 @@ void Engine::RenderGUI()
         if (ImGui::Button("Take Snapshot (RTV)"))
         {
             if (buff[0] == '\0')
-                m_scheduledSnapshotRTV = std::string(SOURCE_DIR) + "/Snapshots/Default_RTV";
+                m_scheduledSnapshotRTV = std::string(BUILD_DIR) + "/Snapshots/Default_RTV";
             else
-                m_scheduledSnapshotRTV = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
+                m_scheduledSnapshotRTV = std::string(BUILD_DIR) + "/Snapshots/" + buff;
         }
 #endif
     }

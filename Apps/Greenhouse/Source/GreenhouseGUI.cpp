@@ -67,7 +67,9 @@ void Greenhouse::RenderGUI()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
-    dynamic_cast<PathTracer*>(m_currRenderBackend)->RenderGUI_DebugInfo(m_config.PathTracerConfig);
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    m_pathTracer.RenderGUI_DebugInfo(m_config.PathTracerConfig);
+#endif
 
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);
@@ -146,7 +148,7 @@ void Greenhouse::RenderGUI()
             ImGui::Spacing();
         }
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
         ImGui::Text("Debug Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
         if (ImGui::BeginTable("Debug Flags", 2))
@@ -231,16 +233,16 @@ void Greenhouse::RenderGUI()
     ImGui::SeparatorText("Tools:");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
         static char buff[256];
         ImGui::InputText("Snapshot Path", buff, 256);
 
         if (ImGui::Button("Take Snapshot (PT)"))
         {
             if (buff[0] == '\0')
-                m_scheduledSnapshotPT = std::string(SOURCE_DIR) + "/Snapshots/Default_PT";
+                m_scheduledSnapshotPT = std::string(BUILD_DIR) + "/Snapshots/Default_PT";
             else
-                m_scheduledSnapshotPT = std::string(SOURCE_DIR) + "/Snapshots/" + buff;
+                m_scheduledSnapshotPT = std::string(BUILD_DIR) + "/Snapshots/" + buff;
         }
 
         if (ImGui::Button("Print Camera Location"))

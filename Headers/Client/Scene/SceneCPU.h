@@ -11,7 +11,7 @@
 
 struct Object
 {
-#ifdef _DEBUG
+#if _DEBUG
     const char* DebugName = "Unnamed Object";
 #endif
 

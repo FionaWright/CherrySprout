@@ -28,7 +28,7 @@ void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescript
     V(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_heapResource)));
     V(m_heapResource->SetName(L"Heap"));
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (Config::GetSystem().DebugHeapEnabled)
     {
         m_debugDescriptorNames.resize(numDescriptors);
@@ -50,7 +50,7 @@ uint32_t Heap::GetNextDescriptorIdx(const char* debugName)
     const uint32_t idx = m_currentHeapIndex;
     m_currentHeapIndex++;
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (debugName && Config::GetSystem().DebugHeapEnabled)
     {
         m_debugDescriptorNames.at(idx) = _strdup(debugName);
@@ -68,7 +68,7 @@ uint32_t Heap::GetNextDescriptorIdx_SceneTexture(const char* debugName)
     const uint32_t idx = m_currentHeapIndexSceneTextures;
     m_currentHeapIndexSceneTextures++;
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (debugName && Config::GetSystem().DebugHeapEnabled)
     {
         m_debugDescriptorNamesBindless.at(idx - m_baseSceneTextures) = _strdup(debugName);
@@ -100,7 +100,7 @@ uint32_t Heap::AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* reso
 void Heap::FreeSceneTextures() // Always do on scene change
 {
     m_currentHeapIndexSceneTextures = m_baseSceneTextures;
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     m_debugDescriptorNamesBindless.clear();
 #endif
 }

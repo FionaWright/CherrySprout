@@ -51,7 +51,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     {
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
         m_gpuErrorInfoRW.Init_Buffer("Error Info (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
@@ -103,7 +103,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 3, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
 #endif
@@ -137,7 +137,7 @@ void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
 
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Asserts))
     {
         d3d->Flush();
@@ -224,12 +224,12 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     const Heap* heap = renderInfo.Heap;
 
     XMMATRIX V = renderInfo.V;
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_scheduledRunState == ScheduledRunState::eRunFrame)
         V = m_scheduledRunViewMatrix;
 #endif
 
-    if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo.Flags))
+    if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo))
     {
         m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, V, renderInfo.P);
     }
@@ -247,7 +247,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.FrameIdx = m_frameIdx;
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
         if (m_scheduledRunState == ScheduledRunState::eRunFrame)
         {
             settings.FrameIdx = m_scheduledRunFrameIdx;
@@ -294,7 +294,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_scheduledRunState != ScheduledRunState::eDisplay)
 #endif
     {
@@ -328,16 +328,20 @@ void PathTracer::UnreserveData()
 
 }
 
-bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const
+bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo) const
 {
-    return GetPathTracerDebugFlag(debugFlags, eDebug_OutputColor) || GetPathTracerDebugFlag(debugFlags, eDebug_PathDumper);
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    return GetPathTracerDebugFlag(debugInfo.Flags, eDebug_OutputColor) || GetPathTracerDebugFlag(debugInfo.Flags, eDebug_PathDumper);
+#else
+    return false;
+#endif
 }
 
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)
 {
     uint32_t numSRV = 13;
     uint32_t numUAV = 4;
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     const bool outputColorEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_OutputColor);
     const bool pathDumpEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_PathDumper);
 #endif
@@ -347,22 +351,22 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
     m_rootSig.SmartInit(device, 1, numSRV, numUAV, true, &sampler, 1);
 
     std::vector<std::string> compileArgs = {};
-    compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
-    compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
     compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
 
+    compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     for (int i = 0; i < FEATURE_COUNT; i++)
     {
         const hlsl::uint flagValue = 1u << i;
         compileArgs.emplace_back("-DFEATURE_FLAG_VALUE_" + std::string(s_featureFlagNames[i]) + "=" + std::to_string(flagValue));
     }
-
-#ifdef _DEBUG
     for (int i = 0; i < DEBUG_COUNT; i++)
     {
         const hlsl::uint flagValue = 1u << i;
         compileArgs.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
     }
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
 
     if (outputColorEnabled || pathDumpEnabled)
     {
@@ -385,13 +389,13 @@ void PathTracer::Reset()
 {
     m_frameIdx = 0;
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_scheduledRunState == ScheduledRunState::eDisplay)
         m_scheduledRunState = ScheduledRunState::eIdle;
 #endif
 }
 
-#ifdef _DEBUG
+#if CHERRY_DEBUG_FEATURES_ENABLED
 void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 {
     if (GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper))

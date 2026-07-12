@@ -51,6 +51,7 @@ include(cmake/Assets.cmake)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug")
     target_compile_definitions(client PUBLIC SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 endif()
+target_compile_definitions(client PUBLIC BUILD_DIR="${CMAKE_BINARY_DIR}")
 
 set(USD_BIN_DIR ${CMAKE_BINARY_DIR}/SceneLoaderUSD/bin)
 file(MAKE_DIRECTORY "${USD_BIN_DIR}")
