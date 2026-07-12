@@ -122,7 +122,7 @@ void D3D::Init(const size_t width, const size_t height)
     else
     {
         ComPtr<IDXGIAdapter1> hardwareAdapter;
-        getHardwareAdapter(factory.Get(), &hardwareAdapter);
+        getHardwareAdapter(factory.Get(), &hardwareAdapter, true);
 
         DXGI_ADAPTER_DESC1 desc{};
         hardwareAdapter->GetDesc1(&desc);

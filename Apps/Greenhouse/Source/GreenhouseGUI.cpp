@@ -161,6 +161,7 @@ void Greenhouse::RenderGUI()
                 bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
                 m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
                 SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, isEnabled);
+                ImGui::IsItemDeactivatedAfterEdit();
 
                 ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
             }
@@ -180,8 +181,8 @@ void Greenhouse::RenderGUI()
             ImGui::Text("Debug Outputs:");
             ImGui::Indent(IM_GUI_INDENTATION);
 
-            ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
-            m_ptPipelineDirty |= ImGui::IsItemDeactivatedAfterEdit();
+            m_ptFrameDirty |= ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
+            ImGui::IsItemDeactivatedAfterEdit();
             m_config.PathTracerConfig.DebugInfo.ChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
 
             ImGui::Text("Remap:");
@@ -196,11 +197,13 @@ void Greenhouse::RenderGUI()
                     const uint32_t flag = 1 << i;
                     bool isEnabled = remapAsUint & flag;
                     const bool prevIsEnabled = isEnabled;
-                    m_ptPipelineDirty |= ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
+                    const bool clicked = ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
+                    m_ptFrameDirty |= clicked;
+                    ImGui::IsItemDeactivatedAfterEdit();
 
-                    if (isEnabled)
+                    if (clicked && isEnabled)
                         m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint | flag);
-                    else if (prevIsEnabled)
+                    else if (clicked && prevIsEnabled)
                         m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint ^ flag);
 
                     ImGui::SetItemTooltip("%s", s_debugOutputColorRemapNames[i]);
@@ -216,7 +219,8 @@ void Greenhouse::RenderGUI()
                 for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
                 {
                     ImGui::TableNextColumn();
-                    m_ptPipelineDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
+                    m_ptFrameDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
+                    ImGui::IsItemDeactivatedAfterEdit();
                     ImGui::SetItemTooltip("%s", s_debugOutputIdxNames[i]);
                 }
                 m_config.PathTracerConfig.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);

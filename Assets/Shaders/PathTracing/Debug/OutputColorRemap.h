@@ -5,7 +5,6 @@
 
 enum class Internal_DebugOutputColorRemapIdx : hlsl::uint
 {
-    eIdx_None,
     eIdx_UnormToSnorm,
     eIdx_SnormToUnorm,
     eIdx_Normalize,
@@ -39,7 +38,6 @@ enum class DebugOutputColorRemap : hlsl::uint
 
 static const char* s_debugOutputColorRemapNames[static_cast<hlsl::uint>(Internal_DebugOutputColorRemapIdx::eCount)] =
 {
-    "None",
     "UnormToSnorm",
     "SnormToUnorm",
     "Normalize",
@@ -92,11 +90,7 @@ float3 ApplyRemap(float3 color, uint outputColorRemap)
     return color;
 }
 
-#       ifndef DEBUG_OUTPUT_COLOR_REMAP
-#           define DEBUG_OUTPUT_COLOR_REMAP DebugOutputColorRemap::eNone
-#       endif
-
-#       define DBG_OUTPUT_COLOR_REMAP(color) { color = ApplyRemap(color, DEBUG_OUTPUT_COLOR_REMAP); }
+#       define DBG_OUTPUT_COLOR_REMAP(color) { color = ApplyRemap(color, gDebugSettings.OutputColorRemapIdx); }
 
 #   else
 

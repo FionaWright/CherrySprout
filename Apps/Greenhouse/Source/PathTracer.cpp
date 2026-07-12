@@ -99,6 +99,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.Init         (heap, true);
 
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
+    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
@@ -248,6 +249,20 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
+        const bool outputColorEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_OutputColor);
+        const bool pathDumpEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper);
+        if (outputColorEnabled || pathDumpEnabled)
+        {
+            const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
+
+            CbvPathTracingDebugSettings debugSettings{};
+            debugSettings.OutputColorIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx);
+            debugSettings.OutputColorRemapIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorRemap);
+            debugSettings.ChosenRayDepth = renderInfo.PathTracerConfig->DebugInfo.ChosenRayDepth;
+            debugSettings.ChosenPixelCoords = chosenPixelCoords;
+            m_descriptorSet.UpdateCBV(1, &debugSettings);
+        }
+
         if (m_scheduledRunState == ScheduledRunState::eRunFrame)
         {
             settings.FrameIdx = m_scheduledRunFrameIdx;
@@ -339,16 +354,13 @@ bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, con
 
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)
 {
-    uint32_t numSRV = 13;
-    uint32_t numUAV = 4;
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    const bool outputColorEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_OutputColor);
-    const bool pathDumpEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_PathDumper);
-#endif
+    constexpr uint32_t numCBV = 2;
+    constexpr uint32_t numSRV = 13;
+    constexpr uint32_t numUAV = 4;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
-    m_rootSig.SmartInit(device, 1, numSRV, numUAV, true, &sampler, 1);
+    m_rootSig.SmartInit(device, numCBV, numSRV, numUAV, true, &sampler, 1);
 
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
@@ -367,16 +379,6 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
-
-    if (outputColorEnabled || pathDumpEnabled)
-    {
-        const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : debugInfo.ChosenPixelCoords;
-
-        compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR=" + std::to_string(static_cast<uint32_t>(debugInfo.OutputColorIdx)));
-        compileArgs.emplace_back("-DDEBUG_CHOSEN_RAY_DEPTH=" + std::to_string(debugInfo.ChosenRayDepth));
-        compileArgs.emplace_back("-DDEBUG_CHOSEN_PIXEL_COORDS=uint2(" + std::to_string(chosenPixelCoords.x) + "," + std::to_string(chosenPixelCoords.y) + ")");
-        compileArgs.emplace_back("-DDEBUG_OUTPUT_COLOR_REMAP=" + std::to_string(static_cast<uint32_t>(debugInfo.OutputColorRemap)));
-    }
 #endif
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());

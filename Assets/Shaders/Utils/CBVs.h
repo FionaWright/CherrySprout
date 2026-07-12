@@ -92,4 +92,14 @@ struct CbvTotalLuminances
     float PunctualTotalLuminance;
 };
 
+struct CbvPathTracingDebugSettings
+{
+    hlsl::uint2 ChosenPixelCoords;
+    hlsl::uint OutputColorIdx;
+    hlsl::uint OutputColorRemapIdx;
+
+    int ChosenRayDepth;
+    hlsl::float3 p;
+};
+
 #endif

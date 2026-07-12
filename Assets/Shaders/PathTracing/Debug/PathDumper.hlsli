@@ -5,13 +5,9 @@
 
 #include "PathTracing/Debug/Globals.hlsli"
 
-#    ifndef DEBUG_CHOSEN_PIXEL_COORDS
-#        define DEBUG_CHOSEN_PIXEL_COORDS uint2(UINT_MAX, UINT_MAX)
-#    endif
-
 void ClearBuffer()
 {
-    if (any(gDebugPixelCoord != DEBUG_CHOSEN_PIXEL_COORDS))
+    if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
     for (int i = 0; i < gSettings.MaxRayDepth; i++)
@@ -28,7 +24,7 @@ void ClearBuffer()
 
 void AssignDebugOutput(float3 value, uint dbgIdx)
 {
-    if (any(gDebugPixelCoord != DEBUG_CHOSEN_PIXEL_COORDS))
+    if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.Float3List[dbgIdx] = value;
@@ -36,7 +32,7 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
 
 void AssignPathState(PathState pathState)
 {
-    if (any(gDebugPixelCoord != DEBUG_CHOSEN_PIXEL_COORDS))
+    if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
     gPathDump[gDebugCurrentRayDepth].PathState = pathState;
@@ -44,7 +40,7 @@ void AssignPathState(PathState pathState)
 
 void MarkExplored()
 {
-    if (any(gDebugPixelCoord != DEBUG_CHOSEN_PIXEL_COORDS))
+    if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
     gPathDump[gDebugCurrentRayDepth].Explored = true;
@@ -55,7 +51,7 @@ void MarkExplored()
 
 void Highlight(inout float3 color)
 {
-    float dist = length((float2)DEBUG_CHOSEN_PIXEL_COORDS - (float2)gDebugPixelCoord);
+    float dist = length((float2)gDebugSettings.ChosenPixelCoords - (float2)gDebugPixelCoord);
     if (HIGHLIGHT_CIRCLE_MIN < dist && dist < HIGHLIGHT_CIRCLE_MAX)
     {
         float2 uv = (float2)gDebugPixelCoord / (float2)gSettings.FrameDimensions;

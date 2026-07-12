@@ -17,6 +17,7 @@
 // =================== B Registers ===============================================================================
 
 ConstantBuffer<CbvPathTracingSettings>      gSettings               : register(b0, REGISTER_SPACE_DEFAULT);
+ConstantBuffer<CbvPathTracingDebugSettings> gDebugSettings          : register(b1, REGISTER_SPACE_DEFAULT);
 
 // =================== T Registers (Default) =====================================================================
 

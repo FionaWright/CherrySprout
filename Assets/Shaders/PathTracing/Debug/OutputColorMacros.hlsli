@@ -9,23 +9,12 @@
 
 #if DEBUG_ENABLED(OutputColor)
 
-#    ifndef DEBUG_OUTPUT_COLOR
-#        define DEBUG_OUTPUT_COLOR DebugOutputIndex::eDebugOutput_Disabled
-#    endif
-
-#    ifndef DEBUG_CHOSEN_RAY_DEPTH
-#        define DEBUG_CHOSEN_RAY_DEPTH -1
-#    endif
-
 void dbgOutput3(float3 value)
 {
-    if (!DEBUG_ENABLED(OutputColor))
-        return;
-
     if (gDebugValueFound)
         return;
 
-    if (DEBUG_CHOSEN_RAY_DEPTH != -1 && DEBUG_CHOSEN_RAY_DEPTH != gDebugCurrentRayDepth)
+    if (gDebugSettings.ChosenRayDepth != -1 && gDebugSettings.ChosenRayDepth != gDebugCurrentRayDepth)
         return;
 
     DBG_OUTPUT_COLOR_REMAP(value);
@@ -34,15 +23,15 @@ void dbgOutput3(float3 value)
     gDebugValue = value;
 }
 
-#    define DBG_OUTPUT3(value, idx)                                                                                                          \
+#    define DBG_OUTPUT3(value, label)                                                                                                          \
 {                                                                                                                                            \
-    DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##idx);                                                           \
-    if (DebugOutputIndex::eDebugOutput_##idx == (DebugOutputIndex)(DEBUG_OUTPUT_COLOR))                                                      \
+    DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label);                                                           \
+    if (DebugOutputIndex::eDebugOutput_##label == (DebugOutputIndex)(gDebugSettings.OutputColorIdx))                                           \
         dbgOutput3(value);                                                                                                                   \
 }                                                                                                                                            \
 
-#    define DBG_OUTPUT2(value, idx) DBG_OUTPUT3(float3(value, 0), idx)
-#    define DBG_OUTPUT1(value, idx) DBG_OUTPUT3(value.xxx, idx)
+#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)
+#    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 #    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; return; }
 
 #    define DBG_OUTPUT_SET(output) { output = gDebugValue; }
@@ -50,9 +39,9 @@ void dbgOutput3(float3 value)
 
 #elif DEBUG_ENABLED(PathDumper)
 
-#    define DBG_OUTPUT3(value, idx) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##idx)
-#    define DBG_OUTPUT2(value, idx) DBG_OUTPUT3(float3(value, 0), idx)
-#    define DBG_OUTPUT1(value, idx) DBG_OUTPUT3(value.xxx, idx)
+#    define DBG_OUTPUT3(value, label) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label)
+#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)
+#    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 
 #    define DBG_FORCE_OUTPUT3(value)
 #    define DBG_OUTPUT_SET(output)
@@ -60,9 +49,9 @@ void dbgOutput3(float3 value)
 
 #else
 
-#    define DBG_OUTPUT3(value, idx)
-#    define DBG_OUTPUT2(value, idx)
-#    define DBG_OUTPUT1(value, idx)
+#    define DBG_OUTPUT3(value, label)
+#    define DBG_OUTPUT2(value, label)
+#    define DBG_OUTPUT1(value, label)
 #    define DBG_FORCE_OUTPUT3(value)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()

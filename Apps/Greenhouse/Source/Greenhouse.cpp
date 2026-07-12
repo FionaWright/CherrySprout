@@ -151,7 +151,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         {
             m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.x = static_cast<uint32_t>(mousePos.x);
             m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.y = static_cast<uint32_t>(mousePos.y);
-            m_ptPipelineDirty = true;
+            m_ptFrameDirty = true;
         }
     }
 #endif

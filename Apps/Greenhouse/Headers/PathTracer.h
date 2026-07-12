@@ -40,7 +40,7 @@ public:
     void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode);
     void Reset();
 
-    size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256); }
+    size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256) + Align(sizeof(CbvPathTracingDebugSettings), 256); }
 
     D12Resource* GetTexOutput() { return &m_output; }
     D12Resource* GetTexAccum() { return &m_accum; }

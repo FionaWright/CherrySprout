@@ -31,7 +31,6 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
         DBG_PATH_DUMP_MARK_EXPLORED();
         DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
         DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
-        DBG_OUTPUT3(normalize(RemapUtoS(gGBufferNormals[pixelCoord].rgb)),  GBufferNormalsSnorm);
         DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBufferDepth);
         DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBufferUv);
         DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBufferMv);
