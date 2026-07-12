@@ -24,6 +24,7 @@ struct DebugErrorInfo
 
 struct RayDump
 {
+    bool Explored;
     DebugOutputStruct DebugOutputs;
     PathState PathState;
 };

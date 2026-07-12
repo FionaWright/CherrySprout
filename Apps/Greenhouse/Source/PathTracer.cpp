@@ -126,6 +126,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 10, m_gbufferPrePass.GetGBufferNormals(), m_gbufferPrePass.GetGBufferNormals()->GetDesc().Format);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, m_gbufferPrePass.GetGBufferUvMv(), m_gbufferPrePass.GetGBufferUvMv()->GetDesc().Format);
+
+    m_gbufferPrePass.LoadSceneData(d3d, scene);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -143,6 +145,12 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
 
+        m_gpuErrorInfoRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        m_gpuErrorInfoReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
+        cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
+
         UploadHeap uploadHeapClear;
         if (m_scheduleClearErrors)
         {
@@ -153,18 +161,11 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
             debugErrorInfoClear.NaNCounter = 0;
             debugErrorInfoClear.InfCounter = 0;
 
-            constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
             const std::vector<DebugErrorInfo> cpuClearBuffer(_countof(s_debugIdList), debugErrorInfoClear);
             m_gpuErrorInfoRW.UploadBuffer(cmdList, &uploadHeapClear, cpuClearBuffer.data(), bufferSize);
 
             m_scheduleClearErrors = false;
         }
-
-        m_gpuErrorInfoRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        m_gpuErrorInfoReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
-        cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
 
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
@@ -231,12 +232,12 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo.Flags))
     {
         m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, V, renderInfo.P);
-
-        m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
+
+    m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     // Fill Settings
     {
@@ -252,7 +253,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             settings.FrameIdx = m_scheduledRunFrameIdx;
             settings.CameraPositionWorld = m_scheduledRunCameraPosition;
             XMStoreFloat4x4(&settings.InvV, XMMatrixInverse(nullptr, m_scheduledRunViewMatrix));
-            
+
             SetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_Accumulation, false);
             d3d->Flush();
             UpdatePipeline(d3d->GetDevice(), renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo, renderInfo.PathTracerConfig->BxdfMode);
@@ -305,6 +306,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
         constexpr uint32_t THREAD_COUNTS = 16;
         DispatchOverTexture(cmdList, THREAD_COUNTS, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+        m_frameIdx++;
     }
 
     // Copy to RTV
@@ -318,8 +321,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
         rtv->CopyTextureInto(cmdList, m_output.GetResource(), Config::GetSystem().WindowAppGuiWidth, 0, 0);
     }
-
-    m_frameIdx++;
 }
 
 void PathTracer::UnreserveData()
@@ -334,23 +335,12 @@ bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, con
 
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)
 {
-    uint32_t numSRV = 6;
-    uint32_t numUAV = 2;
+    uint32_t numSRV = 13;
+    uint32_t numUAV = 4;
 #ifdef _DEBUG
     const bool outputColorEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_OutputColor);
-    const bool assertsEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_Asserts);
     const bool pathDumpEnabled = GetPathTracerDebugFlag(debugInfo.Flags, eDebug_PathDumper);
-    if (assertsEnabled)
-        numUAV++; // gDbgBufferErrorInfo
-    if (pathDumpEnabled)
-        numUAV++; // gPathDump
 #endif
-
-    if (GetPathTracerFeatureFlag(featureFlags, eFeature_NEE))
-        numSRV += 3; // gEnvMapCdfConditional, gEnvMapPmfConditional, gEnvMapCdfMarginal
-
-    if (GBufferRequired(featureFlags, debugInfo.Flags))
-        numSRV += 4;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -428,9 +418,11 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                 m_isPathDumpAutomatic = true;
 
             uint32_t rowIncrementer = 0;
-            const size_t maxRayDepth = std::min(config.MaxRayDepth, static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH));
-            for (int i = 0; i < maxRayDepth; i++)
+            for (int i = 0; i < static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH); i++)
             {
+                if (!m_cpuPathDump[i].Explored)
+                    break;
+
                 const std::string label = std::string("Ray ") + std::to_string(i);
 
                 if (ImGui::TreeNode(label.c_str()))

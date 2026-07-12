@@ -102,7 +102,13 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GBufferPrePassVS.hlsl", "Raster/GBufferPrePassPS.hlsl", desc);
 }
 
-void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap, const XMMATRIX& V, const XMMATRIX& P)
+void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
+{
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+}
+
+void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene, const Heap* heap, const XMMATRIX& V, const XMMATRIX& P)
 {
     GPU_SCOPE(cmdList, "GBuffer Pre-Pass");
 
@@ -139,9 +145,6 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
 
     scene->GPU.MegaBufferInstanceData.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     scene->GPU.MegaBufferMaterials.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 
     {
         D3D12_VERTEX_BUFFER_VIEW viewV;

@@ -1,13 +1,14 @@
 #ifndef H_ASSERT_H
 #define H_ASSERT_H
 
+#include "PathTracing/Debug/Globals.hlsli"
+
 #if DEBUG_ENABLED(Asserts)
 
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/NaNTests.hlsli"
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/Constants.h"
-#include "PathTracing/Debug/Globals.hlsli"
 
 void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
 {

@@ -65,7 +65,7 @@ void BxDF::Sample(
 
     float3 L_s = 0.0f;
 
-    bool isTransmission = Rand01(rngInfo) <= hitInfo.Mat.TransmissionFactor;
+    bool isTransmission = hitInfo.Mat.TransmissionFactor > 0 && Rand01(rngInfo) <= hitInfo.Mat.TransmissionFactor;
 
     DBG_ASSERT_APPROX(length(V_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
     DBG_ASSERT_APPROX(length(H_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
@@ -90,7 +90,7 @@ void BxDF::Sample(
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
 
         float reflectProb = GetReflectProb(iorNCurrent, iorNNext, VdH);
-        bool isReflect = Rand01(rngInfo) <= reflectProb;
+        bool isReflect = reflectProb > 0 && Rand01(rngInfo) <= reflectProb;
 
         DBG_ASSERT_ZERO(hitInfo.Mat.Metallic,         NO_METAL_GLASS);
         DBG_ASSERT_ZERO(hitInfo.Li,                   NO_EMISSIVE_GLASS);
@@ -135,7 +135,7 @@ void BxDF::Sample(
     }
 
     float specProb = GetSpecularProb(NdV, F0);
-    bool isSpecular = Rand01(rngInfo) <= specProb;
+    bool isSpecular = specProb > 0 && Rand01(rngInfo) <= specProb;
 
     DBG_OUTPUT1(specProb,                      SpecProb);
     DBG_OUTPUT1(isSpecular,                    IsSpecular);

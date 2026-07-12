@@ -26,7 +26,9 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
         q.Proceed();
 
         pathState.RaySegmentIdx = i;
+
         DBG_SET_CURRENT_RAY_DEPTH(i);
+        DBG_PATH_DUMP_MARK_EXPLORED();
         DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
         DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
         DBG_OUTPUT3(normalize(RemapUtoS(gGBufferNormals[pixelCoord].rgb)),  GBufferNormalsSnorm);

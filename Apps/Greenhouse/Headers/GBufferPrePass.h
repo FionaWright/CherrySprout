@@ -23,7 +23,8 @@ class GBufferPrePass
 {
 public:
     void Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV);
-    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap, const XMMATRIX& V, const XMMATRIX& P);
+    void LoadSceneData(D3D* d3d, Scene* scene);
+    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene, const Heap* heap, const XMMATRIX& V, const XMMATRIX& P);
 
     [[nodiscard]] D12Resource* GetGBufferMaterialIdx() { return &m_gbufferTexMaterialIdx; }
     [[nodiscard]] D12Resource* GetGBufferNormals() { return &m_gbufferTexNormals; }

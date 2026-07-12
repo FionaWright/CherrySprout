@@ -9,12 +9,12 @@ static int gDebugCurrentRayDepth = 0;
 static uint2 gDebugPixelCoord = uint2(UINT_MAX, UINT_MAX);
 static uint gDebugFrameIndex = UINT_MAX;
 
-#    define DBG_ASSERT_SET_PIXEL_INFO(pixelCoord, frameIndex) { gDebugPixelCoord = pixelCoord; gDebugFrameIndex = frameIndex; }
+#    define DBG_SET_PIXEL_INFO(pixelCoord, frameIndex) { gDebugPixelCoord = pixelCoord; gDebugFrameIndex = frameIndex; }
 #    define DBG_SET_CURRENT_RAY_DEPTH(depth) { gDebugCurrentRayDepth = depth; }
 
 #else
 
-#    define DBG_ASSERT_SET_PIXEL_COORD(pixelCoord)
+#    define DBG_SET_PIXEL_INFO(pixelCoord, frameIndex)
 #    define DBG_SET_CURRENT_RAY_DEPTH(depth)
 
 #endif

@@ -6,12 +6,15 @@
 #include "PathTracing/2_Trace.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
 
+#include "PathTracing/Debug/Globals.hlsli"
+#include "PathTracing/Debug/Assert.hlsli"
+
 #include "Utils/Random.h"
 #include "Utils/HlslUtils.hlsli"
 
 void Core(uint2 pixelCoord)
 {
-    DBG_ASSERT_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
+    DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
     DBG_PATH_DUMP_CLEAR();
 
     if (gSettings.IsMaxFramesReached) // TODO: Make this cleaner?

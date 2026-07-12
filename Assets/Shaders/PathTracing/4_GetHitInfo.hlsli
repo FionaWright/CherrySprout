@@ -59,7 +59,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     uint primitiveIdx = q.CommittedPrimitiveIndex();
     float2 barycentrics = q.CommittedTriangleBarycentrics();
 
-    hitInfo.IsEntering = q.CommittedTriangleFrontFace() != 0;
+    hitInfo.IsEntering = q.CommittedTriangleFrontFace() == 0;
     hitInfo.RayT = q.CommittedRayT();
 
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
@@ -105,8 +105,8 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
         Ns = bumpFrame.ToWorld(bumpSample);
     }
 
-    hitInfo.Ng_ff = hitInfo.IsEntering ? -Ng : Ng;
-    hitInfo.Ns_ff = hitInfo.IsEntering ? -Ns : Ns;
+    hitInfo.Ng_ff = hitInfo.IsEntering ? Ng : -Ng;
+    hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
     ApplyMaterialTextures(hitInfo);

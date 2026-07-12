@@ -16,6 +16,7 @@ void ClearBuffer()
 
     for (int i = 0; i < gSettings.MaxRayDepth; i++)
     {
+        gPathDump[i].Explored = false;
         gPathDump[i].PathState.LastBxdfPdf = NAN;
         gPathDump[i].PathState.RaySegmentIdx = 0;
         gPathDump[i].PathState.LastRayDiracDelta = false;
@@ -35,18 +36,31 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
 
 void AssignPathState(PathState pathState)
 {
+    if (any(gDebugPixelCoord != DEBUG_CHOSEN_PIXEL_COORDS))
+        return;
+
     gPathDump[gDebugCurrentRayDepth].PathState = pathState;
+}
+
+void MarkExplored()
+{
+    if (any(gDebugPixelCoord != DEBUG_CHOSEN_PIXEL_COORDS))
+        return;
+
+    gPathDump[gDebugCurrentRayDepth].Explored = true;
 }
 
 #   define DBG_PATH_DUMP_CLEAR() { ClearBuffer(); }
 #   define DBG_PATH_DUMP_DEBUG_OUTPUT(value, dbgIdx) { AssignDebugOutput(value, dbgIdx); }
 #   define DBG_PATH_DUMP_PATH_STATE(pathState) { AssignPathState(pathState); }
+#   define DBG_PATH_DUMP_MARK_EXPLORED() { MarkExplored(); }
 
 #else
 
 #   define DBG_PATH_DUMP_CLEAR()
 #   define DBG_PATH_DUMP_DEBUG_OUTPUT(dbgIdx, value)
 #   define DBG_PATH_DUMP_PATH_STATE(pathState)
+#   define DBG_PATH_DUMP_MARK_EXPLORED()
 
 #endif
 
