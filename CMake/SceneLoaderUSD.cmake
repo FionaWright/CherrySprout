@@ -120,6 +120,7 @@ target_link_libraries(SceneLoaderUSD PUBLIC
         usd_m
         tbb
         tbb_malloc
+        "${OPEN_USD_DIR_BUILD}/lib"
 )
 
 # -------------- SCENE LOADER COPY FILES  -------------
