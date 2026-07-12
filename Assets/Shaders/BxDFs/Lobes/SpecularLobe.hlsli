@@ -68,7 +68,6 @@ void SpecularLobe_Evaluate(
         out float pdf
     )
 {
-    // Terminate ray if wi ends up inside surface
     if (L_s.z <= 0.0f)
     {
         f = 0.0f;

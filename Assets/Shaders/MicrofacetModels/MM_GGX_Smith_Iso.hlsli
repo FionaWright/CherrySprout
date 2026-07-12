@@ -58,6 +58,8 @@ float MicrofacetModel::G2(float NdL, float NdV)
 float MicrofacetModel::PDF(float D, float3 H, float3 V)
 {
     float NdH = H.z;
+    if (NdH <= 0.0f)
+        return 0.0f;
     return D * NdH;
 }
 
