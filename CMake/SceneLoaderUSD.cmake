@@ -120,8 +120,13 @@ target_link_libraries(SceneLoaderUSD PUBLIC
         usd_m
         tbb
         tbb_malloc
-        "${OPEN_USD_DIR_BUILD}/lib"
 )
+
+if (USD_DEBUG)
+    target_link_directories(SceneLoaderUSD PUBLIC
+            "${OPEN_USD_DIR_BUILD}/lib"
+    )
+endif()
 
 # -------------- SCENE LOADER COPY FILES  -------------
 
