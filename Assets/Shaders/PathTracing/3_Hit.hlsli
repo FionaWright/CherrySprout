@@ -119,7 +119,6 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
     DBG_OUTPUT3(f,                                 f);
     DBG_OUTPUT1(pdf,                               PDF);
-    DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi),        L_s);
     DBG_OUTPUT3(wi,                                L_w);
 
     ray.Direction = wi;

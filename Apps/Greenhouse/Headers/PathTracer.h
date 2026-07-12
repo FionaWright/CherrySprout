@@ -37,7 +37,6 @@ public:
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
     void UnreserveData() override;
-    bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const;
     void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode);
     void Reset();
 
@@ -45,10 +44,11 @@ public:
 
     D12Resource* GetTexOutput() { return &m_output; }
     D12Resource* GetTexAccum() { return &m_accum; }
-    uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
+    [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
+    [[nodiscard]] bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracerDebugFlags& debugFlags) const;
 
 #ifdef _DEBUG
-    void RenderGUI_DebugInfo(const PathTracerConfig& config);
+    void RenderGUI_DebugInfo(PathTracerConfig& config);
 #endif
 
 private:

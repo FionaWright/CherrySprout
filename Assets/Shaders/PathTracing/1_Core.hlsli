@@ -29,7 +29,7 @@ void Core(uint2 pixelCoord)
     {
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, i, gSettings.FrameIdx);
 
-        DBG_OUTPUT1(Rand01(rngInfo), RNG);
+        DBG_OUTPUT1(Rand01_Const(rngInfo), RNG);
 
         RayDesc ray;
         ray.TMin = 0.001;

@@ -63,31 +63,42 @@ void BxDF::Sample(
     float3 H_s = mm.Sample(u1, u2);
     float VdH = dot(H_s, V_s);
 
-    DBG_ASSERT_APPROX(length(V_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
-    DBG_ASSERT_APPROX(length(H_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
-    DBG_ASSERT_APPROX(length(wo), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
+    float3 L_s = 0.0f;
 
+    bool isTransmission = Rand01(rngInfo) <= hitInfo.Mat.TransmissionFactor;
+
+    DBG_ASSERT_APPROX(length(V_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
+    DBG_ASSERT_APPROX(length(H_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
+    DBG_ASSERT_APPROX(length(wo), 1.0f, 0.02f,   UNNORMALIZED_VECTOR);
     DBG_ASSERT_VALUE(H_s,                        BxDF_PBR_H_S);
-
+    DBG_OUTPUT1(isTransmission,                  IsTransmission);
     DBG_OUTPUT3(H_s,                             H_s);
+    DBG_OUTPUT3(N_s,                             N_s);
+    DBG_OUTPUT3(V_s,                             V_s);
+    DBG_OUTPUT3(NdV,                             NdV);
+    DBG_OUTPUT3(VdH,                             VdH);
+    DBG_OUTPUT3(F0,                              F0);
+    DBG_OUTPUT3(u1,                              u1);
+    DBG_OUTPUT3(u2,                              u2);
     DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     H_w);
     DBG_OUTPUT1(mm.m_alpha,                      Alpha);
     DBG_OUTPUT1(mm.D(H_s),                       D);
 
-    float3 L_s = 0.0f;
-
-    if (FEATURE_ENABLED(GlassMaterials) && Rand01(rngInfo) < hitInfo.Mat.TransmissionFactor)
+    if (FEATURE_ENABLED(GlassMaterials) && isTransmission)
     {
-        float iorCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
-        float iorNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
+        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
+        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
 
-        DBG_ASSERT_ZERO(hitInfo.Mat.Metallic, NO_METAL_GLASS);
-        DBG_ASSERT_ZERO(hitInfo.Li          , NO_EMISSIVE_GLASS);
+        float reflectProb = GetReflectProb(iorNCurrent, iorNNext, VdH);
+        bool isReflect = Rand01(rngInfo) <= reflectProb;
 
-        float reflectProb = GetReflectProb(iorCurrent, iorNext, VdH);
-        bool isReflect = Rand01(rngInfo) < reflectProb;
-
+        DBG_ASSERT_ZERO(hitInfo.Mat.Metallic,         NO_METAL_GLASS);
+        DBG_ASSERT_ZERO(hitInfo.Li,                   NO_EMISSIVE_GLASS);
         DBG_OUTPUT1(reflectProb,                      ReflectProb);
+        DBG_OUTPUT1(isReflect,                        IsReflect);
+        DBG_OUTPUT1(iorNCurrent,                      iorNCurrent);
+        DBG_OUTPUT1(iorNNext,                         iorNNext);
+        DBG_OUTPUT1(iorNCurrent/iorNNext,             eta);
 
         if (isReflect)
         {
@@ -104,7 +115,7 @@ void BxDF::Sample(
         }
         else
         {
-            TransmissiveLobe_Sample(hitInfo, mm, V_s, N_s, H_s, iorCurrent, iorNext, L_s, f, pdf);
+            TransmissiveLobe_Sample(hitInfo, mm, V_s, N_s, H_s, iorNCurrent, iorNNext, L_s, f, pdf);
 
             pdf *= 1.0f - reflectProb;
 
@@ -119,13 +130,15 @@ void BxDF::Sample(
         DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
         DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
         DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
+        DBG_OUTPUT3(L_s,        L_s);
         return;
     }
 
     float specProb = GetSpecularProb(NdV, F0);
-    bool isSpecular = Rand01(rngInfo) < specProb;
+    bool isSpecular = Rand01(rngInfo) <= specProb;
 
     DBG_OUTPUT1(specProb,                      SpecProb);
+    DBG_OUTPUT1(isSpecular,                    IsSpecular);
 
     if (isSpecular)
     {
@@ -159,6 +172,7 @@ void BxDF::Sample(
     DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
     DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
     DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
+    DBG_OUTPUT3(L_s,        L_s);
 }
 
 void BxDF::Evaluate(

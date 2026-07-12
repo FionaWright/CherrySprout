@@ -12,8 +12,8 @@ struct SettingsSystem
     uint32_t RtvWidth = 1020;
     uint32_t RtvHeight = 575;
 
-    uint32_t WindowAppGuiWidth = 340;
-    uint32_t WindowEngineGuiWidth = 340;
+    uint32_t WindowAppGuiWidth = 425;
+    uint32_t WindowEngineGuiWidth = 250;
 
     bool VSyncEnabled = false;
     bool ForceSyncCpuGpu = false;

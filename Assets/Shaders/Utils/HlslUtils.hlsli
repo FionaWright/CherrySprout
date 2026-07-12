@@ -8,7 +8,7 @@ float3 NormalizeSafe(float3 v, float3 fallback)
     if (len2 <= 1e-20f || !isfinite(len2))
         return fallback;
 
-    return v * rsqrt(len2);
+    return v / sqrt(len2);
 }
 
 bool CheckTIR(float n1, float n2, float cosTi)

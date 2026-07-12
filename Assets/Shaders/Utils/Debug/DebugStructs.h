@@ -15,8 +15,11 @@ struct DebugErrorInfo
     hlsl::float4 Value2;
     hlsl::float4 Value3;
 
+    // For re-running the error:
     hlsl::uint2 PixelCoord;
     hlsl::uint FrameIndex;
+    hlsl::float3 CameraPositionWorld;
+    hlsl::float4x4 InvV;
 };
 
 struct RayDump

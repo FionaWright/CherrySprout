@@ -45,10 +45,21 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
 
     if (updatedAny && gDebugFrameIndex != UINT_MAX && gDebugPixelCoord.x != UINT_MAX && gDebugPixelCoord.y != UINT_MAX)
     {
-        uint _;
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.x, gDebugPixelCoord.x, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.y, gDebugPixelCoord.y, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].FrameIndex, gDebugFrameIndex, _);
+        uint _i;
+        float _f;
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.x, gDebugPixelCoord.x, _i);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.y, gDebugPixelCoord.y, _i);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].FrameIndex, gDebugFrameIndex, _i);
+
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].CameraPositionWorld.x, gSettings.CameraPositionWorld.x, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].CameraPositionWorld.y, gSettings.CameraPositionWorld.y, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].CameraPositionWorld.z, gSettings.CameraPositionWorld.z, _f);
+
+        [unroll]
+        for (int r = 0; r < 4; r++)
+            [unroll]
+            for (int c = 0; c < 4; c++)
+                InterlockedExchange(gDbgBufferErrorInfo[dbgID].InvV[r][c], gSettings.InvV[r][c], _f);
     }
 }
 

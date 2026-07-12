@@ -55,4 +55,10 @@ inline float Rand01(GLUE_INOUT(RngInfo) rngInfo)
     return PcgRand01(rngInfo.IndependentRngState);
 }
 
+inline float Rand01_Const(const RngInfo rngInfo)
+{
+    hlsl::uint discardState = rngInfo.IndependentRngState;
+    return PcgRand01(discardState);
+}
+
 #endif
