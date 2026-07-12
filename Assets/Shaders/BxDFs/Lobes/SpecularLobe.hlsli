@@ -89,8 +89,8 @@ void SpecularLobe_Evaluate(
     pdf = mm.PDF(D, H_s, V_s);
     pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
 
-    DBG_OUTPUT3(F,                F);
-    DBG_OUTPUT1(G,                G);
+    DBG_OUTPUT3(F,                Eval_F);
+    DBG_OUTPUT1(G,                Eval_G);
 
     // Dirac Delta
     if (hitInfo.Mat.Roughness < ROUGHNESS_DIRAC_THRESHOLD)

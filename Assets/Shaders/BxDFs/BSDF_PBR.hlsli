@@ -200,25 +200,31 @@ void BxDF::Evaluate(
 
     float VdH = dot(H_s, V_s);
 
-    DBG_OUTPUT3(H_s,                             H_s);
-    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     H_w);
-    DBG_OUTPUT1(mm.m_alpha,                      Alpha);
-    DBG_OUTPUT1(mm.D(H_s),                       D);
+    DBG_OUTPUT3(N_s,                             Eval_N_s);
+    DBG_OUTPUT3(V_s,                             Eval_V_s);
+    DBG_OUTPUT3(L_s,                             Eval_L_s);
+    DBG_OUTPUT3(wi,                              Eval_L_w);
+    DBG_OUTPUT3(H_s,                             Eval_H_s);
+    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     Eval_H_w);
+    DBG_OUTPUT1(NdV,                             Eval_NdV);
+    DBG_OUTPUT1(VdH,                             Eval_VdH);
+    DBG_OUTPUT3(F0,                              Eval_F0);
+    DBG_OUTPUT1(mm.m_alpha,                      Eval_Alpha);
+    DBG_OUTPUT1(mm.D(H_s),                       Eval_D);
 
     f = 0;
     pdf = 0;
 
     if (FEATURE_ENABLED(GlassMaterials) && hitInfo.Mat.TransmissionFactor > 0)
     {
-        float iorCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
-        float iorNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
+        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
+        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
 
+        float reflectProb = GetReflectProb(iorNCurrent, iorNNext, VdH);
+
+        DBG_OUTPUT1(reflectProb,                      Eval_ReflectProb);
         DBG_ASSERT_ZERO(hitInfo.Mat.Metallic, NO_METAL_GLASS);
         DBG_ASSERT_ZERO(hitInfo.Li          , NO_EMISSIVE_GLASS);
-
-        float reflectProb = GetReflectProb(iorCurrent, iorNext, VdH);
-
-        DBG_OUTPUT1(reflectProb,                      ReflectProb);
 
         float3 f_trans = 0;
         float pdf_trans = 0;
@@ -236,14 +242,16 @@ void BxDF::Evaluate(
             f_trans += f_reflect;
             pdf_trans += pdf_reflect;
 
-            DBG_ASSERT_VALUE(f_reflect,         BxDF_PBR_GLASS_SPEC_F);
-            DBG_ASSERT_VALUE(pdf_reflect,       BxDF_PBR_GLASS_SPEC_PDF);
+            DBG_ASSERT_VALUE(f_reflect,           BxDF_PBR_GLASS_SPEC_F);
+            DBG_ASSERT_VALUE(pdf_reflect,         BxDF_PBR_GLASS_SPEC_PDF);
+            DBG_OUTPUT1(f_reflect,                Eval_f_reflect);
+            DBG_OUTPUT1(pdf_reflect,              Eval_PDF_reflect);
         }
 
         {
             float3 f_refract;
             float pdf_refract;
-            TransmissiveLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, iorCurrent, iorNext, f_refract, pdf_refract);
+            TransmissiveLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, iorNCurrent, iorNNext, f_refract, pdf_refract);
 
             pdf_refract *= 1.0f - reflectProb;
 
@@ -253,12 +261,17 @@ void BxDF::Evaluate(
             f_trans += f_refract;
             pdf_trans += pdf_refract;
 
-            DBG_ASSERT_VALUE(f_refract,         BxDF_PBR_GLASS_REFRACT_F);
-            DBG_ASSERT_VALUE(pdf_refract,       BxDF_PBR_GLASS_REFRACT_PDF);
+            DBG_ASSERT_VALUE(f_refract,           BxDF_PBR_GLASS_REFRACT_F);
+            DBG_ASSERT_VALUE(pdf_refract,         BxDF_PBR_GLASS_REFRACT_PDF);
+            DBG_OUTPUT1(f_refract,                Eval_f_refract);
+            DBG_OUTPUT1(pdf_refract,              Eval_PDF_refract);
         }
 
         f_trans *= hitInfo.Mat.TransmissionFactor;
         pdf_trans *= hitInfo.Mat.TransmissionFactor;
+
+        DBG_OUTPUT1(f_trans,                Eval_f_trans);
+        DBG_OUTPUT1(pdf_trans,              Eval_PDF_trans);
 
         f += f_trans;
         pdf += pdf_trans;
@@ -266,7 +279,7 @@ void BxDF::Evaluate(
 
     float specProb = GetSpecularProb(NdV, F0);
 
-    DBG_OUTPUT1(specProb,                      SpecProb);
+    DBG_OUTPUT1(specProb,                      Eval_SpecProb);
 
     float3 f_opaque = 0;
     float pdf_opaque = 0;
@@ -285,6 +298,8 @@ void BxDF::Evaluate(
 
             DBG_ASSERT_VALUE(f_spec,           BxDF_PBR_SPEC_F);
             DBG_ASSERT_VALUE(pdf_spec,         BxDF_PBR_SPEC_PDF);
+            DBG_OUTPUT1(f_spec,                Eval_f_spec);
+            DBG_OUTPUT1(pdf_spec,              Eval_PDF_spec);
         }
 
         {
@@ -302,6 +317,8 @@ void BxDF::Evaluate(
 
             DBG_ASSERT_VALUE(f_diff,           BxDF_PBR_DIFF_F);
             DBG_ASSERT_VALUE(pdf_diff,         BxDF_PBR_Diff_PDF);
+            DBG_OUTPUT1(f_diff,                Eval_f_diff);
+            DBG_OUTPUT1(pdf_diff,              Eval_PDF_diff);
         }
     }
 
@@ -314,7 +331,11 @@ void BxDF::Evaluate(
     f += f_opaque;
     pdf += pdf_opaque;
 
-    DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
+    DBG_ASSERT_GE(pdf, 0.0f,                NON_POSITIVE_PDF);
+    DBG_OUTPUT1(f,                          Eval_f);
+    DBG_OUTPUT1(f_opaque,                   Eval_f_opaque);
+    DBG_OUTPUT1(pdf,                        Eval_PDF);
+    DBG_OUTPUT1(pdf_opaque,                 Eval_PDF_opaque);
 }
 
 #endif
