@@ -2,7 +2,7 @@
 
 - [x] Research
 - [x] Figure out the structure
-- [ ] GBuffer pre-pass
+- [x] GBuffer pre-pass
 - [ ] Sample Gen pre-pass
 - [ ] Point lights NEE + MIS
 - [ ] Find indoor scene

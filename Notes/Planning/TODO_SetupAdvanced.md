@@ -5,26 +5,31 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] PBR BSDF from CherryPip
 - [x] Environment maps
 - [x] Glass
-- [ ] Env Map GUI 
+- [ ] (F) Env Map GUI 
+- [ ] Gamma Correction flag
 
 - [x] Hot reloading
 - [x] Root constants support
 - [x] Run path-tracer without sync?
 - [x] Scene switching in GUI
-- [ ] Profiling (Tracy?)
+- [ ] (F) Profiling (Tracy?)
 - [x] Snapshot tool (Can I make it go into my clipboard as well?)
-- [ ] Set up forward/deferred backends for debugging. Do in Greenhouse
+- [ ] (F) Set up forward/deferred backends for debugging. Do in Greenhouse
+- [ ] (F) Object/Material list + Material ball preview
 
-- [ ] Python executor
+- [ ] (F) Python executor
 - [ ] Path visualizer
+- [ ] (F) Gizmos for light sources, etc
 - [x] Debug Info Output (Make it better)
 - [ ] Variance reduction per frame-time test
 - [x] PT Assert based system inspired by Viggo
 - [x] Place asserts all over the program
 - [ ] PT meta counter debug increment/F4/etc system
 - [ ] Debug quick input bools/floats/etc
-- [ ] Path dumper
-- [ ] Automatic path dumper + visualizer on assertion error
+- [x] Path dumper
+- [x] Automatic path dumper on assertion error
+- [ ] Path dumper click pixel + highlight
+- [ ] Visualizer on path dump 
 - [ ] Furnace Test
 - [ ] RMSE Test
 - [x] BxDF Test

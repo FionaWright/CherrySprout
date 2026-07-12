@@ -252,8 +252,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             settings.FrameIdx = m_scheduledRunFrameIdx;
             settings.CameraPositionWorld = m_scheduledRunCameraPosition;
             XMStoreFloat4x4(&settings.InvV, XMMatrixInverse(nullptr, m_scheduledRunViewMatrix));
-
-            // TODO: Make chosen pixel coord a CBV value to avoid recompilation
+            
             SetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_Accumulation, false);
             d3d->Flush();
             UpdatePipeline(d3d->GetDevice(), renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo, renderInfo.PathTracerConfig->BxdfMode);
