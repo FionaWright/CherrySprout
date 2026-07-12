@@ -139,7 +139,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (Input::IsMouseLeftDown())
+    if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_PathDumper) && Input::IsMouseLeftDown())
     {
         XMFLOAT2 mousePos = Input::GetMousePos();
         mousePos.x -= static_cast<float>(Config::GetSystem().WindowAppGuiWidth);
