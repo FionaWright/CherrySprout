@@ -33,7 +33,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
 
     BxDF bxdf;
 
-    if (FEATURE_ENABLED(NEE) && FEATURE_ENABLED(EnvironmentMap))
+    if (FEATURE_ENABLED(NEE))
     {
         float3 E_direct = 0;
         if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
@@ -67,6 +67,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
             float pdf_env;
             SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, E_direct, pdf_env, wi_env);
         }
+
         // TODO: Share shadow ray handling for both out here
         L_sample += E_direct * beta;
     }

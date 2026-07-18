@@ -28,6 +28,31 @@ uint BinarySearch(Texture1D<float> cdf, float u)
     return left;
 }
 
+uint BinarySearch(StructuredBuffer<ProbabilityDistributionSample> cdf, float u)
+{
+    uint size, _;
+    cdf.GetDimensions(size, _);
+
+    uint left = 0;
+    uint right = size - 1;
+
+    while (left < right)
+    {
+        uint mid = left + (right - left) / 2;
+
+        if (u <= cdf[mid].CDF)
+        {
+            right = mid;
+        }
+        else
+        {
+            left = mid + 1;
+        }
+    }
+
+    return left;
+}
+
 uint BinarySearchX(Texture2D<float> cdf, uint y, float u)
 {
     uint size, _;

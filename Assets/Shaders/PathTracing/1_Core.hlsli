@@ -8,6 +8,7 @@
 
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
+#include "PathTracing/Debug/Scales.hlsli"
 
 #include "Utils/Random.h"
 #include "Utils/HlslUtils.hlsli"
@@ -44,7 +45,10 @@ void Core(uint2 pixelCoord)
             gSettings.DofFocalDist, gSettings.DofLensRadius,
             ray.Origin, ray.Direction);
 
-        colorSum += Trace(ray, rngInfo, pixelCoord);
+        float3 radiance = Trace(ray, rngInfo, pixelCoord);
+        DBG_SCALE_INTENSITY_GLOBAL(radiance);
+
+        colorSum += radiance;
     }
 
     colorSum /= float(gSettings.SPP);

@@ -54,6 +54,10 @@ static const char* s_debugIdList[] = {
     CREATE_ID(UNNORMALIZED_VECTOR   , "Vector is unnormalized")
     CREATE_ID(NON_POSITIVE_PDF   , "PDF is not positive or zero")
 
+    CREATE_ID(UNSUPPORTED_LIGHT_TYPE   , "Unsupported light type")
+    CREATE_ID(DISABLED_LIGHT_INDEX   , "Light index was chosen that isn't enabled")
+    CREATE_ID(OOB_LIGHT_INDEX   , "Light index was chosen out of bounds")
+
 };
 
 #endif

@@ -2,6 +2,7 @@
 #define H_MISS_H
 
 #include "PathTracing/MIS.hlsli"
+#include "PathTracing/Debug/Scales.hlsli"
 
 float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bounceIdx)
 {
@@ -11,6 +12,7 @@ float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bou
     {
         float2 uv = EaSphereToSquare(direction);
         float3 Le = gTexEnvMap.Sample(gSampler, uv).rgb;
+        DBG_SCALE_INTENSITY_ENV_MAP(Le);
 
         if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayDiracDelta)
         {

@@ -1,6 +1,7 @@
 #ifndef H_ASSERT_H
 #define H_ASSERT_H
 
+#include "PathTracing/Flags/MethodsHlsl.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 
 #if DEBUG_ENABLED(Asserts)
@@ -70,6 +71,7 @@ void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)         
 
 #define DBG_ASSERT_EXPR(expr, dbgID)                  dbgAssert(0, 0, 0, expr, dbgID);
 #define DBG_ASSERT_VALUE(v,    dbgID)                 dbgAssert(v, 0, 0, 1, dbgID);
+#define DBG_ASSERT_FAIL(dbgID)                        dbgAssert(0, 0, 0, 0, dbgID);
 
 #define DBG_ASSERT_EQ(v1, v2, dbgID)                  dbgAssert(v1, v2, 0, v1 == v2, dbgID);
 #define DBG_ASSERT_NEQ(v1, v2, dbgID)                 dbgAssert(v1, v2, 0, v1 != v2, dbgID);
@@ -88,6 +90,7 @@ void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)         
 
 #define DBG_ASSERT_EXPR(expr, dbgID)
 #define DBG_ASSERT_VALUE(v,    dbgID)
+#define DBG_ASSERT_FAIL(dbgID)
 #define DBG_ASSERT_EQ(v1, v2, dbgID)
 #define DBG_ASSERT_NEQ(v1, v2, dbgID)
 #define DBG_ASSERT_LT(v1, v2, dbgID)

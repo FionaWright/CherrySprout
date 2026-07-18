@@ -113,19 +113,23 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 5, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 5, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
+
+    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), 6, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
 
     if (lightImportanceSampler->IsInitialized())
     {
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 6, lightImportanceSampler->GetEnvMapPmf(), lightImportanceSampler->GetEnvMapPmf()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 7, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), 8, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
+        const size_t lightCount = 1 + scene->CPU.MegaBufferPunctualLightsCount;
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 7, lightImportanceSampler->GetEnvMapPmf(), lightImportanceSampler->GetEnvMapPmf()->GetDesc().Format);
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 8, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
+        m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), 9, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 10, lightImportanceSampler->GetLightsCdf(), lightCount, sizeof(ProbabilityDistributionSample));
     }
 
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 9, m_gbufferPrePass.GetGBufferMaterialIdx(), m_gbufferPrePass.GetGBufferMaterialIdx()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 10, m_gbufferPrePass.GetGBufferNormals(), m_gbufferPrePass.GetGBufferNormals()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, m_gbufferPrePass.GetGBufferUvMv(), m_gbufferPrePass.GetGBufferUvMv()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferMaterialIdx(), m_gbufferPrePass.GetGBufferMaterialIdx()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, m_gbufferPrePass.GetGBufferNormals(), m_gbufferPrePass.GetGBufferNormals()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, m_gbufferPrePass.GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, m_gbufferPrePass.GetGBufferUvMv(), m_gbufferPrePass.GetGBufferUvMv()->GetDesc().Format);
 
     m_gbufferPrePass.LoadSceneData(d3d, scene);
 }
@@ -250,7 +254,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 #if CHERRY_DEBUG_FEATURES_ENABLED
         const bool outputColorEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_OutputColor);
         const bool pathDumpEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper);
-        if (outputColorEnabled || pathDumpEnabled)
+        const bool scalesEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Scales);
+        if (outputColorEnabled || pathDumpEnabled || scalesEnabled)
         {
             const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
 
@@ -259,6 +264,17 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.OutputColorRemapIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorRemap);
             debugSettings.ChosenRayDepth = renderInfo.PathTracerConfig->DebugInfo.ChosenRayDepth;
             debugSettings.ChosenPixelCoords = chosenPixelCoords;
+            debugSettings.ScaleIntensityGlobal = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityGlobal;
+            debugSettings.ScaleIntensityPunctual = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPunctual;
+            debugSettings.ScaleIntensityEnvMap = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEnvMap;
+            debugSettings.ScalePointLightRadius = renderInfo.PathTracerConfig->DebugInfo.ScalePointLightRadius;
+            debugSettings.ScaleF = renderInfo.PathTracerConfig->DebugInfo.ScaleF;
+            debugSettings.ScaleD = renderInfo.PathTracerConfig->DebugInfo.ScaleD;
+            debugSettings.ScaleG = renderInfo.PathTracerConfig->DebugInfo.ScaleG;
+            debugSettings.ScaleDiffuse = renderInfo.PathTracerConfig->DebugInfo.ScaleDiffuse;
+            debugSettings.ScaleSpecular = renderInfo.PathTracerConfig->DebugInfo.ScaleSpecular;
+            debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
+            debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 
@@ -364,7 +380,7 @@ bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, con
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)
 {
     constexpr uint32_t numCBV = 2;
-    constexpr uint32_t numSRV = 13;
+    constexpr uint32_t numSRV = 15;
     constexpr uint32_t numUAV = 4;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};

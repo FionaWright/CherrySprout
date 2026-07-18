@@ -22,6 +22,7 @@ public:
     [[nodiscard]] D12Resource* GetEnvMapPmf() { return &m_envMapPmf; }
     [[nodiscard]] D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
     [[nodiscard]] D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
+    [[nodiscard]] D12Resource* GetLightsCdf() { return &m_lightCdf; }
 
     [[nodiscard]] float GetTotalEnvMapLuminance() const { return m_envMapTotalLuminance; }
     [[nodiscard]] float GetPunctualWeight() const { return m_punctualWeight; }

@@ -99,7 +99,19 @@ struct CbvPathTracingDebugSettings
     hlsl::uint OutputColorRemapIdx;
 
     int ChosenRayDepth;
-    hlsl::float3 p;
+    float ScaleIntensityGlobal;
+    float ScaleIntensityPunctual;
+    float ScaleIntensityEnvMap;
+
+    float ScalePointLightRadius;
+    float ScaleF;
+    float ScaleD;
+    float ScaleG;
+
+    float ScaleDiffuse;
+    float ScaleSpecular;
+    float ScaleReflect;
+    float ScaleRefract;
 };
 
 #endif

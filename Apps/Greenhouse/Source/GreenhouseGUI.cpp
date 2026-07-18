@@ -101,6 +101,8 @@ void Greenhouse::RenderGUI()
             ImGui::Unindent(IM_GUI_INDENTATION);
         }
 
+        const bool prevEnvMapEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_EnvironmentMap);
+
         ImGui::Text("Feature Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
         if (ImGui::BeginTable("Feature Flags", 2))
@@ -121,6 +123,8 @@ void Greenhouse::RenderGUI()
         }
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
+
+        m_lightCdfsDirty |= prevEnvMapEnabled != GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_EnvironmentMap);
 
         if (pathTracingFeatureEnabled(eFeature_DirectionalLight))
         {
@@ -198,6 +202,47 @@ void Greenhouse::RenderGUI()
         {
             m_config.PathTracerConfig.DebugInfo.OutputColorIdx = DebugOutputIndex::eDebugOutput_Disabled;
             m_config.PathTracerConfig.DebugInfo.OutputColorRemap = DebugOutputColorRemap::eNone;
+        }
+
+        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_Scales))
+        {
+            ImGui::Text("Scales:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+
+            static bool dragFloatMode = true;
+            ImGui::Checkbox("Drag Float Mode", &dragFloatMode);
+
+            auto scaleFunc = [&](const char* label, float* v)
+            {
+                if (ImGui::Button((std::string(" 0/1 ##") + label).c_str()))
+                {
+                    *v = *v == 0.0f ? 1.0f : 0.0f;
+                    m_ptFrameDirty = true;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button((std::string(" I ##") + label).c_str()))
+                {
+                    *v = *v * 1.1f;
+                    m_ptFrameDirty = true;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button((std::string(" D ##") + label).c_str()))
+                {
+                    *v = *v * 0.9f;
+                    m_ptFrameDirty = true;
+                }
+                ImGui::SameLine();
+
+                if (dragFloatMode)
+                    m_ptFrameDirty |= GuiUtils::FwDragFloat(label, v, 0.05f, 0.0f, 0.0f);
+                else
+                    m_ptFrameDirty |= GuiUtils::FwInputFloat(label, v);
+            };
+            scaleFunc("Global", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityGlobal);
+            scaleFunc("Env Map", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityEnvMap);
+            scaleFunc("Punctuals", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPunctual);
+            scaleFunc("Point Light Radius", &m_config.PathTracerConfig.DebugInfo.ScalePointLightRadius);
+            ImGui::Unindent(IM_GUI_INDENTATION);
         }
 
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))

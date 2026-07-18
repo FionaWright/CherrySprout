@@ -17,6 +17,19 @@ struct PathTracingDebugInfo
     DebugOutputColorRemap OutputColorRemap = s_defaultOutputColorRemap;
     int ChosenRayDepth = -1;
     hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
+
+    float ScaleIntensityGlobal = 1.0f;
+    float ScaleIntensityPunctual = 1.0f;
+    float ScaleIntensityEnvMap = 1.0f;
+    float ScalePointLightRadius = 0.0f;
+    float ScaleF = 1.0f;
+    float ScaleD = 1.0f;
+    float ScaleG = 1.0f;
+    float ScaleDiffuse = 1.0f;
+    float ScaleSpecular = 1.0f;
+    float ScaleReflect = 1.0f;
+    float ScaleRefract = 1.0f;
+    float ScaleClearcoat = 1.0f;
 #endif
 };
 
