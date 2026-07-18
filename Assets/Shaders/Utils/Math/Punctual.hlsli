@@ -93,6 +93,7 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position)
     float attenuation = 1.0f / max(distance2, radius2);
 
     sample.Radiance = light.Color * (light.Intensity * attenuation);
+    DBG_SCALE_INTENSITY_POINT(sample.Radiance);
 
     return sample;
 }
@@ -101,10 +102,11 @@ LightSample EvaluateDistantLight(PunctualLight light)
 {
     LightSample sample;
 
-    sample.Direction = normalize(-light.Position);
+    sample.Direction = normalize(light.Position);
     sample.Distance = INF;
 
     sample.Radiance = light.Color * light.Intensity;
+    DBG_SCALE_INTENSITY_DISTANT(sample.Radiance);
 
     return sample;
 }
@@ -139,6 +141,7 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position)
     float attenuation = spotFactor / distance2;
 
     sample.Radiance = light.Color * (light.Intensity * attenuation);
+    DBG_SCALE_INTENSITY_SPOT(sample.Radiance);
 
     return sample;
 }

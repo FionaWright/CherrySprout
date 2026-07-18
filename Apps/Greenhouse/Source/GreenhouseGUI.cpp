@@ -94,6 +94,8 @@ void Greenhouse::RenderGUI()
                 int c = 0;
                 for (auto & s_bxdfName : s_bxdfNames)
                 {
+                    if (c != 0)
+                        ImGui::SameLine();
                     m_ptPipelineDirty |= ImGui::RadioButton(s_bxdfName, &e, c++);
                 }
                 m_config.PathTracerConfig.BxdfMode = static_cast<BxdfMode>(e);
@@ -153,49 +155,85 @@ void Greenhouse::RenderGUI()
         }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (pathTracingFeatureEnabled(eFeature_NEE) && ImGui::CollapsingHeader("CDF"))
+        if (pathTracingFeatureEnabled(eFeature_NEE))
         {
-            ImGui::Indent(IM_GUI_INDENTATION);
+            if (ImGui::CollapsingHeader("CDF"))
             {
+                ImGui::Indent(IM_GUI_INDENTATION);
                 ImGui::Text("Env Map Luminance: %f", m_lightImportanceSampler.GetTotalEnvMapLuminance());
                 ImGui::Text("Punctual Weight  : %f", m_lightImportanceSampler.GetPunctualWeight());
 
-                const auto& cpuLightCdf = m_lightImportanceSampler.GetCpuLightsCdf();
-                for (int i = 0; i < cpuLightCdf.size(); ++i)
+                ImGui::PopStyleVar();
+                m_lightCdfsDirty |= ImGui::Button("Reload Light CDFs");
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+
+                if (ImGui::BeginTable("CDF Table", 4))
                 {
-                    if (i == 0)
-                        ImGui::Text("%i (EnvMap)   : PMF=%.3f, CDF=%.3f", i, cpuLightCdf[i].PMF, cpuLightCdf[i].CDF);
-                    else
-                        ImGui::Text("%i (Punctual) : PMF=%.3f, CDF=%.3f", i, cpuLightCdf[i].PMF, cpuLightCdf[i].CDF);
+                    ImGui::TableSetupColumn("Idx");
+                    ImGui::TableSetupColumn("Type");
+                    ImGui::TableSetupColumn("PMF");
+                    ImGui::TableSetupColumn("CDF");
+                    ImGui::TableHeadersRow();
+
+                    const auto& cpuLightCdf = m_lightImportanceSampler.GetCpuLightsCdf();
+                    for (int i = 0; i < cpuLightCdf.size(); ++i)
+                    {
+                        ImGui::TableNextRow();
+
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("%i", i);
+
+                        ImGui::TableSetColumnIndex(1);
+                        if (i == 0)
+                            ImGui::TextUnformatted("EnvMap");
+                        else
+                        {
+                            if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::ePoint)
+                                ImGui::TextUnformatted("Point");
+                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::eDistant)
+                                ImGui::TextUnformatted("Distant");
+                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::eSpot)
+                                ImGui::TextUnformatted("Spot");
+                            else
+                                ImGui::TextUnformatted("Unknown");
+                        }
+
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::Text("%.9f", cpuLightCdf[i].PMF);
+
+                        ImGui::TableSetColumnIndex(3);
+                        ImGui::Text("%.9f", cpuLightCdf[i].CDF);
+                    }
                 }
+                ImGui::EndTable();
+                ImGui::Unindent(IM_GUI_INDENTATION);
             }
-            ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();
         }
 #endif
 
-        m_lightCdfsDirty |= ImGui::Button("Reload Light CDFs");
-
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        ImGui::Text("Debug Flags:");
-        ImGui::Indent(IM_GUI_INDENTATION);
-        if (ImGui::BeginTable("Debug Flags", 2))
+        if (ImGui::CollapsingHeader("Debug Flags"))
         {
-            for (int i = 0; i < DEBUG_COUNT; i++)
+            ImGui::Indent(IM_GUI_INDENTATION);
+            if (ImGui::BeginTable("Debug Flags", 2))
             {
-                ImGui::TableNextColumn();
+                for (int i = 0; i < DEBUG_COUNT; i++)
+                {
+                    ImGui::TableNextColumn();
 
-                const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
-                bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
-                m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
-                SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, isEnabled);
-                ImGui::IsItemDeactivatedAfterEdit();
+                    const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
+                    bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
+                    m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
+                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, isEnabled);
+                    ImGui::IsItemDeactivatedAfterEdit();
 
-                ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
+                    ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
+                }
+                ImGui::EndTable();
             }
-            ImGui::EndTable();
+            ImGui::Unindent(IM_GUI_INDENTATION);
         }
-        ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
         if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
@@ -206,96 +244,116 @@ void Greenhouse::RenderGUI()
 
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_Scales))
         {
-            ImGui::Text("Scales:");
-            ImGui::Indent(IM_GUI_INDENTATION);
-
-            static bool dragFloatMode = true;
-            ImGui::Checkbox("Drag Float Mode", &dragFloatMode);
-
-            auto scaleFunc = [&](const char* label, float* v)
+            if (ImGui::CollapsingHeader("Scales"))
             {
-                if (ImGui::Button((std::string(" 0/1 ##") + label).c_str()))
-                {
-                    *v = *v == 0.0f ? 1.0f : 0.0f;
-                    m_ptFrameDirty = true;
-                }
-                ImGui::SameLine();
-                if (ImGui::Button((std::string(" I ##") + label).c_str()))
-                {
-                    *v = *v * 1.1f;
-                    m_ptFrameDirty = true;
-                }
-                ImGui::SameLine();
-                if (ImGui::Button((std::string(" D ##") + label).c_str()))
-                {
-                    *v = *v * 0.9f;
-                    m_ptFrameDirty = true;
-                }
-                ImGui::SameLine();
+                ImGui::Indent(IM_GUI_INDENTATION);
 
-                if (dragFloatMode)
-                    m_ptFrameDirty |= GuiUtils::FwDragFloat(label, v, 0.05f, 0.0f, 0.0f);
-                else
-                    m_ptFrameDirty |= GuiUtils::FwInputFloat(label, v);
-            };
-            scaleFunc("Global", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityGlobal);
-            scaleFunc("Env Map", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityEnvMap);
-            scaleFunc("Punctuals", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPunctual);
-            scaleFunc("Point Light Radius", &m_config.PathTracerConfig.DebugInfo.ScalePointLightRadius);
-            ImGui::Unindent(IM_GUI_INDENTATION);
+                static bool dragFloatMode = true;
+                ImGui::Checkbox("Drag Float Mode", &dragFloatMode);
+
+                ImGui::PopStyleVar();
+
+                auto scaleFunc = [&](const char* label, float* v)
+                {
+                    if (ImGui::Button((std::string(" 0/1 ##") + label).c_str()))
+                    {
+                        *v = *v == 0.0f ? 1.0f : 0.0f;
+                        m_ptFrameDirty = true;
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button((std::string(" I ##") + label).c_str()))
+                    {
+                        *v = *v * 1.1f;
+                        m_ptFrameDirty = true;
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button((std::string(" D ##") + label).c_str()))
+                    {
+                        *v = *v * 0.9f;
+                        m_ptFrameDirty = true;
+                    }
+                    ImGui::SameLine();
+
+                    if (dragFloatMode)
+                        m_ptFrameDirty |= GuiUtils::FwDragFloat(label, v, 0.05f, 0.0f, 0.0f);
+                    else
+                        m_ptFrameDirty |= GuiUtils::FwInputFloat(label, v);
+                };
+                scaleFunc("Global##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityGlobal);
+                scaleFunc("Env Map##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityEnvMap);
+                scaleFunc("Punctuals##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPunctual);
+                scaleFunc("Point##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPoint);
+                scaleFunc("Distant##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityDistant);
+                scaleFunc("Spot##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensitySpot);
+                scaleFunc("Point Radius##scales", &m_config.PathTracerConfig.DebugInfo.ScalePointLightRadius);
+                scaleFunc("F##scales", &m_config.PathTracerConfig.DebugInfo.ScaleF);
+                scaleFunc("D##scales", &m_config.PathTracerConfig.DebugInfo.ScaleD);
+                scaleFunc("G##scales", &m_config.PathTracerConfig.DebugInfo.ScaleG);
+                scaleFunc("Diffuse##scales", &m_config.PathTracerConfig.DebugInfo.ScaleDiffuse);
+                scaleFunc("Specular##scales", &m_config.PathTracerConfig.DebugInfo.ScaleSpecular);
+                scaleFunc("Reflect##scales", &m_config.PathTracerConfig.DebugInfo.ScaleReflect);
+                scaleFunc("Refract##scales", &m_config.PathTracerConfig.DebugInfo.ScaleRefract);
+
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+                ImGui::Unindent(IM_GUI_INDENTATION);
+            }
+            ImGui::Spacing();
         }
 
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
         {
-            ImGui::Text("Debug Outputs:");
-            ImGui::Indent(IM_GUI_INDENTATION);
-
-            m_ptFrameDirty |= ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
-            ImGui::IsItemDeactivatedAfterEdit();
-            m_config.PathTracerConfig.DebugInfo.ChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
-
-            ImGui::Text("Remap:");
-            ImGui::Indent(IM_GUI_INDENTATION);
-            if (ImGui::BeginTable("Debug Output Color Remaps", 3))
+            if (ImGui::CollapsingHeader("Debug Output Colors"))
             {
-                const auto remapAsUint = static_cast<uint32_t>(m_config.PathTracerConfig.DebugInfo.OutputColorRemap);
-                for (int i = 0; i < _countof(s_debugOutputColorRemapNames); i++)
+                ImGui::Indent(IM_GUI_INDENTATION);
+
+                m_ptFrameDirty |= ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
+                ImGui::IsItemDeactivatedAfterEdit();
+                m_config.PathTracerConfig.DebugInfo.ChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
+
+                ImGui::Text("Remap:");
+                ImGui::Indent(IM_GUI_INDENTATION);
+                if (ImGui::BeginTable("Debug Output Color Remaps", 3))
                 {
-                    ImGui::TableNextColumn();
+                    const auto remapAsUint = static_cast<uint32_t>(m_config.PathTracerConfig.DebugInfo.OutputColorRemap);
+                    for (int i = 0; i < _countof(s_debugOutputColorRemapNames); i++)
+                    {
+                        ImGui::TableNextColumn();
 
-                    const uint32_t flag = 1 << i;
-                    bool isEnabled = remapAsUint & flag;
-                    const bool prevIsEnabled = isEnabled;
-                    const bool clicked = ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
-                    m_ptFrameDirty |= clicked;
-                    ImGui::IsItemDeactivatedAfterEdit();
+                        const uint32_t flag = 1 << i;
+                        bool isEnabled = remapAsUint & flag;
+                        const bool prevIsEnabled = isEnabled;
+                        const bool clicked = ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
+                        m_ptFrameDirty |= clicked;
+                        ImGui::IsItemDeactivatedAfterEdit();
 
-                    if (clicked && isEnabled)
-                        m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint | flag);
-                    else if (clicked && prevIsEnabled)
-                        m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint ^ flag);
+                        if (clicked && isEnabled)
+                            m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint | flag);
+                        else if (clicked && prevIsEnabled)
+                            m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint ^ flag);
 
-                    ImGui::SetItemTooltip("%s", s_debugOutputColorRemapNames[i]);
+                        ImGui::SetItemTooltip("%s", s_debugOutputColorRemapNames[i]);
+                    }
                 }
+                ImGui::Unindent(IM_GUI_INDENTATION);
+                ImGui::EndTable();
+
+                if (ImGui::BeginTable("Debug Outputs", 2))
+                {
+                    static int e = static_cast<int>(m_config.PathTracerConfig.DebugInfo.OutputColorIdx);
+                    int c = 1;
+                    for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
+                    {
+                        ImGui::TableNextColumn();
+                        m_ptFrameDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
+                        ImGui::IsItemDeactivatedAfterEdit();
+                        ImGui::SetItemTooltip("%s", s_debugOutputIdxNames[i]);
+                    }
+                    m_config.PathTracerConfig.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);
+                }
+                ImGui::Unindent(IM_GUI_INDENTATION);
                 ImGui::EndTable();
             }
-            ImGui::Unindent(IM_GUI_INDENTATION);
-
-            if (ImGui::BeginTable("Debug Outputs", 2))
-            {
-                static int e = static_cast<int>(m_config.PathTracerConfig.DebugInfo.OutputColorIdx);
-                int c = 1;
-                for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
-                {
-                    ImGui::TableNextColumn();
-                    m_ptFrameDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
-                    ImGui::IsItemDeactivatedAfterEdit();
-                    ImGui::SetItemTooltip("%s", s_debugOutputIdxNames[i]);
-                }
-                m_config.PathTracerConfig.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);
-            }
-            ImGui::Unindent(IM_GUI_INDENTATION);
-            ImGui::EndTable();
+            ImGui::Spacing();
         }
 #endif
 

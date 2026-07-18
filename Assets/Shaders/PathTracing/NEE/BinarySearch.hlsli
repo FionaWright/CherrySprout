@@ -40,7 +40,7 @@ uint BinarySearch(StructuredBuffer<ProbabilityDistributionSample> cdf, float u)
     {
         uint mid = left + (right - left) / 2;
 
-        if (u <= cdf[mid].CDF)
+        if (u < cdf[mid].CDF)
         {
             right = mid;
         }

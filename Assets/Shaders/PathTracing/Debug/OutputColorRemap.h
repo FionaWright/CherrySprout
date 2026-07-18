@@ -2,6 +2,7 @@
 #define H_OUTPUT_COLOR_REMAP_H
 
 #include "Utils/HlslGlue.h"
+#include "Utils/Debug/Palette.h"
 
 enum class Internal_DebugOutputColorRemapIdx : hlsl::uint
 {

@@ -63,8 +63,15 @@ void SampleLight(
         isDelta = true;
     }
 
+    DBG_OUTPUT3(Le,               NEE_Le);
+    DBG_OUTPUT1(lightIdx,         NEE_LightIdx);
+    DBG_OUTPUT3(xi,               NEE_xi);
+    DBG_OUTPUT1(lightDistance,    NEE_Distance);
+    DBG_OUTPUT3(wi,               NEE_L_w);
+    DBG_OUTPUT1(pdf,              NEE_PDF);
+
     float NdL = dot(hitInfo.Ns_ff, wi);
-    if (NdL < 0.0f)
+    if (length(Le) == 0.0f || NdL < 0.0f)
     {
         lightRadiance = 0;
         return;
@@ -73,36 +80,34 @@ void SampleLight(
     bool occluded;
     TraceShadowRay(nextOrigin, wi, occluded, lightDistance);
 
-    DBG_OUTPUT3(wi,           NEE_L_w);
-    DBG_OUTPUT1(pdf,          NEE_PDF);
     DBG_OUTPUT1(occluded,     NEE_Occluded);
 
-    if (!occluded)
+    if (occluded)
     {
-        float3 m;
-        if (isDelta)
-        {
-            m = 1.0f;
-        }
-        else
-        {
-            float3 f_bxdf;
-            float pdf_bxdf;
-            bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
-
-            m = f_bxdf * PowerHeuristic(pdf, pdf_bxdf);
-        }
-
-        lightRadiance = Le * m * max(0, NdL) / pdf;
-
-        DBG_OUTPUT3(Le,               NEE_Le);
-        DBG_OUTPUT1(m,                NEE_MIS_Weight);
+        lightRadiance = 0;
+        DBG_OUTPUT1(0,            NEE_MIS_Weight);
+        DBG_OUTPUT1(0,            NEE_Radiance);
         return;
     }
 
-    lightRadiance = 0;
-    DBG_OUTPUT1(0,            NEE_Le);
-    DBG_OUTPUT1(0,            NEE_MIS_Weight);
+    float3 m;
+    if (isDelta)
+    {
+        m = 1.0f;
+    }
+    else
+    {
+        float3 f_bxdf;
+        float pdf_bxdf;
+        bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+
+        m = f_bxdf * PowerHeuristic(pdf, pdf_bxdf);
+    }
+
+    lightRadiance = Le * m * max(0, NdL) / pdf;
+
+    DBG_OUTPUT1(m,                NEE_MIS_Weight);
+    DBG_OUTPUT1(lightRadiance,    NEE_Radiance);
 }
 
 #endif

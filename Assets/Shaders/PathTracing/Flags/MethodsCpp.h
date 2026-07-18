@@ -21,6 +21,7 @@ static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags
 #ifdef _DEBUG
 static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_NaNTests |
+        eDebug_Scales |
         eDebug_Asserts
     );
 #else
