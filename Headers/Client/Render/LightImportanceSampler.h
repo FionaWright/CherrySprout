@@ -7,6 +7,8 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
+#include "HWI/UploadHeap.h"
+#include "PathTracing/Structs.h"
 
 struct Scene;
 class D3D;
@@ -14,19 +16,28 @@ class D3D;
 class LightImportanceSampler
 {
 public:
-    void Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene);
-    bool IsInitialized() const { return m_envMapCdfMarginal.IsInitialized(); }
+    void Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, bool envMapEnabled);
+    [[nodiscard]] bool IsInitialized() const { return m_envMapCdfMarginal.IsInitialized(); }
 
-    D12Resource* GetEnvMapPmf() { return &m_envMapPmf; }
-    D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
-    D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
+    [[nodiscard]] D12Resource* GetEnvMapPmf() { return &m_envMapPmf; }
+    [[nodiscard]] D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
+    [[nodiscard]] D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
+
+    [[nodiscard]] float GetTotalEnvMapLuminance() const { return m_envMapTotalLuminance; }
+    [[nodiscard]] float GetPunctualWeight() const { return m_punctualWeight; }
+
+    [[nodiscard]] const std::vector<ProbabilityDistributionSample>& GetCpuLightsCdf() const { return m_cpuLightCdf; }
 
 private:
     void buildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap);
-    void initializeResources(const D3D* d3d, Heap* heap, const D12Resource* envMap, const Scene* scene);
+    void initializeResources(const D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene);
 
     float m_envMapTotalLuminance = 0;
-    float m_punctualTotalLuminance = 0;
+    float m_punctualWeight = 0;
+
+    std::vector<ProbabilityDistributionSample> m_cpuLightCdf;
+
+    UploadHeap m_uploadHeap;
 
     D12Resource m_envMapSumLumBufferRW;
     D12Resource m_envMapSumLumBufferReadback;
@@ -36,6 +47,7 @@ private:
     D12Resource m_punctualPmfRW;
     D12Resource m_punctualPmfReadback;
     D12Resource m_lightCdf;
+    D12Resource m_lightCdfReadback;
 
     RootSig m_rootSigSrvUav;
     RootSig m_rootSigCbvSrvUav;

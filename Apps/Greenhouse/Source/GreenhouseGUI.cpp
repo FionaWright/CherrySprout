@@ -149,6 +149,30 @@ void Greenhouse::RenderGUI()
         }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
+        if (pathTracingFeatureEnabled(eFeature_NEE) && ImGui::CollapsingHeader("CDF"))
+        {
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                ImGui::Text("Env Map Luminance: %f", m_lightImportanceSampler.GetTotalEnvMapLuminance());
+                ImGui::Text("Punctual Weight  : %f", m_lightImportanceSampler.GetPunctualWeight());
+
+                const auto& cpuLightCdf = m_lightImportanceSampler.GetCpuLightsCdf();
+                for (int i = 0; i < cpuLightCdf.size(); ++i)
+                {
+                    if (i == 0)
+                        ImGui::Text("%i (EnvMap)   : PMF=%.3f, CDF=%.3f", i, cpuLightCdf[i].PMF, cpuLightCdf[i].CDF);
+                    else
+                        ImGui::Text("%i (Punctual) : PMF=%.3f, CDF=%.3f", i, cpuLightCdf[i].PMF, cpuLightCdf[i].CDF);
+                }
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+#endif
+
+        m_lightCdfsDirty |= ImGui::Button("Reload Light CDFs");
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
         ImGui::Text("Debug Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
         if (ImGui::BeginTable("Debug Flags", 2))

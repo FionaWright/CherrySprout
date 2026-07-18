@@ -49,7 +49,7 @@
 
 #define INV_SUN_SUBTENDED_SPHERE_SOLID_ANGLE        14874.29375f // Assuming same angular radius as above. Used to convert Radiance <-> Radiant Intensity
 
-#define ENV_MAP_IMPORTANCE_RADIANT_INTENSITY        (1e3f / LUMINOUS_EFFICACY) // TODO: Should be used for combined light weights instead of actual total luminance?
+#define ENV_MAP_IMPORTANCE_RADIANT_INTENSITY        (1e3f / LUMINOUS_EFFICACY)
 
 // ============ COLORS ===========
 

@@ -120,10 +120,11 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
     }
 
-    if (!m_lightImportanceSampler.IsInitialized() && pathTracingFeatureEnabled(eFeature_NEE))
+    if ((!m_lightImportanceSampler.IsInitialized() || m_lightCdfsDirty) && pathTracingFeatureEnabled(eFeature_NEE))
     {
-        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene());
+        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), pathTracingFeatureEnabled(eFeature_EnvironmentMap));
         loadSceneDataIntoRenderBackend = true;
+        m_lightCdfsDirty = false;
     }
 
     if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || loadSceneDataIntoRenderBackend)

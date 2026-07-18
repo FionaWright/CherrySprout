@@ -68,6 +68,10 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     constexpr PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
     UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, debugInfo, s_defaultBxdfMode);
 
+    m_descriptorSet.Init         (heap, true);
+    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
+    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
+
     CherryPrint("Path-Tracer Initialized");
 }
 
@@ -95,11 +99,6 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 
         CherryPrint("PT: RTAS Built");
     }
-
-    m_descriptorSet.Init         (heap, true);
-
-    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
-    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);

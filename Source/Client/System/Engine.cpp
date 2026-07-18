@@ -171,6 +171,10 @@ void Engine::CalculateFPS(const double deltaTime_s)
 
 void Engine::OnResize(const uint32_t width, const uint32_t height) const
 {
+    const uint32_t totalWidth = Config::GetSystem().RtvWidth + Config::GetSystem().WindowAppGuiWidth + Config::GetSystem().WindowEngineGuiWidth;
+    if (Config::GetSystem().RtvHeight == height && totalWidth == width)
+        return;
+
     Config::GetSystem().RtvWidth = (width - Config::GetSystem().WindowAppGuiWidth) - Config::GetSystem().WindowEngineGuiWidth;
     Config::GetSystem().RtvHeight = height;
 

@@ -27,6 +27,11 @@ void DescriptorSet::Init(Heap* heap, const bool hasBindlessParam, const bool has
 
     m_hasBindlessParam = hasBindlessParam;
     m_hasRootConstantsParam = hasRootConstantsParam;
+
+    m_cbvs.clear();
+    m_srvs.clear();
+    m_srvsTextures.clear();
+    m_uavs.clear();
 }
 
 void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* uploadHeap, const char* debugName)

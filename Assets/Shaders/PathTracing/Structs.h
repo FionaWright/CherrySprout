@@ -31,4 +31,10 @@ struct PathState
     bool LastRayDiracDelta;
 };
 
+struct ProbabilityDistributionSample
+{
+    float PMF;
+    float CDF;
+};
+
 #endif

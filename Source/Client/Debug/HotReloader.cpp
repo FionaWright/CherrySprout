@@ -79,9 +79,11 @@ void HotReloader::TrackComputePipeline(const char* csID, Pipeline* ptr, const D3
     CherryPrint("Hot Reloader Tracking Compute Pipeline: " << entry.ComputeEntry.ID);
 }
 
-bool ShaderEntryUpdated(const ShaderEntry& entry)
+bool ShaderEntryUpdated(ShaderEntry& entry)
 {
-    return entry.Timestamp != std::filesystem::last_write_time(entry.Filepath);
+    const bool updated = entry.Timestamp != std::filesystem::last_write_time(entry.Filepath);
+    entry.Timestamp = std::filesystem::last_write_time(entry.Filepath);
+    return updated;
 }
 
 void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const ReloadMode reloadMode)
@@ -93,7 +95,7 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
     {
         for (int i = 0; i < s_graphicsPipelines.size(); i++)
         {
-            const auto& entry = s_graphicsPipelines[i];
+            auto& entry = s_graphicsPipelines[i];
             if (ShaderEntryUpdated(entry.VertexEntry) || ShaderEntryUpdated(entry.PixelEntry) || !onlyModified)
                 dirtyGraphicsPipelines.emplace_back(i);
         }
@@ -103,7 +105,7 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
     {
         for (int i = 0; i < s_computePipelines.size(); i++)
         {
-            const auto& entry = s_computePipelines[i];
+            auto& entry = s_computePipelines[i];
             if (ShaderEntryUpdated(entry.ComputeEntry) || !onlyModified)
                 dirtyComputePipelines.emplace_back(i);
         }
@@ -116,7 +118,8 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
 
     for (int i = 0; i < dirtyGraphicsPipelines.size(); i++)
     {
-        auto& entry = s_graphicsPipelines[i];
+        const uint32_t idx = dirtyGraphicsPipelines[i];
+        auto& entry = s_graphicsPipelines[idx];
 
         if (!entry.Ptr)
             continue;
@@ -131,7 +134,8 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
 
     for (int i = 0; i < dirtyComputePipelines.size(); i++)
     {
-        auto& entry = s_computePipelines[i];
+        const uint32_t idx = dirtyComputePipelines[i];
+        auto& entry = s_computePipelines[idx];
 
         if (!entry.Ptr)
             continue;
