@@ -113,13 +113,7 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
     GPU_SCOPE(cmdList, "GBuffer Pre-Pass");
 
     {
-        const uint32_t w = Config::GetSystem().RtvWidth;
-        const uint32_t h = Config::GetSystem().RtvHeight;
-        const CD3DX12_VIEWPORT viewport(0, 0.0f, float(w), float(h));
-        const CD3DX12_RECT scissorRect(0, 0, w, h);
-
-        cmdList->RSSetViewports(1, &viewport);
-        cmdList->RSSetScissorRects(1, &scissorRect);
+        CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         m_gbufferTexMaterialIdx.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferTexNormals.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);

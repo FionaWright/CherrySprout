@@ -209,4 +209,15 @@ inline void DispatchOverTexture(ID3D12GraphicsCommandList* cmdList, const uint32
     cmdList->Dispatch(groupX, groupY, groupZ);
 }
 
+inline CD3DX12_RECT SetViewportScissor(ID3D12GraphicsCommandList* cmdList, const uint32_t width, const uint32_t height, const uint32_t widthOffset = 0)
+{
+    const CD3DX12_VIEWPORT viewport(static_cast<float>(widthOffset), 0.0f, static_cast<float>(width), static_cast<float>(height));
+    const CD3DX12_RECT scissorRect(widthOffset, 0, width + widthOffset, height);
+
+    cmdList->RSSetViewports(1, &viewport);
+    cmdList->RSSetScissorRects(1, &scissorRect);
+
+    return scissorRect;
+}
+
 #endif

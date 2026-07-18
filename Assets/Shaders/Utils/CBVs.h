@@ -61,6 +61,11 @@ struct CbvMatrices_MVP
     hlsl::float4x4 M, MTI, V, P;
 };
 
+struct CbvMatrices_MVP_Lean
+{
+    hlsl::float4x4 M, V, P;
+};
+
 struct CbvMatrices_M
 {
     hlsl::float4x4 M, MTI;

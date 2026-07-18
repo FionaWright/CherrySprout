@@ -13,6 +13,10 @@
 #include "Scene/SceneManager.h"
 #include "System/App.h"
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
+#   include "Render/GizmoManager.h"
+#endif
+
 struct GreenHouseRenderInfo
 {
     Camera* Camera;
@@ -44,6 +48,8 @@ public:
     void RenderGUI() override;
     void OnResize(uint32_t width, uint32_t height) override;
 
+    [[nodiscard]] bool GBufferRequired() const;
+
 private:
     bool pathTracingFeatureEnabled(PathTracerFeatureFlags flag) const;
 
@@ -60,9 +66,16 @@ private:
 
     CameraController m_cameraController;
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    GizmoManager m_gizmoManager;
+    bool m_gizmosEnabled = true;
+    bool m_gizmosSceneLoaded = false;
+#endif
+
     SceneManager m_sceneManager;
     EnvironmentMap m_envMap;
     LightImportanceSampler m_lightImportanceSampler;
+    GBufferPrePass m_gbufferPrePass;
 
     PathTracer m_pathTracer = {};
     Forward m_forward;

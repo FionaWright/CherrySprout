@@ -23,8 +23,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     CherryPrint("Initializing Path-Tracer...");
 
-    m_gbufferPrePass.Init(d3d, heap, uploadHeapCBV);
-
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -75,9 +73,9 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     CherryPrint("Path-Tracer Initialized");
 }
 
-void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler)
+void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
 {
-    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler);
+    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler, gbuffer);
 
     {
         CherryPrint("PT: Building RTAS");
@@ -126,12 +124,10 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 10, lightImportanceSampler->GetLightsCdf(), lightCount, sizeof(ProbabilityDistributionSample));
     }
 
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, m_gbufferPrePass.GetGBufferMaterialIdx(), m_gbufferPrePass.GetGBufferMaterialIdx()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, m_gbufferPrePass.GetGBufferNormals(), m_gbufferPrePass.GetGBufferNormals()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, m_gbufferPrePass.GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, m_gbufferPrePass.GetGBufferUvMv(), m_gbufferPrePass.GetGBufferUvMv()->GetDesc().Format);
-
-    m_gbufferPrePass.LoadSceneData(d3d, scene);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
 }
 
 void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
@@ -232,16 +228,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     if (m_scheduledRunState == ScheduledRunState::eRunFrame)
         V = m_scheduledRunViewMatrix;
 #endif
-
-    if (GBufferRequired(renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo))
-    {
-        m_gbufferPrePass.Render(d3d, cmdList, scene, renderInfo.Heap, V, renderInfo.P);
-    }
-
-    m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     // Fill Settings
     {
@@ -360,7 +346,6 @@ void PathTracer::UnreserveData()
 {
     m_output.Release();
     m_accum.Release();
-    m_gbufferPrePass.UnreserveData();
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_gpuErrorInfoRW.Release();
     m_gpuErrorInfoReadback.Release();
@@ -369,15 +354,6 @@ void PathTracer::UnreserveData()
 #endif
     m_isInitialized = false;
     m_currentlyLoadedScene = "";
-}
-
-bool PathTracer::GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo) const
-{
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    return GetPathTracerDebugFlag(debugInfo.Flags, eDebug_OutputColor) || GetPathTracerDebugFlag(debugInfo.Flags, eDebug_PathDumper);
-#else
-    return false;
-#endif
 }
 
 void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)

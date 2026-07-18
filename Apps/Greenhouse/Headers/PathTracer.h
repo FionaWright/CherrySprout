@@ -32,7 +32,7 @@ class PathTracer final : public IRenderBackend
 {
 public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;
-    void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler) override;
+    void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer) override;
     void Update(D3D* d3d, TimeArgs timeArgs) override;
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo) override;
@@ -45,7 +45,6 @@ public:
     D12Resource* GetTexOutput() { return &m_output; }
     D12Resource* GetTexAccum() { return &m_accum; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
-    [[nodiscard]] bool GBufferRequired(const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo) const;
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     void RenderGUI_DebugInfo(PathTracerConfig& config);
@@ -53,7 +52,6 @@ public:
 
 private:
     RtasBuilder m_rtasBuilder;
-    GBufferPrePass m_gbufferPrePass;
 
     uint32_t m_frameIdx = 0;
 

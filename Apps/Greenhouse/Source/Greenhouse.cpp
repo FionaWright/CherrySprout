@@ -67,6 +67,8 @@ void Greenhouse::Init(D3D* d3d)
     m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
     m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
 
+    m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
+
     CherryPrint("Greenhouse Initialized");
 }
 
@@ -84,6 +86,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_uploadHeapCBV.FlushData();
         m_sceneManager.UnreserveData();
         m_currRenderBackend->UnreserveData();
+        m_gbufferPrePass.UnreserveData();
 
         m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
 
@@ -111,13 +114,32 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
         m_renderInfo.Scene = &m_sceneManager.GetScene();
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        m_gizmosSceneLoaded = false;
+#endif
+
         m_sceneDirty = false;
     }
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    if (m_gizmosEnabled && !m_gizmosSceneLoaded)
+    {
+        m_gizmoManager.ClearGizmos();
+        for (int i = 0; i < m_sceneManager.GetCPU().MegaBufferPunctualLightsCount; i++)
+        {
+            const XMFLOAT3 position = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Position;
+            m_gizmoManager.AddGizmo(d3d, &m_heap, position, "Textures/CrystalLizard4096.dds");
+        }
+        m_gizmosSceneLoaded = true;
+    }
+#endif
 
     if (m_sceneManager.IsGpuDataDirty())
     {
         m_sceneManager.UploadScene(d3d);
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
+
+        m_gbufferPrePass.LoadSceneData(d3d, &m_sceneManager.GetScene());
     }
 
     if ((!m_lightImportanceSampler.IsInitialized() || m_lightCdfsDirty) && pathTracingFeatureEnabled(eFeature_NEE))
@@ -129,7 +151,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || loadSceneDataIntoRenderBackend)
     {
-        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler);
+        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler, &m_gbufferPrePass);
     }
 
     if (m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f))
@@ -176,7 +198,30 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
     m_renderInfo.EnvMapDirty = m_envMapDirty;
 
+    // GBuffer Pass
+    {
+        if (GBufferRequired())
+        {
+            m_gbufferPrePass.Render(d3d, cmdList, &m_sceneManager.GetScene(), &m_heap, m_renderInfo.V, m_renderInfo.P);
+        }
+
+        m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
+
+    // Forward/Path-Tracing Pass
     m_currRenderBackend->Render(d3d, cmdList, m_renderInfo);
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    // Gizmos Pass
+    if (m_gizmosEnabled)
+    {
+        m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        m_gizmoManager.Render(d3d, &m_heap, cmdList, m_gbufferPrePass.GetDsvHandle(), m_renderInfo.V, m_renderInfo.P);
+    }
+#endif
 }
 
 void Greenhouse::PostUpdate(D3D* d3d)
@@ -267,4 +312,17 @@ void Greenhouse::OnResize(uint32_t width, uint32_t height)
 {
     m_renderBackendDirty = true;
     m_ptFrameDirty = true;
+}
+
+bool Greenhouse::GBufferRequired() const
+{
+    bool debugNeeds = false;
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    const bool outputColor = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor);
+    const bool pathDumper = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_PathDumper);
+    const bool debugFlagsNeeds = m_config.RenderBackend == RenderBackendMode::ePathTracer && (outputColor || pathDumper);
+    debugNeeds = m_gizmosEnabled || debugFlagsNeeds;
+#endif
+
+    return debugNeeds;
 }

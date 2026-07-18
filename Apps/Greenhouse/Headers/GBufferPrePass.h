@@ -32,6 +32,8 @@ public:
     [[nodiscard]] D12Resource* GetGBufferDepth() { return &m_gbufferTexDepth; }
     [[nodiscard]] D12Resource* GetGBufferUvMv() { return &m_gbufferTexUvMv; }
 
+    [[nodiscard]] CD3DX12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const { return m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth); }
+
 private:
     uint32_t createRTV(ID3D12Device* device, const D12Resource* resource);
     uint32_t createDSV(ID3D12Device* device, const D12Resource* resource);

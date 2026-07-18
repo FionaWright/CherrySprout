@@ -29,14 +29,5 @@ VsOut VSMain(VsIn input)
     pos = mul(gMatricesVP.V, worldPos);
     output.position = mul(gMatricesVP.P, pos);
 
-    //float4 pos = float4(input.position, 1.0f);
-    //float4 worldPos = mul(pos, gMatrices.M);
-    //pos = mul(worldPos, gMatrices.V);
-    //output.position = mul(pos, gMatrices.P);
-
-    //output.position = float4(input.position * 0.5f, 1);
-    //output.uv = float2(input.uv);
-    //output.normal = float3(input.normal);
-
     return output;
 }
