@@ -4,7 +4,7 @@
 - [x] Figure out the structure
 - [x] GBuffer pre-pass
 - [ ] Sample Gen pre-pass
-- [ ] Point lights NEE + MIS
+- [x] Point lights NEE
 - [ ] Find indoor scene
 - [ ] Finish and Debug
 - [ ] Python Executor

@@ -88,7 +88,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_renderBackendDirty)
     {
-        m_uploadHeapCBV.FlushData();
+        m_uploadHeapCBV.FreeAssignedData();
         m_sceneManager.UnreserveData();
         m_currRenderBackend->UnreserveData();
 
@@ -134,6 +134,9 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_gizmoManager.ClearGizmos();
         for (int i = 0; i < m_sceneManager.GetCPU().MegaBufferPunctualLightsCount; i++)
         {
+            if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Intensity == 0.0f)
+                continue;
+
             const XMFLOAT3 position = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Position;
             const XMFLOAT3 color3 = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Color;
             const XMFLOAT4 color = XMFLOAT4(color3.x, color3.y, color3.z, 1.0f);
@@ -147,6 +150,9 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     {
         m_sceneManager.UploadScene(d3d);
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
+
+        m_lightImportanceSampler.MarkSceneDataDirty();
+        m_lightCdfsDirty = true;
     }
 
     if ((!m_lightImportanceSampler.IsInitialized() || m_lightCdfsDirty) && pathTracingFeatureEnabled(eFeature_NEE))

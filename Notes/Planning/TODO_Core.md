@@ -10,10 +10,10 @@ The main important tasks for the project
 - [ ] Confirm there's no bias with new mean test
 - [ ] Shadow Ray transmission handling ?
 - [ ] Alias Tables
-- [ ] USD Lights loading 
-- [ ] Point Light NEE
-- [ ] Dir Light NEE
-- [ ] Combine different light types for MIS
+- [x] USD Lights loading 
+- [x] Point Light NEE
+- [x] Dir Light NEE
+- [x] Combine different light types for MIS
 - [ ] Emissive NEE
 
 - [ ] RIS

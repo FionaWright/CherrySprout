@@ -17,6 +17,10 @@
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 
+#ifdef _DEBUG
+#include "Debug/Profiler.h"
+#endif
+
 void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     IRenderBackend::Init(d3d, heap, uploadHeapCBV);
@@ -377,8 +381,16 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
 #endif
 
+#ifdef _DEBUG
+    Profiler::AddToStack("Path-Tracer Update Pipeline");
+#endif
+
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
+
+#ifdef _DEBUG
+    Profiler::PopAndPrint();
+#endif
 
     Reset();
 }

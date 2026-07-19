@@ -48,7 +48,7 @@ uint8_t* UploadHeap::GetMappedPointer(const size_t offset) const
     return m_mappedPointer + offset;
 }
 
-void UploadHeap::FlushData() // Done when you know that the data isn't currently being used on the GPU nor in a current cmdList
+void UploadHeap::FreeAssignedData() // Done when you know that the data isn't currently being used on the GPU nor in a current cmdList
 {
     m_currUploadOffset = 0;
 }

@@ -22,7 +22,7 @@ public:
 
     bool IsInitialized() const { return m_mappedPointer != nullptr; }
 
-    void FlushData();
+    void FreeAssignedData();
 
 private:
     D12Resource m_resource;

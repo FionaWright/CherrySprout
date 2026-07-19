@@ -17,7 +17,9 @@ class LightImportanceSampler
 {
 public:
     void Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, bool envMapEnabled);
-    [[nodiscard]] bool IsInitialized() const { return m_envMapCdfMarginal.IsInitialized(); }
+    [[nodiscard]] bool IsInitialized() const { return m_isInitialized; }
+
+    void MarkSceneDataDirty() { m_sceneDataLoaded = false;}
 
     [[nodiscard]] D12Resource* GetEnvMapPmf() { return &m_envMapPmf; }
     [[nodiscard]] D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
@@ -31,10 +33,14 @@ public:
 
 private:
     void buildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap);
-    void initializeResources(const D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene);
+    void loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D12Resource* envMap);
+    void initializeResources(const D3D* d3d,D12Resource* envMap);
 
     float m_envMapTotalLuminance = 0;
     float m_punctualWeight = 0;
+
+    bool m_isInitialized = false;
+    bool m_sceneDataLoaded = false;
 
     std::vector<ProbabilityDistributionSample> m_cpuLightCdf;
 

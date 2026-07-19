@@ -36,6 +36,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     float delta = 1.0f / (punctualLightCount + 1);
 
     float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000; // TODO: Figure out better weight
+    // Use 50/50 split between env map and others?
 
     //float totalLuminance = gTotalLums.PunctualTotalLuminance + ENV_MAP_IMPORTANCE_RADIANT_INTENSITY;
     //float totalLuminance = gTotalLums.PunctualTotalLuminance + gTotalLums.EnvMapTotalLuminance;
