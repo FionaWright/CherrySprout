@@ -20,6 +20,8 @@ public:
     ID3D12Resource* GetUploadResource() const { return m_resource.GetResource(); }
     uint8_t* GetMappedPointer(size_t offset) const;
 
+    bool IsInitialized() const { return m_mappedPointer != nullptr; }
+
     void FlushData();
 
 private:

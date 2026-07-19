@@ -37,6 +37,7 @@ class DescriptorSet
 {
 public:
     ~DescriptorSet();
+
     void Init(Heap* heap, bool hasBindlessParam = false, bool hasRootConstantsParam = false);
     const char* GetName() const { return m_name.c_str(); }
     void SetName(const char* str) { m_name = str; }

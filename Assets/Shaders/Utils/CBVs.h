@@ -76,6 +76,11 @@ struct CbvMatrices_VP
     hlsl::float4x4 V, P;
 };
 
+struct CbvColor
+{
+    hlsl::float4 Color;
+};
+
 struct CbvForward
 {
     hlsl::float3 DirLightDir;

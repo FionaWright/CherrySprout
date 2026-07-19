@@ -39,12 +39,12 @@
 
 namespace SceneLoaderUSD
 {
-    inline PunctualLight ExtractLight(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache)
+    inline PunctualLight ExtractLight(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const pxr::GfMatrix4d& globalXForm)
     {
         PunctualLight light{};
 
         // World-space transform
-        const pxr::GfMatrix4d world = xformCache.GetLocalToWorldTransform(prim);
+        const pxr::GfMatrix4d world = xformCache.GetLocalToWorldTransform(prim) * globalXForm;
         pxr::GfVec3d translation = world.ExtractTranslation();
         light.Position = hlsl::float3(
             static_cast<float>(translation[0]),

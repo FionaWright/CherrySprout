@@ -74,6 +74,8 @@ void Greenhouse::RenderGUI()
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
+        ImGui::Checkbox("Gizmos Enabled", &m_gizmosEnabled);
+        ImGui::Spacing();
 
         m_ptFrameDirty |= GuiUtils::FwInputUInt("SPP", &m_config.PathTracerConfig.SPP);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Ray Depth", &m_config.PathTracerConfig.MaxRayDepth);

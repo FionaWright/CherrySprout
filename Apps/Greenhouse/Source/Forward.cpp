@@ -70,7 +70,7 @@ void Forward::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 
 }
 
-void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo)
+void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
 

@@ -131,7 +131,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
         if (prim.HasAPI<pxr::UsdLuxLightAPI>())
         {
-            PunctualLight light = ExtractLight(prim, xformCache);
+            PunctualLight light = ExtractLight(prim, xformCache, globalXform);
             context.PunctualLights.emplace_back(light);
             continue;
         }

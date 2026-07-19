@@ -11,37 +11,7 @@
 #include "Scene/Vertex.h"
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
-
-uint32_t GBufferPrePass::createRTV(ID3D12Device* device, const D12Resource* resource)
-{
-    D3D12_RENDER_TARGET_VIEW_DESC desc{};
-    desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-    desc.Format = resource->GetDesc().Format;
-    desc.Texture2D.MipSlice = 0;
-    desc.Texture2D.PlaneSlice = 0;
-
-    const uint32_t heapIdx = m_heapRTV.GetNextDescriptorIdx(resource->GetName());
-    const auto handle = m_heapRTV.GetDescriptorHandleAtIndex(heapIdx);
-
-    device->CreateRenderTargetView(resource->GetResource(), &desc, handle);
-
-    return heapIdx;
-}
-
-uint32_t GBufferPrePass::createDSV(ID3D12Device* device, const D12Resource* resource)
-{
-    D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
-    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-    desc.Format = GBUFFER_FORMAT_DEPTH;
-    desc.Texture2D.MipSlice = 0;
-
-    const uint32_t heapIdx = m_heapDSV.GetNextDescriptorIdx(resource->GetName());
-    const auto handle = m_heapDSV.GetDescriptorHandleAtIndex(heapIdx);
-
-    device->CreateDepthStencilView(resource->GetResource(), &desc, handle);
-
-    return heapIdx;
-}
+#include "Utils/Helper.h"
 
 void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
@@ -61,12 +31,12 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 #define NUM_RENDER_TARGETS 3
 
     m_heapRTV.Init("GBuffer Pre-Pass Heap RTV", d3d->GetDevice(), NUM_RENDER_TARGETS, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_heapIdxMatIdx = createRTV(d3d->GetDevice(), &m_gbufferTexMaterialIdx);
-    m_heapIdxNormals = createRTV(d3d->GetDevice(), &m_gbufferTexNormals);
-    m_heapIdxUvMv = createRTV(d3d->GetDevice(), &m_gbufferTexUvMv);
+    m_heapIdxMatIdx = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexMaterialIdx);
+    m_heapIdxNormals = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexNormals);
+    m_heapIdxUvMv = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexUvMv);
 
     m_heapDSV.Init("GBuffer Pre-Pass Heap DSV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    m_heapIdxDepth = createDSV(d3d->GetDevice(), &m_gbufferTexDepth);
+    m_heapIdxDepth = CreateDSV(d3d->GetDevice(), &m_heapDSV, &m_gbufferTexDepth, GBUFFER_FORMAT_DEPTH);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -104,6 +74,9 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
 void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
 {
+    CherryAssert(scene->GPU.MegaBufferInstanceData.GetResource());
+    CherryAssert(scene->GPU.MegaBufferMaterials.GetResource());
+
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 }
@@ -172,8 +145,6 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
     for (int i = 0; i < scene->CPU.ObjectCount; ++i)
     {
         const Object& obj = scene->CPU.Objects[i];
-
-        //GPU_SCOPE(cmdList, obj.DebugName);
 
         perInstance.InstanceIdx = i;
         m_rootConstants.Bind_Graphics(cmdList, &perInstance);

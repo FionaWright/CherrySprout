@@ -29,8 +29,8 @@ struct Gizmo
 class GizmoManager
 {
 public:
-    void AddGizmo(D3D* d3d, Heap* heap, XMFLOAT3 position, const char* texFilepath);
-    void Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle, const XMMATRIX& V, const XMMATRIX& P);
+    void AddGizmo(D3D* d3d, Heap* heap, XMFLOAT3 position, XMFLOAT4 color, const char* texFilepath);
+    void Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, const XMMATRIX& V, const XMMATRIX& P);
 
     void ClearGizmos() { m_gizmos.clear(); }
 

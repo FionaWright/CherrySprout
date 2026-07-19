@@ -4,6 +4,7 @@
 #include "System/Config.h"
 #include "HWI/D12Resource.h"
 #include "HWI/D3D.h"
+#include "HWI/Heap.h"
 
 inline size_t Align(const size_t value, const size_t alignment)
 {
@@ -218,6 +219,37 @@ inline CD3DX12_RECT SetViewportScissor(ID3D12GraphicsCommandList* cmdList, const
     cmdList->RSSetScissorRects(1, &scissorRect);
 
     return scissorRect;
+}
+
+inline uint32_t CreateRTV(ID3D12Device* device, Heap* heapRTV, const D12Resource* resource)
+{
+    D3D12_RENDER_TARGET_VIEW_DESC desc{};
+    desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+    desc.Format = resource->GetDesc().Format;
+    desc.Texture2D.MipSlice = 0;
+    desc.Texture2D.PlaneSlice = 0;
+
+    const uint32_t heapIdx = heapRTV->GetNextDescriptorIdx(resource->GetName());
+    const auto handle = heapRTV->GetDescriptorHandleAtIndex(heapIdx);
+
+    device->CreateRenderTargetView(resource->GetResource(), &desc, handle);
+
+    return heapIdx;
+}
+
+inline uint32_t CreateDSV(ID3D12Device* device, Heap* heapDSV, const D12Resource* resource, DXGI_FORMAT format)
+{
+    D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
+    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    desc.Format = format;
+    desc.Texture2D.MipSlice = 0;
+
+    const uint32_t heapIdx = heapDSV->GetNextDescriptorIdx(resource->GetName());
+    const auto handle = heapDSV->GetDescriptorHandleAtIndex(heapIdx);
+
+    device->CreateDepthStencilView(resource->GetResource(), &desc, handle);
+
+    return heapIdx;
 }
 
 #endif

@@ -216,18 +216,12 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 #endif
 }
 
-void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo)
+void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV)
 {
     GPU_SCOPE(cmdList, "Path-Trace");
 
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
-
-    XMMATRIX V = renderInfo.V;
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    if (m_scheduledRunState == ScheduledRunState::eRunFrame)
-        V = m_scheduledRunViewMatrix;
-#endif
 
     // Fill Settings
     {
@@ -333,12 +327,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     {
         GPU_SCOPE(cmdList, "Copy PT Output to RTV");
 
-        D12Resource* rtv = d3d->GetRtv();
-
         m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        rtv->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+        RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        rtv->CopyTextureInto(cmdList, m_output.GetResource(), Config::GetSystem().WindowAppGuiWidth, 0, 0);
+        RTV->CopyTextureInto(cmdList, m_output.GetResource(), 0, 0, 0);
     }
 }
 

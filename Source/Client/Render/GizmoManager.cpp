@@ -13,7 +13,9 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, const char* texFilepath)
+#define UPLOAD_HEAP_SIZE (256 * 100 + 512)
+
+void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, XMFLOAT4 color, const char* texFilepath)
 {
     const auto fullPath = FileHelper::GetAssetFullPath(texFilepath);
 
@@ -38,21 +40,22 @@ void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, const
         m_textureCache[fullPath] = tex;
     }
 
-    Gizmo gizmo;
+    if (!m_uploadHeap.IsInitialized())
+        m_uploadHeap.Init(d3d->GetDevice(), UPLOAD_HEAP_SIZE);
+
+    Gizmo& gizmo = m_gizmos.emplace_back();
     gizmo.Position = position;
     gizmo.TextureFilepath = fullPath;
 
     gizmo.DescSet.Init(heap, false, true);
+    gizmo.DescSet.AddCBV(d3d->GetDevice(), sizeof(CbvColor), &m_uploadHeap);
+    gizmo.DescSet.UpdateCBV(0, &color);
     gizmo.DescSet.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_textureCache[fullPath], m_textureCache[fullPath].GetDesc().Format);
-
-    m_gizmos.emplace_back(std::move(gizmo));
 }
 
-void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle, const XMMATRIX& V, const XMMATRIX& P)
+void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, const XMMATRIX& V, const XMMATRIX& P)
 {
     GPU_SCOPE(cmdList, "Gizmos");
-
-    // TODO: Refactor so that this can output into a RtvWidth sized RTV, then have the copy to the swapchain happen in Greenhouse instead of PT
 
     if (!m_initializedResources)
     {
@@ -62,11 +65,6 @@ void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList*
 
     {
         SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
-
-        const auto rtvHandle = d3d->GetRtvHandle();
-        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-        d3d->GetRtv()->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
 
     {
@@ -120,7 +118,9 @@ void GizmoManager::initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         { {  0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
     };
 
-    m_uploadHeap.Init(d3d->GetDevice(), 512);
+    if (!m_uploadHeap.IsInitialized())
+        m_uploadHeap.Init(d3d->GetDevice(), UPLOAD_HEAP_SIZE);
+
     m_quadVertexBuffer.Init_Buffer("Gizmo Quad Vertex Buffer", d3d->GetDevice(), sizeof(quadVertices));
     m_quadVertexBuffer.UploadBuffer(cmdList, &m_uploadHeap, quadVertices, sizeof(quadVertices));
 
@@ -128,7 +128,7 @@ void GizmoManager::initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     InitializeSamplerLinearClamp(&sampler);
 
     m_rootConstants.Init(0, 0, sizeof(CbvMatrices_MVP_Lean));
-    m_rootSig.SmartInit(d3d->GetDevice(), 0, 1, 0, false, &sampler, 1, &m_rootConstants);
+    m_rootSig.SmartInit(d3d->GetDevice(), 1, 1, 0, false, &sampler, 1, &m_rootConstants);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {

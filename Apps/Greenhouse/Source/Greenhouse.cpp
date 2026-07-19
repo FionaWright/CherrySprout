@@ -3,6 +3,7 @@
 
 #include "imgui.h"
 #include "Scenes.h"
+#include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "Scene/SceneManager.h"
 #include "System/FileHelper.h"
@@ -20,6 +21,10 @@ void Greenhouse::Init(D3D* d3d)
     App::Init(d3d);
 
     CherryPrint("Initializing Greenhouse...");
+
+    m_frameBuffer.Init_Tex2D("Frame Buffer", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+    m_heapRTV.Init("Greenhouse Heap RTV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_heapIdxFrameBuffer = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_frameBuffer);
 
     for (int i = s_sceneConfigs.size() - 1; i >= 0; i--)
     {
@@ -86,13 +91,15 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_uploadHeapCBV.FlushData();
         m_sceneManager.UnreserveData();
         m_currRenderBackend->UnreserveData();
-        m_gbufferPrePass.UnreserveData();
 
         m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
 
         if (!m_currRenderBackend->IsInitialized())
         {
             m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
+
+            m_gbufferPrePass.UnreserveData();
+            m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
         }
 
         m_renderBackendDirty = false;
@@ -128,7 +135,9 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         for (int i = 0; i < m_sceneManager.GetCPU().MegaBufferPunctualLightsCount; i++)
         {
             const XMFLOAT3 position = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Position;
-            m_gizmoManager.AddGizmo(d3d, &m_heap, position, "Textures/CrystalLizard4096.dds");
+            const XMFLOAT3 color3 = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Color;
+            const XMFLOAT4 color = XMFLOAT4(color3.x, color3.y, color3.z, 1.0f);
+            m_gizmoManager.AddGizmo(d3d, &m_heap, position, color, "Textures/LightGizmo.dds");
         }
         m_gizmosSceneLoaded = true;
     }
@@ -138,8 +147,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     {
         m_sceneManager.UploadScene(d3d);
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
-
-        m_gbufferPrePass.LoadSceneData(d3d, &m_sceneManager.GetScene());
     }
 
     if ((!m_lightImportanceSampler.IsInitialized() || m_lightCdfsDirty) && pathTracingFeatureEnabled(eFeature_NEE))
@@ -202,6 +209,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     {
         if (GBufferRequired())
         {
+            m_gbufferPrePass.LoadSceneData(d3d, &m_sceneManager.GetScene());
             m_gbufferPrePass.Render(d3d, cmdList, &m_sceneManager.GetScene(), &m_heap, m_renderInfo.V, m_renderInfo.P);
         }
 
@@ -212,16 +220,31 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     }
 
     // Forward/Path-Tracing Pass
-    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo);
+    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo, &m_frameBuffer);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     // Gizmos Pass
     if (m_gizmosEnabled)
     {
+        m_frameBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-        m_gizmoManager.Render(d3d, &m_heap, cmdList, m_gbufferPrePass.GetDsvHandle(), m_renderInfo.V, m_renderInfo.P);
+        const auto rtvHandle = m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxFrameBuffer);
+        const auto& dsvHandle = m_gbufferPrePass.GetDsvHandle();
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+        m_gizmoManager.Render(d3d, &m_heap, cmdList, m_renderInfo.V, m_renderInfo.P);
     }
 #endif
+
+    // Copy to swapchain
+    {
+        GPU_SCOPE(cmdList, "Copy final output to swapchain");
+
+        m_frameBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        d3d->GetRtv()->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        d3d->GetRtv()->CopyTextureInto(cmdList, m_frameBuffer.GetResource(), Config::GetSystem().WindowAppGuiWidth, 0, 0);
+    }
 }
 
 void Greenhouse::PostUpdate(D3D* d3d)

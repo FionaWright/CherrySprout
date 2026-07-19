@@ -14,6 +14,7 @@ struct VsOut
 };
 
 ConstantBuffer<CbvMatrices_MVP_Lean> gMatrices : register(b0); // Push Constants
+ConstantBuffer<CbvColor> gColor : register(b1);
 
 Texture2D<float4> gTex : register(t0);
 
@@ -42,7 +43,8 @@ VsOut VSMain(VsIn input)
     float scaleX = length(gMatrices.M[0].xyz);
     float scaleY = length(gMatrices.M[1].xyz);
 
-    scaleX = scaleY = 1;
+    scaleX *= 0.15f;
+    scaleY *= 0.15f;
 
     float3 worldPos =
         center +
@@ -59,7 +61,8 @@ VsOut VSMain(VsIn input)
 float4 PSMain(VsOut input) : SV_TARGET
 {
     float4 texSample = gTex.SampleLevel(gSampler, input.uv, 0);
-    //if (texSample.a < 0.5f)
-    //    discard;
+    texSample *= gColor.Color;
+    if (texSample.a < 0.5f)
+        discard;
     return texSample;
 }
