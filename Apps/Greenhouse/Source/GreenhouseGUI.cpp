@@ -105,7 +105,8 @@ void Greenhouse::RenderGUI()
             ImGui::Unindent(IM_GUI_INDENTATION);
         }
 
-        const bool prevEnvMapEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_EnvironmentMap);
+        const bool prevEnvMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
+        const bool prevAliasTablesEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
 
         ImGui::Text("Feature Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
@@ -128,7 +129,8 @@ void Greenhouse::RenderGUI()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-        m_lightCdfsDirty |= prevEnvMapEnabled != GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, eFeature_EnvironmentMap);
+        m_lightCdfsDirty |= prevEnvMapEnabled != pathTracingFeatureEnabled(eFeature_EnvironmentMap);
+        m_lightCdfsDirty |= prevAliasTablesEnabled != pathTracingFeatureEnabled(eFeature_AliasTables);
 
         if (pathTracingFeatureEnabled(eFeature_DirectionalLight))
         {
@@ -169,16 +171,32 @@ void Greenhouse::RenderGUI()
                 m_lightCdfsDirty |= ImGui::Button("Reload Light CDFs");
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
-                if (ImGui::BeginTable("CDF Table", 4))
+                const bool aliasTablesEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
+                const int numColumns = aliasTablesEnabled ? 5 : 4;
+
+                if (ImGui::BeginTable("CDF Table", numColumns))
                 {
                     ImGui::TableSetupColumn("Idx");
                     ImGui::TableSetupColumn("Type");
-                    ImGui::TableSetupColumn("PMF");
-                    ImGui::TableSetupColumn("CDF");
+
+                    if (aliasTablesEnabled)
+                    {
+                        ImGui::TableSetupColumn("PDF");
+                        ImGui::TableSetupColumn("Threshold");
+                        ImGui::TableSetupColumn("Alias");
+                    }
+                    else
+                    {
+                        ImGui::TableSetupColumn("PDF");
+                        ImGui::TableSetupColumn("CDF");
+                    }
+
                     ImGui::TableHeadersRow();
 
                     const auto& cpuLightCdf = m_lightImportanceSampler.GetCpuLightsCdf();
-                    for (int i = 0; i < cpuLightCdf.size(); ++i)
+                    const auto& cpuLightAlias = m_lightImportanceSampler.GetCpuLightsAlias();
+                    const size_t lightCount = aliasTablesEnabled ? cpuLightAlias.size() : cpuLightCdf.size();
+                    for (int i = 0; i < lightCount; ++i)
                     {
                         ImGui::TableNextRow();
 
@@ -200,11 +218,25 @@ void Greenhouse::RenderGUI()
                                 ImGui::TextUnformatted("Unknown");
                         }
 
-                        ImGui::TableSetColumnIndex(2);
-                        ImGui::Text("%.9f", cpuLightCdf[i].PMF);
+                        if (aliasTablesEnabled)
+                        {
+                            ImGui::TableSetColumnIndex(2);
+                            ImGui::Text("%.9f", cpuLightAlias[i].PDF);
 
-                        ImGui::TableSetColumnIndex(3);
-                        ImGui::Text("%.9f", cpuLightCdf[i].CDF);
+                            ImGui::TableSetColumnIndex(3);
+                            ImGui::Text("%.9f", cpuLightAlias[i].Threshold);
+
+                            ImGui::TableSetColumnIndex(4);
+                            ImGui::Text("%i", cpuLightAlias[i].Alias);
+                        }
+                        else
+                        {
+                            ImGui::TableSetColumnIndex(2);
+                            ImGui::Text("%.9f", cpuLightCdf[i].PDF);
+
+                            ImGui::TableSetColumnIndex(3);
+                            ImGui::Text("%.9f", cpuLightCdf[i].CDF);
+                        }
                     }
                 }
                 ImGui::EndTable();

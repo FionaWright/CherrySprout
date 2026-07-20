@@ -5,7 +5,7 @@
 #include "Utils/Math/Punctual.hlsli"
 
 StructuredBuffer<PunctualLight> gPunctualLights : register(t0);
-RWStructuredBuffer<float> gPMF  : register(u0);
+RWStructuredBuffer<float> gPDF  : register(u0);
 
 [numthreads(64,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -19,5 +19,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     PunctualLight light = gPunctualLights[DTid.x];
     float weight = PunctualLightWeight(light);
-    gPMF[DTid.x] = weight;
+    gPDF[DTid.x] = weight;
 }

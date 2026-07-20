@@ -6,13 +6,14 @@
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
 #include "HWI/UploadHeap.h"
+#include "PathTracing/NEE/Alias.h"
 #include "Render/EnvironmentMap.h"
 #include "Scene/Scene.h"
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, const bool envMapEnabled)
+void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, const bool envMapEnabled, const bool aliasTablesEnabled)
 {
     if (!m_isInitialized)
     {
@@ -21,7 +22,7 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
 
     if (!m_sceneDataLoaded)
     {
-        loadSceneData(d3d, heap, scene, envMap);
+        loadSceneData(d3d, heap, scene, envMap, aliasTablesEnabled);
     }
 
     if (envMapEnabled)
@@ -29,28 +30,28 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
     else
         m_envMapTotalLuminance = 0.0f;
 
-    // Punctual PMF Pass
+    // Punctual PDF Pass
     {
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
         {
-            GPU_SCOPE(cmdList, "Punctual Light PMF");
+            GPU_SCOPE(cmdList, "Punctual Light PDF");
 
             D12Resource* punctualLights = &scene->GPU.MegaBufferPunctualLights;
 
             punctualLights->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-            m_punctualPmfRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_punctualPdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
             heap->Bind(cmdList);
             cmdList->SetComputeRootSignature(m_rootSigSrvUav.Get());
-            cmdList->SetPipelineState(m_pipelinePunctualPmf.GetPSO());
-            m_setPunctualPmf.SetDescriptorTables_Compute(cmdList);
+            cmdList->SetPipelineState(m_pipelinePunctualPdf.GetPSO());
+            m_setPunctualPdf.SetDescriptorTables_Compute(cmdList);
 
             DispatchOverTexture(cmdList, 64, scene->CPU.MegaBufferPunctualLightsCount);
 
-            m_punctualPmfRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-            m_punctualPmfReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-            cmdList->CopyBufferRegion(m_punctualPmfReadback.GetResource(), 0, m_punctualPmfRW.GetResource(), 0, m_punctualLightsPmfBufferSize);
+            m_punctualPdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            m_punctualPdfReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+            cmdList->CopyBufferRegion(m_punctualPdfReadback.GetResource(), 0, m_punctualPdfRW.GetResource(), 0, m_punctualLightsPdfBufferSize);
         }
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
@@ -58,7 +59,7 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
     }
 
     std::vector<float> buff(scene->CPU.MegaBufferPunctualLightsCount);
-    m_punctualPmfReadback.Readback(buff.data());
+    m_punctualPdfReadback.Readback(buff.data());
 
     for (const float lum : buff)
     {
@@ -76,34 +77,48 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         CbvTotalLuminances cbv{};
         cbv.EnvMapTotalLuminance = m_envMapTotalLuminance;
         cbv.PunctualTotalLuminance = m_punctualWeight;
-        m_setLightCdf.UpdateCBV(0, &cbv);
+        m_setLSD.UpdateCBV(0, &cbv);
 
-        m_punctualPmfRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_lightCdf.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_punctualPdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_lsdRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        const Pipeline& pipeline = aliasTablesEnabled ? m_pipelineLsdAlias : m_pipelineLsdCdf;
 
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigCbvUav2.Get());
-        cmdList->SetPipelineState(m_pipelineLightCdf.GetPSO());
-        m_setLightCdf.SetDescriptorTables_Compute(cmdList);
+        cmdList->SetPipelineState(pipeline.GetPSO());
+        m_setLSD.SetDescriptorTables_Compute(cmdList);
 
         cmdList->Dispatch(1, 1, 1);
 
-        const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_lightCdf.GetResource());
+        const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_lsdRW.GetResource());
         cmdList->ResourceBarrier(1, &uavBarrier);
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_lightCdf.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    m_lightCdfReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-    cmdList->CopyBufferRegion(m_lightCdfReadback.GetResource(), 0, m_lightCdf.GetResource(), 0, m_lightsCdfBufferSize);
+    m_lsdRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    m_lsdReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+    cmdList->CopyBufferRegion(m_lsdReadback.GetResource(), 0, m_lsdRW.GetResource(), 0, m_lsdBufferSize);
 #endif
 
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
 
-    m_cpuLightCdf.resize(scene->CPU.MegaBufferPunctualLightsCount + 1);
-    m_lightCdfReadback.Readback(m_cpuLightCdf.data());
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    if (aliasTablesEnabled)
+    {
+        m_cpuLsdCdf.clear();
+        m_cpuLsdAlias.resize(scene->CPU.MegaBufferPunctualLightsCount + 1);
+        m_lsdReadback.Readback(m_cpuLsdAlias.data());
+    }
+    else
+    {
+        m_cpuLsdAlias.clear();
+        m_cpuLsdCdf.resize(scene->CPU.MegaBufferPunctualLightsCount + 1);
+        m_lsdReadback.Readback(m_cpuLsdCdf.data());
+    }
+#endif
 }
 
 void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap)
@@ -148,23 +163,23 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
         }
     }
 
-    // PMF & CDF Passes
+    // PDF & CDF Passes
     {
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
 
-        // PMF Pass
+        // PDF Pass
         {
-            GPU_SCOPE(cmdList, "EnvMap PMF");
+            GPU_SCOPE(cmdList, "EnvMap PDF");
 
-            m_setEnvMapPmf.UpdateCBV(0, &m_envMapTotalLuminance);
-            m_envMapPmf.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_setEnvMapPdf.UpdateCBV(0, &m_envMapTotalLuminance);
+            m_envMapPdf.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
             heap->Bind(cmdList);
             cmdList->SetComputeRootSignature(m_rootSigCbvSrvUav.Get());
-            cmdList->SetPipelineState(m_pipelineEnvMapPmf.GetPSO());
-            m_setEnvMapPmf.TransitionAllSRVToShaderResource(cmdList);
-            m_setEnvMapPmf.SetDescriptorTables_Compute(cmdList);
+            cmdList->SetPipelineState(m_pipelineEnvMapPdf.GetPSO());
+            m_setEnvMapPdf.TransitionAllSRVToShaderResource(cmdList);
+            m_setEnvMapPdf.SetDescriptorTables_Compute(cmdList);
 
             DispatchOverTexture(cmdList, 16, envMap->GetDesc().Width, envMap->GetDesc().Height);
         }
@@ -181,7 +196,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
             m_setEnvMapCdfConditional.TransitionAllSRVToShaderResource(cmdList);
             m_setEnvMapCdfConditional.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 64, m_envMapPmf.GetDesc().Width);
+            DispatchOverTexture(cmdList, 64, m_envMapPdf.GetDesc().Width);
 
             const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfConditional.GetResource());
             cmdList->ResourceBarrier(1, &uavBarrier);
@@ -239,7 +254,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
             cmdList->ResourceBarrier(1, &uavBarrier);
         }
 
-        m_envMapPmf.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_envMapPdf.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         m_envMapCdfConditional.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         m_envMapCdfMarginal.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
@@ -249,51 +264,56 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
     }
 }
 
-void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D12Resource* envMap)
+void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D12Resource* envMap, const bool aliasTablesEnabled)
 {
     d3d->Flush();
 
     m_uploadHeap.FreeAssignedData();
 
     const size_t punctualLightsCount = scene->CPU.MegaBufferPunctualLightsCount;
-    m_punctualLightsPmfBufferSize = punctualLightsCount * sizeof(float);
+    m_punctualLightsPdfBufferSize = punctualLightsCount * sizeof(float);
     const size_t totalLightsCount = scene->CPU.MegaBufferPunctualLightsCount + 1;
-    m_lightsCdfBufferSize = totalLightsCount * sizeof(ProbabilityDistributionSample);
 
-    m_punctualPmfRW.Release();
-    m_punctualPmfReadback.Release();
-    m_lightCdf.Release();
-    m_lightCdfReadback.Release();
+    CherryAssert(totalLightsCount < ALIAS_TABLE_BUILD_MAX_STACK_SIZE);
 
-    m_punctualPmfRW.          Init_Buffer("Punctual Light PMF (RW)", d3d->GetDevice(), m_punctualLightsPmfBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    m_punctualPmfReadback.    Init_Buffer("Punctual Light PMF (Readback)", d3d->GetDevice(), m_punctualLightsPmfBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
-    m_lightCdf.               Init_Buffer("Combined Lights CDF", d3d->GetDevice(), m_lightsCdfBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    m_lightCdfReadback.       Init_Buffer("Combined Lights CDF (Readback)", d3d->GetDevice(), m_lightsCdfBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
+    const size_t lsdStride = aliasTablesEnabled ? sizeof(AliasEntry) : sizeof(ProbabilityDistributionSample);
+    m_lsdBufferSize = totalLightsCount * lsdStride;
+
+    m_punctualPdfRW.Release();
+    m_punctualPdfReadback.Release();
+    m_lsdRW.Release();
+    m_lsdReadback.Release();
+
+    m_punctualPdfRW.          Init_Buffer("Punctual Light PDF (RW)", d3d->GetDevice(), m_punctualLightsPdfBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_punctualPdfReadback.    Init_Buffer("Punctual Light PDF (Readback)", d3d->GetDevice(), m_punctualLightsPdfBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
+    m_lsdRW.                  Init_Buffer("LSD (RW)", d3d->GetDevice(), m_lsdBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_lsdReadback.            Init_Buffer("LSD (Readback)", d3d->GetDevice(), m_lsdBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
 
     // Sets
     m_setEnvMapSumLum.                          Init(heap);
-    m_setEnvMapPmf.                             Init(heap);
+    m_setEnvMapPdf.                             Init(heap);
     m_setEnvMapCdfConditional.                  Init(heap);
     m_setEnvMapCdfMarginal.                     Init(heap);
     m_setEnvMapCdfConditionalNormalize.         Init(heap);
     m_setCdfNormalize1D.                        Init(heap);
-    m_setPunctualPmf.                           Init(heap);
-    m_setLightCdf.                              Init(heap);
+    m_setPunctualPdf.                           Init(heap);
+    m_setLSD.                                   Init(heap);
 
-    m_setPunctualPmf.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
-    m_setPunctualPmf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPmfRW, scene->CPU.MegaBufferPunctualLightsCount, sizeof(float));
+    m_setPunctualPdf.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
+    m_setPunctualPdf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPdfRW, scene->CPU.MegaBufferPunctualLightsCount, sizeof(float));
 
-    m_setLightCdf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPmfRW, scene->CPU.MegaBufferPunctualLightsCount, sizeof(float));
-    m_setLightCdf.SetUAV_Buffer(d3d->GetDevice(), 1, &m_lightCdf, scene->CPU.MegaBufferPunctualLightsCount + 1, sizeof(ProbabilityDistributionSample));
+    m_setLSD.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPdfRW, scene->CPU.MegaBufferPunctualLightsCount, sizeof(float));
+    m_setLSD.SetUAV_Buffer(d3d->GetDevice(), 1, &m_lsdRW, scene->CPU.MegaBufferPunctualLightsCount + 1, lsdStride);
+    m_setLSD.AddCBV(d3d->GetDevice(), sizeof(CbvTotalLuminances), &m_uploadHeap);
 
     m_setEnvMapSumLum.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
     m_setEnvMapSumLum.SetUAV_Buffer(d3d->GetDevice(), 0, &m_envMapSumLumBufferRW, m_sumLumBufferNumElements, sizeof(float));
 
-    m_setEnvMapPmf.AddCBV(d3d->GetDevice(), sizeof(float), &m_uploadHeap);
-    m_setEnvMapPmf.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
-    m_setEnvMapPmf.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapPmf, m_envMapPmf.GetDesc().Format);
+    m_setEnvMapPdf.AddCBV(d3d->GetDevice(), sizeof(float), &m_uploadHeap);
+    m_setEnvMapPdf.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
+    m_setEnvMapPdf.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapPdf, m_envMapPdf.GetDesc().Format);
 
-    m_setEnvMapCdfConditional.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_envMapPmf, m_envMapPmf.GetDesc().Format);
+    m_setEnvMapCdfConditional.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_envMapPdf, m_envMapPdf.GetDesc().Format);
     m_setEnvMapCdfConditional.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapCdfConditional, m_envMapCdfConditional.GetDesc().Format);
 
     m_setEnvMapCdfMarginal.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_envMapCdfConditional, m_envMapCdfConditional.GetDesc().Format);
@@ -302,8 +322,6 @@ void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D
     m_setEnvMapCdfConditionalNormalize.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_envMapCdfConditional, m_envMapCdfConditional.GetDesc().Format);
 
     m_setCdfNormalize1D.SetUAV_Tex1D(d3d->GetDevice(), 0, &m_envMapCdfMarginal, m_envMapCdfMarginal.GetDesc().Format);
-
-    m_setLightCdf.AddCBV(d3d->GetDevice(), sizeof(CbvTotalLuminances), &m_uploadHeap);
 
     m_sceneDataLoaded = true;
 }
@@ -318,14 +336,16 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, D12Resource* en
 
     // Pipelines
     m_pipelineEnvMapSumLum.                     InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/SumLumReductionSearchCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineEnvMapPmf.                        InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/PmfCS.hlsl", m_rootSigCbvSrvUav.Get());
+    m_pipelineEnvMapPdf.                        InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/PdfCS.hlsl", m_rootSigCbvSrvUav.Get());
     m_pipelineEnvMapCdfConditional.             InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfConditionalCS.hlsl", m_rootSigSrvUav.Get());
     m_pipelineEnvMapCdfMarginal.                InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfMarginalCS.hlsl", m_rootSigSrvUav.Get());
     m_pipelineEnvMapCdfConditionalNormalize.    InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfConditionalNormalizeCS.hlsl", m_rootSigUav.Get());
 
     m_pipelineCdfNormalize1D.                   InitCompute(d3d->GetDevice(), "Compute/NEE/CdfNormalize1DCS.hlsl", m_rootSigUav.Get());
-    m_pipelinePunctualPmf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/PunctualPmfCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineLightCdf.                         InitCompute(d3d->GetDevice(), "Compute/NEE/LightCdfCS.hlsl", m_rootSigCbvUav2.Get());
+    m_pipelinePunctualPdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/PunctualPdfCS.hlsl", m_rootSigSrvUav.Get());
+
+    m_pipelineLsdCdf.                           InitCompute(d3d->GetDevice(), "Compute/NEE/LightCdfCS.hlsl", m_rootSigCbvUav2.Get());
+    m_pipelineLsdAlias.                         InitCompute(d3d->GetDevice(), "Compute/NEE/LightAliasCS.hlsl", m_rootSigCbvUav2.Get(), {ALIAS_TABLE_BUILD_MAX_STACK_SIZE_DEFINE});
 
     const size_t w = envMap->GetDesc().Width;
     const size_t h = envMap->GetDesc().Height;
@@ -341,7 +361,7 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, D12Resource* en
     // D12Resources
     m_envMapSumLumBufferRW.                     Init_Buffer("Env Map Sum Luminance Buffer (RW)", d3d->GetDevice(), m_sumLumBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_envMapSumLumBufferReadback.               Init_Buffer("Env Map Sum Luminance Buffer (Readback)", d3d->GetDevice(), m_sumLumBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
-    m_envMapPmf.                                Init_Tex2D("Env Map PMF", d3d->GetDevice(), w, h, 1, distributionFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_envMapPdf.                                Init_Tex2D("Env Map PDF", d3d->GetDevice(), w, h, 1, distributionFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_envMapCdfConditional.                     Init_Tex2D("Env Map CDF Conditional", d3d->GetDevice(), w, h, 1, distributionFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_envMapCdfMarginal.                        Init_Tex1D("Env Map CDF Marginal", d3d->GetDevice(), w, 1, 1, distributionFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 

@@ -33,7 +33,7 @@ struct PathState
 
 struct ProbabilityDistributionSample
 {
-    float PMF;
+    float PDF;
     float CDF;
 };
 

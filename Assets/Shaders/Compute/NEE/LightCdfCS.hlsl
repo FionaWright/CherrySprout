@@ -4,15 +4,15 @@
 
 #include "Utils/Constants.h"
 
-RWStructuredBuffer<float> gPunctualPMF : register(u0);
+RWStructuredBuffer<float> gPunctualPDF : register(u0);
 RWStructuredBuffer<ProbabilityDistributionSample> gCDF  : register(u1);
 
 ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
 
-void AddCdfPmf(float pmf, inout float rollingSum, inout uint idx)
+void AddCdfPdf(float pdf, inout float rollingSum, inout uint idx)
 {
-    rollingSum += pmf;
-    gCDF[idx].PMF = pmf;
+    rollingSum += pdf;
+    gCDF[idx].PDF = pdf;
     gCDF[idx].CDF = rollingSum;
     idx++;
 }
@@ -25,7 +25,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
     uint punctualLightCount;
     uint punctualLightStride;
-    gPunctualPMF.GetDimensions(punctualLightCount, punctualLightStride);
+    gPunctualPDF.GetDimensions(punctualLightCount, punctualLightStride);
 
     float rollingSum = 0.0f;
     uint idx = 0;
@@ -43,22 +43,22 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     float totalLuminance = gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance;
 
     // Env Map assigned to Idx 0
-    //float envMapPMF = ENV_MAP_IMPORTANCE_RADIANT_INTENSITY * delta / totalLuminance;
-    //float envMapPMF = gTotalLums.EnvMapTotalLuminance * delta / totalLuminance;
-    float envMapPMF = averageEnvMapLuminance * delta / totalLuminance;
-    AddCdfPmf(envMapPMF, rollingSum, idx);
+    //float envMapPDF = ENV_MAP_IMPORTANCE_RADIANT_INTENSITY * delta / totalLuminance;
+    //float envMapPDF = gTotalLums.EnvMapTotalLuminance * delta / totalLuminance;
+    float envMapPDF = averageEnvMapLuminance * delta / totalLuminance;
+    AddCdfPdf(envMapPDF, rollingSum, idx);
 
     // Punctual Lights
     for (int x = 0; x < punctualLightCount; x++)
     {
-        float pmf = gPunctualPMF[x] * delta / totalLuminance;
-        AddCdfPmf(pmf, rollingSum, idx);
+        float pdf = gPunctualPDF[x] * delta / totalLuminance;
+        AddCdfPdf(pdf, rollingSum, idx);
     }
 
     // Normalize
     for (int x = 0; x < punctualLightCount + 1; x++)
     {
-        gCDF[x].PMF /= rollingSum;
+        gCDF[x].PDF /= rollingSum;
         gCDF[x].CDF /= rollingSum;
     }
 }

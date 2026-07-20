@@ -6,6 +6,29 @@
 #include "Utils/Math/Punctual.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
+#if FEATURE_ENABLED(AliasTables)
+void sampleLSD(float xi, out uint lightIdx, out float pdf)
+{
+    uint lightCount, _;
+    gLightAliasTable.GetDimensions(lightCount, _);
+
+    xi *= lightCount;
+    uint xiIdx = floor(xi);
+    float xi01 = frac(xi);
+
+    AliasEntry entry = gLightAliasTable[xiIdx];
+    lightIdx = xi01 < entry.Threshold ? xiIdx : entry.Alias;
+
+    pdf = gLightAliasTable[lightIdx].PDF;
+}
+#else
+void sampleLSD(float xi, out uint lightIdx, out float pdf)
+{
+    lightIdx = BinarySearch(gLightCDF, xi);
+    pdf = gLightCDF[lightIdx].PDF;
+}
+#endif
+
 void SampleLight(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
@@ -19,7 +42,9 @@ void SampleLight(
 )
 {
     float xi = Rand01(rngInfo);
-    uint lightIdx = BinarySearch(gLightCDF, xi);
+    uint lightIdx;
+    float pdf_lsd;
+    sampleLSD(xi, lightIdx, pdf_lsd);
 
     float3 Le;
     float lightDistance;
@@ -33,8 +58,9 @@ void SampleLight(
         float xi2 = Rand01(rngInfo);
 
         float2 uv_env;
-        SampleEnvMapCdf(xi1, xi2, uv_env, wi, pdf);
-        pdf *= gLightCDF[lightIdx].PMF;
+        float pdf_env;
+        SampleEnvMapCdf(xi1, xi2, uv_env, wi, pdf_env);
+        pdf = pdf_env * pdf_lsd;
 
         Le = gTexEnvMap.Sample(gSampler, uv_env).rgb;
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
@@ -50,7 +76,7 @@ void SampleLight(
             DBG_ASSERT_LT(lightIdx, puncLightCount+1, OOB_LIGHT_INDEX);
         }
 
-        pdf = gLightCDF[lightIdx].PMF;
+        pdf = pdf_lsd;
 
         uint punctualLightIdx = lightIdx - 1;
         PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];

@@ -2,7 +2,7 @@
 #include "Utils/CBVs.h"
 
 Texture2D<float4> gEnvMap : register(t0);
-RWTexture2D<float> gPMF  : register(u0);
+RWTexture2D<float> gPDF  : register(u0);
 
 struct CbvSumLuminance
 {
@@ -22,5 +22,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float3 color = gEnvMap.Load(uint3(DTid.xy, 0)).rgb;
 
-    gPMF[DTid.xy] = Luminance(color) / gCbv.TotalLuminance;
+    gPDF[DTid.xy] = Luminance(color) / gCbv.TotalLuminance;
 }

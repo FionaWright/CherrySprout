@@ -157,7 +157,9 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if ((!m_lightImportanceSampler.IsInitialized() || m_lightCdfsDirty) && pathTracingFeatureEnabled(eFeature_NEE))
     {
-        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), pathTracingFeatureEnabled(eFeature_EnvironmentMap));
+        const bool envMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
+        const bool aliasEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
+        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), envMapEnabled, aliasEnabled);
         loadSceneDataIntoRenderBackend = true;
         m_lightCdfsDirty = false;
     }

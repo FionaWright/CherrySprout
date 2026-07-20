@@ -14,7 +14,9 @@ FLAG_PROCESS(AlphaTesting)
 FLAG_PROCESS(GlassMaterials)
 
 FLAG_PROCESS(NEE)
-FLAG_PROCESS(Anisotropy)
+FLAG_PROCESS(AliasTables)
 
 FLAG_PROCESS(FireflyThreshold)
 FLAG_PROCESS(RestirDI)
+
+FLAG_PROCESS(Anisotropy)
