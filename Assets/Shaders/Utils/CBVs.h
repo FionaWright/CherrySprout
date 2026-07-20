@@ -30,7 +30,9 @@ struct CbvPathTracingSettings
     hlsl::uint2 FrameDimensions;
 
     hlsl::uint MaxShadowRayDepth;
-    hlsl::float3 p;
+    int TransientLightIdx;
+    float TransientDistanceSinceStart;
+    float TransientPulseDistance;
 };
 
 struct CbvPanoToEA

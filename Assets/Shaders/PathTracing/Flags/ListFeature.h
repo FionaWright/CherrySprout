@@ -20,3 +20,4 @@ FLAG_PROCESS(FireflyThreshold)
 FLAG_PROCESS(RestirDI)
 
 FLAG_PROCESS(Anisotropy)
+FLAG_PROCESS(Transient)

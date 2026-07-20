@@ -158,6 +158,20 @@ void Greenhouse::RenderGUI()
             ImGui::Spacing();
         }
 
+        if (pathTracingFeatureEnabled(eFeature_Transient))
+        {
+            ImGui::Text("Transient Rendering:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwInputInt("Light Index", &m_config.PathTracerConfig.TransientLightIndex);
+                m_ptFrameDirty |= GuiUtils::FwDragFloat("Time Since Start", &m_config.PathTracerConfig.TransientTimeSinceStart, 0.1f);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("Pulse Duration", &m_config.PathTracerConfig.TransientPulseDuration);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("Speed of Light", &m_config.PathTracerConfig.TransientSpeedOfLight);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
 #if CHERRY_DEBUG_FEATURES_ENABLED
         if (pathTracingFeatureEnabled(eFeature_NEE))
         {

@@ -9,11 +9,12 @@
 LightSampleSelection Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info)
 {
     BxDF bxdf;
+    PathState pathState;
 
     float3 radiance_light;
     float pdf_light;
     float3 wi;
-    SampleLight(rngInfo, info.HitInfo, bxdf, info.Dir_wo, info.HitPosOffset, radiance_light, pdf_light, wi);
+    SampleLight(rngInfo, info.HitInfo, pathState, bxdf, info.Dir_wo, info.HitPosOffset, radiance_light, pdf_light, wi);
 
     uint lightIndex = 0; // TODO
 

@@ -23,13 +23,15 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;
     float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
 
+#if FEATURE_ENABLED(Transient)
+    pathState.RollingPathDistance += hitInfo.RayT;
+#endif
+
     L_sample = beta * hitInfo.Li;
 
     float3 wo = -ray.Direction;
 
-    // TODO in a loose order:
-    // Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
-    // Make mocks for NEE and restir so the include files can be ignored when disabled
+    // TODO: Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
 
     BxDF bxdf;
 
@@ -65,7 +67,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
         {
             float3 wi_env;
             float pdf_env;
-            SampleLight(rngInfo, hitInfo, bxdf, wo, nextOrigin, E_direct, pdf_env, wi_env);
+            SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, nextOrigin, E_direct, pdf_env, wi_env);
         }
 
         // TODO: Share shadow ray handling for both out here
@@ -76,6 +78,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     float3 f;
     float pdf;
 
+    // TODO: Move these tests into own file or something
     if (DEBUG_ENABLED(BxdfTestHemisphere) && gRunBxdfTestForPixel)
     {
         float u1 = Rand01(rngInfo);

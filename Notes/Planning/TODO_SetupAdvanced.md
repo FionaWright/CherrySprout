@@ -19,7 +19,7 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 
 - [ ] (F) Python executor
 - [ ] Path visualizer
-- [ ] (F) Gizmos for light sources, etc
+- [x] (F) Gizmos for light sources, etc
 - [x] Debug Info Output (Make it better)
 - [ ] Variance reduction per frame-time test
 - [x] PT Assert based system inspired by Viggo

@@ -16,4 +16,4 @@ Stuff in the repo that I don't like
 
 - [ ] Delete OpenUSD build dir after extracting stuff? It's like 10GB
 
-- [ ] Change dir light to punctual light and put into CDF ?
+- [ ] Change dir light to punctual light and put into LSD ?

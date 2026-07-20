@@ -20,6 +20,10 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
     PathState pathState;
     pathState.LastRayDiracDelta = false;
 
+#if FEATURE_ENABLED(Transient)
+    pathState.RollingPathDistance = 0.0f;
+#endif
+
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);

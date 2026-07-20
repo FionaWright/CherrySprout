@@ -9,7 +9,7 @@ The main important tasks for the project
 - [ ] Confirm by RMSE test that it is faster
 - [ ] Confirm there's no bias with new mean test
 - [ ] Shadow Ray transmission handling ?
-- [ ] Alias Tables
+- [x] Alias Tables
 - [x] USD Lights loading 
 - [x] Point Light NEE
 - [x] Dir Light NEE

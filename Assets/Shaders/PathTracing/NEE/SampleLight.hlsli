@@ -5,6 +5,7 @@
 #include "Scene/PunctualLight.h"
 #include "Utils/Math/Punctual.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
+#include "PathTracing/Transient.hlsli"
 
 #if FEATURE_ENABLED(AliasTables)
 void sampleLSD(float xi, out uint lightIdx, out float pdf)
@@ -32,6 +33,7 @@ void sampleLSD(float xi, out uint lightIdx, out float pdf)
 void SampleLight(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
+    PathState pathState,
     BxDF bxdf,
 
     float3 wo,
@@ -95,6 +97,15 @@ void SampleLight(
     DBG_OUTPUT1(lightDistance,    NEE_Distance);
     DBG_OUTPUT3(wi,               NEE_L_w);
     DBG_OUTPUT1(pdf,              NEE_PDF);
+
+    //if (FEATURE_ENABLED(Transient) && gSettings.TransientLightIdx == lightIdx)
+    if (FEATURE_ENABLED(Transient))
+    {
+        float transientFactor = GetTransientFactor(pathState.RollingPathDistance + lightDistance);
+        Le *= transientFactor;
+    }
+    else
+        Le = 0.0f; // TODO
 
     float NdL = dot(hitInfo.Ns_ff, wi);
     if (length(Le) == 0.0f || NdL < 0.0f)

@@ -286,6 +286,11 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
         settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && m_frameIdx > renderInfo.PathTracerConfig->MaxFrameNumber;
 
+        float speedOfLight = renderInfo.PathTracerConfig->TransientSpeedOfLight; // TODO: Have proper units
+        settings.TransientLightIdx = renderInfo.PathTracerConfig->TransientLightIndex;
+        settings.TransientDistanceSinceStart = (renderInfo.PathTracerConfig->TransientTimeSinceStart) * speedOfLight;
+        settings.TransientPulseDistance = (renderInfo.PathTracerConfig->TransientPulseDuration) * speedOfLight;
+
         settings.DirLightDirection = renderInfo.BackendConfig->DirLightDirection;
         settings.DirLightColor = renderInfo.BackendConfig->DirLightColor;
         settings.DirLightCosAngularRadius = 1.0f - renderInfo.BackendConfig->DirLightCosAngularRadius;

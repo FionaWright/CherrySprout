@@ -48,6 +48,11 @@ struct PathTracerConfig
     float DofFocalDist = 0.1f;
     float DofLensRadius = 0.003f;
 
+    int TransientLightIndex = -1;
+    float TransientTimeSinceStart = 0.0f;
+    float TransientPulseDuration = 1.0f;
+    float TransientSpeedOfLight = 1.0f;
+
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
 

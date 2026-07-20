@@ -29,6 +29,7 @@ struct PathState
     float LastBxdfPdf;
     hlsl::uint RaySegmentIdx;
     bool LastRayDiracDelta;
+    float RollingPathDistance;
 };
 
 struct ProbabilityDistributionSample
