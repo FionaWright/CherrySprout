@@ -62,7 +62,7 @@ private:
     bool m_renderBackendDirty = false;
     bool m_ptFrameDirty = false;
     bool m_ptPipelineDirty = false;
-    bool m_lightCdfsDirty = false;
+    bool m_lsdDirty = false;
 
     CameraController m_cameraController;
 

@@ -32,7 +32,7 @@ public:
     void AddGizmo(D3D* d3d, Heap* heap, XMFLOAT3 position, XMFLOAT4 color, const char* texFilepath);
     void Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, const XMMATRIX& V, const XMMATRIX& P);
 
-    void ClearGizmos() { m_gizmos.clear(); }
+    void ClearGizmos() { m_uploadHeap.FreeAssignedData(); m_gizmos.clear(); }
 
 private:
     void initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList);

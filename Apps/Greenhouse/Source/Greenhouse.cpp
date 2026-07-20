@@ -125,6 +125,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_gizmosSceneLoaded = false;
 #endif
 
+        m_lsdDirty = true;
+        m_ptFrameDirty = true;
         m_sceneDirty = false;
     }
 
@@ -152,16 +154,16 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
 
         m_lightImportanceSampler.MarkSceneDataDirty();
-        m_lightCdfsDirty = true;
+        m_lsdDirty = true;
     }
 
-    if ((!m_lightImportanceSampler.IsInitialized() || m_lightCdfsDirty) && pathTracingFeatureEnabled(eFeature_NEE))
+    if ((!m_lightImportanceSampler.IsInitialized() || m_lsdDirty) && pathTracingFeatureEnabled(eFeature_NEE))
     {
         const bool envMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
         const bool aliasEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
         m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), envMapEnabled, aliasEnabled);
         loadSceneDataIntoRenderBackend = true;
-        m_lightCdfsDirty = false;
+        m_lsdDirty = false;
     }
 
     if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || loadSceneDataIntoRenderBackend)
@@ -202,6 +204,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (m_ptPipelineDirty)
     {
+        d3d->Flush();
         m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, m_config.PathTracerConfig.DebugInfo, m_config.PathTracerConfig.BxdfMode);
         m_ptPipelineDirty = false;
     }

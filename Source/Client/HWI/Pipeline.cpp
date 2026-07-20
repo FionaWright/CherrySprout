@@ -54,7 +54,8 @@ void Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_P
                            const std::vector<std::string>& compileArgs)
 {
 #if defined(_DEBUG)
-    constexpr auto compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
+    //constexpr auto compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
+    constexpr auto compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug);
 #else
     constexpr auto compileFlags = static_cast<ShaderCompileFlags>(0);
 #endif

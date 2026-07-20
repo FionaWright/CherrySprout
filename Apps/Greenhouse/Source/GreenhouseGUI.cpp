@@ -129,8 +129,8 @@ void Greenhouse::RenderGUI()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-        m_lightCdfsDirty |= prevEnvMapEnabled != pathTracingFeatureEnabled(eFeature_EnvironmentMap);
-        m_lightCdfsDirty |= prevAliasTablesEnabled != pathTracingFeatureEnabled(eFeature_AliasTables);
+        m_lsdDirty |= prevEnvMapEnabled != pathTracingFeatureEnabled(eFeature_EnvironmentMap);
+        m_lsdDirty |= prevAliasTablesEnabled != pathTracingFeatureEnabled(eFeature_AliasTables);
 
         if (pathTracingFeatureEnabled(eFeature_DirectionalLight))
         {
@@ -161,20 +161,20 @@ void Greenhouse::RenderGUI()
 #if CHERRY_DEBUG_FEATURES_ENABLED
         if (pathTracingFeatureEnabled(eFeature_NEE))
         {
-            if (ImGui::CollapsingHeader("CDF"))
+            if (ImGui::CollapsingHeader("LSD"))
             {
                 ImGui::Indent(IM_GUI_INDENTATION);
                 ImGui::Text("Env Map Luminance: %f", m_lightImportanceSampler.GetTotalEnvMapLuminance());
                 ImGui::Text("Punctual Weight  : %f", m_lightImportanceSampler.GetPunctualWeight());
 
                 ImGui::PopStyleVar();
-                m_lightCdfsDirty |= ImGui::Button("Reload Light CDFs");
+                m_lsdDirty |= ImGui::Button("Reload Light LSDs");
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
                 const bool aliasTablesEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
                 const int numColumns = aliasTablesEnabled ? 5 : 4;
 
-                if (ImGui::BeginTable("CDF Table", numColumns))
+                if (ImGui::BeginTable("LSD Table", numColumns))
                 {
                     ImGui::TableSetupColumn("Idx");
                     ImGui::TableSetupColumn("Type");
@@ -227,7 +227,10 @@ void Greenhouse::RenderGUI()
                             ImGui::Text("%.9f", cpuLightAlias[i].Threshold);
 
                             ImGui::TableSetColumnIndex(4);
-                            ImGui::Text("%i", cpuLightAlias[i].Alias);
+                            if (cpuLightAlias[i].Alias == i)
+                                ImGui::TextUnformatted("-");
+                            else
+                                ImGui::Text("%i", cpuLightAlias[i].Alias);
                         }
                         else
                         {
