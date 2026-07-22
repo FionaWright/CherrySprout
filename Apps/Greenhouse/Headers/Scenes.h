@@ -44,8 +44,23 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     },
 
     {
-        .Name = "Living Room",
-        .Filepath = "Scenes/USD/GitIgnored/LivingRoom/Modernes Wohnzimmer.usda",
+        .Name = "MC",
+        .Filepath = "Scenes/USD/MC/McUsd.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+        .SceneScale = 0.1f
+    },
+
+    {
+        .Name = "Sponza",
+        .Filepath = "Scenes/USD/GitIgnored/Sponza/Sponza.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+    },
+
+    {
+        .Name = "Bistro",
+        .Filepath = "Scenes/USD/GitIgnored/Bistro/Bistro.usdc",
         .CameraPosition = {-0.114393, 0.159540, -0.291603},
         .CameraPitchYaw = {0.251301, 0.375632},
     },

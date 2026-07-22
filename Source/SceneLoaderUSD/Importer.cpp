@@ -38,7 +38,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
     if (!stage)
         throw std::runtime_error("USD file does not exist");
 
-    context.Materials.emplace_back(Material()); // Assign default fallback material for objects missing materials
+    context.Materials.emplace_back(); // Assign default fallback material for objects missing materials
 
     std::unordered_map<std::string, size_t> matPathToIdxMap;
     for (const pxr::UsdPrim& prim : stage->Traverse())
@@ -48,6 +48,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
             matPathToIdxMap[prim.GetPath().GetString()] = context.Materials.size();
             const Material mat = ExtractMaterial(pxr::UsdShadeMaterial(prim), context.TextureFilePaths);
             context.Materials.emplace_back(mat);
+
+            std::cout << "Imported Material: " << prim.GetPath().GetString() << std::endl;
         }
     }
 
@@ -79,6 +81,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
     {
         pxr::GfRotation rot(pxr::GfVec3d(1, 0, 0), -90.0f);
         ToYUp.SetRotate(rot);
+
+        std::cout << "Scene is Z-up" << std::endl;
     }
 
     pxr::GfMatrix4d RhToLh(1.0);
@@ -107,6 +111,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         if (prim.IsA<pxr::UsdGeomPointInstancer>())
         {
             ExtractPointInstancer(&context, stage, prim, xformCache, matPathToIdxMap, globalXform);
+            std::cout << "Extracted Point Instancer: " << prim.GetName().GetString() << std::endl;
             continue;
         }
 
@@ -116,8 +121,11 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         if (prim.IsInstance())
         {
             std::vector<ImporterObject> objects = ExtractInstance(prim, xformCache, matPathToIdxMap, globalXform);
-            for (int i = 0; i < objects.size(); ++i)
-                context.Objects.emplace_back(std::move(objects[i]));
+            for (auto & object : objects)
+            {
+                context.Objects.emplace_back(std::move(object));
+                std::cout << "Extracted Instance: " << object.Name << std::endl;
+            }
             continue;
         }
 
@@ -125,7 +133,10 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         {
             std::vector<ImporterObject> objects = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
             for (int i = 0; i < objects.size(); ++i)
+            {
                 context.Objects.emplace_back(std::move(objects[i]));
+                std::cout << "Extracted Mesh: " << objects[i].Name << std::endl;
+            }
             continue;
         }
 
@@ -133,6 +144,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         {
             PunctualLight light = ExtractLight(prim, xformCache, globalXform);
             context.PunctualLights.emplace_back(light);
+            std::cout << "Extracted Light: " << static_cast<int>(light.Type) << std::endl;
             continue;
         }
     }
