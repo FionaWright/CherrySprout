@@ -50,6 +50,7 @@ static const char* s_debugIdList[] = {
 
     CREATE_ID(REVALUATE_F   , "Revaluate Failed: f")
     CREATE_ID(REVALUATE_PDF   , "Revaluate Failed: pdf")
+    CREATE_ID(COLOR_OUT   , "Output Color Invalid")
 
     CREATE_ID(UNNORMALIZED_VECTOR   , "Vector is unnormalized")
     CREATE_ID(NON_POSITIVE_PDF   , "PDF is not positive or zero")

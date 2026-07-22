@@ -263,6 +263,51 @@ void Greenhouse::PostUpdate(D3D* d3d)
     m_currRenderBackend->PostUpdate(d3d, m_renderInfo);
 
 #ifdef _DEBUG
+    if (m_scheduledTransientRenderFrameIdx != -1)
+    {
+        const bool completedFrame = m_scheduledTransientRenderSampleIdx > m_config.PathTracerConfig.TransientRenderNumSamples;
+        if (completedFrame)
+        {
+            m_scheduledSnapshotPT =
+                std::format("{}/Snapshots/TransientRender/Frame_{:04}",
+                    BUILD_DIR,
+                    m_scheduledTransientRenderFrameIdx);
+            m_isSnapshotPtLDR = true;
+
+            m_ptFrameDirty = true;
+            m_scheduledTransientRenderSampleIdx = 0;
+            m_scheduledTransientRenderFrameIdx++;
+
+            m_config.PathTracerConfig.TransientTimeSinceStart += m_config.PathTracerConfig.TransientRenderTotalTime / static_cast<float>(m_config.PathTracerConfig.TransientRenderNumFrames);
+        }
+        else
+            m_scheduledTransientRenderSampleIdx++;
+
+        const bool completedRender = m_scheduledTransientRenderFrameIdx >= m_config.PathTracerConfig.TransientRenderNumFrames;
+        if (completedRender)
+        {
+            m_scheduledTransientRenderFrameIdx = -1;
+
+            const std::string framePath = std::string(BUILD_DIR) + "/Snapshots/TransientRender/Frame_%04d.png";
+            const std::string outputPath = std::string(BUILD_DIR) + "/Snapshots/TransientRender/Video.mp4";
+
+            const std::string command =
+                //std::string("ffmpeg -framerate 30")
+                std::string(R"(C:\Users\fionawright\Downloads\ffmpeg-8.1.2-essentials_build\ffmpeg-8.1.2-essentials_build\bin\ffmpeg.exe)")
+                + " -framerate 30"
+                + " -i \"" + framePath + "\""
+                + " -start_number 0"
+                + " -y"
+                + " -c:v libx264"
+                + " -pix_fmt yuv420p"
+                + " -vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2\""
+                + " \"" + outputPath + "\"";
+
+            std::cout << command << std::endl;
+            std::system(command.c_str());
+        }
+    }
+
     if (!m_scheduledSnapshotPT.empty())
     {
         D12Resource* accum = m_pathTracer.GetTexAccum();
@@ -321,11 +366,14 @@ void Greenhouse::PostUpdate(D3D* d3d)
         ScratchImage scratch;
         const Image* packed = Snapshotter::PackData(d3d, data, &texGammaCorrected, scratch);
 
-        Snapshotter::SnapshotToFile(packed, m_scheduledSnapshotPT.c_str());
-
         ScratchImage rgba8;
         Snapshotter::SnapshotToRgba8(packed, rgba8);
         Snapshotter::Rgba8SnapshotToClipboard(rgba8.GetImage(0,0,0));
+
+        if (m_isSnapshotPtLDR)
+            Snapshotter::SnapshotToFile(rgba8.GetImage(0,0,0), m_scheduledSnapshotPT.c_str(), true);
+        else
+            Snapshotter::SnapshotToFile(packed, m_scheduledSnapshotPT.c_str());
 
         m_scheduledSnapshotPT = "";
     }

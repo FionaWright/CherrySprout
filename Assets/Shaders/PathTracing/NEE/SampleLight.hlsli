@@ -98,14 +98,16 @@ void SampleLight(
     DBG_OUTPUT3(wi,               NEE_L_w);
     DBG_OUTPUT1(pdf,              NEE_PDF);
 
-    //if (FEATURE_ENABLED(Transient) && gSettings.TransientLightIdx == lightIdx)
     if (FEATURE_ENABLED(Transient))
     {
-        float transientFactor = GetTransientFactor(pathState.RollingPathDistance + lightDistance);
-        Le *= transientFactor;
+        if (gSettings.TransientLightIdx == -1 || gSettings.TransientLightIdx == lightIdx)
+        {
+            float transientFactor = GetTransientFactor(pathState.RollingPathDistance + lightDistance);
+            Le *= transientFactor;
+        }
+        else
+            Le = 0.0f;
     }
-    else
-        Le = 0.0f; // TODO
 
     float NdL = dot(hitInfo.Ns_ff, wi);
     if (length(Le) == 0.0f || NdL < 0.0f)

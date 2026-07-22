@@ -92,6 +92,10 @@ private:
 
 #if _DEBUG
     std::string m_scheduledSnapshotPT = "";
+    bool m_isSnapshotPtLDR = false;
+
+    int m_scheduledTransientRenderFrameIdx = -1;
+    uint32_t m_scheduledTransientRenderSampleIdx = 0;
 #endif
 };
 

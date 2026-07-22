@@ -31,6 +31,9 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 color)
         return color;
     }
 
+    if (!DEBUG_ENABLED(OutputColor))
+        DBG_ASSERT_VALUE(color, COLOR_OUT);
+
     if (DEBUG_ENABLED(NaNTests))
     {
         if (IsNaN3(color) || IsNaN3(accumColor))

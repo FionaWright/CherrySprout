@@ -113,6 +113,8 @@ bool FormatIsHDR(const DXGI_FORMAT format)
 
 void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const bool ldrIsPNG)
 {
+    std::filesystem::create_directories(std::filesystem::path(fileName).parent_path());
+
     const bool isHDR = FormatIsHDR(image->format);
 
     const std::string fileNameWithExt = std::string(fileName) + (isHDR ? ".hdr" : (ldrIsPNG ? ".png" : ".tga"));

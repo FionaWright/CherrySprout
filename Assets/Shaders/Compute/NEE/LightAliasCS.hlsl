@@ -14,6 +14,10 @@ ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
 #error Maximum stack size must be passed in through define
 #endif
 
+// https://www.keithschwarz.com/darts-dice-coins/
+// https://arxiv.org/pdf/2106.12270
+// https://en.wikipedia.org/wiki/Alias_method
+
 [numthreads(1,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
@@ -75,7 +79,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         }
     }
 
-    // Naive Method, can be optimized
+    // Vose's Method
+    // TODO: Sorting beforehand can lead to better runtime performance
 
     while (stackSmallPtr > 0 && stackLargePtr > 0)
     {
@@ -89,7 +94,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gAliasTable[idxS].Alias = idxL;
         gAliasTable[idxL].Threshold -= diffS;
 
-        if (gAliasTable[idxL].Threshold < 1.0f)
+        if (gAliasTable[idxL].Threshold < 1.0f) // TODO: See Vose's. Can be made more numerically stable
         {
             stackSmall[stackSmallPtr] = idxL;
             stackSmallPtr++;

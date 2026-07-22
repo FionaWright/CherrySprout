@@ -53,6 +53,10 @@ struct PathTracerConfig
     float TransientPulseDuration = 1.0f;
     float TransientSpeedOfLight = 1.0f;
 
+    uint32_t TransientRenderNumSamples = 1000;
+    uint32_t TransientRenderNumFrames = 60;
+    float TransientRenderTotalTime = 10.0f;
+
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
 

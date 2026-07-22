@@ -167,6 +167,29 @@ void Greenhouse::RenderGUI()
                 m_ptFrameDirty |= GuiUtils::FwDragFloat("Time Since Start", &m_config.PathTracerConfig.TransientTimeSinceStart, 0.1f);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Pulse Duration", &m_config.PathTracerConfig.TransientPulseDuration);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Speed of Light", &m_config.PathTracerConfig.TransientSpeedOfLight);
+
+#if _DEBUG // TODO: Snapshots shouldn't require debug mode anymore
+                GuiUtils::FwInputUInt("Transient Video - Num Frames", &m_config.PathTracerConfig.TransientRenderNumFrames);
+                GuiUtils::FwInputUInt("Transient Video - Num Samples", &m_config.PathTracerConfig.TransientRenderNumSamples);
+                GuiUtils::FwInputFloat("Transient Video - Total Time", &m_config.PathTracerConfig.TransientRenderTotalTime);
+                if (m_scheduledTransientRenderFrameIdx == -1)
+                {
+                    ImGui::PopStyleVar();
+                    if (ImGui::Button("Generate Transient Video"))
+                    {
+                        m_scheduledTransientRenderFrameIdx = 0;
+                        m_scheduledTransientRenderSampleIdx = 0;
+                        m_ptFrameDirty = true;
+                    }
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+                }
+                else
+                {
+                    const float framePercent = m_scheduledTransientRenderFrameIdx / static_cast<float>(m_config.PathTracerConfig.TransientRenderNumFrames);
+                    const float samplePercent = m_scheduledTransientRenderSampleIdx / static_cast<float>(m_config.PathTracerConfig.TransientRenderNumSamples);
+                    ImGui::Text("Transient Rendering in Progress:\nFrames:%.2f%%\nSamples:%.2f%%", framePercent*100.0f, samplePercent*100.0f);
+                }
+#endif
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();
@@ -416,6 +439,8 @@ void Greenhouse::RenderGUI()
     ImGui::Indent(IM_GUI_INDENTATION);
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
+        ImGui::Checkbox("Snapshot is LDR", &m_isSnapshotPtLDR);
+
         static char buff[256];
         ImGui::InputText("Snapshot Path", buff, 256);
 
