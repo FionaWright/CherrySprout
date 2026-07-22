@@ -14,7 +14,7 @@ struct HitInfo
     hlsl::float3 Ns_ff;
     ShadingFrame SFrame;
 
-    hlsl::float3 Li;
+    hlsl::float3 Emission;
 
     hlsl::float2 AnisoDir;
     float AnisoStrength;

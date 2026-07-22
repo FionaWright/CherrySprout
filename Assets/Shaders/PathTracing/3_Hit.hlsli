@@ -27,7 +27,7 @@ void Hit(inout RayQuery<RAY_FLAGS> q, inout RayDesc ray, inout PathState pathSta
     pathState.RollingPathDistance += hitInfo.RayT;
 #endif
 
-    L_sample = beta * hitInfo.Li;
+    L_sample = beta * hitInfo.Emission;
 
     float3 wo = -ray.Direction;
 

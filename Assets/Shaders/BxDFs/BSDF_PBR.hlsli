@@ -93,7 +93,7 @@ void BxDF::Sample(
         bool isReflect = reflectProb > 0 && Rand01(rngInfo) <= reflectProb;
 
         DBG_ASSERT_ZERO(hitInfo.Mat.Metallic,         NO_METAL_GLASS);
-        DBG_ASSERT_ZERO(hitInfo.Li,                   NO_EMISSIVE_GLASS);
+        DBG_ASSERT_ZERO(hitInfo.Emission,             NO_EMISSIVE_GLASS);
         DBG_OUTPUT1(reflectProb,                      ReflectProb);
         DBG_OUTPUT1(isReflect,                        IsReflect);
         DBG_OUTPUT1(iorNCurrent,                      iorNCurrent);
@@ -223,8 +223,8 @@ void BxDF::Evaluate(
         float reflectProb = GetReflectProb(iorNCurrent, iorNNext, VdH);
 
         DBG_OUTPUT1(reflectProb,                      Eval_ReflectProb);
-        DBG_ASSERT_ZERO(hitInfo.Mat.Metallic, NO_METAL_GLASS);
-        DBG_ASSERT_ZERO(hitInfo.Li          , NO_EMISSIVE_GLASS);
+        DBG_ASSERT_ZERO(hitInfo.Mat.Metallic,         NO_METAL_GLASS);
+        DBG_ASSERT_ZERO(hitInfo.Emission,             NO_EMISSIVE_GLASS);
 
         float3 f_trans = 0;
         float pdf_trans = 0;

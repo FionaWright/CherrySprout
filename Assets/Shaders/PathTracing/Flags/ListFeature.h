@@ -17,7 +17,9 @@ FLAG_PROCESS(NEE)
 FLAG_PROCESS(AliasTables)
 
 FLAG_PROCESS(FireflyThreshold)
-FLAG_PROCESS(RestirDI)
+FLAG_PROCESS(GammaCorrectionFast)
 
 FLAG_PROCESS(Anisotropy)
 FLAG_PROCESS(Transient)
+
+FLAG_PROCESS(RestirDI)

@@ -4,6 +4,7 @@
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/HlslUtils.hlsli"
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Utils.hlsli"
 
 #include "Utils/Debug/Palette.h"
 
@@ -40,16 +41,16 @@ void ApplyMaterialTextures(inout HitInfo hitInfo)
     float4 albedoSample = sampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
     float roughnessSample = sampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
     float metallicSample = sampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
-    //float3 emissionSample = sampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
+    float3 emissionSample = sampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
 
-    if (true) // TODO
-        albedoSample.xyz = pow(albedoSample.xyz, 2.2f);
+    albedoSample.xyz = SRGB_to_LRGB(albedoSample.xyz);
+    emissionSample.xyz = SRGB_to_LRGB(emissionSample.xyz);
 
     hitInfo.Mat.Albedo.rgb *= albedoSample.rgb;
     hitInfo.Mat.Roughness *= roughnessSample;
     hitInfo.Mat.Metallic *= metallicSample;
 
-    hitInfo.Li = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor;
+    hitInfo.Emission = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor * emissionSample.rgb;
 }
 
 void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
@@ -132,7 +133,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                                                     Opacity);
     DBG_OUTPUT1(hitInfo.Mat.EmissiveStrength,                                             EmissiveStrength);
     DBG_OUTPUT3(hitInfo.Mat.EmissiveColor,                                                EmissiveColor);
-    DBG_OUTPUT3(hitInfo.Li,                                                               Emission);
+    DBG_OUTPUT3(hitInfo.Emission,                                                         Emission);
     DBG_OUTPUT1(hitInfo.Mat.TransmissionFactor,                                           TransmissionFactor);
     DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,                                            TransmissionColor);
     DBG_OUTPUT1(hitInfo.Mat.Roughness,                                                    Roughness);

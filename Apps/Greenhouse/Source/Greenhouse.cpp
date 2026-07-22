@@ -292,7 +292,6 @@ void Greenhouse::PostUpdate(D3D* d3d)
             const std::string outputPath = std::string(BUILD_DIR) + "/Snapshots/TransientRender/Video.mp4";
 
             const std::string command =
-                //std::string("ffmpeg -framerate 30")
                 std::string("ffmpeg")
                 + " -framerate 30"
                 + " -i \"" + framePath + "\""

@@ -5,6 +5,7 @@
 #include "PathTracing/2_GetPrimaryRay.hlsli"
 #include "PathTracing/2_Trace.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
+#include "PathTracing/Utils.hlsli"
 
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
@@ -56,10 +57,7 @@ void Core(uint2 pixelCoord)
     DBG_OUTPUT_SET(colorSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, colorSum);
-
-    // TODO: Better gamma correction
-    if (true)
-        average = pow(average, 1.0f/2.2f);
+    average = LRGB_to_SRGB(average);
 
     DBG_PATH_DUMP_HIGHLIGHT(average);
 
