@@ -14,16 +14,46 @@ Created for my bachelors final year project at Trinity College Dublin
 
 ### Engine
 
-- USD Scene Loader 
+- USD Scene Loader
+- MaterialX Support
+- NVIDIA MDL Material Support
+- Shader Hot Reloading
+- Scene Config System
+- Window Resizing
 
 ### Path-Tracer
 
-- Rotatable Environment Map
+#### Basic
+- Determinstic
+- Jitter
+- Alpha Testing
+- Rotatable EA Environment Map
+- Depth of Field
+- Russian Roulette
+- Firefly Threshold
+- Transmission
+- Anisotropy
+- GBuffer Pre-Pass for Primary Ray Reconstruction
 
-### Debugging
+#### Advanced
+- Transient Rendering + Video Generator
+- Abstracted BxDF System
+- Principled BSDF
+- Environment Map + Punctual Light NEE
+- Alias Tables
+- Modular Feature Flags System
+
+### Debug Tools
 
 - Forward Render Backend
-- Shader Hot Reloader
+- Snapshot Tool With Clipboard Pasting
+- Shader Assertion System
+- Output Color System + Remaps
+- Intensity Scales System
+- Path Dumper System
+- BxDF Tests
+- Furnance Test
+- Gizmos
 
 ## Third Party
 
@@ -31,7 +61,8 @@ Created for my bachelors final year project at Trinity College Dublin
 - DirectXTex
 - Dear ImGui
 - OpenUSD
-- WinPixEventRuntime 
+- WinPixEventRuntime
+- ffmpeg
 
 ## Images
 
