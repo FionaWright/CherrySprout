@@ -187,7 +187,7 @@ void Greenhouse::RenderGUI()
                 {
                     const float framePercent = m_scheduledTransientRenderFrameIdx / static_cast<float>(m_config.PathTracerConfig.TransientRenderNumFrames);
                     const float samplePercent = m_scheduledTransientRenderSampleIdx / static_cast<float>(m_config.PathTracerConfig.TransientRenderNumSamples);
-                    ImGui::Text("Transient Rendering in Progress:\nFrames:%.2f%%\nSamples:%.2f%%", framePercent*100.0f, samplePercent*100.0f);
+                    ImGui::Text("Transient Rendering in Progress:\nFrames: %.2f%%\nSamples: %.2f%%", framePercent*100.0f, samplePercent*100.0f);
                 }
 #endif
             }

@@ -293,7 +293,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
 
             const std::string command =
                 //std::string("ffmpeg -framerate 30")
-                std::string(R"(C:\Users\fionawright\Downloads\ffmpeg-8.1.2-essentials_build\ffmpeg-8.1.2-essentials_build\bin\ffmpeg.exe)")
+                std::string("ffmpeg")
                 + " -framerate 30"
                 + " -i \"" + framePath + "\""
                 + " -start_number 0"

@@ -43,4 +43,9 @@ add_custom_command(TARGET Greenhouse POST_BUILD
         $<TARGET_FILE_DIR:Greenhouse>
 )
 
+add_custom_command(TARGET Greenhouse POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${FFMPEG_EXECUTABLE}"
+        "$<TARGET_FILE_DIR:Greenhouse>/ffmpeg.exe")
+
 wis_install_dx_win32(Greenhouse)

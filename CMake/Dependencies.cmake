@@ -60,3 +60,38 @@ CPMAddPackage(
 if(TARGET DirectXTex)
     add_library(DirectXTex::DirectXTex ALIAS DirectXTex)
 endif()
+
+include(FetchContent)
+
+set(FFMPEG_VERSION "8.1.2")
+set(FFMPEG_URL "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-${FFMPEG_VERSION}-essentials_build.zip")
+
+set(FFMPEG_ROOT "${CMAKE_BINARY_DIR}/_deps/ffmpeg")
+
+if (WIN32)
+    if (NOT EXISTS "${FFMPEG_ROOT}/ffmpeg.exe")
+
+        file(DOWNLOAD
+                "${FFMPEG_URL}"
+                "${CMAKE_BINARY_DIR}/ffmpeg.zip"
+                SHOW_PROGRESS)
+
+        file(ARCHIVE_EXTRACT
+                INPUT "${CMAKE_BINARY_DIR}/ffmpeg.zip"
+                DESTINATION "${FFMPEG_ROOT}")
+
+        file(GLOB FFMPEG_BIN
+                "${FFMPEG_ROOT}/*/bin/ffmpeg.exe")
+
+        list(GET FFMPEG_BIN 0 FFMPEG_EXE)
+
+        file(COPY
+                "${FFMPEG_EXE}"
+                DESTINATION "${FFMPEG_ROOT}")
+
+    endif()
+
+    set(FFMPEG_EXECUTABLE
+            "${FFMPEG_ROOT}/ffmpeg.exe"
+            CACHE FILEPATH "ffmpeg executable")
+endif()
