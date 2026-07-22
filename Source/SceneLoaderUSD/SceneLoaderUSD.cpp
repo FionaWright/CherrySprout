@@ -30,5 +30,23 @@ void LoadUSD(const char* usdPath, const float sceneScale, SceneCPU* scene)
 
 void FreeScene(SceneCPU* scene)
 {
-    // TODO
+    std::cout << "Freeing Scene..." << std::endl;
+
+    free(scene->Objects);
+    scene->Objects = nullptr;
+
+    free(scene->TextureFilepaths);
+    scene->TextureFilepaths = nullptr;
+
+    free(scene->MegaBufferVertex);
+    scene->MegaBufferVertex = nullptr;
+
+    free(scene->MegaBufferIndex);
+    scene->MegaBufferIndex = nullptr;
+
+    free(scene->MegaBufferMaterials);
+    scene->MegaBufferMaterials = nullptr;
+
+    free(scene->MegaBufferPunctualLights);
+    scene->MegaBufferPunctualLights = nullptr;
 }

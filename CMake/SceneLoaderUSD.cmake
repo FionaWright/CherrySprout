@@ -34,7 +34,7 @@ else()
     set(TBB_DEBUG_BYPRODUCT )
 endif()
 
-if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
+if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
     ExternalProject_Add(USD_EP
             GIT_REPOSITORY https://github.com/PixarAnimationStudios/OpenUSD.git
             GIT_TAG v25.05
@@ -70,35 +70,92 @@ if (NOT EXISTS "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib")
                 "${OPEN_USD_DIR_BUILD}/lib/tbbmalloc.lib"
                 ${TBB_DEBUG_BYPRODUCT}
     )
-endif()
 
-# Required
-file(MAKE_DIRECTORY "${OPEN_USD_DIR_BUILD}/include")
+    # Required
+    file(MAKE_DIRECTORY "${USD_BIN_DIR}/include")
+
+    # -------------- SCENE LOADER COPY FILES  -------------
+
+    add_custom_command(
+            OUTPUT "${USD_BIN_DIR}/usd_ms.lib"
+            OUTPUT "${USD_BIN_DIR}/tbbmalloc.lib"
+
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${USD_BIN_DIR}"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib" "${USD_BIN_DIR}/usd_ms.lib"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${OPEN_USD_DIR_BUILD}/lib/tbb.lib" "${USD_BIN_DIR}/tbb.lib"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${OPEN_USD_DIR_BUILD}/lib/tbbmalloc.lib" "${USD_BIN_DIR}/tbbmalloc.lib"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${OPEN_USD_DIR_BUILD}/lib/tbb_debug.lib" "${USD_BIN_DIR}/tbb_debug.lib"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${OPEN_USD_DIR_BUILD}/bin" "${USD_BIN_DIR}"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${OPEN_USD_DIR_BUILD}/lib/usd" "${USD_BIN_DIR}/usd"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${OPEN_USD_DIR_BUILD}/include" "${USD_BIN_DIR}/include"
+
+            DEPENDS USD_EP
+            VERBATIM
+    )
+    add_custom_target(SceneLoaderUSD_CopyBuild DEPENDS "${USD_BIN_DIR}/usd_ms.lib" "${USD_BIN_DIR}/tbbmalloc.lib")
+
+    if(USD_DEBUG)
+        # Copy usd_ms.pdb to bin dir
+        add_custom_command(TARGET SceneLoaderUSD_CopyBuild PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${OPEN_USD_DIR_BUILD}/lib/usd_ms.pdb"
+                "${USD_BIN_DIR}"
+        )
+    endif()
+
+    # Delete OpenUSD source/build (They are MASSIVE and no longer needed)
+    if(EXISTS ${OPEN_USD_DIR})
+        add_custom_command(TARGET SceneLoaderUSD_CopyBuild POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E rm -rf "${OPEN_USD_DIR}"
+        )
+    endif()
+else()
+    add_custom_target(USD_EP)
+    add_custom_target(SceneLoaderUSD_CopyBuild)
+endif()
 
 # -------------- IMPORTED LIBRARIES -------------------
 
 add_library(usd_m SHARED IMPORTED GLOBAL)
 set_target_properties(usd_m PROPERTIES
-        IMPORTED_IMPLIB "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib"
-        IMPORTED_LOCATION "${OPEN_USD_DIR_BUILD}/bin/usd_ms.dll"
-        INTERFACE_INCLUDE_DIRECTORIES "${OPEN_USD_DIR_BUILD}/include"
+        IMPORTED_IMPLIB "${USD_BIN_DIR}/usd_ms.lib"
+        IMPORTED_LOCATION "${USD_BIN_DIR}/usd_ms.dll"
+        INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
 )
 
-add_dependencies(usd_m USD_EP)
+add_dependencies(usd_m USD_EP SceneLoaderUSD_CopyBuild)
 
 add_library(tbb SHARED IMPORTED GLOBAL)
 set_target_properties(tbb PROPERTIES
-        IMPORTED_IMPLIB "${OPEN_USD_DIR_BUILD}/lib/tbb.lib"
-        IMPORTED_LOCATION "${OPEN_USD_DIR_BUILD}/bin/tbb.dll"
-        INTERFACE_INCLUDE_DIRECTORIES "${OPEN_USD_DIR_BUILD}/include"
+        IMPORTED_IMPLIB "${USD_BIN_DIR}/tbb.lib"
+        IMPORTED_LOCATION "${USD_BIN_DIR}/tbb.dll"
+        INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
 )
+
+add_dependencies(tbb USD_EP SceneLoaderUSD_CopyBuild)
 
 add_library(tbb_malloc SHARED IMPORTED GLOBAL)
 set_target_properties(tbb_malloc PROPERTIES
-        IMPORTED_IMPLIB "${OPEN_USD_DIR_BUILD}/lib/tbbmalloc.lib"
-        IMPORTED_LOCATION "${OPEN_USD_DIR_BUILD}/bin/tbbmalloc.dll"
-        INTERFACE_INCLUDE_DIRECTORIES "${OPEN_USD_DIR_BUILD}/include"
+        IMPORTED_IMPLIB "${USD_BIN_DIR}/tbbmalloc.lib"
+        IMPORTED_LOCATION "${USD_BIN_DIR}/tbbmalloc.dll"
+        INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
 )
+
+add_dependencies(tbb_malloc USD_EP SceneLoaderUSD_CopyBuild)
 
 # -------------- SCENE LOADER TARGET ------------------
 
@@ -108,8 +165,10 @@ add_library(SceneLoaderUSD SHARED
         "${CMAKE_SOURCE_DIR}/Source/SceneLoaderUSD/Processor.cpp"
 )
 
+add_dependencies(SceneLoaderUSD SceneLoaderUSD_CopyBuild)
+
 target_include_directories(SceneLoaderUSD PUBLIC
-        $<BUILD_INTERFACE:${OPEN_USD_DIR_BUILD}/include>
+        $<BUILD_INTERFACE:${USD_BIN_DIR}/include>
         "${CMAKE_SOURCE_DIR}/Headers/SceneLoaderUSD"
         "${CMAKE_SOURCE_DIR}/Headers/Client"
         "${CMAKE_SOURCE_DIR}/Assets/Shaders"
@@ -124,53 +183,7 @@ target_link_libraries(SceneLoaderUSD PUBLIC
 
 if (USD_DEBUG)
     target_link_directories(SceneLoaderUSD PUBLIC
-            "${OPEN_USD_DIR_BUILD}/lib"
-    )
-endif()
-
-# -------------- SCENE LOADER COPY FILES  -------------
-
-# Copy usd_ms.dll to bin dir
-add_custom_command(TARGET SceneLoaderUSD POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${OPEN_USD_DIR_BUILD}/lib/usd_ms.dll"
-        "${USD_BIN_DIR}"
-)
-
-# Copy tbb.lib to bin dir
-add_custom_command(TARGET SceneLoaderUSD POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${OPEN_USD_DIR_BUILD}/lib/tbb.lib"
-        "${USD_BIN_DIR}"
-)
-
-# Copy tbb_debug.lib to bin dir
-add_custom_command(TARGET SceneLoaderUSD POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${OPEN_USD_DIR_BUILD}/lib/tbb_debug.lib"
-        "${USD_BIN_DIR}"
-)
-
-# Copy bin/* to bin dir
-add_custom_command(TARGET SceneLoaderUSD POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${OPEN_USD_DIR_BUILD}/bin"
-        "${USD_BIN_DIR}"
-)
-
-# Copy lib/usd dir to bin dir
-add_custom_command(TARGET SceneLoaderUSD POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${OPEN_USD_DIR_BUILD}/lib/usd"
-        "${USD_BIN_DIR}/usd"
-)
-
-if(USD_DEBUG)
-    # Copy usd_ms.pdb to bin dir
-    add_custom_command(TARGET SceneLoaderUSD POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/usd_ms.pdb"
-            "${USD_BIN_DIR}"
+            "${USD_BIN_DIR}/lib"
     )
 endif()
 

@@ -15,13 +15,13 @@ struct Object
     const char* DebugName = "Unnamed Object";
 #endif
 
-    float M[16];
-    uint32_t MaterialIndex;
+    float M[16]{};
+    uint32_t MaterialIndex{};
 
-    uint32_t MegaBufferVertexOffset;
-    uint32_t MegaBufferVertexCount;
-    uint32_t MegaBufferIndexOffset;
-    uint32_t MegaBufferIndexCount;
+    uint32_t MegaBufferVertexOffset{};
+    uint32_t MegaBufferVertexCount{};
+    uint32_t MegaBufferIndexOffset{};
+    uint32_t MegaBufferIndexCount{};
 };
 
 struct SceneCPU
