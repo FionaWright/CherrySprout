@@ -33,8 +33,10 @@ public:
     [[nodiscard]] float GetTotalEnvMapLuminance() const { return m_envMapTotalLuminance; }
     [[nodiscard]] float GetPunctualWeight() const { return m_punctualWeight; }
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
     [[nodiscard]] const std::vector<ProbabilityDistributionSample>& GetCpuLightsCdf() const { return m_cpuLsdCdf; }
     [[nodiscard]] const std::vector<AliasEntry>& GetCpuLightsAlias() const { return m_cpuLsdAlias; }
+#endif
 
 private:
     void buildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap);

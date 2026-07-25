@@ -76,9 +76,18 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
 
     # -------------- SCENE LOADER COPY FILES  -------------
 
+    set(EXTRA_LIB )
+    set(EXTRA_LIB_OUTPUT )
+    if (USD_DEBUG)
+        set(EXTRA_LIB "${USD_BIN_DIR}/tbb_debug.lib")
+        set(EXTRA_LIB_OUTPUT OUTPUT "${USD_BIN_DIR}/tbb_debug.lib")
+    endif()
+
     add_custom_command(
             OUTPUT "${USD_BIN_DIR}/usd_ms.lib"
+            OUTPUT "${USD_BIN_DIR}/tbb.lib"
             OUTPUT "${USD_BIN_DIR}/tbbmalloc.lib"
+            ${EXTRA_LIB_OUTPUT}
 
             COMMAND ${CMAKE_COMMAND} -E make_directory "${USD_BIN_DIR}"
 
@@ -106,7 +115,12 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
             DEPENDS USD_EP
             VERBATIM
     )
-    add_custom_target(SceneLoaderUSD_CopyBuild DEPENDS "${USD_BIN_DIR}/usd_ms.lib" "${USD_BIN_DIR}/tbbmalloc.lib")
+    add_custom_target(SceneLoaderUSD_CopyBuild DEPENDS
+            "${USD_BIN_DIR}/usd_ms.lib"
+            "${USD_BIN_DIR}/tbb.lib"
+            ${EXTRA_LIB}
+            "${USD_BIN_DIR}/tbbmalloc.lib"
+    )
 
     if(USD_DEBUG)
         # Copy usd_ms.pdb to bin dir
@@ -141,8 +155,11 @@ add_dependencies(usd_m USD_EP SceneLoaderUSD_CopyBuild)
 
 add_library(tbb SHARED IMPORTED GLOBAL)
 set_target_properties(tbb PROPERTIES
-        IMPORTED_IMPLIB "${USD_BIN_DIR}/tbb.lib"
-        IMPORTED_LOCATION "${USD_BIN_DIR}/tbb.dll"
+        IMPORTED_LOCATION_DEBUG "${USD_BIN_DIR}/tbb_debug.dll"
+        IMPORTED_IMPLIB_DEBUG "${USD_BIN_DIR}/tbb_debug.lib"
+
+        IMPORTED_LOCATION_RELEASE "${USD_BIN_DIR}/tbb.dll"
+        IMPORTED_IMPLIB_RELEASE "${USD_BIN_DIR}/tbb.lib"
         INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
 )
 

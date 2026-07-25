@@ -52,6 +52,8 @@ public:
 
 private:
     bool pathTracingFeatureEnabled(PathTracerFeatureFlags flag) const;
+    void renderGuiCore();
+    void renderGuiSceneData();
 
     GreenhouseConfig m_config{};
     float m_aspectRatio = 0.0f;

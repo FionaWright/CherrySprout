@@ -14,14 +14,25 @@ void Greenhouse::RenderGUI()
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
                      ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
-    static bool s_hideGUI = false;
-    ImGui::Checkbox("Hide GUI", &s_hideGUI);
-    if (s_hideGUI)
+    if (ImGui::BeginTabItem("Core"))
     {
-        Gui::EndWindow();
-        return;
+        renderGuiCore();
+        ImGui::EndTabItem();
     }
 
+    if (ImGui::BeginTabItem("Scene"))
+    {
+        renderGuiSceneData();
+        ImGui::EndTabItem();
+    }
+
+    m_ptFrameDirty |= m_sceneDirty | m_renderBackendDirty | m_ptPipelineDirty;
+
+    Gui::EndWindow();
+}
+
+void Greenhouse::renderGuiCore()
+{
     ImGui::SeparatorText("Scene");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
@@ -74,7 +85,9 @@ void Greenhouse::RenderGUI()
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
+#if CHERRY_DEBUG_FEATURES_ENABLED
         ImGui::Checkbox("Gizmos Enabled", &m_gizmosEnabled);
+#endif
         ImGui::Spacing();
 
         m_ptFrameDirty |= GuiUtils::FwInputUInt("SPP", &m_config.PathTracerConfig.SPP);
@@ -465,8 +478,86 @@ void Greenhouse::RenderGUI()
 #endif
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
+}
 
-    m_ptFrameDirty |= m_sceneDirty | m_renderBackendDirty | m_ptPipelineDirty;
+void renderGuiSceneDataMaterial(SceneCPU* sceneCpu, const uint32_t materialIdx)
+{
+    CherryAssert(materialIdx < sceneCpu->MegaBufferMaterialsCount);
+    auto& mat = sceneCpu->MegaBufferMaterials[materialIdx];
 
-    Gui::EndWindow();
+    GuiUtils::FwColorEdit4((std::string("Albedo##") + std::to_string(materialIdx)).c_str(), reinterpret_cast<float*>(&mat.Albedo));
+    GuiUtils::FwColorEdit3((std::string("Emissive Color##") + std::to_string(materialIdx)).c_str(), reinterpret_cast<float*>(&mat.EmissiveColor));
+    GuiUtils::FwColorEdit3((std::string("Transmission Color##") + std::to_string(materialIdx)).c_str(), reinterpret_cast<float*>(&mat.TransmissionColor));
+
+    GuiUtils::FwInputFloat((std::string("Emissive Strength##") + std::to_string(materialIdx)).c_str(), &mat.EmissiveStrength);
+    GuiUtils::FwInputFloat((std::string("Transmission Factor##") + std::to_string(materialIdx)).c_str(), &mat.TransmissionFactor);
+
+    GuiUtils::FwInputFloat((std::string("Roughness##") + std::to_string(materialIdx)).c_str(), &mat.Roughness);
+    GuiUtils::FwInputFloat((std::string("Metallic##") + std::to_string(materialIdx)).c_str(), &mat.Metallic);
+    GuiUtils::FwInputFloat((std::string("SpecularFactor##") + std::to_string(materialIdx)).c_str(), &mat.SpecularFactor);
+    GuiUtils::FwInputFloat((std::string("Aniso Strength##") + std::to_string(materialIdx)).c_str(), &mat.AnisoStrength);
+    GuiUtils::FwInputFloat((std::string("IOR N##") + std::to_string(materialIdx)).c_str(), &mat.IOR_N);
+
+    auto textureText = [&](const int texIdx, const char* name)
+    {
+        const std::string s = std::string(name) + " Texture: " + sceneCpu->TextureFilepaths[texIdx] + "##" + std::to_string(materialIdx);
+        ImGui::TextUnformatted(s.c_str());
+    };
+
+    textureText(mat.TexIdxAlbedo, "Albedo");
+    textureText(mat.TexIdxNormal, "Normal");
+    textureText(mat.TexIdxRoughness, "Roughness");
+    textureText(mat.TexIdxMetallic, "Metallic");
+    textureText(mat.TexIdxEmissive, "Emissive");
+    textureText(mat.TexIdxAnisotropy, "Anisotropy");
+    textureText(mat.TexIdxClearcoat, "Clearcoat");
+    textureText(mat.TexIdxClearcoatRoughness, "Clearcoat R");
+    textureText(mat.TexIdxClearcoatNormal, "Clearcoat N");
+    textureText(mat.TexIdxSheenColor, "Sheen");
+    textureText(mat.TexIdxSheenRoughness, "Sheen R");
+    textureText(mat.TexIdxTransmissionFactor, "Transmission");
+}
+
+void Greenhouse::renderGuiSceneData()
+{
+    ImGui::Text("%s Scene Data", s_sceneConfigs.at(m_currentSceneIdx).Name.c_str());
+    ImGui::Spacing();
+
+    auto& sceneCPU = m_sceneManager.GetCPU();
+
+    const std::string labelObjects = std::string("Objects (") + std::to_string(sceneCPU.ObjectCount) + ")";
+    if (ImGui::CollapsingHeader(labelObjects.c_str()))
+    {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
+        for (int i = 0; i < sceneCPU.ObjectCount; i++)
+        {
+            std::string labelObjI = std::string("(") + std::to_string(i) + ")";
+#if _DEBUG
+            labelObjI += " " + sceneCPU.Objects[i].DebugName;
+#endif
+            if (ImGui::TreeNode(labelObjI.c_str()))
+            {
+                ImGui::Indent(IM_GUI_INDENTATION);
+                ImGui::Text("Material Index: %i", sceneCPU.Objects[i].MaterialIndex);
+                ImGui::Text("Index Count: %i", sceneCPU.Objects[i].MegaBufferIndexCount);
+                ImGui::Text("Vertex Count: %i", sceneCPU.Objects[i].MegaBufferVertexCount);
+                ImGui::Text("Index Offset: %i", sceneCPU.Objects[i].MegaBufferIndexOffset);
+                ImGui::Text("Vertex Offset: %i", sceneCPU.Objects[i].MegaBufferVertexOffset);
+
+                if (ImGui::TreeNode((std::string("View Material##") + labelObjI).c_str()))
+                {
+                    ImGui::Indent(IM_GUI_INDENTATION);
+                    renderGuiSceneDataMaterial(&sceneCPU, sceneCPU.Objects[i].MaterialIndex);
+                    ImGui::Unindent(IM_GUI_INDENTATION);
+                    ImGui::TreePop();
+                }
+
+                ImGui::Unindent(IM_GUI_INDENTATION);
+                ImGui::TreePop();
+            }
+        }
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
 }
