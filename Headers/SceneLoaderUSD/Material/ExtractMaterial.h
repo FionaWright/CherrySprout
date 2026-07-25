@@ -66,6 +66,26 @@ namespace SceneLoaderUSD
     {
         pxr::UsdShadeShader surface;
 
+        // MaterialX
+        {
+            pxr::TfToken ctx("mtlx");
+            auto output = mat.GetSurfaceOutput(ctx);
+            if (output)
+            {
+                pxr::UsdShadeConnectableAPI source;
+                pxr::TfToken sourceName;
+                pxr::UsdShadeAttributeType sourceType;
+
+                if (output.GetConnectedSource(&source, &sourceName, &sourceType))
+                {
+                    if (!TryResolveSurface(source, surface))
+                        return {};
+
+                    return ExtractMaterial_MaterialX(surface, textureList);
+                }
+            }
+        }
+
         // Universal
         {
             auto output = mat.GetSurfaceOutput();
@@ -117,27 +137,8 @@ namespace SceneLoaderUSD
             }
         }
 
-        // MaterialX
-        {
-            pxr::TfToken ctx("mtlx");
-            auto output = mat.GetSurfaceOutput(ctx);
-            if (output)
-            {
-                pxr::UsdShadeConnectableAPI source;
-                pxr::TfToken sourceName;
-                pxr::UsdShadeAttributeType sourceType;
-
-                if (output.GetConnectedSource(&source, &sourceName, &sourceType))
-                {
-                    if (!TryResolveSurface(source, surface))
-                        return {};
-
-                    return ExtractMaterial_MaterialX(surface, textureList);
-                }
-            }
-        }
-
-        throw std::runtime_error("Unsupported material type");
+        std::cerr << "[WARNING] Unsupported material type" << std::endl;
+        return {};
     }
 }
 

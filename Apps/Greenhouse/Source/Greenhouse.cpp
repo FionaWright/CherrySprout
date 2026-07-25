@@ -405,5 +405,6 @@ bool Greenhouse::GBufferRequired() const
     debugNeeds = m_gizmosEnabled || debugFlagsNeeds;
 #endif
 
-    return debugNeeds;
+    // PT only for now
+    return m_config.RenderBackend == RenderBackendMode::ePathTracer && debugNeeds;
 }

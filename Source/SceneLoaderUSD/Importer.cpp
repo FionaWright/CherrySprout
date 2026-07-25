@@ -14,6 +14,8 @@
 #include "pxr/usd/usdShade/material.h"
 #include "pxr/usd/usdShade/materialBindingAPI.h"
 #include "pxr/base/gf/matrix4d.h"
+#include "pxr/base/plug/registry.h"
+#include "pxr/base/plug/plugin.h"
 
 #pragma warning(pop)
 
@@ -37,6 +39,12 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
     pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdPath);
     if (!stage)
         throw std::runtime_error("USD file does not exist");
+
+    const auto& plugins = pxr::PlugRegistry::GetInstance().GetAllPlugins();
+    for (auto& plugin : plugins)
+    {
+        std::cout << "USD Plugin Registered: " << plugin->GetName() << std::endl;
+    }
 
     context.Materials.emplace_back(); // Assign default fallback material for objects missing materials
 
