@@ -1,5 +1,9 @@
 #include "System/pch.h"
 #include "PathTracer.h"
+#include "Utils/ConstantsCpp.h"
+
+#include "imgui.h"
+#include "GreenhouseConfig.h"
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
 void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)

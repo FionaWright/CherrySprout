@@ -534,7 +534,7 @@ void Greenhouse::renderGuiSceneData()
         {
             std::string labelObjI = std::string("(") + std::to_string(i) + ")";
 #if _DEBUG
-            labelObjI += " " + sceneCPU.Objects[i].DebugName;
+            labelObjI += std::string(" ") + sceneCPU.Objects[i].DebugName;
 #endif
             if (ImGui::TreeNode(labelObjI.c_str()))
             {

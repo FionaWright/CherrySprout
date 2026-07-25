@@ -25,11 +25,24 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
     if (!isUSD)
         throw std::runtime_error("Non-USD scenes not supported yet!");
 
-    const HMODULE dll = LoadLibraryA("SceneLoaderUSD.dll");
+    char exe[MAX_PATH];
+    GetModuleFileNameA(nullptr, exe, MAX_PATH);
+    const std::filesystem::path dllPath = std::filesystem::path(exe).parent_path() / "SceneLoaderUSD.dll";
+    const HMODULE dll = LoadLibraryA(dllPath.string().c_str());
     if (!dll)
     {
-        std::cerr << "Failed to load DLL\n";
-        return;
+        LPSTR msg = nullptr;
+        FormatMessageA(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            nullptr,
+            GetLastError(),
+            0,
+            (LPSTR)&msg,
+            0,
+            nullptr);
+        std::cerr << "DLL LOAD ERROR: " << msg << std::endl;
+
+        throw std::runtime_error("Failed to load SceneLoaderUSD.dll!");
     }
 
     const auto LoadUSD =
@@ -38,9 +51,8 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 
     if (!LoadUSD)
     {
-        std::cerr << "Failed to find LoadUSD\n";
         FreeLibrary(dll);
-        return;
+        throw std::runtime_error("Failed to find SceneLoaderUSD.dll/LoadUSD!");
     }
 
     CherryPrint("Loading scene...: " << fullpath);

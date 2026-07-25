@@ -85,6 +85,7 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
 
     add_custom_command(
             OUTPUT "${USD_BIN_DIR}/usd_ms.lib"
+            OUTPUT "${USD_BIN_DIR}/usd_ms.dll"
             OUTPUT "${USD_BIN_DIR}/tbb.lib"
             OUTPUT "${USD_BIN_DIR}/tbbmalloc.lib"
             ${EXTRA_LIB_OUTPUT}
@@ -93,6 +94,9 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
 
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib" "${USD_BIN_DIR}/usd_ms.lib"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${OPEN_USD_DIR_BUILD}/lib/usd_ms.dll" "${USD_BIN_DIR}/usd_ms.dll"
 
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${OPEN_USD_DIR_BUILD}/lib/tbb.lib" "${USD_BIN_DIR}/tbb.lib"
@@ -117,6 +121,7 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
     )
     add_custom_target(SceneLoaderUSD_CopyBuild DEPENDS
             "${USD_BIN_DIR}/usd_ms.lib"
+            "${USD_BIN_DIR}/usd_ms.dll"
             "${USD_BIN_DIR}/tbb.lib"
             ${EXTRA_LIB}
             "${USD_BIN_DIR}/tbbmalloc.lib"
@@ -131,8 +136,10 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
         )
     endif()
 
+    set(DELETE_BUILD_DIR 1)
+
     # Delete OpenUSD source/build (They are MASSIVE and no longer needed)
-    if(EXISTS ${OPEN_USD_DIR})
+    if(DELETE_BUILD_DIR AND EXISTS ${OPEN_USD_DIR})
         add_custom_command(TARGET SceneLoaderUSD_CopyBuild POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E rm -rf "${OPEN_USD_DIR}"
         )
@@ -199,9 +206,7 @@ target_link_libraries(SceneLoaderUSD PUBLIC
 )
 
 if (USD_DEBUG)
-    target_link_directories(SceneLoaderUSD PUBLIC
-            "${USD_BIN_DIR}/lib"
-    )
+    target_link_directories(SceneLoaderUSD PUBLIC "${USD_BIN_DIR}")
 endif()
 
 # Copy SceneLoaderUSD lib/dll to bin dir
