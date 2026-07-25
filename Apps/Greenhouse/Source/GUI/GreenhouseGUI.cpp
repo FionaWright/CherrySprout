@@ -14,16 +14,21 @@ void Greenhouse::RenderGUI()
     Gui::BeginWindow("Greenhouse", ImVec2(0, 0),
                      ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
-    if (ImGui::BeginTabItem("Core"))
+    if (ImGui::BeginTabBar("Greenhouse"))
     {
-        renderGuiCore();
-        ImGui::EndTabItem();
-    }
+        if (ImGui::BeginTabItem("Core"))
+        {
+            renderGuiCore();
+            ImGui::EndTabItem();
+        }
 
-    if (ImGui::BeginTabItem("Scene"))
-    {
-        renderGuiSceneData();
-        ImGui::EndTabItem();
+        if (ImGui::BeginTabItem("Scene"))
+        {
+            renderGuiSceneData();
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
     }
 
     m_ptFrameDirty |= m_sceneDirty | m_renderBackendDirty | m_ptPipelineDirty;
