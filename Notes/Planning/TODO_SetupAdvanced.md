@@ -6,7 +6,8 @@ Setup stuff that is not required to begin work on the core stuff, but still need
 - [x] Environment maps
 - [x] Glass
 - [ ] (F) Env Map GUI 
-- [ ] Gamma Correction flag
+- [x] Gamma Correction flag
+- [ ] Microfacet Model GUI 
 
 - [x] Hot reloading
 - [x] Root constants support
