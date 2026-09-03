@@ -92,26 +92,14 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
 
             COMMAND ${CMAKE_COMMAND} -E make_directory "${USD_BIN_DIR}"
 
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/usd_ms.lib" "${USD_BIN_DIR}/usd_ms.lib"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/usd_ms.dll" "${USD_BIN_DIR}/usd_ms.dll"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/tbb.lib" "${USD_BIN_DIR}/tbb.lib"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/tbbmalloc.lib" "${USD_BIN_DIR}/tbbmalloc.lib"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/tbb_debug.lib" "${USD_BIN_DIR}/tbb_debug.lib"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${OPEN_USD_DIR_BUILD}/lib" "${USD_BIN_DIR}"
 
             COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
             "${OPEN_USD_DIR_BUILD}/bin" "${USD_BIN_DIR}"
 
-            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            "${OPEN_USD_DIR_BUILD}/lib/usd" "${USD_BIN_DIR}/usd"
+            #COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            #"${OPEN_USD_DIR_BUILD}/lib/usd" "${USD_BIN_DIR}/usd"
 
             COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
             "${OPEN_USD_DIR_BUILD}/include" "${USD_BIN_DIR}/include"
