@@ -19,8 +19,8 @@ struct PathTracingDebugInfo
     hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
 
     float ScaleIntensityGlobal = 1.0f;
-    float ScaleIntensityPunctual = 1.0f;
-    float ScaleIntensityPoint = 1.0f;
+    float ScaleIntensityPunctual = 0.01f;
+    float ScaleIntensityPoint = 0.1f;
     float ScaleIntensityDistant = 1.0f;
     float ScaleIntensitySpot = 1.0f;
     float ScaleIntensityEnvMap = 1.0f;

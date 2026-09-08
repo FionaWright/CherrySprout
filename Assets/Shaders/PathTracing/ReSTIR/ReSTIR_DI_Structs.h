@@ -6,22 +6,14 @@
 
 #include "PathTracing/ReSTIR/Reservoir.h"
 
-struct LightSampleSelection
-{
-    hlsl::float3 Direction;
-    hlsl::uint LightIndex;
-
-    hlsl::float3 Radiance;
-    float PDF;
-};
-
 struct LightSampleSelectionInfo
 {
     hlsl::float3 Dir_wo;
+    hlsl::float3 HitPos;
     hlsl::float3 HitPosOffset;
     HitInfo HitInfo;
 };
 
-typedef Reservoir<LightSampleSelection> ReservoirDI;
+typedef Reservoir<LightSample> ReservoirDI;
 
 #endif

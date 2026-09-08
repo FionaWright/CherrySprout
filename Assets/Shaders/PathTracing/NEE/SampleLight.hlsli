@@ -8,7 +8,6 @@
 #include "Scene/PunctualLight.h"
 #include "Utils/Math/Punctual.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
-#include "PathTracing/Transient.hlsli"
 
 #if FEATURE_ENABLED(AliasTables)
 void sampleLSD(float xi, out uint lightIdx, out float pdf)
@@ -33,27 +32,23 @@ void sampleLSD(float xi, out uint lightIdx, out float pdf)
 }
 #endif
 
-void SampleLight(
+LightSample SampleLight(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
     PathState pathState,
     BxDF bxdf,
 
     float3 wo,
-    float3 nextOrigin,
-    out float3 lightRadiance,
-    out uint lightIdx,
-    out float pdf,
-    out float3 wi
+    float3 hitPos,
+    float3 nextOrigin
 )
 {
     float xi = Rand01(rngInfo);
     float pdf_lsd;
+    uint lightIdx;
     sampleLSD(xi, lightIdx, pdf_lsd);
 
-    float3 Le;
-    float lightDistance;
-    bool isDelta;
+    LightSample lightSample;
 
     if (lightIdx == 0)
     {
@@ -64,13 +59,14 @@ void SampleLight(
 
         float2 uv_env;
         float pdf_env;
-        SampleEnvMapCdf(xi1, xi2, uv_env, wi, pdf_env);
-        pdf = pdf_env * pdf_lsd;
+        SampleEnvMapCdf(xi1, xi2, uv_env, lightSample.Direction, pdf_env);
 
-        Le = gTexEnvMap.Sample(gSampler, uv_env).rgb;
-        DBG_SCALE_INTENSITY_ENV_MAP(Le);
-        lightDistance = INF;
-        isDelta = false;
+        lightSample.Radiance = gTexEnvMap.Sample(gSampler, uv_env).rgb;
+        DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
+
+        lightSample.Distance = INF;
+        lightSample.PDF = pdf_env * pdf_lsd;
+        lightSample.IsDelta = false;
     }
     else
     {
@@ -81,75 +77,26 @@ void SampleLight(
             DBG_ASSERT_LT(lightIdx, puncLightCount+1, OOB_LIGHT_INDEX);
         }
 
-        pdf = pdf_lsd;
-
         uint punctualLightIdx = lightIdx - 1;
         PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];
 
-        LightSample lightSample = EvaluateLight(light, nextOrigin); // TODO: Is it okay to use nextOrigin instead of hitPos?
-        wi = lightSample.Direction;
-        Le = lightSample.Radiance;
-        DBG_SCALE_INTENSITY_PUNCTUAL(Le);
-        lightDistance = lightSample.Distance;
-        isDelta = true;
+        lightSample = EvaluateLight(light, hitPos);
+        DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
+
+        lightSample.PDF = pdf_lsd;
+        lightSample.IsDelta = true;
     }
 
-    DBG_OUTPUT3(Le,               NEE_Le);
-    DBG_OUTPUT1(lightIdx,         NEE_LightIdx);
-    DBG_OUTPUT3(xi,               NEE_xi);
-    DBG_OUTPUT1(lightDistance,    NEE_Distance);
-    DBG_OUTPUT3(wi,               NEE_L_w);
-    DBG_OUTPUT1(pdf,              NEE_PDF);
+    lightSample.Index = lightIdx;
 
-    if (FEATURE_ENABLED(Transient))
-    {
-        if (gSettings.TransientLightIdx == -1 || gSettings.TransientLightIdx == lightIdx)
-        {
-            float transientFactor = GetTransientFactor(pathState.RollingPathDistance + lightDistance);
-            Le *= transientFactor;
-        }
-        else
-            Le = 0.0f;
-    }
+    DBG_OUTPUT3(lightSample.Radiance, NEE_Le);
+    DBG_OUTPUT1(lightSample.Index, NEE_LightIdx);
+    DBG_OUTPUT3(xi, NEE_xi);
+    DBG_OUTPUT1(lightSample.Distance, NEE_Distance);
+    DBG_OUTPUT3(lightSample.Direction, NEE_L_w);
+    DBG_OUTPUT1(lightSample.PDF, NEE_PDF);
 
-    float NdL = dot(hitInfo.Ns_ff, wi);
-    if (length(Le) == 0.0f || NdL < 0.0f)
-    {
-        lightRadiance = 0;
-        return;
-    }
-
-    bool occluded;
-    TraceShadowRay(nextOrigin, wi, occluded, lightDistance);
-
-    DBG_OUTPUT1(occluded,     NEE_Occluded);
-
-    if (occluded)
-    {
-        lightRadiance = 0;
-        DBG_OUTPUT1(0,            NEE_MIS_Weight);
-        DBG_OUTPUT1(0,            NEE_Radiance);
-        return;
-    }
-
-    float3 m;
-    if (isDelta)
-    {
-        m = 1.0f;
-    }
-    else
-    {
-        float3 f_bxdf;
-        float pdf_bxdf;
-        bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
-
-        m = f_bxdf * PowerHeuristic(pdf, pdf_bxdf);
-    }
-
-    lightRadiance = Le * m * max(0, NdL) / pdf;
-
-    DBG_OUTPUT1(m,                NEE_MIS_Weight);
-    DBG_OUTPUT1(lightRadiance,    NEE_Radiance);
+    return lightSample;
 }
 
 #endif

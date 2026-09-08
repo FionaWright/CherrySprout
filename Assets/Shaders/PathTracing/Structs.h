@@ -38,4 +38,16 @@ struct ProbabilityDistributionSample
     float CDF;
 };
 
+struct LightSample
+{
+    hlsl::float3 Direction;
+    float Distance;
+
+    hlsl::float3 Radiance;
+    hlsl::uint Index;
+
+    bool IsDelta;
+    float PDF;
+};
+
 #endif
