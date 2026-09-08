@@ -38,14 +38,14 @@ void Hit(HitInfo hitInfo, inout RayDesc ray, inout PathState pathState, inout fl
 
         if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
         {
-            // TODO: Share TraceShadowRay?
             E_direct += SampleReservoir(hitInfo, pixelCoord, wo, nextOrigin, bxdf);
         }
         else
         {
             float3 wi_env;
             float pdf_env;
-            SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, nextOrigin, E_direct, pdf_env, wi_env);
+            uint lightIdx;
+            SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, nextOrigin, E_direct, lightIdx, pdf_env, wi_env);
         }
 
         // TODO: Share shadow ray handling for both out here

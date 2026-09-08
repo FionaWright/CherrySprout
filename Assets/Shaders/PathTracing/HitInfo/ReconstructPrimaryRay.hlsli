@@ -2,6 +2,7 @@
 #define H_CONSTRUCT_FIRST_HIT_H
 
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
+#include "Utils/Debug/Palette.h"
 
 float3 DepthToWorldPos(uint2 pixelCoord, float depth)
 {

@@ -42,12 +42,12 @@ void SampleLight(
     float3 wo,
     float3 nextOrigin,
     out float3 lightRadiance,
+    out uint lightIdx,
     out float pdf,
     out float3 wi
 )
 {
     float xi = Rand01(rngInfo);
-    uint lightIdx;
     float pdf_lsd;
     sampleLSD(xi, lightIdx, pdf_lsd);
 

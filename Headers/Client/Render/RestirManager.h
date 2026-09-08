@@ -14,9 +14,9 @@ class D3D;
 class RestirManager
 {
 public:
-    void Init(D3D* d3d, const RootSig* rootSig);
+    void Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs);
 
-    void GenerateSamplesDi(ID3D12GraphicsCommandList* cmdList, const Heap* heap);
+    void GenerateSamplesDi(ID3D12GraphicsCommandList* cmdList);
 
     static size_t TotalCbvRequiredSize() { return 0; }
 

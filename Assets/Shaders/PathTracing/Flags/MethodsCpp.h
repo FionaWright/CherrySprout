@@ -16,6 +16,7 @@ static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags
         eFeature_NEE |
         eFeature_FireflyThreshold |
         eFeature_AliasTables |
+        eFeature_RestirDI |
         eFeature_RussianRoulette
     );
 

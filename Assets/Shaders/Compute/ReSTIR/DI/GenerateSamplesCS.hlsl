@@ -61,5 +61,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     WRS(rngInfo, reservoir, gSettings.RestirNumCandidates, gSettings.RestirConfidenceCap, info);
 
+    //reservoir.Y = Generate(rngInfo, info);
+    //reservoir.Confidence = 1;
+    //reservoir.WeightSum = 1.0f;
+
     gReservoirBuffer[reservoirIdx] = reservoir;
 }

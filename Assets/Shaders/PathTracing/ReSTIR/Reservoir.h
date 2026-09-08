@@ -15,7 +15,7 @@ struct Reservoir
 template<typename T>
 Reservoir<T> CreateReservoir()
 {
-    Reservoir<T> r;
+    Reservoir<T> r = (Reservoir<T>)0;
     r.W_Y = 0;
     r.WeightSum = 0;
     r.Confidence = 0;

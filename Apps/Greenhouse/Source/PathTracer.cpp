@@ -75,8 +75,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
 
-    m_restirManager.Init(d3d, &m_rootSig);
-
     CherryPrint("Path-Tracer Initialized");
 }
 
@@ -303,6 +301,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.DofFocalDist = renderInfo.PathTracerConfig->DofFocalDist;
         settings.DofLensRadius = renderInfo.PathTracerConfig->DofLensRadius;
 
+        settings.RestirConfidenceCap = 30;
+        settings.RestirNumCandidates = 6;
+
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
         m_descriptorSet.UpdateCBV(0, &settings);
@@ -320,6 +321,17 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
+    if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_RestirDI))
+    {
+        cmdList->SetComputeRootSignature(m_rootSig.Get());
+        heap->Bind(cmdList);
+        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
+        m_descriptorSet.SetDescriptorTables_Compute(cmdList);
+
+        m_restirManager.GenerateSamplesDi(cmdList);
+    }
+
+    // Main Pass
 #if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_scheduledRunState != ScheduledRunState::eDisplay)
 #endif
@@ -402,6 +414,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 #endif
 
     Reset();
+
+    if (GetPathTracerFeatureFlag(featureFlags, eFeature_RestirDI))
+        m_restirManager.Init(device, &m_rootSig, compileArgs);
 }
 
 void PathTracer::Reset()
