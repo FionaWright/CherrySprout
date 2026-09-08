@@ -7,6 +7,7 @@
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 #include "PathTracing/ReSTIR/WRS.hlsli"
+#include "Utils/Debug/Palette.h"
 
 LightSample Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info)
 {
@@ -54,34 +55,42 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
     DBG_OUTPUT3(Palette(reservoir.Y.Index), RESTIR_YLightIndex);
     DBG_OUTPUT1(max(0, dot(reservoir.Y.Direction, hitInfo.Ns_ff)), RESTIR_NdL);
 
-    if (reservoir.WeightSum <= 0.0f || reservoir.Confidence <= 0.0f)
+    float NdL = max(0, dot(reservoir.Y.Direction, hitInfo.Ns_ff));
+    if (reservoir.WeightSum <= 0.0f || reservoir.Confidence <= 0.0f || NdL <= 0)
+    {
+        DBG_OUTPUT1(1, RESTIR_Occluded);
         return 0;
-
-    float3 wi = reservoir.Y.Direction;
-    float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (NdL <= 0)
-        return 0;
+    }
 
     bool occluded;
-    float lightDistance;
-    TraceShadowRay(nextOrigin, wi, occluded, lightDistance);
+    TraceShadowRay(nextOrigin, reservoir.Y.Direction, occluded, reservoir.Y.Distance);
 
     DBG_OUTPUT1(occluded, RESTIR_Occluded);
 
     if (occluded)
         return 0;
 
-    float3 f_bxdf;
-    float pdf_bxdf;
-    bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+    float3 m;
+    if (reservoir.Y.IsDelta)
+    {
+        m = 1.0f;
+    }
+    else
+    {
+        float3 f_bxdf;
+        float pdf_bxdf;
+        bxdf.Evaluate(hitInfo, wo, reservoir.Y.Direction, f_bxdf, pdf_bxdf);
+
+        m = f_bxdf * PowerHeuristic(reservoir.Y.PDF, pdf_bxdf);
+
+        DBG_OUTPUT3(f_bxdf, RESTIR_Bxdf);
+        DBG_OUTPUT1(pdf_bxdf, RESTIR_PDF);
+    }
 
     float W_Y = reservoir.W_Y / reservoir.Confidence; // ?
-
-    DBG_OUTPUT3(f_bxdf, RESTIR_Bxdf);
-    DBG_OUTPUT1(pdf_bxdf, RESTIR_PDF);
     DBG_OUTPUT1(W_Y, RESTIR_W_Y);
 
-    return f_bxdf * reservoir.Y.Radiance * NdL * W_Y;
+    return reservoir.Y.Radiance * m * max(0, NdL) * W_Y;
 }
 
 #endif
