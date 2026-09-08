@@ -6,12 +6,6 @@
 
 #include "PathTracing/ReSTIR/Reservoir.h"
 
-struct CbvRestirSettings
-{
-    hlsl::uint ConfidenceCap;
-    hlsl::uint NumCandidates;
-};
-
 struct LightSampleSelection
 {
     hlsl::float3 Direction;

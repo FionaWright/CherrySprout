@@ -3,8 +3,11 @@
 
 #include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/NEE/SampleLight.hlsli"
+#include "PathTracing/NEE/TraceShadowRay.hlsli"
 
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/WRS.hlsli"
 
 LightSampleSelection Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info)
 {
@@ -45,6 +48,33 @@ float Target(LightSampleSelection X_i, LightSampleSelectionInfo info)
 float PDF(LightSampleSelection X_i, LightSampleSelectionInfo info)
 {
     return max(1e-6f, X_i.PDF);
+}
+
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 nextOrigin, BxDF bxdf)
+{
+    uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
+    ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+
+    float3 wi = reservoir.Y.Direction;
+    float NdL = max(0, dot(wi, hitInfo.Ns_ff));
+    if (reservoir.Confidence <= 0 || NdL <= 0)
+        return 0;
+
+    bool occluded;
+    float lightDistance;
+    TraceShadowRay(nextOrigin, wi, occluded, lightDistance);
+
+    if (!occluded)
+    {
+        float3 f_bxdf;
+        float pdf_bxdf;
+        bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+
+        float W_Y = reservoir.W_Y / reservoir.Confidence; // ?
+        return f_bxdf * reservoir.Y.Radiance * NdL * W_Y;
+    }
+
+    return 0;
 }
 
 #endif

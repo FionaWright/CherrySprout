@@ -1,6 +1,8 @@
 #ifndef H_BTDF_TRANSMISSIVE_LOBE_H
 #define H_BTDF_TRANSMISSIVE_LOBE_H
 
+#include "PathTracing/Structs.h"
+
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
 
 void TransmissiveLobe_Sample(

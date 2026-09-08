@@ -1,6 +1,8 @@
 #ifndef H_PT_UTILS_H
 #define H_PT_UTILS_H
 
+#define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
+
 float3 LRGB_to_SRGB(float3 color)
 {
     if (FEATURE_ENABLED(GammaCorrectionFast))

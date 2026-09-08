@@ -33,6 +33,10 @@ struct CbvPathTracingSettings
     int TransientLightIdx;
     float TransientDistanceSinceStart;
     float TransientPulseDistance;
+
+    hlsl::uint RestirConfidenceCap;
+    hlsl::uint RestirNumCandidates;
+    hlsl::uint2 p;
 };
 
 struct CbvPanoToEA

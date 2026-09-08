@@ -2,6 +2,9 @@
 #define H_SAMPLE_LIGHT_H
 
 #include "PathTracing/MIS.hlsli"
+#include "PathTracing/NEE/BinarySearch.hlsli"
+#include "PathTracing/NEE/SampleEnvMapCdf.hlsli"
+#include "PathTracing/NEE/TraceShadowRay.hlsli"
 #include "Scene/PunctualLight.h"
 #include "Utils/Math/Punctual.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"

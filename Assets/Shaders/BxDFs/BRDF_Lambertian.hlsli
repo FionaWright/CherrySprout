@@ -1,6 +1,9 @@
 #ifndef H_BRDF_LAMBERTIAN_H
 #define H_BRDF_LAMBERTIAN_H
 
+#include "PathTracing/Debug/Assert.hlsli"
+#include "PathTracing/Debug/OutputColorMacros.hlsli"
+#include "PathTracing/Structs.h"
 #include "BxDFs/Lobes/LambertianLobe.hlsli"
 
 void BxDF::Sample(

@@ -58,13 +58,13 @@ Texture2D<float4>                                   gSceneTextures[]        : re
 
 RWTexture2D<float4>                                 gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
 RWTexture2D<float4>                                 gTexOutput              : register(u1, REGISTER_SPACE_DEFAULT);
-//RWStructuredBuffer<ReservoirDI>             gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ReservoirDI>                     gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
 
 // =================== U Registers (Debug) =======================================================================
 
 // TODO: Handle register spaces properly in root sig. Then have all debug buffers dependent on _DEBUG
-RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u2, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<RayDump>                         gPathDump               : register(u3, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u3, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<RayDump>                         gPathDump               : register(u4, REGISTER_SPACE_DEFAULT);
 
 // =================== S Registers ===============================================================================
 

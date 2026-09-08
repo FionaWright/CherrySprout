@@ -1,11 +1,10 @@
 #ifndef H_TRACE_H
 #define H_TRACE_H
 
-#define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
-
 #include "PathTracing/Structs.h"
 #include "PathTracing/3_Hit.hlsli"
 #include "PathTracing/3_Miss.hlsli"
+#include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
 #include "Utils/Random.h"
@@ -26,20 +25,35 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
 
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
-        q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-        q.Proceed();
+        bool isMiss;
+        HitInfo hitInfo;
 
-        pathState.RaySegmentIdx = i;
+        if (FEATURE_ENABLED(ReconstructPrimaryRay) && i == 0)
+        {
+            ReconstructPrimaryRayHit(
+                gSettings.CameraPositionWorld,
+                pixelCoord,
+                gGBufferMaterialIdx,
+                gGBufferNormals,
+                gGBufferDepth,
+                gGBufferUvMv,
+                gMegaBufferMaterials,
+                hitInfo,
+                isMiss
+            );
+        }
+        else
+        {
+            q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
+            q.Proceed();
 
-        DBG_SET_CURRENT_RAY_DEPTH(i);
-        DBG_PATH_DUMP_MARK_EXPLORED();
-        DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
-        DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
-        DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBufferDepth);
-        DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBufferUv);
-        DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBufferMv);
+            isMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
 
-        if (q.CommittedStatus() != COMMITTED_TRIANGLE_HIT)
+            if (!isMiss)
+                GetHitInfo(q, hitInfo);
+        }
+
+        if (isMiss)
         {
             float3 L_sample = beta * Miss(pathState, ray.Origin, ray.Direction, i);
 
@@ -54,10 +68,19 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
             break;
         }
 
+        pathState.RaySegmentIdx = i;
         pathState.LastRayDiracDelta = false;
 
+        DBG_SET_CURRENT_RAY_DEPTH(i);
+        DBG_PATH_DUMP_MARK_EXPLORED();
+        DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
+        DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
+        DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBufferDepth);
+        DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBufferUv);
+        DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBufferMv);
+
         float3 L_sample;
-        Hit(q, ray, pathState, L_sample, beta, rngInfo, pixelCoord);
+        Hit(hitInfo, ray, pathState, L_sample, beta, rngInfo, pixelCoord);
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
 

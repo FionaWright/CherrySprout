@@ -4,10 +4,9 @@
 #include "Utils/RandomDirection.h"
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
 #include "BxDFs/BxDFMode.h"
+#include "PathTracing/Structs.h"
 
 struct RngInfo;
-struct PathState;
-struct HitInfo;
 
 struct BxDF
 {

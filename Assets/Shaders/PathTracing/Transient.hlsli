@@ -1,6 +1,8 @@
 #ifndef H_TRANSIENT_H
 #define H_TRANSIENT_H
 
+#if FEATURE_ENABLED(Transient)
+
 enum TransientMode : uint
 {
     eUniform,
@@ -23,5 +25,11 @@ float GetTransientFactor(float pathDistance)
     float d = pathDistance - mid;
     return exp(-0.5f * d * d / (sigma * sigma));
 }
+
+#else
+
+float GetTransientFactor(float pathDistance) { return NAN; }
+
+#endif
 
 #endif

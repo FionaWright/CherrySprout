@@ -50,7 +50,7 @@ GBufferOut PSMain(VsOut input)
 
     Ns = RemapStoU(Ns);
 
-    output.MaterialIdx1 = input.materialIdx;
+    output.MaterialIdx1 = input.materialIdx + 1;
     output.Normals3_Reserved1 = float4(Ns, 0);
     output.UV2_MV2 = float4(uv, 0, 0);
     return output;

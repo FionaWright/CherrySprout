@@ -1,12 +1,11 @@
 #include "Utils/SharedUtils.h"
 #include "Utils/CBVs.h"
+#include "PathTracing/Structs.h"
 
-#include "PathTracing/ReSTIR/ReSTIR_DI.h"
-
-RWStructuredBuffer<ReservoirDI> gReservoirBuffer : register(u0);
-
-ConstantBuffer<CbvPathTracingSettings> gSettings : register(b0);
-ConstantBuffer<CbvRestirSettings> gRestirSettings : register(b1);
+#include "PathTracing/Buffers.hlsli"
+#include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#include "PathTracing/2_GetPrimaryRay.hlsli"
+#include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
 #define SEED_DECORRELATOR 0x46362346 // TODO
 
@@ -15,7 +14,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
     uint2 pixelCoord = DTid.xy;
 
-    if (pixelCoord.x > gSettings.Dimensions.x || pixelCoord.y > gSettings.Dimensions.y)
+    if (pixelCoord.x > gSettings.FrameDimensions.x || pixelCoord.y > gSettings.FrameDimensions.y)
         return;
 
     uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
@@ -25,9 +24,19 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     HitInfo hitInfo;
     bool isMiss;
-    ConstructFirstHitFromGBuffer(gSettings.CameraPositionWorld, pixelCoord, hitInfo, isMiss);
+    ReconstructPrimaryRayHit(
+        gSettings.CameraPositionWorld,
+        pixelCoord,
+        gGBufferMaterialIdx,
+        gGBufferNormals,
+        gGBufferDepth,
+        gGBufferUvMv,
+        gMegaBufferMaterials,
+        hitInfo,
+        isMiss
+    );
 
-    ReservoirDI reservoir = CreateReservoir();
+    ReservoirDI reservoir = CreateReservoir<LightSampleSelection>();
 
     if (isMiss)
     {
@@ -50,7 +59,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     info.HitInfo = hitInfo;
     info.HitPosOffset = hitPos + hitInfo.Ns_ff * EPSILON;
 
-    WRS(rngInfo, reservoir, gRestirSettings.NumCandidates, gRestirSettings.ConfidenceCap, info);
+    WRS(rngInfo, reservoir, gSettings.RestirNumCandidates, gSettings.RestirConfidenceCap, info);
 
     gReservoirBuffer[reservoirIdx] = reservoir;
 }

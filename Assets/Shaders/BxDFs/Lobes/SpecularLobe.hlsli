@@ -1,6 +1,8 @@
 #ifndef H_BRDF_SPECULAR_LOBE_H
 #define H_BRDF_SPECULAR_LOBE_H
 
+#include "PathTracing/Structs.h"
+
 #define ROUGHNESS_DIRAC_THRESHOLD EPSILON
 
 void SpecularLobe_Sample(
