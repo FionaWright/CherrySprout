@@ -34,7 +34,7 @@ void ReconstructPrimaryRayHit(
     out HitInfo hitInfo,
     out bool isMiss)
 {
-    hitInfo.IsEntering = false;
+    hitInfo.IsEntering = true;
 
     uint matIdx = gbufferMaterialIdx[pixelCoord];
     if (matIdx == 0)

@@ -25,7 +25,7 @@ void GetPrimaryRay(
 {
     origin = cameraPos;
 
-    float2 pixelUV = pixelCoord;
+    float2 pixelUV = pixelCoord + 0.5f;
     if (FEATURE_ENABLED(Jitter))
     {
         float rJitterX = Rand01(rngInfo);
