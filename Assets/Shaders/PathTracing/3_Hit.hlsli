@@ -11,18 +11,18 @@
 #include "PathTracing/4_SampleDirect.hlsli"
 #include "PathTracing/4_SampleIndirect.hlsli"
 
-void Hit(HitInfo hitInfo, inout RayDesc ray, inout PathState pathState, inout float3 L_sample, inout float3 beta, inout RngInfo rngInfo, uint2 pixelCoord)
+void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inout RngInfo rngInfo, uint2 pixelCoord)
 {
-    float3 hitPos = ray.Origin + ray.Direction * hitInfo.RayT;
+    float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
     float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
 
 #if FEATURE_ENABLED(Transient)
     pathState.RollingPathDistance += hitInfo.RayT;
 #endif
 
-    L_sample = beta * hitInfo.Emission;
+    L_sample = pathState.Beta * hitInfo.Emission;
 
-    float3 wo = -ray.Direction;
+    float3 wo = -pathState.Desc.Direction;
 
     // TODO: Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
 
@@ -31,18 +31,18 @@ void Hit(HitInfo hitInfo, inout RayDesc ray, inout PathState pathState, inout fl
     if (FEATURE_ENABLED(NEE))
     {
         float3 E_direct = SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin);
-        L_sample += E_direct * beta;
+        L_sample += E_direct * pathState.Beta;
     }
 
     float3 wi;
     float pdf;
     float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, pathState, wo, wi, pdf);
-    beta *= E_indirect;
+    pathState.Beta *= E_indirect;
 
     pathState.LastBxdfPdf = pdf;
 
-    ray.Direction = wi;
-    ray.Origin = nextOrigin;
+    pathState.Desc.Direction = wi;
+    pathState.Desc.Origin = nextOrigin;
 }
 
 #endif

@@ -24,12 +24,32 @@ struct HitInfo
     float RayT;
 };
 
+#ifdef __cplusplus
+struct RayDesc
+{
+    hlsl::float3 Origin;
+    float  TMin;
+
+    hlsl::float3 Direction;
+    float  TMax;
+};
+#endif
+
 struct PathState
 {
+    RayDesc Desc;
+
+    hlsl::float3 Beta;
     float LastBxdfPdf;
+
+    hlsl::float3 Lo;
     hlsl::uint RaySegmentIdx;
-    bool LastRayDiracDelta;
+
+    hlsl::float3 Gradient;
     float RollingPathDistance;
+
+    hlsl::uint LastRayWasDiracDelta;
+    hlsl::float3 p;
 };
 
 struct ProbabilityDistributionSample

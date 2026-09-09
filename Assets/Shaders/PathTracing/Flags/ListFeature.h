@@ -26,3 +26,4 @@ FLAG_PROCESS(ReconstructPrimaryRay)
 FLAG_PROCESS(RestirDI)
 
 FLAG_PROCESS(RestirTargetVisibility)
+FLAG_PROCESS(GradientDomain)

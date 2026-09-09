@@ -16,7 +16,7 @@ static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags
         eFeature_NEE |
         eFeature_FireflyThreshold |
         eFeature_AliasTables |
-        eFeature_RestirDI |
+        //eFeature_RestirDI |
         eFeature_RussianRoulette
     );
 
@@ -25,7 +25,6 @@ static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_NaNTests |
         eDebug_Scales |
         eDebug_ForceLightIndex |
-        eDebug_PathDumper |
         eDebug_Asserts
     );
 #else

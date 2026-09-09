@@ -131,8 +131,13 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                         };
 
                         RowInt("Ray Segment", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
-                        RowInt("Dirac Delta", m_cpuPathDump[i].PathState.LastRayDiracDelta);
-                        RowFloat("Last PDF", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
+                        RowFloat3("Ray Origin", m_cpuPathDump[i].PathState.Desc.Origin, true);
+                        RowFloat3("Ray Direction", m_cpuPathDump[i].PathState.Desc.Direction, true);
+                        RowFloat3("Beta", m_cpuPathDump[i].PathState.Beta, true);
+                        RowFloat3("Lo", m_cpuPathDump[i].PathState.Lo, true);
+                        RowFloat3("Gradient", m_cpuPathDump[i].PathState.Gradient, true);
+                        RowInt("Last Ray Was Dirac Delta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
+                        RowFloat("Last Ray PDF", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
 
                         for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
                         {

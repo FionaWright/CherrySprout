@@ -32,7 +32,7 @@ float3 SampleIndirectLighting(
         float pdf_sample;
         bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f_sample, pdf_sample);
 
-        if (pathState.LastRayDiracDelta)
+        if (pathState.LastRayWasDiracDelta)
         {
             f = f_sample;
             pdf = pdf_sample;

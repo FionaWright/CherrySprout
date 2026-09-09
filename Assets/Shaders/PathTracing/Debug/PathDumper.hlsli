@@ -15,7 +15,7 @@ void ClearBuffer()
         gPathDump[i].Explored = false;
         gPathDump[i].PathState.LastBxdfPdf = NAN;
         gPathDump[i].PathState.RaySegmentIdx = 0;
-        gPathDump[i].PathState.LastRayDiracDelta = false;
+        gPathDump[i].PathState.LastRayWasDiracDelta = false;
 
         for (int j = 0; j < (int)DebugOutputIndex::eCount; j++)
         {
