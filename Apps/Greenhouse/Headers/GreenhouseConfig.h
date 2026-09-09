@@ -57,6 +57,9 @@ struct PathTracerConfig
     uint32_t TransientRenderNumFrames = 60;
     float TransientRenderTotalTime = 10.0f;
 
+    uint32_t RestirConfidenceCap = 30;
+    uint32_t RestirNumCandidates = 8;
+
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
 

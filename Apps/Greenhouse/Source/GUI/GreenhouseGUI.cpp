@@ -164,6 +164,18 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        if (pathTracingFeatureEnabled(eFeature_RestirDI))
+        {
+            ImGui::Text("ReSTIR:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Candidates", &m_config.PathTracerConfig.RestirNumCandidates);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap", &m_config.PathTracerConfig.RestirConfidenceCap);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
         if (pathTracingFeatureEnabled(eFeature_DepthOfField))
         {
             ImGui::Text("Depth of Field:");

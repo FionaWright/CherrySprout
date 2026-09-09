@@ -301,8 +301,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.DofFocalDist = renderInfo.PathTracerConfig->DofFocalDist;
         settings.DofLensRadius = renderInfo.PathTracerConfig->DofLensRadius;
 
-        settings.RestirConfidenceCap = 30;
-        settings.RestirNumCandidates = 6;
+        settings.RestirConfidenceCap = renderInfo.PathTracerConfig->RestirConfidenceCap;
+        settings.RestirNumCandidates = renderInfo.PathTracerConfig->RestirNumCandidates;
 
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);

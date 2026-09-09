@@ -24,3 +24,5 @@ FLAG_PROCESS(Transient)
 
 FLAG_PROCESS(ReconstructPrimaryRay)
 FLAG_PROCESS(RestirDI)
+
+FLAG_PROCESS(RestirTargetVisibility)
