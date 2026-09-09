@@ -241,7 +241,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         const bool outputColorEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_OutputColor);
         const bool pathDumpEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper);
         const bool scalesEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Scales);
-        if (outputColorEnabled || pathDumpEnabled || scalesEnabled)
+        const bool forcedLightIndexEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_ForceLightIndex);
+        if (outputColorEnabled || pathDumpEnabled || scalesEnabled || forcedLightIndexEnabled)
         {
             const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
 
@@ -264,6 +265,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ScaleSpecular = renderInfo.PathTracerConfig->DebugInfo.ScaleSpecular;
             debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
             debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
+            debugSettings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 

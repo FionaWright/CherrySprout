@@ -22,6 +22,7 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
     {
         InterlockedAdd(gDbgBufferErrorInfo[dbgID].ExprCounter, 1);
 
+        // TODO: Make only the first or last trigger perform exchanges
         float _;
         InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.x, v1.x, _);
         InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.y, v1.y, _);

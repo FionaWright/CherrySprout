@@ -34,7 +34,7 @@ float3 SampleNEE(
     if (occluded)
     {
         DBG_OUTPUT1(0,            NEE_MIS_Weight);
-        DBG_OUTPUT1(0,            NEE_Radiance);
+        DBG_OUTPUT3(0,            NEE_Radiance);
         return 0;
     }
 
@@ -53,9 +53,9 @@ float3 SampleNEE(
     }
 
     DBG_OUTPUT1(m,                       NEE_MIS_Weight);
-    DBG_OUTPUT1(lightSample.Radiance,    NEE_Radiance);
+    DBG_OUTPUT3(lightSample.Radiance,    NEE_Radiance);
 
-    return lightSample.Radiance * m * max(0, NdL) / lightSample.PDF;
+    return lightSample.Radiance * m * NdL / lightSample.PDF;
 }
 
 #endif

@@ -25,6 +25,9 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
 
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
+        pathState.RaySegmentIdx = i;
+        pathState.LastRayDiracDelta = false;
+
         bool isMiss;
         HitInfo hitInfo;
 
@@ -67,9 +70,6 @@ float3 Trace(RayDesc ray, inout RngInfo rngInfo, uint2 pixelCoord)
             Lo += L_sample;
             break;
         }
-
-        pathState.RaySegmentIdx = i;
-        pathState.LastRayDiracDelta = false;
 
         DBG_SET_CURRENT_RAY_DEPTH(i);
         DBG_PATH_DUMP_MARK_EXPLORED();

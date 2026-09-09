@@ -65,11 +65,8 @@ void WRS(
         T X_i = Generate(rngInfo, tInfo);
 
         float pHat = Target(X_i, tInfo);
-        float m_i = RestirMis(X_i, M);
         float W_X_i = 1.0f / PDF(X_i, tInfo);
 
-        //float w_i = pHat * m_i * W_X_i;
-        //float w_i = pHat * W_X_i / M;
         float w_i = pHat * W_X_i;
         float c_i = 1;
 
@@ -86,7 +83,6 @@ void WRS(
     // TODO: Avoid recomputation of Target(Y)
     reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
     reservoir.W_Y = reservoir.WeightSum / (M * Target(reservoir.Y, tInfo));
-    //reservoir.W_Y = reservoir.WeightSum / Target(reservoir.Y, tInfo);
 }
 
 #endif

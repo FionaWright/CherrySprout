@@ -404,6 +404,12 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_ForceLightIndex))
+        {
+            m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
+            ImGui::Spacing();
+        }
+
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
         {
             if (ImGui::CollapsingHeader("Debug Output Colors"))

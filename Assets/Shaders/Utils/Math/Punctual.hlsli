@@ -81,7 +81,7 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position)
 
     float distance = sqrt(distance2);
 
-    sample.Direction = L / distance;
+    sample.Direction = normalize(L);
     sample.Distance = max(distance - radius, 0.0f);
 
     float attenuation = 1.0f / max(distance2, radius2);

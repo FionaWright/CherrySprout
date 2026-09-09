@@ -59,6 +59,11 @@ static const char* s_debugIdList[] = {
     CREATE_ID(DISABLED_LIGHT_INDEX   , "Light index was chosen that isn't enabled")
     CREATE_ID(OOB_LIGHT_INDEX   , "Light index was chosen out of bounds")
 
+    CREATE_ID(RESTIR_W_Y_RANGE   , "ReSTIR: W_Y incorrect value")
+    CREATE_ID(RESTIR_WEIGHT_SUM_RANGE   , "ReSTIR: WeightSum incorrect value")
+    CREATE_ID(RESTIR_CONF_RANGE   , "ReSTIR: Confidence incorrect value")
+    CREATE_ID(RESTIR_DIR_NORM   , "ReSTIR: Direction unnormalized")
+
 };
 
 #endif

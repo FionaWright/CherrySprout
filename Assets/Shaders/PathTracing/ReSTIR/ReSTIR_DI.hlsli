@@ -8,6 +8,7 @@
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Utils/Debug/Palette.h"
+#include "PathTracing/Debug/Assert.hlsli"
 
 LightSample Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info)
 {
@@ -22,7 +23,7 @@ float Target(LightSample X_i, LightSampleSelectionInfo info)
     float NdL = max(0.0f, dot(info.HitInfo.Ns_ff, X_i.Direction));
 
     if (X_i.PDF < EPSILON || NdL <= 0)
-        return 0.0f; // Null
+        return 0.0f;
 
     if (FEATURE_ENABLED(RestirTargetVisibility))
     {
@@ -63,26 +64,30 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
 
     lightSample = reservoir.Y;
 
-    DBG_OUTPUT3(Palette(reservoirIdx), RESTIR_ReservoirIdx);
-    DBG_OUTPUT1(reservoir.WeightSum, RESTIR_ReservoirWeightSum);
-    DBG_OUTPUT1(reservoir.Confidence / 30, RESTIR_ReservoirConfidence);
-    DBG_OUTPUT3(reservoir.Y.Direction, RESTIR_YDir);
-    DBG_OUTPUT3(reservoir.Y.Radiance, RESTIR_YRadiance);
-    DBG_OUTPUT3(Palette(reservoir.Y.Index), RESTIR_YLightIndex);
-    DBG_OUTPUT1(max(0, dot(reservoir.Y.Direction, hitInfo.Ns_ff)), RESTIR_NdL);
-    DBG_OUTPUT1(reservoir.W_Y, RESTIR_W_Y);
+    // Debug
+    {
+        DBG_OUTPUT3(Palette(reservoirIdx), RESTIR_ReservoirIdx);
+        DBG_OUTPUT1(reservoir.WeightSum, RESTIR_ReservoirWeightSum);
+        DBG_OUTPUT1(reservoir.Confidence / 30, RESTIR_ReservoirConfidence);
+        DBG_OUTPUT3(reservoir.Y.Direction, RESTIR_YDir);
+        DBG_OUTPUT3(reservoir.Y.Radiance, RESTIR_YRadiance);
+        DBG_OUTPUT3(Palette(reservoir.Y.Index), RESTIR_YLightIndex);
+        DBG_OUTPUT1(max(0, dot(reservoir.Y.Direction, hitInfo.Ns_ff)), RESTIR_NdL);
+        DBG_OUTPUT1(reservoir.W_Y, RESTIR_W_Y);
+        DBG_ASSERT_GE(reservoir.W_Y, 0.0f, RESTIR_W_Y_RANGE);
+        DBG_ASSERT_GE(reservoir.WeightSum, 0.0f, RESTIR_WEIGHT_SUM_RANGE);
+        DBG_ASSERT_RANGE(0.0f, RESTIR_CONF_RANGE, gSettings.RestirConfidenceCap, RESTIR_CONF_RANGE);
+    }
 
     float NdL = max(0, dot(reservoir.Y.Direction, hitInfo.Ns_ff));
     if (reservoir.W_Y <= 0.0f || reservoir.Confidence <= 0.0f || NdL <= 0)
-    {
-        DBG_OUTPUT1(1, RESTIR_Occluded);
         return 0;
-    }
 
     bool occluded;
     TraceShadowRay(nextOrigin, reservoir.Y.Direction, occluded, reservoir.Y.Distance);
 
     DBG_OUTPUT1(occluded, RESTIR_Occluded);
+    //DBG_ASSERT_APPROX(length(reservoir.Y.Direction), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason
 
     if (occluded)
         return 0;
@@ -105,6 +110,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
     }
 
     return reservoir.Y.Radiance * m * NdL * reservoir.W_Y;
+    //return reservoir.Y.Radiance * m * NdL  / reservoir.Y.PDF;
 }
 
 #endif

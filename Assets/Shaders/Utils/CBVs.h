@@ -132,7 +132,7 @@ struct CbvPathTracingDebugSettings
     float ScaleSpecular;
     float ScaleReflect;
     float ScaleRefract;
-    float p;
+    int ForcedLightIndex;
 };
 
 #endif

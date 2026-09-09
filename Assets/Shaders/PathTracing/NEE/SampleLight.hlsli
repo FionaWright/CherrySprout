@@ -43,10 +43,21 @@ LightSample SampleLight(
     float3 nextOrigin
 )
 {
-    float xi = Rand01(rngInfo);
-    float pdf_lsd;
     uint lightIdx;
-    sampleLSD(xi, lightIdx, pdf_lsd);
+    float pdf_lsd;
+
+    if (DEBUG_ENABLED(ForceLightIndex) && gDebugSettings.ForcedLightIndex != -1)
+    {
+        lightIdx = gDebugSettings.ForcedLightIndex;
+        pdf_lsd = 1.0f;
+    }
+    else
+    {
+        float xi = Rand01(rngInfo);
+        sampleLSD(xi, lightIdx, pdf_lsd);
+
+        DBG_OUTPUT3(xi, NEE_xi);
+    }
 
     LightSample lightSample;
 
@@ -91,7 +102,6 @@ LightSample SampleLight(
 
     DBG_OUTPUT3(lightSample.Radiance, NEE_Le);
     DBG_OUTPUT1(lightSample.Index, NEE_LightIdx);
-    DBG_OUTPUT3(xi, NEE_xi);
     DBG_OUTPUT1(lightSample.Distance, NEE_Distance);
     DBG_OUTPUT3(lightSample.Direction, NEE_L_w);
     DBG_OUTPUT1(lightSample.PDF, NEE_PDF);

@@ -18,6 +18,8 @@ struct PathTracingDebugInfo
     int ChosenRayDepth = -1;
     hlsl::uint2 ChosenPixelCoords = s_defaultChosenPixelIdx;
 
+    int ForcedLightIndex = -1;
+
     float ScaleIntensityGlobal = 1.0f;
     float ScaleIntensityPunctual = 0.01f;
     float ScaleIntensityPoint = 0.1f;
