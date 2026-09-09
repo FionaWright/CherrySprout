@@ -46,6 +46,9 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 
                     char buf[64];
 
+                    constexpr float MIN_ROW_HEIGHT = 20.0f;
+                    constexpr float COLOR_SQUARE_SIZE = 15.0f;
+
                     if (ImGui::BeginTable((label + "##table").c_str(), 3,
                                           ImGuiTableFlags_Borders |
                                           ImGuiTableFlags_RowBg |
@@ -58,7 +61,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 
                         auto RowInt = [&](const char* key, const int value)
                         {
-                            ImGui::TableNextRow();
+                            ImGui::TableNextRow(0, MIN_ROW_HEIGHT);
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted(key);
 
@@ -71,53 +74,74 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                             rowIncrementer++;
                         };
 
-                        auto RowFloat = [&](const char* key, const float value)
+                        auto RowFloat = [&](const char* key, const float value, const bool isAssignedValue)
                         {
-                            ImGui::TableNextRow();
+                            ImGui::TableNextRow(0, MIN_ROW_HEIGHT);
                             ImGui::TableSetColumnIndex(0);
+                            if (!isAssignedValue)
+                                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 150));
                             ImGui::TextUnformatted(key);
+                            if (!isAssignedValue)
+                                ImGui::PopStyleColor();
 
                             ImGui::TableSetColumnIndex(1);
-                            snprintf(buf, sizeof(buf), "%.6f##float-%i", value, rowIncrementer);
+                            if (isAssignedValue)
+                                snprintf(buf, sizeof(buf), "%.6f##float-%i", value, rowIncrementer);
+                            else
+                                snprintf(buf, sizeof(buf), "-##float-%i", rowIncrementer);
                             ImGui::Selectable(buf);
                             if (ImGui::IsItemClicked())
                                 ImGui::SetClipboardText(std::string(buf).substr(0, std::string(buf).find('#')).c_str());
 
                             ImGui::TableSetColumnIndex(2);
-                            const ImVec4 color(std::clamp(value, 0.0f, 1.0f), std::clamp(value, 0.0f, 1.0f), std::clamp(value, 0.0f, 1.0f), 1.0f);
-                            ImGui::ColorButton((std::string("##color1-") + std::to_string(rowIncrementer)).c_str(), color, ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(18, 18));
+                            if (isAssignedValue)
+                            {
+                                const ImVec4 color(std::clamp(value, 0.0f, 1.0f), std::clamp(value, 0.0f, 1.0f), std::clamp(value, 0.0f, 1.0f), 1.0f);
+                                ImGui::ColorButton((std::string("##color1-") + std::to_string(rowIncrementer)).c_str(), color, ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(COLOR_SQUARE_SIZE, COLOR_SQUARE_SIZE));
+                            }
                             rowIncrementer++;
                         };
 
-                        auto RowFloat3 = [&](const char* key, const hlsl::float3& v)
+                        auto RowFloat3 = [&](const char* key, const hlsl::float3& v, const bool isAssignedValue)
                         {
-                            ImGui::TableNextRow();
+                            ImGui::TableNextRow(0, MIN_ROW_HEIGHT);
                             ImGui::TableSetColumnIndex(0);
+                            if (!isAssignedValue)
+                                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 150));
                             ImGui::TextUnformatted(key);
-                            ImGui::TableSetColumnIndex(1);
+                            if (!isAssignedValue)
+                                ImGui::PopStyleColor();
 
                             ImGui::TableSetColumnIndex(1);
-                            snprintf(buf, sizeof(buf), "(%.3f, %.3f, %.3f)##float3-%i", v.x, v.y, v.z, rowIncrementer);
+                            if (isAssignedValue)
+                                snprintf(buf, sizeof(buf), "(%.3f, %.3f, %.3f)##float3-%i", v.x, v.y, v.z, rowIncrementer);
+                            else
+                                snprintf(buf, sizeof(buf), "-##float3-%i", rowIncrementer);
                             ImGui::Selectable(buf);
                             if (ImGui::IsItemClicked())
                                 ImGui::SetClipboardText(std::string(buf).substr(0, std::string(buf).find('#')).c_str());
 
                             ImGui::TableSetColumnIndex(2);
-                            const ImVec4 color(std::clamp(v.x, 0.0f, 1.0f), std::clamp(v.y, 0.0f, 1.0f), std::clamp(v.z, 0.0f, 1.0f), 1.0f);
-                            ImGui::ColorButton((std::string("##color3-") + std::to_string(rowIncrementer)).c_str(), color, ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(18, 18));
+                            if (isAssignedValue)
+                            {
+                                const ImVec4 color(std::clamp(v.x, 0.0f, 1.0f), std::clamp(v.y, 0.0f, 1.0f), std::clamp(v.z, 0.0f, 1.0f), 1.0f);
+                                ImGui::ColorButton((std::string("##color3-") + std::to_string(rowIncrementer)).c_str(), color, ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(COLOR_SQUARE_SIZE, COLOR_SQUARE_SIZE));
+                            }
                             rowIncrementer++;
                         };
 
                         RowInt("Ray Segment", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
                         RowInt("Dirac Delta", m_cpuPathDump[i].PathState.LastRayDiracDelta);
-                        RowFloat("Last PDF", m_cpuPathDump[i].PathState.LastBxdfPdf);
+                        RowFloat("Last PDF", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
 
                         for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
                         {
+                            const bool isAssignedValue = m_cpuPathDump[i].DebugOutputs.IsAssignedValueList[j];
+
                             if (m_cpuPathDump[i].DebugOutputs.Float3List[j].x == m_cpuPathDump[i].DebugOutputs.Float3List[j].y && m_cpuPathDump[i].DebugOutputs.Float3List[j].x == m_cpuPathDump[i].DebugOutputs.Float3List[j].z)
-                                RowFloat(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j].x);
+                                RowFloat(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j].x, isAssignedValue);
                             else
-                                RowFloat3(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j]);
+                                RowFloat3(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j], isAssignedValue);
                         }
 
                         ImGui::EndTable();

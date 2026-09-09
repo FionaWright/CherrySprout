@@ -60,12 +60,18 @@ void WRS(
 {
     bool candidateSelected = false;
 
+    reservoir.WeightSum = 0.0f;
+
     for (uint i = 0; i < M; i++)
     {
         T X_i = Generate(rngInfo, tInfo);
 
         float pHat = Target(X_i, tInfo);
-        float W_X_i = 1.0f / PDF(X_i, tInfo);
+        float pdf = PDF(X_i, tInfo);
+        if (pdf <= 0.0f)
+            continue;
+
+        float W_X_i = 1.0f / pdf;
 
         float w_i = pHat * W_X_i;
         float c_i = 1;

@@ -22,7 +22,7 @@ static constexpr auto s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Disa
 struct DebugOutputStruct
 {
     hlsl::float3 Float3List[(hlsl::uint)DebugOutputIndex::eCount];
-    // TODO: IsAssigned bool for each value, show explicitly in GUI if value never assigned
+    hlsl::uint IsAssignedValueList[(hlsl::uint)DebugOutputIndex::eCount];
 };
 #else
 struct DebugOutputStruct {};
