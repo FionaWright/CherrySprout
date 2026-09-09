@@ -18,27 +18,11 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
     bool updateInf = IsInf4(v1) || IsInf4(v2) || IsInf4(v3);
     bool updatedAny = updateExpr || updateNaN || updateInf;
 
+    if (!updatedAny)
+        return;
+
     if (updateExpr)
-    {
         InterlockedAdd(gDbgBufferErrorInfo[dbgID].ExprCounter, 1);
-
-        // TODO: Make only the first or last trigger perform exchanges
-        float _;
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.x, v1.x, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.y, v1.y, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.z, v1.z, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.w, v1.w, _);
-
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.x, v2.x, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.y, v2.y, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.z, v2.z, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.w, v2.w, _);
-
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.x, v3.x, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.y, v3.y, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.z, v3.z, _);
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.w, v3.w, _);
-    }
 
     if (updateNaN)
         InterlockedAdd(gDbgBufferErrorInfo[dbgID].NaNCounter, 1);
@@ -46,10 +30,36 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
     if (updateInf)
         InterlockedAdd(gDbgBufferErrorInfo[dbgID].InfCounter, 1);
 
-    if (updatedAny && gDebugFrameIndex != UINT_MAX && gDebugPixelCoord.x != UINT_MAX && gDebugPixelCoord.y != UINT_MAX)
+    if (gDebugFrameIndex == UINT_MAX || gDebugPixelCoord.x == UINT_MAX || gDebugPixelCoord.y == UINT_MAX)
+        return;
+
+    hlsl::uint oldLock = DebugErrorInfoLock::eLocked;
+    InterlockedCompareExchange(
+        gDbgBufferErrorInfo[dbgID].Lock,
+        (hlsl::uint)DebugErrorInfoLock::eUnlocked,
+        (hlsl::uint)DebugErrorInfoLock::eLocked,
+        oldLock);
+
+    if (oldLock == DebugErrorInfoLock::eUnlocked)
     {
         uint _i;
         float _f;
+
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.x, v1.x, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.y, v1.y, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.z, v1.z, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value1.w, v1.w, _f);
+
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.x, v2.x, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.y, v2.y, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.z, v2.z, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value2.w, v2.w, _f);
+
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.x, v3.x, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.y, v3.y, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.z, v3.z, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Value3.w, v3.w, _f);
+
         InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.x, gDebugPixelCoord.x, _i);
         InterlockedExchange(gDbgBufferErrorInfo[dbgID].PixelCoord.y, gDebugPixelCoord.y, _i);
         InterlockedExchange(gDbgBufferErrorInfo[dbgID].FrameIndex, gDebugFrameIndex, _i);
@@ -63,6 +73,8 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
             [unroll]
             for (int c = 0; c < 4; c++)
                 InterlockedExchange(gDbgBufferErrorInfo[dbgID].InvV[r][c], gSettings.InvV[r][c], _f);
+
+        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Lock, (hlsl::uint)DebugErrorInfoLock::eUnlocked, _i);
     }
 }
 

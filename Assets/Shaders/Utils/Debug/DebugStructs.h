@@ -5,8 +5,16 @@
 #include "Utils/HlslGlue.h"
 #include "PathTracing/Debug/OutputColor.h"
 
+enum DebugErrorInfoLock : hlsl::uint
+{
+    eUnlocked,
+    eLocked,
+};
+
 struct DebugErrorInfo
 {
+    hlsl::uint Lock;
+
     hlsl::uint ExprCounter;
     hlsl::uint NaNCounter;
     hlsl::uint InfCounter;
