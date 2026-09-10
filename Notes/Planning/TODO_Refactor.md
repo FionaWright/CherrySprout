@@ -23,3 +23,5 @@ Stuff in the repo that I don't like
 - [ ] App GUI disable is in engine GUI, Remove "Hide GUI"
 
 - [ ] Remove ImGui window rounded corners
+
+- [ ] Make Env Map capped at 50% LSD contribution
