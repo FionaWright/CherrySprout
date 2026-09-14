@@ -13,9 +13,9 @@
 #include "HWI/RootSig.h"
 #include "HWI/RtasBuilder.h"
 #include "HWI/Pipeline.h"
-#include "PathTracing/Debug/OutputColor.h"
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags/MethodsCpp.h"
+#include "Render/RestirManager.h"
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 
@@ -40,7 +40,12 @@ public:
     void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode);
     void Reset();
 
-    size_t TotalCbvRequiredSize() override { return Align(sizeof(CbvPathTracingSettings), 256) + Align(sizeof(CbvPathTracingDebugSettings), 256); }
+    size_t TotalCbvRequiredSize() override
+    {
+        return Align(sizeof(CbvPathTracingSettings), 256) +
+            Align(sizeof(CbvPathTracingDebugSettings), 256) +
+            RestirManager::TotalCbvRequiredSize();
+    }
 
     D12Resource* GetTexOutput() { return &m_output; }
     D12Resource* GetTexAccum() { return &m_accum; }
@@ -52,6 +57,7 @@ public:
 
 private:
     RtasBuilder m_rtasBuilder;
+    RestirManager m_restirManager;
 
     uint32_t m_frameIdx = 0;
 

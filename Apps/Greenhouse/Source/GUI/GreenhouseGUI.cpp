@@ -164,6 +164,18 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        if (pathTracingFeatureEnabled(eFeature_RestirDI))
+        {
+            ImGui::Text("ReSTIR:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Candidates", &m_config.PathTracerConfig.RestirNumCandidates);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap", &m_config.PathTracerConfig.RestirConfidenceCap);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
         if (pathTracingFeatureEnabled(eFeature_DepthOfField))
         {
             ImGui::Text("Depth of Field:");
@@ -392,6 +404,12 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_ForceLightIndex))
+        {
+            m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
+            ImGui::Spacing();
+        }
+
         if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
         {
             if (ImGui::CollapsingHeader("Debug Output Colors"))
@@ -541,8 +559,9 @@ void Greenhouse::renderGuiSceneData()
         {
             std::string labelObjI = std::string("(") + std::to_string(i) + ")";
 #if _DEBUG
-            if (sceneCPU.Objects[i].DebugName)
-                labelObjI += std::string(" ") + sceneCPU.Objects[i].DebugName;
+            // TODO: Broken on LightTest
+            //if (sceneCPU.Objects[i].DebugName)
+            //    labelObjI += std::string(" ") + sceneCPU.Objects[i].DebugName;
 #endif
             if (ImGui::TreeNode(labelObjI.c_str()))
             {

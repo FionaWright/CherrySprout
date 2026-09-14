@@ -1,6 +1,8 @@
 #ifndef H_SHADOW_RAY_H
 #define H_SHADOW_RAY_H
 
+#include "PathTracing/Utils.hlsli"
+
 void TraceShadowRay(float3 pos, float3 dir, out bool occluded, float lightDistance)
 {
     // TODO: Does it matter to recreate the RayQuery?

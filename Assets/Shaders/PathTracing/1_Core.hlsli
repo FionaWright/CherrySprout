@@ -36,17 +36,16 @@ void Core(uint2 pixelCoord)
 
         DBG_OUTPUT1(Rand01_Const(rngInfo), RNG);
 
-        RayDesc ray;
-        ray.TMin = 0.001;
-        ray.TMax = 1000.0;
+        float3 rayOrigin;
+        float3 rayDirection;
 
         GetPrimaryRay(
             rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
             pixelCoord, gSettings.InvV, gSettings.InvP,
             gSettings.DofFocalDist, gSettings.DofLensRadius,
-            ray.Origin, ray.Direction);
+            rayOrigin, rayDirection);
 
-        float3 radiance = Trace(ray, rngInfo, pixelCoord);
+        float3 radiance = Trace(rayOrigin, rayDirection, rngInfo, pixelCoord);
         DBG_SCALE_INTENSITY_GLOBAL(radiance);
 
         colorSum += radiance;

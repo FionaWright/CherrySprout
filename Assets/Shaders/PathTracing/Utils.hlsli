@@ -1,6 +1,33 @@
 #ifndef H_PT_UTILS_H
 #define H_PT_UTILS_H
 
+#define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
+
+PathState CreatePathState(float3 origin, float3 dir)
+{
+    PathState pathState = (PathState)0;
+
+    pathState.LastBxdfPdf = 1.0f;
+
+#if FEATURE_ENABLED(Transient)
+    pathState.RollingPathDistance = 0.0f;
+#endif
+
+    pathState.Desc.TMin = 0.001;
+    pathState.Desc.TMax = 1000.0;
+    pathState.Desc.Origin = origin;
+    pathState.Desc.Direction = dir;
+
+    pathState.Beta = float3(1, 1, 1);
+    pathState.Lo = float3(0, 0, 0);
+
+#if FEATURE_ENABLED(GradientDomain)
+    pathState.Gradient = float3(0, 0, 0);
+#endif
+
+    return pathState;
+}
+
 float3 LRGB_to_SRGB(float3 color)
 {
     if (FEATURE_ENABLED(GammaCorrectionFast))

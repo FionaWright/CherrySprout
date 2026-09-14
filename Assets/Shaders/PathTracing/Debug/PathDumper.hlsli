@@ -15,10 +15,13 @@ void ClearBuffer()
         gPathDump[i].Explored = false;
         gPathDump[i].PathState.LastBxdfPdf = NAN;
         gPathDump[i].PathState.RaySegmentIdx = 0;
-        gPathDump[i].PathState.LastRayDiracDelta = false;
+        gPathDump[i].PathState.LastRayWasDiracDelta = false;
 
         for (int j = 0; j < (int)DebugOutputIndex::eCount; j++)
+        {
             gPathDump[i].DebugOutputs.Float3List[j] = NAN;
+            gPathDump[i].DebugOutputs.IsAssignedValueList[j] = false;
+        }
     }
 }
 
@@ -28,6 +31,7 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
         return;
 
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.Float3List[dbgIdx] = value;
+    gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx] = true;
 }
 
 void AssignPathState(PathState pathState)

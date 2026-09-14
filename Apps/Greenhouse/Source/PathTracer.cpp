@@ -8,6 +8,7 @@
 #include "Greenhouse.h"
 #include "imgui.h"
 #include "Debug/GPUEventScoped.h"
+#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
 #include "Utils/CBVs.h"
 #include "Scene/InstanceData.h"
 #include "System/HighResolutionClock.h"
@@ -104,10 +105,11 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, m_restirManager.GetReservoirBuffer(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 3, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 3, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 4, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -239,7 +241,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         const bool outputColorEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_OutputColor);
         const bool pathDumpEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper);
         const bool scalesEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Scales);
-        if (outputColorEnabled || pathDumpEnabled || scalesEnabled)
+        const bool forcedLightIndexEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_ForceLightIndex);
+        if (outputColorEnabled || pathDumpEnabled || scalesEnabled || forcedLightIndexEnabled)
         {
             const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
 
@@ -262,6 +265,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ScaleSpecular = renderInfo.PathTracerConfig->DebugInfo.ScaleSpecular;
             debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
             debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
+            debugSettings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 
@@ -299,6 +303,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.DofFocalDist = renderInfo.PathTracerConfig->DofFocalDist;
         settings.DofLensRadius = renderInfo.PathTracerConfig->DofLensRadius;
 
+        settings.RestirConfidenceCap = renderInfo.PathTracerConfig->RestirConfidenceCap;
+        settings.RestirNumCandidates = renderInfo.PathTracerConfig->RestirNumCandidates;
+
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
         m_descriptorSet.UpdateCBV(0, &settings);
@@ -316,6 +323,17 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
+    if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_RestirDI))
+    {
+        cmdList->SetComputeRootSignature(m_rootSig.Get());
+        heap->Bind(cmdList);
+        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
+        m_descriptorSet.SetDescriptorTables_Compute(cmdList);
+
+        m_restirManager.GenerateSamplesDi(cmdList);
+    }
+
+    // Main Pass
 #if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_scheduledRunState != ScheduledRunState::eDisplay)
 #endif
@@ -361,7 +379,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 {
     constexpr uint32_t numCBV = 2;
     constexpr uint32_t numSRV = 15;
-    constexpr uint32_t numUAV = 4;
+    constexpr uint32_t numUAV = 5;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -398,6 +416,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 #endif
 
     Reset();
+
+    if (GetPathTracerFeatureFlag(featureFlags, eFeature_RestirDI))
+        m_restirManager.Init(device, &m_rootSig, compileArgs);
 }
 
 void PathTracer::Reset()

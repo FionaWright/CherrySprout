@@ -1,6 +1,8 @@
 #ifndef H_BRDF_LAMBERTIAN_LOBE_H
 #define H_BRDF_LAMBERTIAN_LOBE_H
 
+#include "PathTracing/Structs.h"
+
 void LambertianLobe_Sample(
         HitInfo hitInfo,
         float u1, float u2,

@@ -4,17 +4,17 @@
 #include "PathTracing/MIS.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
-float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bounceIdx)
+float3 Miss(inout PathState pathState, uint bounceIdx)
 {
     float3 Li = float3(0, 0, 0);
 
     if (FEATURE_ENABLED(EnvironmentMap))
     {
-        float2 uv = EaSphereToSquare(direction);
+        float2 uv = EaSphereToSquare(pathState.Desc.Direction);
         float3 Le = gTexEnvMap.Sample(gSampler, uv).rgb;
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
 
-        if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayDiracDelta)
+        if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
         {
             float pdf_env = GetEnvMapPdf(uv);
             float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env);
@@ -26,7 +26,7 @@ float3 Miss(inout PathState pathState, float3 origin, float3 direction, uint bou
 
     if (FEATURE_ENABLED(DirectionalLight) && bounceIdx >= 1)
     {
-        float sunCos = dot(direction, -normalize(gSettings.DirLightDirection));
+        float sunCos = dot(pathState.Desc.Direction, -normalize(gSettings.DirLightDirection));
         if (FEATURE_ENABLED(DirectionalLightDistant))
             Li += gSettings.DirLightColor * gSettings.DirLightIntensity * saturate(sunCos);
         if (sunCos > gSettings.DirLightCosAngularRadius)

@@ -6,7 +6,6 @@ bool ReservoirUpdate(
     inout RngInfo rngInfo,
     inout Reservoir<T> reservoir,
     T X_i,
-    float m_i,
     float w_i,
     float c_i
 )
@@ -47,7 +46,7 @@ void ReservoirMerge(
 template<typename T>
 float RestirMis(T X_i, uint M)
 {
-    return 1 / M; // TODO
+    return 1 / M;
 }
 
 template<typename T, typename TInfo>
@@ -59,23 +58,37 @@ void WRS(
     TInfo tInfo
 )
 {
+    bool candidateSelected = false;
+
+    reservoir.WeightSum = 0.0f;
+
     for (uint i = 0; i < M; i++)
     {
         T X_i = Generate(rngInfo, tInfo);
 
         float pHat = Target(X_i, tInfo);
-        //float m_i = RestirMis(X_i, M);
-        float W_X_i = 1.0f / PDF(X_i, tInfo);
+        float pdf = PDF(X_i, tInfo);
+        if (pdf <= 0.0f)
+            continue;
 
-        //float w_i = pHat * m_i * W_X_i;
+        float W_X_i = 1.0f / pdf;
+
         float w_i = pHat * W_X_i;
         float c_i = 1;
 
-        ReservoirUpdate(rngInfo, reservoir, X_i, m_i, w_i, c_i);
+        candidateSelected |= ReservoirUpdate(rngInfo, reservoir, X_i, w_i, c_i);
     }
 
-    reservoir.W_Y = reservoir.WeightSum / Target(reservoir.Y);
+    if (!candidateSelected)
+    {
+        reservoir.Confidence = 0.0f;
+        reservoir.W_Y = 0.0f;
+        return;
+    }
+
+    // TODO: Avoid recomputation of Target(Y)
     reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
+    reservoir.W_Y = reservoir.WeightSum / (M * Target(reservoir.Y, tInfo));
 }
 
 #endif

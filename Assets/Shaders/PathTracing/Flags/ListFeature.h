@@ -22,4 +22,8 @@ FLAG_PROCESS(GammaCorrectionFast)
 FLAG_PROCESS(Anisotropy)
 FLAG_PROCESS(Transient)
 
+FLAG_PROCESS(ReconstructPrimaryRay)
 FLAG_PROCESS(RestirDI)
+
+FLAG_PROCESS(RestirTargetVisibility)
+FLAG_PROCESS(GradientDomain)

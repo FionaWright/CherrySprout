@@ -3,7 +3,9 @@
 
 #include "Utils/Math/Fresnel.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
+#include "PathTracing/Debug/OutputColorMacros.hlsli"
 #include "MicrofacetModels/GetMM.hlsli"
+#include "PathTracing/Structs.h"
 
 #include "BxDFs/Lobes/LambertianLobe.hlsli"
 #include "BxDFs/Lobes/SpecularLobe.hlsli"
@@ -105,7 +107,7 @@ void BxDF::Sample(
             bool isDiracDelta;
             SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf, isDiracDelta);
 
-            pathState.LastRayDiracDelta = isDiracDelta;
+            pathState.LastRayWasDiracDelta = isDiracDelta;
 
             pdf *= reflectProb;
 
@@ -145,7 +147,7 @@ void BxDF::Sample(
         bool isDiracDelta;
         SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf, isDiracDelta);
 
-        pathState.LastRayDiracDelta = isDiracDelta;
+        pathState.LastRayWasDiracDelta = isDiracDelta;
 
         pdf *= specProb;
 

@@ -4,6 +4,7 @@
 #include "Utils/Constants.h"
 #include "PathTracing/Debug/Assert.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
+#include "PathTracing/Structs.h"
 
 // light.Intensity is Candela (lm/sr)
 float3 PointLightWeight(PunctualLight light)
@@ -62,13 +63,6 @@ float PunctualLightWeight(PunctualLight light)
     return length(weight);
 }
 
-struct LightSample
-{
-    float3 Direction;
-    float Distance;
-    float3 Radiance;
-};
-
 LightSample EvaluatePointLight(PunctualLight light, float3 position)
 {
     LightSample sample;
@@ -87,7 +81,7 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position)
 
     float distance = sqrt(distance2);
 
-    sample.Direction = L / distance;
+    sample.Direction = normalize(L);
     sample.Distance = max(distance - radius, 0.0f);
 
     float attenuation = 1.0f / max(distance2, radius2);
