@@ -32,6 +32,14 @@ void FreeScene(SceneCPU* scene)
 {
     std::cout << "Freeing Scene..." << std::endl;
 
+    for (int i = 0; i < scene->ObjectCount; i++)
+    {
+#if _DEBUG
+        free(scene->Objects[i].DebugName);
+        scene->Objects[i].DebugName = nullptr;
+#endif
+    }
+
     free(scene->Objects);
     scene->Objects = nullptr;
 

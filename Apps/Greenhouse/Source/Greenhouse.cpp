@@ -230,8 +230,10 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
+    const auto rtvHandle = m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxFrameBuffer);
+
     // Forward/Path-Tracing Pass
-    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo, &m_frameBuffer);
+    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo, &m_frameBuffer, rtvHandle);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     // Gizmos Pass
@@ -239,7 +241,6 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     {
         m_frameBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-        const auto rtvHandle = m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxFrameBuffer);
         const auto& dsvHandle = m_gbufferPrePass.GetDsvHandle();
         cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 

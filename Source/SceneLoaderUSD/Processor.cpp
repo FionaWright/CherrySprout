@@ -42,8 +42,7 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
         Object obj{};
 
 #ifdef _DEBUG
-        // TODO
-        //obj.DebugName = Name.c_str();
+        obj.DebugName = _strdup(impObj.Name.c_str());
 #endif
 
         obj.MegaBufferVertexOffset  = static_cast<uint32_t>(scene->MegaBufferVertexCount);

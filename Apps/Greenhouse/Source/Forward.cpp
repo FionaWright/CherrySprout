@@ -70,7 +70,7 @@ void Forward::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 
 }
 
-void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV)
+void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
 
@@ -78,13 +78,13 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     Heap* heap = renderInfo.Heap;
 
     {
-        CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, Config::GetSystem().WindowAppGuiWidth);
+        CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 0);
 
-        const auto rtvHandle = d3d->GetRtvHandle();
+        RTV->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
         const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
         cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
-        cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &scissorRect);
         cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     }
 

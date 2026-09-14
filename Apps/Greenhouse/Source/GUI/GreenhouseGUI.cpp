@@ -505,8 +505,10 @@ void renderGuiSceneDataMaterial(SceneCPU* sceneCpu, const uint32_t materialIdx)
 
     auto textureText = [&](const int texIdx, const char* name)
     {
-        const std::string s = std::string(name) + " Texture: " + sceneCpu->TextureFilepaths[texIdx] + "##" + std::to_string(materialIdx);
-        ImGui::TextUnformatted(s.c_str());
+        if (texIdx == -1)
+            ImGui::Text("%s Texture: None", name);
+        else
+            ImGui::Text("%s Texture: %s", name, sceneCpu->TextureFilepaths[texIdx]);
     };
 
     textureText(mat.TexIdxAlbedo, "Albedo");
@@ -533,17 +535,18 @@ void Greenhouse::renderGuiSceneData()
     const std::string labelObjects = std::string("Objects (") + std::to_string(sceneCPU.ObjectCount) + ")";
     if (ImGui::CollapsingHeader(labelObjects.c_str()))
     {
-        ImGui::Indent(IM_GUI_INDENTATION);
+        ImGui::Indent(IM_GUI_INDENTATION/4);
 
         for (int i = 0; i < sceneCPU.ObjectCount; i++)
         {
             std::string labelObjI = std::string("(") + std::to_string(i) + ")";
 #if _DEBUG
-            labelObjI += std::string(" ") + sceneCPU.Objects[i].DebugName;
+            if (sceneCPU.Objects[i].DebugName)
+                labelObjI += std::string(" ") + sceneCPU.Objects[i].DebugName;
 #endif
             if (ImGui::TreeNode(labelObjI.c_str()))
             {
-                ImGui::Indent(IM_GUI_INDENTATION);
+                ImGui::Indent(IM_GUI_INDENTATION/4);
                 ImGui::Text("Material Index: %i", sceneCPU.Objects[i].MaterialIndex);
                 ImGui::Text("Index Count: %i", sceneCPU.Objects[i].MegaBufferIndexCount);
                 ImGui::Text("Vertex Count: %i", sceneCPU.Objects[i].MegaBufferVertexCount);
@@ -552,17 +555,17 @@ void Greenhouse::renderGuiSceneData()
 
                 if (ImGui::TreeNode((std::string("View Material##") + labelObjI).c_str()))
                 {
-                    ImGui::Indent(IM_GUI_INDENTATION);
+                    ImGui::Indent(IM_GUI_INDENTATION/4);
                     renderGuiSceneDataMaterial(&sceneCPU, sceneCPU.Objects[i].MaterialIndex);
-                    ImGui::Unindent(IM_GUI_INDENTATION);
+                    ImGui::Unindent(IM_GUI_INDENTATION/4);
                     ImGui::TreePop();
                 }
 
-                ImGui::Unindent(IM_GUI_INDENTATION);
+                ImGui::Unindent(IM_GUI_INDENTATION/4);
                 ImGui::TreePop();
             }
         }
 
-        ImGui::Unindent(IM_GUI_INDENTATION);
+        ImGui::Unindent(IM_GUI_INDENTATION/4);
     }
 }

@@ -159,7 +159,7 @@ namespace SceneLoaderUSD
         material.TexIdxNormal               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "normal");
         material.TexIdxRoughness            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "specular_roughness");
         material.TexIdxMetallic             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "metalness");
-        material.TexIdxEmissive     = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "emission");
+        material.TexIdxEmissive             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "emission");
         material.TexIdxAnisotropy           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "anisotropy");
         material.TexIdxClearcoat            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "clearcoat");
         material.TexIdxClearcoatRoughness   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "clearcoatRoughness");

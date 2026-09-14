@@ -12,7 +12,7 @@
 struct Object
 {
 #if _DEBUG
-    const char* DebugName = "Unnamed Object";
+    char* DebugName = nullptr;
 #endif
 
     float M[16]{};
