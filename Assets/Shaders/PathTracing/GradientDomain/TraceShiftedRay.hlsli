@@ -17,7 +17,11 @@ PathSample TraceShiftedRay(
 
     out bool isSymmetric)
 {
+    RayQuery<RAY_FLAGS> q;
+
     ReconnectionState reconnectionState = ReconnectionState::eUnconnected;
+
+    PathState pathState = CreatePathState(origin, dir);
 
     for (uint i = 0; i < mainVertices.NumVertices-1; i++)
     {
@@ -26,7 +30,12 @@ PathSample TraceShiftedRay(
 
         if (reconnectionState == ReconnectionState::eUnconnected)
         {
-
+            if (v1.IsDiffuse && v2.IsDiffuse)
+            {
+                // Reconnection
+                reconnectionState = ReconnectionState::eSemiConnected;
+                continue;
+            }
         }
     }
 }

@@ -5,7 +5,7 @@
 #include "PathTracing/Utils.hlsli"
 #include "PathTracing/4_Hit.hlsli"
 #include "PathTracing/4_Miss.hlsli"
-#include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
+#include "PathTracing/4_ComputeRayHit.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
 #include "Utils/Random.h"
@@ -23,31 +23,7 @@ PathSample Trace(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoord)
 
         bool isMiss;
         HitInfo hitInfo;
-
-        if (FEATURE_ENABLED(ReconstructPrimaryRay) && i == 0)
-        {
-            ReconstructPrimaryRayHit(
-                gSettings.CameraPositionWorld,
-                pixelCoord,
-                gGBufferMaterialIdx,
-                gGBufferNormals,
-                gGBufferDepth,
-                gGBufferUvMv,
-                gMegaBufferMaterials,
-                hitInfo,
-                isMiss
-            );
-        }
-        else
-        {
-            q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, pathState.Desc);
-            q.Proceed();
-
-            isMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
-
-            if (!isMiss)
-                GetHitInfo(q, hitInfo);
-        }
+        ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
 
         if (isMiss)
         {
