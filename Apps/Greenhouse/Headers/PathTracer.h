@@ -47,7 +47,7 @@ public:
             RestirManager::TotalCbvRequiredSize();
     }
 
-    D12Resource* GetTexOutput() { return &m_output; }
+    D12Resource* GetTexPrimal() { return &m_primal; }
     D12Resource* GetTexAccum() { return &m_accum; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
@@ -64,7 +64,7 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
-    D12Resource m_output, m_accum;
+    D12Resource m_primal, m_accum;
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;

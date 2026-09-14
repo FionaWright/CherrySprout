@@ -10,6 +10,7 @@ float3 SampleNEE(
     PathState pathState,
     BxDF bxdf,
 
+    uint numSamples,
     float3 wo,
     float3 hitPos,
     float3 nextOrigin,
@@ -49,7 +50,7 @@ float3 SampleNEE(
         float pdf_bxdf;
         bxdf.Evaluate(hitInfo, wo, lightSample.Direction, f_bxdf, pdf_bxdf);
 
-        m = f_bxdf * PowerHeuristic(lightSample.PDF, pdf_bxdf);
+        m = f_bxdf * PowerHeuristic(lightSample.PDF, pdf_bxdf, numSamples, 1);
     }
 
     DBG_OUTPUT1(m,                       NEE_MIS_Weight);

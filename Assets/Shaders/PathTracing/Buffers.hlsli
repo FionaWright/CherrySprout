@@ -57,7 +57,7 @@ Texture2D<float4>                                   gSceneTextures[]        : re
 // =================== U Registers ===============================================================================
 
 RWTexture2D<float4>                                 gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
-RWTexture2D<float4>                                 gTexOutput              : register(u1, REGISTER_SPACE_DEFAULT);
+RWTexture2D<float4>                                 gTexPrimal              : register(u1, REGISTER_SPACE_DEFAULT);
 RWStructuredBuffer<ReservoirDI>                     gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
 
 // =================== U Registers (Debug) =======================================================================

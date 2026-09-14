@@ -164,6 +164,17 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        if (pathTracingFeatureEnabled(eFeature_NEE))
+        {
+            ImGui::Text("NEE:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples", &m_config.PathTracerConfig.NeeNumSamples);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
         if (pathTracingFeatureEnabled(eFeature_RestirDI))
         {
             ImGui::Text("ReSTIR:");

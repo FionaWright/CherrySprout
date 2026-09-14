@@ -38,7 +38,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
-        m_output.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
+        m_primal.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
     {
@@ -104,7 +104,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     }
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_output, m_output.GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_primal, m_primal.GetDesc().Format);
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, m_restirManager.GetReservoirBuffer(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
@@ -289,6 +289,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.SPP = renderInfo.PathTracerConfig->SPP;
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
         settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && m_frameIdx > renderInfo.PathTracerConfig->MaxFrameNumber;
+        settings.NeeNumSamples = renderInfo.PathTracerConfig->NeeNumSamples;
 
         float speedOfLight = renderInfo.PathTracerConfig->TransientSpeedOfLight;
         settings.TransientLightIdx = renderInfo.PathTracerConfig->TransientLightIndex;
@@ -312,7 +313,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     }
 
     {
-        m_output.Transition                             (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_primal.Transition                             (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         m_accum.Transition                              (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         scene->GPU.MegaBufferVertex.Transition          (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -354,16 +355,16 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     {
         GPU_SCOPE(cmdList, "Copy PT Output to RTV");
 
-        m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        m_primal.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
         RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        RTV->CopyTextureInto(cmdList, m_output.GetResource(), 0, 0, 0);
+        RTV->CopyTextureInto(cmdList, m_primal.GetResource(), 0, 0, 0);
     }
 }
 
 void PathTracer::UnreserveData()
 {
-    m_output.Release();
+    m_primal.Release();
     m_accum.Release();
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_gpuErrorInfoRW.Release();

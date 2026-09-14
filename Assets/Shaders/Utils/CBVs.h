@@ -34,9 +34,10 @@ struct CbvPathTracingSettings
     float TransientDistanceSinceStart;
     float TransientPulseDistance;
 
+    hlsl::uint NeeNumSamples;
     hlsl::uint RestirConfidenceCap;
     hlsl::uint RestirNumCandidates;
-    hlsl::uint2 p;
+    hlsl::uint GradientNumSamples;
 };
 
 struct CbvPanoToEA

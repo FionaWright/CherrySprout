@@ -3,14 +3,14 @@
 
 #include "PathTracing/Structs.h"
 #include "PathTracing/Utils.hlsli"
-#include "PathTracing/3_Hit.hlsli"
-#include "PathTracing/3_Miss.hlsli"
+#include "PathTracing/4_Hit.hlsli"
+#include "PathTracing/4_Miss.hlsli"
 #include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
 #include "Utils/Random.h"
 
-float3 Trace(float3 origin, float3 dir, inout RngInfo rngInfo, uint2 pixelCoord)
+PathSample Trace(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoord)
 {
     RayQuery<RAY_FLAGS> q;
 
@@ -106,7 +106,17 @@ float3 Trace(float3 origin, float3 dir, inout RngInfo rngInfo, uint2 pixelCoord)
         DBG_PATH_DUMP_PATH_STATE(pathState);
     }
 
-    return pathState.Lo;
+    PathSample pathSample;
+    pathSample.Lo = pathState.Lo;
+
+    if (FEATURE_ENABLED(GradientDomain))
+    {
+        pathSample.PDF = pathState.PDF;
+
+        // TODO: VertexList
+    }
+
+    return pathSample;
 }
 
 #endif

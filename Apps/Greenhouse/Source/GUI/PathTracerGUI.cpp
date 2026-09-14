@@ -135,7 +135,6 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                         RowFloat3("Ray Direction", m_cpuPathDump[i].PathState.Desc.Direction, true);
                         RowFloat3("Beta", m_cpuPathDump[i].PathState.Beta, true);
                         RowFloat3("Lo", m_cpuPathDump[i].PathState.Lo, true);
-                        RowFloat3("Gradient", m_cpuPathDump[i].PathState.Gradient, true);
                         RowInt("Last Ray Was Dirac Delta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
                         RowFloat("Last Ray PDF", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
 

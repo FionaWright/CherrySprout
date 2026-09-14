@@ -1,6 +1,7 @@
 #ifndef H_PATH_TRACING_STRUCTS_H
 #define H_PATH_TRACING_STRUCTS_H
 
+#include "GradientDomain/Structs.h"
 #include "Utils/HlslGlue.h"
 
 #include "Scene/Material.h"
@@ -40,16 +41,24 @@ struct PathState
     RayDesc Desc;
 
     hlsl::float3 Beta;
-    float LastBxdfPdf;
+    float PDF; // Note: Using log(PDF) for better fp-precision
 
     hlsl::float3 Lo;
-    hlsl::uint RaySegmentIdx;
+    float LastBxdfPdf;
 
-    hlsl::float3 Gradient;
     float RollingPathDistance;
-
     hlsl::uint LastRayWasDiracDelta;
-    hlsl::float3 p;
+    hlsl::uint RaySegmentIdx;
+    float p;
+};
+
+// Note: Unaligned, do not use in C++
+struct PathSample
+{
+    hlsl::float3 Lo;
+    float PDF;
+
+    PathVertexList VertexList;
 };
 
 struct ProbabilityDistributionSample

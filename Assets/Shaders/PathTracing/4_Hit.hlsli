@@ -8,8 +8,8 @@
 
 #include "Utils/RandomDirection.h"
 
-#include "PathTracing/4_SampleDirect.hlsli"
-#include "PathTracing/4_SampleIndirect.hlsli"
+#include "PathTracing/5_SampleDirect.hlsli"
+#include "PathTracing/5_SampleIndirect.hlsli"
 
 void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inout RngInfo rngInfo, uint2 pixelCoord)
 {
@@ -30,8 +30,12 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
 
     if (FEATURE_ENABLED(NEE))
     {
-        float3 E_direct = SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin);
+        float pdf;
+        float3 E_direct = SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, pdf);
         L_sample += E_direct * pathState.Beta;
+
+        if (FEATURE_ENABLED(GradientDomain))
+            pathState.PDF += pdf;
     }
 
     float3 wi;
@@ -40,6 +44,9 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
     pathState.Beta *= E_indirect;
 
     pathState.LastBxdfPdf = pdf;
+
+    if (FEATURE_ENABLED(GradientDomain))
+        pathState.PDF += pdf;
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = nextOrigin;

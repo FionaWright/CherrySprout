@@ -45,7 +45,7 @@ float Target(LightSample X_i, LightSampleSelectionInfo info)
         float pdf_bxdf;
         bxdf.Evaluate(info.HitInfo, info.Dir_wo, X_i.Direction, f_bxdf, pdf_bxdf);
 
-        m = f_bxdf * PowerHeuristic(X_i.PDF, pdf_bxdf);
+        m = f_bxdf * PowerHeuristic(X_i.PDF, pdf_bxdf, 1, 1); // TODO: Send in M?
     }
 
     float3 radiance = X_i.Radiance * m * NdL;
@@ -103,7 +103,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
         float pdf_bxdf;
         bxdf.Evaluate(hitInfo, wo, reservoir.Y.Direction, f_bxdf, pdf_bxdf);
 
-        m = f_bxdf * PowerHeuristic(reservoir.Y.PDF, pdf_bxdf);
+        m = f_bxdf * PowerHeuristic(reservoir.Y.PDF, pdf_bxdf, 1, 1);
 
         DBG_OUTPUT3(f_bxdf, RESTIR_Bxdf);
         DBG_OUTPUT1(pdf_bxdf, RESTIR_PDF);
