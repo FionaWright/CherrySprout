@@ -42,6 +42,8 @@ Created for my bachelors final year project at Trinity College Dublin
 - Environment Map + Punctual Light NEE
 - Alias Tables
 - Modular Feature Flags System
+- ReSTIR DI
+- Gradient Domain Path-Tracing
 
 ### Debug Tools
 
