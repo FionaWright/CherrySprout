@@ -113,7 +113,7 @@ void GD_PT(pixelCoord)
     gGradientTex[pixelCoord] = gradient;
 }
 
-// Seperate CS passes. Iterative Jacobi for base implementation 
+// Seperate CS passes. Iterative Jacobi for base implementation. Or FFT might be better 
 // Pseudocode not exactly matching what happens. But gives general idea of inputs/outputs
 void Reconstruct()
 {
@@ -127,15 +127,82 @@ void Reconstruct()
 ```
 
 ```cpp
-void GradientMIS(PathSample main, PathSample shifted)
+bool IsSymmetric(PathSample main, PathSample shifted)
 {
+    if (!PossibleMainSample(shifted)) // Can be sampled by the path-tracer
+        return false; // w_ij == 1, w_ji == 1
+
+    if (!InverseMappingExists(main, shifted)) // For shift mapping T_ij, T_ji exists
+        return false; // w_ij == 1, w_ji == 0
+
+    // If for a vertex, the main path does a refraction whereas the shifted path is forced into TIR, the reverse shift will still be a reflection. Thus it is uninvertable.
+    // TODO: Explain better
+
+    // If when attempting a reconnection shift (into a diffuse vertex), it is occluded, then the path is not symmetric 
+
+    return true;
+}
+
+// Note: NEE Emissive light sources make the MIS more complex 
+float GradientMIS(PathSample main, PathSample shifted)
+{
+    if (!IsSymmetric(main, shifted))
+        return 1.0f;
+
     float p1 = main.PDF;
-
-    float p2 = ShiftMappingJacobian(main, shifted) * JacobianDet(main, shifted);
-
+    float p2 = shifted.PDF * shifted.JacobianDet;
     return BalanceHeuristic(p1, p2); // p1 / (p1 + p2)
 }
 ```
+
+```cpp
+PathSample TraceShifted(VertexList vertices)
+{
+    bool reconnected = false;
+    for (uint v = 0; v < vertices.Count; v++)
+    {
+        Vertex vertex = vertices.Array[v];
+        Vertex nextVertex = vertices.Array[v+1];
+
+        if (reconnected)
+        {
+            TraceToVertex(vertex);
+        }
+        else if (!vertex.IsDirac && !nextVertex.IsDirac)
+        {
+            ReconnectionShift();
+            VisibilityTest(nextVertex);
+            reconnected = true;
+        }
+        else
+        {
+            HalfVectorShift();
+            TraceNextRay();
+        }
+    }
+}
+```
+
+## Jacobian
+
+### For Half-Vector Shifts:
+
+Jacobian Determinent for reflection is:  
+$|T'_{ij}| = \dfrac{w_o^y \cdot h^y}{w_o^x \cdot h^x}$  
+
+And for refraction:  
+$\eta^x = \dfrac{n_2^x}{n_1^x}$  
+$|T'_{ij}| = \dfrac{|w_i^y + \eta^y w_o^y|^2}{|w_i^x + \eta^x w_o^x|^2} \dfrac{w_i^x \cdot h^x}{w_i^y \cdot h^y}$  
+
+### For the Reconnection Shift:
+
+$x_1$ is the current vertex   
+$x_2$ is the next vertex ($x_2^x = x_2^y$ right?)  
+$cos(\theta^x)$ is dot(surfaceNormal, $x_1 \to x_2$)  
+
+$|T'_{ij}| = \dfrac{cos(\theta^y)}{cos(\theta^x)} \dfrac{|x_1^x - x_2^x|^2}{|x_1^y - x_2^y|^2}$  
+
+If connecting to the env map, $|T'_{ij}| = 1$ 
 
 # Screened Poisson Reconstruction
 
