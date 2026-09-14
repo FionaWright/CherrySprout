@@ -289,7 +289,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.SPP = renderInfo.PathTracerConfig->SPP;
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
         settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && m_frameIdx > renderInfo.PathTracerConfig->MaxFrameNumber;
-        settings.NeeNumSamples = renderInfo.PathTracerConfig->NeeNumSamples;
+        settings.DirectNumSamples = renderInfo.PathTracerConfig->DirectNumSamples;
 
         float speedOfLight = renderInfo.PathTracerConfig->TransientSpeedOfLight;
         settings.TransientLightIdx = renderInfo.PathTracerConfig->TransientLightIndex;

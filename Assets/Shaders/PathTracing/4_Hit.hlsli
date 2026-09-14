@@ -30,12 +30,17 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
 
     if (FEATURE_ENABLED(NEE))
     {
-        float pdf;
-        float3 E_direct = SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, pdf);
-        L_sample += E_direct * pathState.Beta;
+        float3 E_direct = 0;
+        for (uint i = 0; i < gSettings.DirectNumSamples; i++)
+        {
+            float pdf;
+            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, pdf);
 
-        if (FEATURE_ENABLED(GradientDomain))
-            pathState.PDF += pdf;
+            if (FEATURE_ENABLED(GradientDomain))
+                pathState.PDF += pdf;
+        }
+
+        L_sample += E_direct * pathState.Beta / float(gSettings.DirectNumSamples);
     }
 
     float3 wi;

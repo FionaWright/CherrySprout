@@ -23,23 +23,13 @@ float3 SampleDirectLighting(
 
     LightSample lightSample = (LightSample)0;
 
-    pdf = NAN; // TODO
-
     if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
     {
-        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, nextOrigin, bxdf, lightSample);
-        //pdf = lightSample.PDF;
+        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, nextOrigin, bxdf, gSettings.DirectNumSamples, lightSample);
     }
     else
     {
-        //pdf = 1.0f;
-        float3 E_direct_nee = 0;
-        for (int i = 0; i < gSettings.NeeNumSamples; i++)
-        {
-            E_direct_nee += SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.NeeNumSamples, wo, hitPos, nextOrigin, lightSample);
-            //pdf *= lightSample.PDF;
-        }
-        E_direct += E_direct_nee / float(gSettings.NeeNumSamples);
+        E_direct += SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample);
     }
 
     // TODO: Share shadow ray handling for both out here

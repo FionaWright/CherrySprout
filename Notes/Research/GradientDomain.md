@@ -7,6 +7,9 @@ Wiki:
 Original Paper:
     https://dl.acm.org/doi/10.1145/2766997
 
+Students Paper:
+    https://studenttheses.uu.nl/bitstreams/6de1ae1e-69bf-4488-b7f8-1ca9f922da44/download
+
 SPR:
     https://www.ipol.im/pub/art/2014/84/revisions/2022-01-01/article.pdf
 

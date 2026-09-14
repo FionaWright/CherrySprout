@@ -166,10 +166,10 @@ void Greenhouse::renderGuiCore()
 
         if (pathTracingFeatureEnabled(eFeature_NEE))
         {
-            ImGui::Text("NEE:");
+            ImGui::Text("Direct Light Sampling:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples", &m_config.PathTracerConfig.NeeNumSamples);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples", &m_config.PathTracerConfig.DirectNumSamples);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

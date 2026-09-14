@@ -57,7 +57,7 @@ float PDF(LightSample X_i, LightSampleSelectionInfo info)
     return X_i.PDF;
 }
 
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 nextOrigin, BxDF bxdf, out LightSample lightSample)
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 nextOrigin, BxDF bxdf, uint numSamples, out LightSample lightSample)
 {
     uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
@@ -103,7 +103,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
         float pdf_bxdf;
         bxdf.Evaluate(hitInfo, wo, reservoir.Y.Direction, f_bxdf, pdf_bxdf);
 
-        m = f_bxdf * PowerHeuristic(reservoir.Y.PDF, pdf_bxdf, 1, 1);
+        m = f_bxdf * PowerHeuristic(reservoir.Y.PDF, pdf_bxdf, numSamples, 1);
 
         DBG_OUTPUT3(f_bxdf, RESTIR_Bxdf);
         DBG_OUTPUT1(pdf_bxdf, RESTIR_PDF);

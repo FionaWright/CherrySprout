@@ -19,7 +19,7 @@ struct PathVertex // Include HitInfo instead of normal?
 
 struct PathVertexList
 {
-    PathVertex Vertices[PATH_MAX_VERTICES];
+    PathVertex Array[PATH_MAX_VERTICES];
     hlsl::uint NumVertices;
 };
 

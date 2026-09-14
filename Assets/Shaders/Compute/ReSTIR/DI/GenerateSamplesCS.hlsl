@@ -4,7 +4,7 @@
 
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
-#include "PathTracing/2_GetPrimaryRay.hlsli"
+#include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
 #define SEED_DECORRELATOR 0x46362346 // TODO

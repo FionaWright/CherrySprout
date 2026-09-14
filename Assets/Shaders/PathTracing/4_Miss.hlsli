@@ -17,7 +17,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
         if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
         {
             float pdf_env = GetEnvMapPdf(uv);
-            float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.NeeNumSamples);
+            float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
             Le *= m;
         }
 

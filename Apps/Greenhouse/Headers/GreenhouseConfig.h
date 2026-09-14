@@ -45,7 +45,7 @@ struct PathTracerConfig
     uint32_t MaxShadowRayDepth = 1; // Transmission unsupported for shadow rays for now
     uint32_t MaxFrameNumber = 0;
     uint32_t RussianRouletteMinBounces = 1;
-    uint32_t NeeNumSamples = 1;
+    uint32_t DirectNumSamples = 1;
 
     float FireFlyThreshold = 2.5f;
     float DofFocalDist = 0.1f;
