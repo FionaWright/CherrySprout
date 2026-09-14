@@ -67,6 +67,12 @@ struct PathVertex
 
 You also might need a `float PathPDF` for the total PDF of the path
 
+The Gradient is just the difference between the main and shifted path contribution. I do not need to track anything different in the main path state (Except maybe PDFs ?)
+
+Uniform sampling introduces uniform white noise at all frequencies with a dirac at the "DC" frequency (0)
+
+The variable used by SPR to determine how much to take from the main sample vs the gradients is $\alpha$. The optimal value for $\alpha_{*}$ is different for each frequency, but MAY be able to be derived from the PT samples? Not sure
+
 # GD-PT Model
 
 PT()  
@@ -75,13 +81,61 @@ PT()
     SampleGradient()  
         for (dx and dy):  
             ShiftPrimaryRay()   
-                # Shift by epsilon in one axis  
-            ReplayPath()   
+                # Shift to a neighbouring pixel
+            TraceShifted(MainPathVertices)   
                 # Use correlated path vertices  
                 ShiftMapping()  
-            EvaluateGradient()  
+            gradient = f_main - f_shifted
 
-ReconstructGradientPoisson()
+ScreenedPoissonReconstruction(primal, gx, gy)
+
+# Begin
+
+Note that we do NOT shift by epsilon, we use neighbouring pixels
+
+```cpp
+void GD_PT(pixelCoord)
+{
+    PathSample pathSample = Trace(pixelCoord);
+    Accumulate(gPrimalTex, pixelCoord, pathSample.Primal);
+
+    float3 gradient = 0;
+    for (int j = 0; j < gSettings.NumGradients; j++)
+    {
+        NeighbourInfo neighbour = GetNeighbour(pixelCoord, j);
+        float3 neighbourContribution = GradientMIS(neighbour) * TraceShifted(neighbour, pathSample.VerticesList); // Multplies by shift mapping jacobian internally
+
+        gradient += pathSample.Primal - neighbourContribution;
+    }
+
+    gradient /= gSettings.NumGradients;
+
+    gGradientTex[pixelCoord] = gradient;
+}
+
+// Seperate CS passes. Iterative Jacobi for base implementation 
+// Pseudocode not exactly matching what happens. But gives general idea of inputs/outputs
+void Reconstruct()
+{
+    float3 primal = gPrimalTex[pixelCoord];
+    float3 gradient = gGradientTex[pixelCoord];
+
+    float3 poisson = ScreenedPoissonReconstruct(primal, gradient, gSettings.GradientAlpha);
+
+    gOutputTex[pixelCoord] = poisson;
+}
+```
+
+```cpp
+void GradientMIS(PathSample main, PathSample shifted)
+{
+    float p1 = main.PDF;
+
+    float p2 = ShiftMappingJacobian(main, shifted) * JacobianDet(main, shifted);
+
+    return BalanceHeuristic(p1, p2); // p1 / (p1 + p2)
+}
+```
 
 # Screened Poisson Reconstruction
 
