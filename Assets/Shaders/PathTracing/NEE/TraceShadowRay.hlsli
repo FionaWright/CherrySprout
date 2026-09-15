@@ -15,8 +15,6 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
 
     shadowFactor = 1.0f;
 
-    // TODO: Alpha handling
-
     for (uint i = 0; i < gSettings.MaxShadowRayDepth; i++)
     {
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
@@ -27,13 +25,15 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
             return;
 
         uint instanceIdx = q.CommittedInstanceIndex();
-
         InstanceData instance = gMegaBufferInstanceData[instanceIdx];
         Material mat = gMegaBufferMaterials[instance.MaterialIndex];
 
-        // TODO: Transmission eval? 
-        shadowFactor *= mat.TransmissionFactor;
-        //shadowFactor *= Luminance(mat.TransmissionColor);
+        float2 uv = ExtractUV(q, instance);
+
+        float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSampler, uv);
+        float alpha = albedoSample.w;
+
+        shadowFactor *= 1.0f - alpha;
 
         if (shadowFactor <= 0.0f)
             return;

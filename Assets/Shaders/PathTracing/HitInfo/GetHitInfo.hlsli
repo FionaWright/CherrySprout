@@ -9,13 +9,12 @@
 #include "Utils/Debug/Palette.h"
 
 #include "PathTracing/Structs.h"
+#include "PathTracing/HitInfo/ExtractUtils.hlsli"
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
 
 void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 {
     uint instanceIdx = q.CommittedInstanceIndex();
-    uint primitiveIdx = q.CommittedPrimitiveIndex();
-    float2 barycentrics = q.CommittedTriangleBarycentrics();
 
     hitInfo.IsEntering = q.CommittedTriangleFrontFace() == 0;
     hitInfo.RayT = q.CommittedRayT();
@@ -34,24 +33,11 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     hitInfo.Mat = gMegaBufferMaterials[instance.MaterialIndex];
 
-    uint primitiveOffset = instance.MegaBufferOffsetIndex / 3; // TODO: Put primitiveOffset in instanceData?
-    uint3 tri = gMegaBufferIndex[primitiveOffset + primitiveIdx];
-    Vertex v0 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.x];
-    Vertex v1 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.y];
-    Vertex v2 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.z];
+    float3 Ng, Ns;
+    float2 uv;
+    ExtractInterpolatedAttributes(q, instance, Ns, Ng, uv);
 
-    precise float3 bary = float3(1 - barycentrics.x - barycentrics.y, barycentrics.x, barycentrics.y);
-
-    hitInfo.UV = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
-    hitInfo.UV.y = 1 - hitInfo.UV.y;
-
-	float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
-	float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
-	float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
-	float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
-
-    float3 Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
-    Ns = normalize(mul((float3x3)instance.MTI, Ns));
+    hitInfo.UV = uv;
 
     ApplyNormalMap(hitInfo, Ns);
 
@@ -65,7 +51,6 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     {
         DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
         DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);
-        DBG_OUTPUT2(barycentrics,                                                             Barycentrics);
         DBG_OUTPUT3(Ns,                                                                       Normals);
         DBG_OUTPUT3(hitInfo.Ns_ff,                                                            NormalShadedFF);
         DBG_OUTPUT3(Ng,                                                                       NormalGeometric);
