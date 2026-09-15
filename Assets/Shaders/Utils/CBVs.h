@@ -3,6 +3,8 @@
 
 #include "Utils/HlslGlue.h"
 
+#include "PathTracing/Flags/Flags.h"
+
 struct CbvPathTracingSettings
 {
     hlsl::float4x4 InvP;
@@ -134,6 +136,10 @@ struct CbvPathTracingDebugSettings
     float ScaleReflect;
     float ScaleRefract;
     int ForcedLightIndex;
+
+    PathTracerFeatureFlags CbvFeatureFlags;
+    PathTracerDebugFlags CbvDebugFlags;
+    hlsl::float2 p;
 };
 
 #endif

@@ -1,29 +1,29 @@
-FLAG_PROCESS(Jitter)
-FLAG_PROCESS(Accumulation)
+FLAG_PROCESS(Jitter, true)
+FLAG_PROCESS(Accumulation, true)
 
-FLAG_PROCESS(NormalMaps)
-FLAG_PROCESS(EnvironmentMap)
+FLAG_PROCESS(NormalMaps, true)
+FLAG_PROCESS(EnvironmentMap, true)
 
-FLAG_PROCESS(DirectionalLight)
-FLAG_PROCESS(DirectionalLightDistant)
+FLAG_PROCESS(DirectionalLight, true)
+FLAG_PROCESS(DirectionalLightDistant, true)
 
-FLAG_PROCESS(DepthOfField)
-FLAG_PROCESS(RussianRoulette)
+FLAG_PROCESS(DepthOfField, true)
+FLAG_PROCESS(RussianRoulette, true)
 
-FLAG_PROCESS(AlphaTesting)
-FLAG_PROCESS(GlassMaterials)
+FLAG_PROCESS(AlphaTesting, true)
+FLAG_PROCESS(GlassMaterials, true)
 
-FLAG_PROCESS(NEE)
-FLAG_PROCESS(AliasTables)
+FLAG_PROCESS(NEE, true)
+FLAG_PROCESS(AliasTables, false) // !
 
-FLAG_PROCESS(FireflyThreshold)
-FLAG_PROCESS(GammaCorrectionFast)
+FLAG_PROCESS(FireflyThreshold, true)
+FLAG_PROCESS(GammaCorrectionFast, true)
 
-FLAG_PROCESS(Anisotropy)
-FLAG_PROCESS(Transient)
+FLAG_PROCESS(Anisotropy, true)
+FLAG_PROCESS(Transient, true)
 
-FLAG_PROCESS(ReconstructPrimaryRay)
-FLAG_PROCESS(RestirDI)
+FLAG_PROCESS(ReconstructPrimaryRay, true)
+FLAG_PROCESS(RestirDI, true)
 
-FLAG_PROCESS(RestirTargetVisibility)
-FLAG_PROCESS(GradientDomain)
+FLAG_PROCESS(RestirTargetVisibility, true)
+FLAG_PROCESS(GradientDomain, true)

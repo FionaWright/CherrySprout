@@ -18,7 +18,7 @@
 static constexpr auto s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Disabled;
 #endif
 
-#if defined(__cplusplus) || DEBUG_ENABLED(PathDumper)
+#if defined(__cplusplus) || DEBUG_ENABLED_PP(PathDumper)
 struct DebugOutputStruct
 {
     hlsl::float3 Float3List[(hlsl::uint)DebugOutputIndex::eCount];

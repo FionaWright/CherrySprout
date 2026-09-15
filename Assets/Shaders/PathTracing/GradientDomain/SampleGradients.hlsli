@@ -1,7 +1,7 @@
 #ifndef H_SAMPLE_GRADIENT_H
 #define H_SAMPLE_GRADIENT_H
 
-#if FEATURE_ENABLED(GradientDomain)
+#if FEATURE_ENABLED_PP(GradientDomain)
 
 #include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/GradientDomain/TraceShiftedRay.hlsli"

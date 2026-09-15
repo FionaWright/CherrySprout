@@ -5,7 +5,7 @@
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
-#if DEBUG_ENABLED(OutputColor)
+#if DEBUG_ENABLED_PP(OutputColor)
 
 #include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
@@ -38,7 +38,7 @@ void dbgOutput3(float3 value)
 #    define DBG_OUTPUT_SET(output) { output = gDebugValue; }
 #    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }
 
-#elif DEBUG_ENABLED(PathDumper)
+#elif DEBUG_ENABLED_PP(PathDumper)
 
 #    define DBG_OUTPUT3(value, label) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label)
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)

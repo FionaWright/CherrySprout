@@ -16,9 +16,8 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
     float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
     float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
 
-#if FEATURE_ENABLED(Transient)
-    pathState.RollingPathDistance += hitInfo.RayT;
-#endif
+    if (FEATURE_ENABLED(Transient))
+        pathState.RollingPathDistance += hitInfo.RayT;
 
     L_sample = pathState.Beta * hitInfo.Emission;
 

@@ -10,8 +10,14 @@ Original Paper:
 Students Paper:
     https://studenttheses.uu.nl/bitstreams/6de1ae1e-69bf-4488-b7f8-1ca9f922da44/download
 
+Small-GDPT:
+    https://gist.github.com/BachiLi/4f5c6e5a4fef5773dab1
+
 SPR:
     https://www.ipol.im/pub/art/2014/84/revisions/2022-01-01/article.pdf
+
+SPR Fourier Analysis:
+    https://grail.cs.washington.edu/projects/screenedPoissonEq/
 
 Code:
     https://github.com/gradientpm/gradient-mts
@@ -219,10 +225,12 @@ $\lambda_d$ = $\alpha$
 $d_x$ = Discrete Derivative Filter (X) ?  
 $d_y$ = Discrete Derivative Filter (Y) ?  
 
-$\dfrac{\partial f}{\partial x} = d_x * f$   
-$\dfrac{\partial}{\partial x} \dfrac{\partial f}{\partial x} = d_x * d_x * f$  
+$\dfrac{\partial f}{\partial x} = d_x \circ f$   
+$\dfrac{\partial}{\partial x} \dfrac{\partial f}{\partial x} = d_x \circ d_x \circ f$  
 
 Apply DFT on the variables to find them in the fourier domain (Capital letters)  
+
+Spatial $\circ \to$ Fourier $\times$
 
 $\lambda_d F = D_x^2 F - D_x^2 F = \lambda_d U - D_x G^x - D_y G^y$  
 

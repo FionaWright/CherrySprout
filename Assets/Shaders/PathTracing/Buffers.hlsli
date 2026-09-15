@@ -37,7 +37,7 @@ Texture2D<float>                                    gEnvMapPmfConditional   : re
 Texture2D<float>                                    gEnvMapCdfConditional   : register(t8, REGISTER_SPACE_DEFAULT);
 Texture1D<float>                                    gEnvMapCdfMarginal      : register(t9, REGISTER_SPACE_DEFAULT);
 
-#if FEATURE_ENABLED(AliasTables)
+#if FEATURE_ENABLED_PP(AliasTables)
 StructuredBuffer<AliasEntry>                        gLightAliasTable        : register(t10, REGISTER_SPACE_DEFAULT);
 #else
 StructuredBuffer<ProbabilityDistributionSample>     gLightCDF               : register(t10, REGISTER_SPACE_DEFAULT);

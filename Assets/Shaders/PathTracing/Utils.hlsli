@@ -9,9 +9,8 @@ PathState CreatePathState(float3 origin, float3 dir)
 
     pathState.LastBxdfPdf = 1.0f;
 
-#if FEATURE_ENABLED(Transient)
-    pathState.RollingPathDistance = 0.0f;
-#endif
+    if (FEATURE_ENABLED(Transient))
+        pathState.RollingPathDistance = 0.0f;
 
     pathState.Desc.TMin = 0.001;
     pathState.Desc.TMax = 1000.0;
@@ -20,10 +19,6 @@ PathState CreatePathState(float3 origin, float3 dir)
 
     pathState.Beta = float3(1, 1, 1);
     pathState.Lo = float3(0, 0, 0);
-
-#if FEATURE_ENABLED(GradientDomain)
-    pathState.Gradient = float3(0, 0, 0);
-#endif
 
     return pathState;
 }

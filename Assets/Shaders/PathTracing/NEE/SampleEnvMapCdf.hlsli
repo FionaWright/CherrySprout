@@ -1,7 +1,7 @@
 #ifndef H_SAMPLE_ENV_MAP_CDF_H
 #define H_SAMPLE_ENV_MAP_CDF_H
 
-#if FEATURE_ENABLED(NEE)
+#if FEATURE_ENABLED_PP(NEE)
 
 #include "Utils/Constants.h"
 #include "Utils/SharedUtils.h"

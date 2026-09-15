@@ -1,7 +1,7 @@
 #ifndef H_DEBUG_SCALES_H
 #define H_DEBUG_SCALES_H
 
-#if DEBUG_ENABLED(Scales)
+#if DEBUG_ENABLED_PP(Scales)
 
 #define DBG_SCALE_INTENSITY_GLOBAL(x)     x *= gDebugSettings.ScaleIntensityGlobal;
 #define DBG_SCALE_INTENSITY_PUNCTUAL(x)   x *= gDebugSettings.ScaleIntensityPunctual;

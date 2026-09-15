@@ -9,7 +9,7 @@
 #include "Utils/Math/Punctual.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
-#if FEATURE_ENABLED(AliasTables)
+#if FEATURE_ENABLED_PP(AliasTables)
 void sampleLSD(float xi, out uint lightIdx, out float pdf)
 {
     uint lightCount, _;

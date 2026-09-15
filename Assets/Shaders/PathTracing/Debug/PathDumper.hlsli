@@ -1,7 +1,7 @@
 #ifndef H_PATH_DUMP_H
 #define H_PATH_DUMP_H
 
-#if DEBUG_ENABLED(PathDumper)
+#if DEBUG_ENABLED_PP(PathDumper)
 
 #include "PathTracing/Debug/Globals.hlsli"
 

@@ -1,7 +1,7 @@
 #ifndef H_TRANSIENT_H
 #define H_TRANSIENT_H
 
-#if FEATURE_ENABLED(Transient)
+#if FEATURE_ENABLED_PP(Transient)
 
 enum TransientMode : uint
 {

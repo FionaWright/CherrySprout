@@ -1,7 +1,7 @@
 #ifndef H_TARGET_H
 #define H_TARGET_H
 
-#if FEATURE_ENABLED(RestirDI)
+#if FEATURE_ENABLED_PP(RestirDI)
 
 #include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/NEE/NEE.hlsli"

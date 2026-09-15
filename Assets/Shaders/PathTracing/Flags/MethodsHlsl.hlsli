@@ -15,25 +15,36 @@
 #       define DEBUG_FLAGS 0
 #   endif
 
-#define FEATURE_ENABLED(flag) (FEATURE_FLAGS & FEATURE_FLAG_VALUE_##flag)
-#define DEBUG_ENABLED(flag)   (DEBUG_FLAGS & DEBUG_FLAG_VALUE_##flag)
+bool featureEnabled(uint flagValue, uint linearIndex)
+{
+#if DEBUG_CBV_FLAGS_MODE_ENABLED
+    bool canBeCbvValue = s_canBeCbvValueFlagListFeature[linearIndex];
+    if ((FEATURE_FLAGS & flagValue) &&                         // Comptime enabled
+        canBeCbvValue &&                                       // Has runtime functionality
+        (gDebugSettings.CbvFeatureFlags & flagValue))          // Runtime enabled
+        return true;
+#else
+    return FEATURE_FLAGS & flagValue;
+#endif
+}
 
-// Combined Flags
+bool debugEnabled(uint flagValue, uint linearIndex)
+{
+#if DEBUG_CBV_FLAGS_MODE_ENABLED
+    bool canBeCbvValue = s_canBeCbvValueFlagListDebug[linearIndex];
+    if ((DEBUG_FLAGS & flagValue) &&                          // Comptime enabled
+        canBeCbvValue &&                                      // Has runtime functionality
+        (gDebugSettings.CbvDebugFlags & flagValue))           // Runtime enabled
+        return true;
+#else
+    return DEBUG_FLAGS & flagValue;
+#endif
+}
 
-#define FEATURES_ENABLED_ANY2(_1, _2)             FEATURE_ENABLED(_1) || FEATURE_ENABLED(_2)
-#define FEATURES_ENABLED_ANY3(_1, _2, _3)         FEATURE_ENABLED(_1) || FEATURE_ENABLED(_2) || FEATURE_ENABLED(_3)
-#define FEATURES_ENABLED_ANY4(_1, _2, _3, _4)     FEATURE_ENABLED(_1) || FEATURE_ENABLED(_2) || FEATURE_ENABLED(_3) || FEATURE_ENABLED(_4)
+#define FEATURE_ENABLED_PP(flag) (FEATURE_FLAGS & FEATURE_FLAG_VALUE_##flag)
+#define DEBUG_ENABLED_PP(flag)   (DEBUG_FLAGS & DEBUG_FLAG_VALUE_##flag)
 
-#define DEBUGS_ENABLED_ANY2(_1, _2)               DEBUG_ENABLED(_1) || DEBUG_ENABLED(_2)
-#define DEBUGS_ENABLED_ANY3(_1, _2, _3)           DEBUG_ENABLED(_1) || DEBUG_ENABLED(_2) || DEBUG_ENABLED(_3)
-#define DEBUGS_ENABLED_ANY4(_1, _2, _3, _4)       DEBUG_ENABLED(_1) || DEBUG_ENABLED(_2) || DEBUG_ENABLED(_3) || DEBUG_ENABLED(_4)
-
-#define FEATURES_ENABLED_ALL2(_1, _2)             FEATURE_ENABLED(_1) && FEATURE_ENABLED(_2)
-#define FEATURES_ENABLED_ALL3(_1, _2, _3)         FEATURE_ENABLED(_1) && FEATURE_ENABLED(_2) && FEATURE_ENABLED(_3)
-#define FEATURES_ENABLED_ALL4(_1, _2, _3, _4)     FEATURE_ENABLED(_1) && FEATURE_ENABLED(_2) && FEATURE_ENABLED(_3) && FEATURE_ENABLED(_4)
-
-#define DEBUGS_ENABLED_ALL2(_1, _2)               DEBUG_ENABLED(_1) && DEBUG_ENABLED(_2)
-#define DEBUGS_ENABLED_ALL3(_1, _2, _3)           DEBUG_ENABLED(_1) && DEBUG_ENABLED(_2) && DEBUG_ENABLED(_3)
-#define DEBUGS_ENABLED_ALL4(_1, _2, _3, _4)       DEBUG_ENABLED(_1) && DEBUG_ENABLED(_2) && DEBUG_ENABLED(_3) && DEBUG_ENABLED(_4)
+#define FEATURE_ENABLED(flag) (featureEnabled(FEATURE_FLAG_VALUE_##flag, (hlsl::uint)Internal_PathTracerFeatureIndex::Idx_##flag))
+#define DEBUG_ENABLED(flag)   (debugEnabled(DEBUG_FLAG_VALUE_##flag, (hlsl::uint)Internal_PathTracerDebugIndex::Idx_##flag))
 
 #endif

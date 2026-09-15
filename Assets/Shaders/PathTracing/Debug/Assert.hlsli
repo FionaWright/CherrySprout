@@ -4,7 +4,7 @@
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 
-#if DEBUG_ENABLED(Asserts)
+#if DEBUG_ENABLED_PP(Asserts)
 
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/NaNTests.hlsli"

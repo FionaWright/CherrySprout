@@ -1,7 +1,7 @@
 #ifndef H_NEE_H
 #define H_NEE_H
 
-#if FEATURE_ENABLED(NEE)
+#if FEATURE_ENABLED_PP(NEE)
 
 #include "PathTracing/NEE/SampleLight.hlsli"
 

@@ -1,7 +1,7 @@
 #ifndef H_PT_DEBUG_GLOBALS_H
 #define H_PT_DEBUG_GLOBALS_H
 
-#if DEBUG_ENABLED(OutputColor) || DEBUG_ENABLED(PathDumper) || DEBUG_ENABLED(Asserts)
+#if DEBUG_ENABLED_PP(OutputColor) || DEBUG_ENABLED_PP(PathDumper) || DEBUG_ENABLED_PP(Asserts)
 
 static bool gDebugValueFound = false;
 static float3 gDebugValue = NAN;
