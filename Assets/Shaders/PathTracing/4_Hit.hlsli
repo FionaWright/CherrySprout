@@ -24,8 +24,6 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
 
     float3 wo = -pathState.Desc.Direction;
 
-    // TODO: Perform average luminance tests between with/without NEE. Should be equal. Set up python executor
-
     BxDF bxdf;
 
     if (FEATURE_ENABLED(NEE))
@@ -51,7 +49,7 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
     pathState.LastBxdfPdf = pdf;
 
     if (FEATURE_ENABLED(GradientDomain))
-        pathState.PDF += pdf;
+        pathState.PDF *= pdf;
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = nextOrigin;

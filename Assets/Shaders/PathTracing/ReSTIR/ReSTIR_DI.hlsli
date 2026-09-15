@@ -1,6 +1,8 @@
 #ifndef H_TARGET_H
 #define H_TARGET_H
 
+#if FEATURE_ENABLED(RestirDI)
+
 #include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/NEE/NEE.hlsli"
 
@@ -112,5 +114,14 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
     return reservoir.Y.Radiance * m * NdL * reservoir.W_Y;
     //return reservoir.Y.Radiance * m * NdL  / reservoir.Y.PDF;
 }
+
+#else
+
+LightSample Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info) { return (LightSample)0; }
+float Target(LightSample X_i, LightSampleSelectionInfo info) { return NAN; }
+float PDF(LightSample X_i, LightSampleSelectionInfo info) { return NAN; }
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 nextOrigin, BxDF bxdf, uint numSamples, out LightSample lightSample) { return NAN; }
+
+#endif
 
 #endif

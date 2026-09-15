@@ -44,4 +44,15 @@ float3 SRGB_to_LRGB(float3 color)
     return SRGB_to_LRGB_Exact(color);
 }
 
+float3 ApplyFireflyThreshold(float3 radiance)
+{
+    if (FEATURE_ENABLED(FireflyThreshold))
+    {
+        float L_lum = Luminance(radiance);
+        if (L_lum > gSettings.FireflyThreshold)
+            radiance *= gSettings.FireflyThreshold / L_lum;
+    }
+    return radiance;
+}
+
 #endif

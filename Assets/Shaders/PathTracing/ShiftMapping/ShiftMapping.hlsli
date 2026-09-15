@@ -21,7 +21,7 @@ struct ShiftResult
 }
 
 // Is this eta relative or n?
-ShiftResult ShiftHalfVector(ShadingFrame sframe, float3 wiMain, float3 woMain, float3 woShifted, float etaMain, float etaShifted)
+ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted, float3 wiMain, float3 woMain, float3 woShifted, float etaMain, float etaShifted)
 {
     ShiftResult result = (ShiftResult)0;
 
@@ -32,9 +32,9 @@ ShiftResult ShiftHalfVector(ShadingFrame sframe, float3 wiMain, float3 woMain, f
         return result;
     }
 
-    float3 V_s = sframe.ToLocal(woMain);
-    float3 V_s_shifted = sframe.ToLocal(woShifted);
-    float3 L_s = sframe.ToLocal(wiMain);
+    float3 V_s = sframeMain.ToLocal(woMain);
+    float3 V_s_shifted = sframeShifted.ToLocal(woShifted);
+    float3 L_s = sframeMain.ToLocal(wiMain);
 
     float NdV = SSpaceCosTheta(V_s);
     float NdL = SSpaceCosTheta(L_s);
@@ -69,7 +69,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframe, float3 wiMain, float3 woMain, f
     }
 
     result.IsSuccessful = true;
-    result.Wi = sframe.ToWorld(L_s_shifted);
+    result.Wi = sframeShifted.ToWorld(L_s_shifted);
     return result;
 }
 

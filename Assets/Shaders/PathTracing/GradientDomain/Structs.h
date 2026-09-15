@@ -3,16 +3,20 @@
 
 #include "Utils/HlslGlue.h"
 #include "Utils/Random.h"
+#include "Utils/Math/ShadingFrame.h"
 
-struct PathVertex // Include HitInfo instead of normal?
+struct PathVertex
 {
     hlsl::float3 Position;
-    hlsl::float3 Normal;
 
+    ShadingFrame SFrame;
     hlsl::float3 Wo;
     hlsl::float3 Wi;
 
     hlsl::uint IsDiffuse;
+    hlsl::uint IsNextVertexDiffuse;
+    float Eta;
+    hlsl::float3 IndirectContribution;
 };
 
 #define PATH_MAX_VERTICES 16 // TODO

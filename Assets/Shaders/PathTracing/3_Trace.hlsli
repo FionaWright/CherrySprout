@@ -27,16 +27,7 @@ PathSample Trace(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoord)
 
         if (isMiss)
         {
-            float3 L_sample = pathState.Beta * Miss(pathState, i);
-
-            if (FEATURE_ENABLED(FireflyThreshold))
-            {
-                float L_lum = Luminance(L_sample);
-                if (L_lum > gSettings.FireflyThreshold)
-                    L_sample *= gSettings.FireflyThreshold / L_lum;
-            }
-
-            pathState.Lo += L_sample;
+            pathState.Lo += ApplyFireflyThreshold(pathState.Beta * Miss(pathState, i));
             break;
         }
 
@@ -58,14 +49,7 @@ PathSample Trace(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoord)
         if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
             break;
 
-        if (FEATURE_ENABLED(FireflyThreshold))
-        {
-            float L_lum = Luminance(L_sample);
-            if (L_lum > gSettings.FireflyThreshold)
-                L_sample *= gSettings.FireflyThreshold / L_lum;
-        }
-
-        pathState.Lo += L_sample; // TODO: Should the L_sample * beta be moved out here?
+        pathState.Lo += ApplyFireflyThreshold(L_sample);
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
 

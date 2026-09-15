@@ -4,7 +4,7 @@
 #include "PathTracing/NEE/NEE.hlsli"
 
 #include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
-#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/Transient.hlsli"
 
 float3 SampleDirectLighting(
     inout RngInfo rngInfo,
@@ -22,6 +22,8 @@ float3 SampleDirectLighting(
     float3 E_direct = 0;
 
     LightSample lightSample = (LightSample)0;
+
+    pdf = NAN; // TODO
 
     if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
     {

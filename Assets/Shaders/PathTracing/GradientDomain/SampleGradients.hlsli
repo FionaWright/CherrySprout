@@ -1,6 +1,8 @@
 #ifndef H_SAMPLE_GRADIENT_H
 #define H_SAMPLE_GRADIENT_H
 
+#if FEATURE_ENABLED(GradientDomain)
+
 #include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/GradientDomain/TraceShiftedRay.hlsli"
 #include "PathTracing/MIS.hlsli"
@@ -44,5 +46,11 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
 
     return gradientSum;
 }
+
+#else
+
+float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath) { return NAN; }
+
+#endif
 
 #endif

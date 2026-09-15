@@ -1,6 +1,8 @@
 #ifndef H_SAMPLE_ENV_MAP_CDF_H
 #define H_SAMPLE_ENV_MAP_CDF_H
 
+#if FEATURE_ENABLED(NEE)
+
 #include "Utils/Constants.h"
 #include "Utils/SharedUtils.h"
 
@@ -35,5 +37,18 @@ float GetEnvMapPdf(float2 uv)
     float pixelArea = 4 * PI / N;
     return gEnvMapPmfConditional[xy] / pixelArea;
 }
+
+#else
+
+void SampleEnvMapCdf(float xi1, float xi2, out float2 uv, out float3 wi, out float pdf)
+{
+    uv = NAN;
+    wi = NAN;
+    pdf = NAN;
+}
+
+float GetEnvMapPdf(float2 uv) { return NAN; }
+
+#endif
 
 #endif

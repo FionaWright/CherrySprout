@@ -1,8 +1,9 @@
 #ifndef H_NEE_H
 #define H_NEE_H
 
+#if FEATURE_ENABLED(NEE)
+
 #include "PathTracing/NEE/SampleLight.hlsli"
-#include "PathTracing/Transient.hlsli"
 
 float3 SampleNEE(
     inout RngInfo rngInfo,
@@ -58,5 +59,22 @@ float3 SampleNEE(
 
     return lightSample.Radiance * m * NdL / lightSample.PDF;
 }
+
+#else
+
+float3 SampleNEE(
+    inout RngInfo rngInfo,
+    HitInfo hitInfo,
+    PathState pathState,
+    BxDF bxdf,
+
+    uint numSamples,
+    float3 wo,
+    float3 hitPos,
+    float3 nextOrigin,
+
+    out LightSample lightSample) { return NAN; }
+
+#endif
 
 #endif
