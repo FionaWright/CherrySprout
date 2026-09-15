@@ -62,4 +62,21 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
     return average;
 }
 
+void AccumulateGradient(uint2 pixelCoord, float3 gradient)
+{
+    if (!FEATURE_ENABLED(Accumulation))
+    {
+        gTexGradient[pixelCoord].rgb = gradient;
+        return;
+    }
+
+    float3 accumColor = gSettings.FrameIdx == 0 ? 0 : gTexGradient.Load(pixelCoord).rgb;
+
+    float accumFrameCount = (float)gSettings.FrameIdx;
+    float totalFrames = accumFrameCount + 1.0f;
+
+    float3 average = (accumColor * accumFrameCount + gradient) / totalFrames;
+    gTexGradient[pixelCoord].rgb = average;
+}
+
 #endif

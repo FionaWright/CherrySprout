@@ -11,6 +11,13 @@
 
 void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs)
 {
+    m_pipelineDiGenerateSamples.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
+}
+
+void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+{
+    GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
+
     if (!m_reservoirBuffer.GetResource())
     {
         m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * 2;
@@ -18,12 +25,8 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
         m_reservoirBuffer.Init_Buffer("Reservoir", device, reservoirBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     }
 
-    m_pipelineDiGenerateSamples.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
-}
-
-void RestirManager::GenerateSamplesDi(ID3D12GraphicsCommandList* cmdList)
-{
-    GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
+    if (!m_pipelineDiGenerateSamples.GetPSO())
+        return;
 
     m_reservoirBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 

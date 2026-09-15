@@ -11,13 +11,17 @@
 #include "PathTracing/5_SampleDirect.hlsli"
 #include "PathTracing/5_SampleIndirect.hlsli"
 
-void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inout RngInfo rngInfo, uint2 pixelCoord)
+void Hit(inout PathState pathState,
+        inout RngInfo rngInfo,
+
+        HitInfo hitInfo,
+        uint2 pixelCoord,
+
+        out float3 L_sample,
+        out PathVertexInfo currentVertexInfo)
 {
     float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
     float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
-
-    if (FEATURE_ENABLED(Transient))
-        pathState.RollingPathDistance += hitInfo.RayT;
 
     L_sample = pathState.Beta * hitInfo.Emission;
 
@@ -41,17 +45,34 @@ void Hit(HitInfo hitInfo, inout PathState pathState, inout float3 L_sample, inou
     }
 
     float3 wi;
-    float pdf;
-    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, pathState, wo, wi, pdf);
+    float pdf_bxdf;
+    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, pathState, wo, wi, pdf_bxdf);
     pathState.Beta *= E_indirect;
 
-    pathState.LastBxdfPdf = pdf;
+    if (FEATURE_ENABLED(NEE))
+        pathState.LastBxdfPdf = pdf_bxdf;
 
     if (FEATURE_ENABLED(GradientDomain))
-        pathState.PDF *= pdf;
+        pathState.PDF *= pdf_bxdf;
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = nextOrigin;
+
+    if (FEATURE_ENABLED(GradientDomain))
+    {
+        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
+        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
+        float eta = iorNCurrent / iorNNext;
+
+        currentVertexInfo.Type = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
+        currentVertexInfo.Position = hitPos;
+        currentVertexInfo.SFrame = hitInfo.SFrame;
+        currentVertexInfo.Wo = wo;
+        currentVertexInfo.Wi = wi;
+        currentVertexInfo.Eta = eta;
+        currentVertexInfo.IndirectContribution = E_indirect;
+        currentVertexInfo.BxdfPdf = pdf_bxdf;
+    }
 }
 
 #endif

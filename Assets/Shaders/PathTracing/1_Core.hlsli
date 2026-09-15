@@ -19,7 +19,7 @@ void Core(uint2 pixelCoord)
     DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
     DBG_PATH_DUMP_CLEAR();
 
-    if (gSettings.IsMaxFramesReached) // TODO: Make this cleaner?
+    if (gSettings.IsMaxFramesReached)
     {
         float3 average = gTexAccumulation[pixelCoord].rgb;
         average = pow(average, 1.0f/2.2f);
@@ -53,13 +53,14 @@ void Core(uint2 pixelCoord)
     if (FEATURE_ENABLED(GradientDomain))
     {
         gradientSum /= float(gSettings.SPP * gSettings.GradientNumSamples);
-        // TODO: Write to tex, and accumulate?
+        AccumulateGradient(pixelCoord, gradientSum);
+        DBG_OUTPUT3(gradientSum, GD_Gradient);
     }
 
     DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
-    average = LRGB_to_SRGB(average);
+    average = LRGB_to_SRGB(average); // TODO: Avoid when gradient domain?
 
     DBG_PATH_DUMP_HIGHLIGHT(average);
 

@@ -16,6 +16,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
     PathState pathState = CreatePathState(origin, dir);
 
+    PathVertexList vertexList = (PathVertexList)0;
+
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
         pathState.RaySegmentIdx = i;
@@ -32,8 +34,18 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
         }
 
+        if (FEATURE_ENABLED(Transient))
+            pathState.RollingPathDistance += hitInfo.RayT;
+
         float3 L_sample;
-        Hit(hitInfo, pathState, L_sample, rngInfo, pixelCoord);
+        PathVertexInfo currentVertexInfo;
+        Hit(pathState, rngInfo, hitInfo, pixelCoord, L_sample, currentVertexInfo);
+
+        if (FEATURE_ENABLED(GradientDomain))
+        {
+            vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
+            vertexList.NumVertices++;
+        }
 
         // Debug
         {
@@ -73,8 +85,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     if (FEATURE_ENABLED(GradientDomain))
     {
         pathSample.PDF = pathState.PDF;
-
-        // TODO: VertexList
+        pathSample.VertexList = vertexList;
     }
 
     return pathSample;

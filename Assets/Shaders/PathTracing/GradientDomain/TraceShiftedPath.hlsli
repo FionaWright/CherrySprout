@@ -15,7 +15,7 @@ void HitShiftedUnconnected(
     inout bool isSymmetric,
     inout PathState pathState,
 
-    PathVertex v1,
+    PathVertexInfo v1,
     HitInfo hitInfo,
     float3 wo,
     float3 nextOrigin,
@@ -23,6 +23,11 @@ void HitShiftedUnconnected(
     out float3 wi)
 {
     ShiftResult shiftResult;
+
+    if (v1.NextVertexType == VertexType::eUninitialized) // (Path terminates on v1)
+    {
+        // TODO: ?
+    }
 
     if (v1.Type == VertexType::eDiffuse && v1.NextVertexType != VertexType::eGlossy)
     {
@@ -90,7 +95,7 @@ void TraceShiftedPath(
 
     for (uint i = 0; i < mainVertices.NumVertices; i++)
     {
-        PathVertex v1 = mainVertices.Array[i];
+        PathVertexInfo v1 = mainVertices.Array[i];
 
         pathState.RaySegmentIdx = i;
         pathState.LastRayWasDiracDelta = false;
@@ -119,7 +124,10 @@ void TraceShiftedPath(
         {
             wi = v1.Wi;
             pathState.Beta *= v1.IndirectContribution;
-            pathState.LastBxdfPdf = v1.BxdfPdf; // TODO: pathState.PDF
+            // TODO: pathState.PDF
+
+            if (FEATURE_ENABLED(NEE))
+                pathState.LastBxdfPdf = v1.BxdfPdf;
         }
         else if (reconnectionState == ReconnectionState::eSemiConnected)
         {
@@ -133,7 +141,8 @@ void TraceShiftedPath(
             float NdL = dot(hitInfo.Ns_ff, wi);
             pathState.Beta *= f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
 
-            pathState.LastBxdfPdf = pdf_bxdf;
+            if (FEATURE_ENABLED(NEE))
+                pathState.LastBxdfPdf = pdf_bxdf;
 
             reconnectionState = ReconnectionState::eConnected;
         }

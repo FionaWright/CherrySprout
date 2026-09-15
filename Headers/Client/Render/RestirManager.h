@@ -16,7 +16,7 @@ class RestirManager
 public:
     void Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs);
 
-    void GenerateSamplesDi(ID3D12GraphicsCommandList* cmdList);
+    void GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
 
     static size_t TotalCbvRequiredSize() { return 0; }
 

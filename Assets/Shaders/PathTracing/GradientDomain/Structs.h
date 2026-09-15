@@ -7,34 +7,35 @@
 
 enum class VertexType : hlsl::uint
 {
+    eUninitialized,
     eGlossy,
     eDiffuse,
     eEnvironment,
 };
 
-struct PathVertex
+struct PathVertexInfo
 {
+    VertexType Type;
     hlsl::float3 Position;
-    hlsl::float3 NextVertexPosition;
-    hlsl::float3 NextVertexNormal;
 
     ShadingFrame SFrame;
     hlsl::float3 Wo;
     hlsl::float3 Wi;
-
-    VertexType Type;
-    VertexType NextVertexType;
     float Eta;
 
     hlsl::float3 IndirectContribution;
     float BxdfPdf;
+
+    VertexType NextVertexType;
+    hlsl::float3 NextVertexPosition;
+    hlsl::float3 NextVertexNormal;
 };
 
 #define PATH_MAX_VERTICES 16 // TODO
 
 struct PathVertexList
 {
-    PathVertex Array[PATH_MAX_VERTICES];
+    PathVertexInfo Array[PATH_MAX_VERTICES];
     hlsl::uint NumVertices;
 };
 

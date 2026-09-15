@@ -268,6 +268,17 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        if (pathTracingFeatureEnabled(eFeature_GradientDomain))
+        {
+            ImGui::Text("Gradient Domain PT:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples", &m_config.PathTracerConfig.GradientNumSamples);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
         if (pathTracingFeatureEnabled(eFeature_DepthOfField))
         {
             ImGui::Text("Depth of Field:");

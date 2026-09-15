@@ -66,6 +66,7 @@ struct PathTracerConfig
 
     uint32_t RestirConfidenceCap = 30;
     uint32_t RestirNumCandidates = 8;
+    uint32_t GradientNumSamples = 1;
 
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;

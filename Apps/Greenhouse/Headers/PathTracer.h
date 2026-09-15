@@ -64,7 +64,7 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
-    D12Resource m_primal, m_accum;
+    D12Resource m_primal, m_accum, m_gradient;
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;
