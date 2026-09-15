@@ -238,11 +238,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        const bool outputColorEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_OutputColor);
-        const bool pathDumpEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper);
-        const bool scalesEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Scales);
-        const bool forcedLightIndexEnabled = GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_ForceLightIndex);
-        if (outputColorEnabled || pathDumpEnabled || scalesEnabled || forcedLightIndexEnabled)
+        if (renderInfo.PathTracerConfig->DebugInfo.Flags != 0)
         {
             const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
 
@@ -266,6 +262,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
             debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
             debugSettings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
+            debugSettings.CbvFeatureFlags = renderInfo.PathTracerConfig->DebugInfo.CbvFeatureFlags;
+            debugSettings.CbvDebugFlags = renderInfo.PathTracerConfig->DebugInfo.CbvDebugFlags;
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 
@@ -404,6 +402,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 #if CHERRY_DEBUG_FEATURES_ENABLED
     compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
 #endif
+
+    if (debugInfo.CbvFlagsModeEnabled)
+        compileArgs.emplace_back("-DDEBUG_CBV_FLAGS_MODE_ENABLED=1");
 
 #ifdef _DEBUG
     Profiler::AddToStack("Path-Tracer Update Pipeline");

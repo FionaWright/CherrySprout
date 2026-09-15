@@ -124,18 +124,84 @@ void Greenhouse::renderGuiCore()
             ImGui::Unindent(IM_GUI_INDENTATION);
         }
 
+        const bool prevCbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
+        m_ptPipelineDirty |= ImGui::Checkbox("CBV Flags Debug Mode", &m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled);
+        const bool cbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
+
+        // Runtime = Comptime; Comptime = TRUE
+        if (!prevCbvFlagsEnabled && cbvFlagsEnabled)
+        {
+            for (int i = 0; i < FEATURE_COUNT; i++)
+            {
+                const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
+                if (s_canBeCbvValueFlagListFeature[i])
+                {
+                    const auto comptimeFlagEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
+                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag, comptimeFlagEnabled);
+                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, true);
+                }
+            }
+
+            for (int i = 0; i < DEBUG_COUNT; i++)
+            {
+                const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
+                if (s_canBeCbvValueFlagListDebug[i])
+                {
+                    const auto comptimeFlagEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
+                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag, comptimeFlagEnabled);
+                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, true);
+                }
+            }
+        }
+
+        // Comptime = Runtime
+        if (prevCbvFlagsEnabled && !cbvFlagsEnabled)
+        {
+            for (int i = 0; i < FEATURE_COUNT; i++)
+            {
+                const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
+                if (s_canBeCbvValueFlagListFeature[i])
+                {
+                    const auto runtimeFlagEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
+                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, runtimeFlagEnabled);
+                }
+            }
+
+            for (int i = 0; i < DEBUG_COUNT; i++)
+            {
+                const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
+                if (s_canBeCbvValueFlagListDebug[i])
+                {
+                    const auto runtimeFlagEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag);
+                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, runtimeFlagEnabled);
+                }
+            }
+        }
+
         const bool prevEnvMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
         const bool prevAliasTablesEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
 
+        const uint32_t numFlagColumns = cbvFlagsEnabled ? 4 : 2;
+
         ImGui::Text("Feature Flags:");
         ImGui::Indent(IM_GUI_INDENTATION);
-        if (ImGui::BeginTable("Feature Flags", 2))
+        if (ImGui::BeginTable("Feature Flags", numFlagColumns))
         {
             for (int i = 0; i < FEATURE_COUNT; i++)
             {
                 ImGui::TableNextColumn();
 
                 const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
+
+                if (cbvFlagsEnabled)
+                {
+                    bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
+                    m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_featureFlagNames[i]).c_str(), &isEnabled);
+                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag, isEnabled);
+                    ImGui::SetItemTooltip("%s", s_featureFlagNames[i]);
+                    ImGui::TableNextColumn();
+                }
+
                 bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
                 m_ptPipelineDirty |= ImGui::Checkbox(s_featureFlagNames[i], &isEnabled);
                 SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, isEnabled);

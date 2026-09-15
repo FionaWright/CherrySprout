@@ -35,6 +35,10 @@ struct PathTracingDebugInfo
     float ScaleReflect = 1.0f;
     float ScaleRefract = 1.0f;
     float ScaleClearcoat = 1.0f;
+
+    bool CbvFlagsModeEnabled = false;
+    PathTracerFeatureFlags CbvFeatureFlags = static_cast<PathTracerFeatureFlags>(0);
+    PathTracerDebugFlags CbvDebugFlags = static_cast<PathTracerDebugFlags>(0);
 #endif
 };
 
