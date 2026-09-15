@@ -209,69 +209,21 @@ If connecting to the env map, $|T'_{ij}| = 1$
 
 # Screened Poisson Reconstruction
 
-A way to recover an image from its desired gradients while optionally having constraints 
+Will use a type of DFT called Discrete Cosine Transform (DCT). Uses cosines only
 
-$f$ = Unknown reconstructed image  
-$v$ = Gradient field  
-$f_0$ = Reference image (primal)   
-$\lambda$ = Screening Strength  
+$f$ = The integral  
+$g^x$ = The Gradient (X)  
+$g^y$ = The Gradient (Y)  
+$u$ =   
+$\lambda_d$ = $\alpha$  
+$d_x$ = Discrete Derivative Filter (X) ?  
+$d_y$ = Discrete Derivative Filter (Y) ?  
 
-$\underset{f}{min} \int || \nabla f - v ||^2 \ dx + \lambda \int (f - f_0)^2 \ dx$
+$\dfrac{\partial f}{\partial x} = d_x * f$   
+$\dfrac{\partial}{\partial x} \dfrac{\partial f}{\partial x} = d_x * d_x * f$  
 
-The first term makes the gradients of $f$ match $v$   
-The second term prevents $f$ from drifting too far from $f_0$  
+Apply DFT on the variables to find them in the fourier domain (Capital letters)  
 
-Ordinary poisson reconstruction isn't enough (Find $\nabla f = v$) as the gradients have been measured with noise  
-So instead we find the closest integrable gradient field in a least-squares sense 
+$\lambda_d F = D_x^2 F - D_x^2 F = \lambda_d U - D_x G^x - D_y G^y$  
 
-For each pixel $p_{i,j}$ we sample $I^0_{i,j}, g_{i,j}^x, g_{i,j}^y$ 
-
-The final equation finds $I_{i,j}$ by minimizing:
-
-$\underset{I}{min} \sum (I_{i+1,j} - I_{i,j} - g_{i,j}^x)^2 + (I_{i,j+1}-I_{i,j}-g_{i,j}^y)^2 + \lambda (I_{i,j} - I_{i,j}^0)^2$  
-
-This is a massive linear system across all pixels and cannot be solved independently for each pixel
-
-Laplacian($I$) = divergence($g$) + $\lambda (I-I^0)$  
-$\nabla^2 I - \lambda I = \nabla \cdot g - \lambda I^0$  
-
-We have a linear system:  
-$AI = b$  
-
-$A = \begin{bmatrix} 4 + \lambda & -1 & 0 & \dots \\ -1 & 4 + \lambda & -1 & \dots \\ 0 & -1 & 4 + \lambda & \dots \\ \dots & \dots & \dots & \dots \end{bmatrix}$  
-
-Note that the matrix is sparse and highly structured, we do not need to store it in memory and can use it implicitly 
-
-## Jacobi Iterations
-
-Iterative solvers are then used to solve the linear system, such as Jacobi Iteration which is GPU-friendly  
-
-$(4 + \lambda) I_{i,j} = I_{i-1, j} + I_{i+1,j} + I_{i,j-1} + I_{i,j+1} + b_{i,j}$  
-
-Where $b_{i,j} = \nabla g_{i,j} + \lambda I_{i,j}^0$   
-
-Solve for $b_{i,j}$ and store it in a buffer, then use ping-pong textures to perform the iterations 
-
-```cpp
-CS(x,y):
-    left = prev[x-1,y];
-    right = prev[x+1,y];
-    up = prev[x,y-1];
-    down = prev[x,y+1];
-
-    b = b[x,y];
-
-    I_new = (left + down + up + right + b) / (4 + lambda);
-```
-
-Jacobi converges slow however. We can't use Gauss-Seidel as it breaks parallelism but we can use a clever trick:
-
-## Red-Black Gauss Seidel
-
-Split pixels into a checkerboard pattern where its either assigned as red or black. Update all reds in parallel and all blacks in parallel 
-
-Allows for improved convergence without breaking parallelism 
-
-## Conjugate Gradient / MultiGrid
-
-Possibly even better solutions? Do the simpler ones then look into this
+$F = \dfrac{\lambda_d U - D_x G^x - D_y G^y}{\lambda_d - D^2_x - D^2_y}$  
