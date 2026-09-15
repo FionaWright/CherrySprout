@@ -30,7 +30,7 @@ float Target(LightSample X_i, LightSampleSelectionInfo info)
     if (FEATURE_ENABLED(RestirTargetVisibility))
     {
         bool occluded;
-        TraceShadowRay(info.HitPosOffset, X_i.Direction, occluded, X_i.Distance);
+        TraceRayShadow(info.HitPosOffset, X_i.Direction, occluded, X_i.Distance);
         if (occluded)
             return 0;
     }
@@ -86,7 +86,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
         return 0;
 
     bool occluded;
-    TraceShadowRay(nextOrigin, reservoir.Y.Direction, occluded, reservoir.Y.Distance);
+    TraceRayShadow(nextOrigin, reservoir.Y.Direction, occluded, reservoir.Y.Distance);
 
     DBG_OUTPUT1(occluded, RESTIR_Occluded);
     //DBG_ASSERT_APPROX(length(reservoir.Y.Direction), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason

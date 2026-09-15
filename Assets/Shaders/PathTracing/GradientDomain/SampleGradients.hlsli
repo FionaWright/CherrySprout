@@ -25,23 +25,27 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             gSettings.DofFocalDist, gSettings.DofLensRadius,
             shiftedRayOrigin, shiftedRayDirection);
 
+        float3 Lo;
+        float pdf;
         bool isSymmetric;
-        PathSample shiftedSample = TraceShiftedRay(
-                                        mainPath.VertexList,
-                                        shiftedRayOrigin,
-                                        shiftedRayDirection,
-                                        rngInfo,
-                                        shiftedCoord,
-                                        isSymmetric);
+        TraceShiftedPath(
+            mainPath.VertexList,
+            shiftedRayOrigin,
+            shiftedRayDirection,
+            rngInfo,
+            shiftedCoord,
+            Lo,
+            pdf,
+            isSymmetric);
 
         float m = 1.0f;
         if (isSymmetric)
         {
-            m = BalanceHeuristic(mainPath.PDF, shiftedSample.PDF, 1, gSettings.GradientNumSamples); // ?
+            m = BalanceHeuristic(mainPath.PDF, pdf, 1, gSettings.GradientNumSamples); // ?
         }
-        shiftedSample.Lo *= m;
+        Lo *= m;
 
-        gradientSum += mainPath.Lo - shiftedSample.Lo;
+        gradientSum += mainPath.Lo - Lo;
 	}
 
     return gradientSum;

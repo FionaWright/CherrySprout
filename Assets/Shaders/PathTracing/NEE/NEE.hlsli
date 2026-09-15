@@ -29,7 +29,7 @@ float3 SampleNEE(
     }
 
     bool occluded;
-    TraceShadowRay(nextOrigin, lightSample.Direction, occluded, lightSample.Distance);
+    TraceRayShadow(nextOrigin, lightSample.Direction, occluded, lightSample.Distance);
 
     DBG_OUTPUT1(occluded,     NEE_Occluded);
 
