@@ -4,7 +4,7 @@
 #if FEATURE_ENABLED_PP(GradientDomain)
 
 #include "PathTracing/3_GetPrimaryRay.hlsli"
-#include "PathTracing/GradientDomain/TraceShiftedRay.hlsli"
+#include "PathTracing/GradientDomain/TraceShiftedPath.hlsli"
 #include "PathTracing/MIS.hlsli"
 
 float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)

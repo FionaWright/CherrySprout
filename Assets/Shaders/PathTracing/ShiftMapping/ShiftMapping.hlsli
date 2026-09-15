@@ -7,7 +7,7 @@ void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
 {
     RayQuery<RAY_FLAGS> q;
 
-    float3 distance = length(dest - source);
+    float distance = length(dest - source);
     float3 dir = normalize(dest - source);
 
     RayDesc ray;
@@ -26,7 +26,7 @@ void TestVisibilityDirection(float3 source, float3 dir, out bool occluded)
 {
     RayQuery<RAY_FLAGS> q;
 
-    float3 distance = 1000.0f;
+    float distance = 1000.0f;
 
     RayDesc ray;
     ray.Origin = source;
@@ -45,7 +45,7 @@ struct ShiftResult
     bool IsSuccessful;
     float Jacobian;
     float3 Wi;
-}
+};
 
 // Is this eta relative or n?
 ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted, float3 wiMain, float3 woMain, float3 woShifted, float etaMain, float etaShifted)
@@ -91,6 +91,8 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
         float3 N_s = float3(0,0,1);
         L_s_shifted = NormalizeSafe(reflect(-V_s_shifted, H_s), N_s);
 
+        float3 H_s_shifted = H_s; // TODO: Guess, idk
+
         float VdH = abs(dot(V_s_shifted, H_s)) / max(EPSILON, abs(dot(V_s, H_s_shifted)));
         result.Jacobian = abs(VdH);
     }
@@ -125,7 +127,7 @@ ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 dest,
     float cosThetaShifted = dot(result.Wi, destNormal); // ?
 
     result.IsSuccessful = true;
-    result.Jacobian = abs(cosThetaShifted, length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
+    result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
     return result;
 }
 

@@ -7,6 +7,9 @@
 
 void ClearBuffer()
 {
+    if (!DEBUG_ENABLED(PathDumper))
+        return;
+
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
@@ -27,6 +30,9 @@ void ClearBuffer()
 
 void AssignDebugOutput(float3 value, uint dbgIdx)
 {
+    if (!DEBUG_ENABLED(PathDumper))
+        return;
+
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
@@ -36,6 +42,9 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
 
 void AssignPathState(PathState pathState)
 {
+    if (!DEBUG_ENABLED(PathDumper))
+        return;
+
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
@@ -44,6 +53,9 @@ void AssignPathState(PathState pathState)
 
 void MarkExplored()
 {
+    if (!DEBUG_ENABLED(PathDumper))
+        return;
+
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
@@ -55,6 +67,9 @@ void MarkExplored()
 
 void Highlight(inout float3 color)
 {
+    if (!DEBUG_ENABLED(PathDumper))
+        return;
+
     float dist = length((float2)gDebugSettings.ChosenPixelCoords - (float2)gDebugPixelCoord);
     if (HIGHLIGHT_CIRCLE_MIN < dist && dist < HIGHLIGHT_CIRCLE_MAX)
     {

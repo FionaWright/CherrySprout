@@ -68,8 +68,10 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     }
 #endif
 
-    constexpr PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
-    UpdatePipeline(d3d->GetDevice(), s_defaultFeatureFlags, debugInfo, s_defaultBxdfMode);
+    PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
+    const auto featureFlags = debugInfo.CbvFlagsModeEnabled ? s_defaultFeatureFlagsCbvMode : s_defaultFeatureFlags;
+    debugInfo.Flags = debugInfo.CbvFlagsModeEnabled ? s_defaultDebugFlagsCbvMode : s_defaultDebugFlags;
+    UpdatePipeline(d3d->GetDevice(), featureFlags, debugInfo, s_defaultBxdfMode);
 
     m_descriptorSet.Init         (heap, true);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);

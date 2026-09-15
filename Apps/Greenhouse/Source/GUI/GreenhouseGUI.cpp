@@ -122,10 +122,12 @@ void Greenhouse::renderGuiCore()
                 m_config.PathTracerConfig.BxdfMode = static_cast<BxdfMode>(e);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
         }
 
         const bool prevCbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
         m_ptPipelineDirty |= ImGui::Checkbox("CBV Flags Debug Mode", &m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled);
+        ImGui::Spacing();
         const bool cbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
 
         // Runtime = Comptime; Comptime = TRUE
@@ -187,6 +189,15 @@ void Greenhouse::renderGuiCore()
         ImGui::Indent(IM_GUI_INDENTATION);
         if (ImGui::BeginTable("Feature Flags", numFlagColumns))
         {
+            if (cbvFlagsEnabled)
+            {
+                ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
+                ImGui::TableHeadersRow();
+            }
+
             for (int i = 0; i < FEATURE_COUNT; i++)
             {
                 ImGui::TableNextColumn();
@@ -195,10 +206,13 @@ void Greenhouse::renderGuiCore()
 
                 if (cbvFlagsEnabled)
                 {
-                    bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
-                    m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_featureFlagNames[i]).c_str(), &isEnabled);
-                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag, isEnabled);
-                    ImGui::SetItemTooltip("%s", s_featureFlagNames[i]);
+                    if (s_canBeCbvValueFlagListFeature[i])
+                    {
+                        bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
+                        m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_featureFlagNames[i]).c_str(), &isEnabled);
+                        SetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag, isEnabled);
+                        ImGui::SetItemTooltip("%s", s_featureFlagNames[i]);
+                    }
                     ImGui::TableNextColumn();
                 }
 
@@ -398,13 +412,35 @@ void Greenhouse::renderGuiCore()
         if (ImGui::CollapsingHeader("Debug Flags"))
         {
             ImGui::Indent(IM_GUI_INDENTATION);
-            if (ImGui::BeginTable("Debug Flags", 2))
+            if (ImGui::BeginTable("Debug Flags", numFlagColumns))
             {
+                if (cbvFlagsEnabled)
+                {
+                    ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                    ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
+                    ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                    ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
+                    ImGui::TableHeadersRow();
+                }
+
                 for (int i = 0; i < DEBUG_COUNT; i++)
                 {
                     ImGui::TableNextColumn();
 
                     const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
+
+                    if (cbvFlagsEnabled)
+                    {
+                        if (s_canBeCbvValueFlagListDebug[i])
+                        {
+                            bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag);
+                            m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_debugFlagNames[i]).c_str(), &isEnabled);
+                            SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag, isEnabled);
+                            ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
+                        }
+                        ImGui::TableNextColumn();
+                    }
+
                     bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
                     m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
                     SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, isEnabled);
@@ -413,6 +449,14 @@ void Greenhouse::renderGuiCore()
                     ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
                 }
                 ImGui::EndTable();
+
+                ImGui::PopStyleVar();
+                if (ImGui::Button("Clear all##Debug Flags"))
+                {
+                    m_ptPipelineDirty |= (m_config.PathTracerConfig.DebugInfo.Flags != 0);
+                    m_config.PathTracerConfig.DebugInfo.Flags = static_cast<PathTracerDebugFlags>(0);
+                }
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
         }
@@ -528,8 +572,8 @@ void Greenhouse::renderGuiCore()
                 if (ImGui::BeginTable("Debug Outputs", 2))
                 {
                     static int e = static_cast<int>(m_config.PathTracerConfig.DebugInfo.OutputColorIdx);
-                    int c = 1;
-                    for (int i = 1; i < static_cast<int>(DebugOutputIndex::eCount); i++)
+                    int c = 0;
+                    for (int i = 0; i < static_cast<int>(DebugOutputIndex::eCount); i++)
                     {
                         ImGui::TableNextColumn();
                         m_ptFrameDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);

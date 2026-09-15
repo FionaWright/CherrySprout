@@ -5,6 +5,7 @@
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
+// TODO: Move to Globals.hlsli
 static bool gRunBxdfTestForPixel = false;
 
 void GetPrimaryRay(

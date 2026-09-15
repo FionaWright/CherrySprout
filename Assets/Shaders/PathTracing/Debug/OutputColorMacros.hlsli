@@ -10,8 +10,16 @@
 #include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
 
-void dbgOutput3(float3 value)
+void dbgOutput3(float3 value, uint index)
 {
+    DBG_PATH_DUMP_DEBUG_OUTPUT(value, index);
+
+    if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == (uint)DebugOutputIndex::eDebugOutput_Disabled)
+        return;
+
+    if (index != gDebugSettings.OutputColorIdx)
+        return;
+
     if (gDebugValueFound)
         return;
 
@@ -24,18 +32,20 @@ void dbgOutput3(float3 value)
     gDebugValue = value;
 }
 
-#    define DBG_OUTPUT3(value, label)                                                                                                          \
-{                                                                                                                                            \
-    DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label);                                                           \
-    if (DebugOutputIndex::eDebugOutput_##label == (DebugOutputIndex)(gDebugSettings.OutputColorIdx))                                           \
-        dbgOutput3(value);                                                                                                                   \
-}                                                                                                                                            \
+void dbgOutputSet(inout float3 output)
+{
+    if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == 0)
+        return;
 
+    output = gDebugValue;
+}
+
+#    define DBG_OUTPUT3(value, label) dbgOutput3(value, (uint)DebugOutputIndex::eDebugOutput_##label);
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 #    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; return; }
 
-#    define DBG_OUTPUT_SET(output) { output = gDebugValue; }
+#    define DBG_OUTPUT_SET(output) dbgOutputSet(output);
 #    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }
 
 #elif DEBUG_ENABLED_PP(PathDumper)

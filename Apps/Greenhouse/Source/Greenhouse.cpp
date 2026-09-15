@@ -53,6 +53,16 @@ void Greenhouse::Init(D3D* d3d)
     m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, numSceneTextureDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
 
+    Config::SetBoolFromArg(&m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled, "--cbvFlagMode");
+    if (m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled)
+    {
+        m_config.PathTracerConfig.FeatureFlags = s_defaultFeatureFlagsCbvMode;
+        m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags = s_defaultFeatureFlags;
+
+        m_config.PathTracerConfig.DebugInfo.Flags = s_defaultDebugFlagsCbvMode;
+        m_config.PathTracerConfig.DebugInfo.CbvDebugFlags = s_defaultDebugFlags;
+    }
+
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
     m_renderInfo.P = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
     m_renderInfo.InvP = XMMatrixInverse(nullptr, m_renderInfo.P);

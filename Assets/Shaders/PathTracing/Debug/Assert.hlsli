@@ -13,6 +13,9 @@
 
 void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
 {
+    if (!DEBUG_ENABLED(Asserts))
+        return;
+
     bool updateExpr = !expr.x || !expr.y || !expr.z || !expr.w;
     bool updateNaN = IsNaN4(v1) || IsNaN4(v2) || IsNaN4(v3);
     bool updateInf = IsInf4(v1) || IsInf4(v2) || IsInf4(v3);

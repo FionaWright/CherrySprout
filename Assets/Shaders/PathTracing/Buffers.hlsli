@@ -6,11 +6,6 @@
 #include "Scene/Material.h"
 #include "Scene/InstanceData.h"
 #include "Scene/PunctualLight.h"
-#include "Utils/Debug/DebugStructs.h"
-
-#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
-#include "PathTracing/Flags/MethodsHlsl.hlsli"
-#include "PathTracing/NEE/Alias.h"
 
 #define REGISTER_SPACE_DEFAULT            space0
 #define REGISTER_SPACE_SCENE_TEXTURES     space1
@@ -20,6 +15,11 @@
 
 ConstantBuffer<CbvPathTracingSettings>              gSettings               : register(b0, REGISTER_SPACE_DEFAULT);
 ConstantBuffer<CbvPathTracingDebugSettings>         gDebugSettings          : register(b1, REGISTER_SPACE_DEFAULT);
+
+#include "Utils/Debug/DebugStructs.h"
+#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/NEE/Alias.h"
 
 // =================== T Registers (Default) =====================================================================
 

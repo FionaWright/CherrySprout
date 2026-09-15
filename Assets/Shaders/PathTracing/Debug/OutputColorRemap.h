@@ -54,7 +54,7 @@ static constexpr auto s_defaultOutputColorRemap = DebugOutputColorRemap::eNone;
 
 #else
 
-#   if DEBUG_ENABLED(OutputColor)
+#   if DEBUG_ENABLED_PP(OutputColor)
 
 float3 ApplyRemap(float3 color, uint outputColorRemap)
 {

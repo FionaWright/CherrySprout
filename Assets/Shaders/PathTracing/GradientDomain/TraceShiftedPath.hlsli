@@ -1,6 +1,8 @@
 #ifndef H_TRACE_SHIFTED_RAY_H
 #define H_TRACE_SHIFTED_RAY_H
 
+#include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
+
 enum class ReconnectionState : uint
 {
     eUnconnected,
@@ -22,7 +24,7 @@ void HitShiftedUnconnected(
 {
     ShiftResult shiftResult;
 
-    if (v1 == VertexType::eDiffuse && v1.NextVertexType != VertexType::eGlossy)
+    if (v1.Type == VertexType::eDiffuse && v1.NextVertexType != VertexType::eGlossy)
     {
         if (v1.NextVertexType == VertexType::eDiffuse)
         {
@@ -40,7 +42,7 @@ void HitShiftedUnconnected(
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
-        float eta = nCurrent / nNext;
+        float eta = iorNCurrent / iorNNext;
 
         shiftResult = ShiftHalfVector(v1.SFrame, hitInfo.SFrame, v1.Wi, v1.Wo, wo, v1.Eta, eta);
     }
@@ -137,7 +139,7 @@ void TraceShiftedPath(
         }
         else if (reconnectionState == ReconnectionState::eUnconnected)
         {
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, hitInfo, wo, wi);
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, hitInfo, wo, nextOrigin, wi);
         }
 
         pathState.Lo += ApplyFireflyThreshold(L_sample);

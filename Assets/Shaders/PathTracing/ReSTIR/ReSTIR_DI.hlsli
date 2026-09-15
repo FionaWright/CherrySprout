@@ -4,7 +4,8 @@
 #if FEATURE_ENABLED_PP(RestirDI)
 
 #include "BxDFs/GetBxDF.hlsli"
-#include "PathTracing/NEE/NEE.hlsli"
+#include "PathTracing/NEE/SampleLight.hlsli"
+#include "PathTracing/NEE/TraceShadowRay.hlsli"
 
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"

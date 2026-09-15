@@ -99,6 +99,9 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resou
     ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
     SRV& srv = m_srvs.at(srvIdx);
+    if (srv.D12Resource == d12Resource)
+        return;
+
     srv.D12Resource = d12Resource;
     const auto handle = m_pHeap->GetDescriptorHandleAtIndex(srv.HeapIndex);
     device->CreateShaderResourceView(resource, &desc, handle);

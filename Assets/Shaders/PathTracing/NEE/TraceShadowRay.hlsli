@@ -2,6 +2,7 @@
 #define H_SHADOW_RAY_H
 
 #include "PathTracing/Utils.hlsli"
+#include "PathTracing/HitInfo/ExtractUtils.hlsli"
 
 void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shadowFactor)
 {

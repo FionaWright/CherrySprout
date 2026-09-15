@@ -19,10 +19,9 @@ bool featureEnabled(uint flagValue, uint linearIndex)
 {
 #if DEBUG_CBV_FLAGS_MODE_ENABLED
     bool canBeCbvValue = s_canBeCbvValueFlagListFeature[linearIndex];
-    if ((FEATURE_FLAGS & flagValue) &&                         // Comptime enabled
+    return ((FEATURE_FLAGS & flagValue) &&                         // Comptime enabled
         canBeCbvValue &&                                       // Has runtime functionality
-        (gDebugSettings.CbvFeatureFlags & flagValue))          // Runtime enabled
-        return true;
+        (gDebugSettings.CbvFeatureFlags & flagValue));          // Runtime enabled
 #else
     return FEATURE_FLAGS & flagValue;
 #endif
@@ -32,10 +31,9 @@ bool debugEnabled(uint flagValue, uint linearIndex)
 {
 #if DEBUG_CBV_FLAGS_MODE_ENABLED
     bool canBeCbvValue = s_canBeCbvValueFlagListDebug[linearIndex];
-    if ((DEBUG_FLAGS & flagValue) &&                          // Comptime enabled
+    return ((DEBUG_FLAGS & flagValue) &&                          // Comptime enabled
         canBeCbvValue &&                                      // Has runtime functionality
-        (gDebugSettings.CbvDebugFlags & flagValue))           // Runtime enabled
-        return true;
+        (gDebugSettings.CbvDebugFlags & flagValue));           // Runtime enabled
 #else
     return DEBUG_FLAGS & flagValue;
 #endif

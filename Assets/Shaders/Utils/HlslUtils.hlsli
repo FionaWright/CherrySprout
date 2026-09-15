@@ -117,8 +117,8 @@ float3 RemapStoU(float3 v) { return (v + 1.0f) * 0.5f; }
 float4 RemapStoU(float4 v) { return (v + 1.0f) * 0.5f; }
 
 float LengthSquared(float v) { return dot(v, v); }
-float2 LengthSquared(float2 v) { return dot(v, v); }
-float3 LengthSquared(float3 v) { return dot(v, v); }
-float4 LengthSquared(float4 v) { return dot(v, v); }
+float LengthSquared(float2 v) { return dot(v, v); }
+float LengthSquared(float3 v) { return dot(v, v); }
+float LengthSquared(float4 v) { return dot(v, v); }
 
 #endif
