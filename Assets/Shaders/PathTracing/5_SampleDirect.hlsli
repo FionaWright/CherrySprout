@@ -34,8 +34,6 @@ float3 SampleDirectLighting(
         E_direct += SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample);
     }
 
-    // TODO: Share shadow ray handling for both out here
-
     if (FEATURE_ENABLED(Transient))
     {
         if (gSettings.TransientLightIdx == -1 || gSettings.TransientLightIdx == lightSample.Index)

@@ -85,14 +85,14 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
     if (reservoir.W_Y <= 0.0f || reservoir.Confidence <= 0.0f || NdL <= 0)
         return 0;
 
-    bool occluded;
-    TraceRayShadow(nextOrigin, reservoir.Y.Direction, occluded, reservoir.Y.Distance);
+    float shadowFactor;
+    TraceRayShadow(nextOrigin, reservoir.Y.Direction, reservoir.Y.Distance, shadowFactor);
+    DBG_OUTPUT1(shadowFactor, RESTIR_Occluded);
 
-    DBG_OUTPUT1(occluded, RESTIR_Occluded);
-    //DBG_ASSERT_APPROX(length(reservoir.Y.Direction), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason
-
-    if (occluded)
+    if (shadowFactor <= 0.0f)
         return 0;
+
+    //DBG_ASSERT_APPROX(length(reservoir.Y.Direction), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason
 
     float3 m;
     if (reservoir.Y.IsDelta)
@@ -111,7 +111,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
         DBG_OUTPUT1(pdf_bxdf, RESTIR_PDF);
     }
 
-    return reservoir.Y.Radiance * m * NdL * reservoir.W_Y;
+    return shadowFactor * reservoir.Y.Radiance * m * NdL * reservoir.W_Y;
     //return reservoir.Y.Radiance * m * NdL  / reservoir.Y.PDF;
 }
 

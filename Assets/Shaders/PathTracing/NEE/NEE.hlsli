@@ -28,17 +28,12 @@ float3 SampleNEE(
         return 0;
     }
 
-    bool occluded;
-    TraceRayShadow(nextOrigin, lightSample.Direction, occluded, lightSample.Distance);
+    float shadowFactor;
+    TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, shadowFactor);
+    DBG_OUTPUT1(shadowFactor,     NEE_Occluded);
 
-    DBG_OUTPUT1(occluded,     NEE_Occluded);
-
-    if (occluded)
-    {
-        DBG_OUTPUT1(0,            NEE_MIS_Weight);
-        DBG_OUTPUT3(0,            NEE_Radiance);
+    if (shadowFactor <= 0.0f)
         return 0;
-    }
 
     float3 m;
     if (lightSample.IsDelta)
@@ -57,7 +52,7 @@ float3 SampleNEE(
     DBG_OUTPUT1(m,                       NEE_MIS_Weight);
     DBG_OUTPUT3(lightSample.Radiance,    NEE_Radiance);
 
-    return lightSample.Radiance * m * NdL / lightSample.PDF;
+    return shadowFactor * lightSample.Radiance * m * NdL / lightSample.PDF;
 }
 
 #else
