@@ -16,7 +16,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
     PathState pathState = CreatePathState(origin, dir);
 
-    PathVertexList vertexList = (PathVertexList)0;
+    PathVertexList vertexList;
+    vertexList.NumVertices = 0;
 
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {

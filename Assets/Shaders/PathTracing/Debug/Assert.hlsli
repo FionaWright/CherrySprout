@@ -12,10 +12,20 @@
 #include "Utils/Constants.h"
 
 [noinline]
-void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
+void dbgAssert(
+    float v1_x, v1_y, v1_z, v1_w,
+    float v2_x, v2_y, v2_z, v2_w,
+    float v3_x, v3_y, v3_z, v3_w,
+    bool expr_x, expr_y, expr_z, expr_w,
+    uint dbgID)
 {
     if (!DEBUG_ENABLED(Asserts))
         return;
+
+    float4 v1 = float4(v1_x, v1_y, v1_z, v1_w);
+    float4 v2 = float4(v2_x, v2_y, v2_z, v2_w);
+    float4 v3 = float4(v3_x, v3_y, v3_z, v3_w);
+    bool4 expr = float4(expr_x, expr_y, expr_z, expr_w);
 
     bool updateExpr = !expr.x || !expr.y || !expr.z || !expr.w;
     bool updateNaN = IsNaN4(v1) || IsNaN4(v2) || IsNaN4(v3);
@@ -82,13 +92,9 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
     }
 }
 
-[noinline]
+void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)          { dbgAssert(v1.x, v1.y, v1.z, v1.w, v2.x, v2.y, v2.z, v2.w, v3.x, v3.y, v3.z, v3.w, expr.xyzz, dbgID); }
 void dbgAssert(float3 v1, float3 v2, float3 v3, bool3 expr, uint dbgID)          { dbgAssert(v1.xyzz, v2.xyzz, v3.xyzz, expr.xyzz, dbgID); }
-
-[noinline]
 void dbgAssert(float2 v1, float2 v2, float2 v3, bool2 expr, uint dbgID)          { dbgAssert(v1.xyyy, v2.xyyy, v3.xyyy, expr.xyyy, dbgID); }
-
-[noinline]
 void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)          { dbgAssert(v1.xxxx, v2.xxxx, v3.xxxx, expr.xxxx, dbgID); }
 
 #define DBG_ASSERT_EXPR(expr, dbgID)                  dbgAssert(0, 0, 0, expr, dbgID);
