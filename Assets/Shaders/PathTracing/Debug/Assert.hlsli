@@ -13,10 +13,10 @@
 
 [noinline]
 void dbgAssert(
-    float v1_x, v1_y, v1_z, v1_w,
-    float v2_x, v2_y, v2_z, v2_w,
-    float v3_x, v3_y, v3_z, v3_w,
-    bool expr_x, expr_y, expr_z, expr_w,
+    float v1_x, float v1_y, float v1_z, float v1_w,
+    float v2_x, float v2_y, float v2_z, float v2_w,
+    float v3_x, float v3_y, float v3_z, float v3_w,
+    bool expr_x, float expr_y, float expr_z, float expr_w,
     uint dbgID)
 {
     if (!DEBUG_ENABLED(Asserts))
@@ -92,10 +92,10 @@ void dbgAssert(
     }
 }
 
-void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)          { dbgAssert(v1.x, v1.y, v1.z, v1.w, v2.x, v2.y, v2.z, v2.w, v3.x, v3.y, v3.z, v3.w, expr.xyzz, dbgID); }
-void dbgAssert(float3 v1, float3 v2, float3 v3, bool3 expr, uint dbgID)          { dbgAssert(v1.xyzz, v2.xyzz, v3.xyzz, expr.xyzz, dbgID); }
-void dbgAssert(float2 v1, float2 v2, float2 v3, bool2 expr, uint dbgID)          { dbgAssert(v1.xyyy, v2.xyyy, v3.xyyy, expr.xyyy, dbgID); }
-void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)          { dbgAssert(v1.xxxx, v2.xxxx, v3.xxxx, expr.xxxx, dbgID); }
+void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)          { dbgAssert(v1.x, v1.y, v1.z, v1.w, v2.x, v2.y, v2.z, v2.w, v3.x, v3.y, v3.z, v3.w, expr.x, expr.y, expr.z, expr.w, dbgID); }
+void dbgAssert(float3 v1, float3 v2, float3 v3, bool3 expr, uint dbgID)          { dbgAssert(v1.x, v1.y, v1.z, 0, v2.x, v2.y, v2.z, 0, v3.x, v3.y, v3.z, 0, expr.x, expr.y, expr.z, 1, dbgID); }
+void dbgAssert(float2 v1, float2 v2, float2 v3, bool2 expr, uint dbgID)          { dbgAssert(v1.x, v1.y, 0, 0, v2.x, v2.y, 0, 0, v3.x, v3.y, 0, 0, expr.x, expr.y, 1, 1, dbgID); }
+void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)          { dbgAssert(v1.x, 0, 0, 0, v2.x, 0, 0, 0, v3.x, 0, 0, 0, expr.x, 1, 1, 1, dbgID); }
 
 #define DBG_ASSERT_EXPR(expr, dbgID)                  dbgAssert(0, 0, 0, expr, dbgID);
 #define DBG_ASSERT_VALUE(v,    dbgID)                 dbgAssert(v, 0, 0, 1, dbgID);
