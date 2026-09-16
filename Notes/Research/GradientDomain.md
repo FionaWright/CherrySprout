@@ -217,10 +217,10 @@ If connecting to the env map, $|T'_{ij}| = 1$
 
 Will use a type of DFT called Discrete Cosine Transform (DCT). Uses cosines only
 
-$f$ = The integral  
-$g^x$ = The Gradient (X)  
-$g^y$ = The Gradient (Y)  
-$u$ =   
+$f$ = The integral to solve for 
+$g^x$ = The Gradient Sample (X)  
+$g^y$ = The Gradient Sample (Y)  
+$u$ = The primal sample, used as a constraint
 $\lambda_d$ = $\alpha$  
 $d_x$ = Discrete Derivative Filter (X) ?  
 $d_y$ = Discrete Derivative Filter (Y) ?  
@@ -235,3 +235,130 @@ Spatial $\circ \to$ Fourier $\times$
 $\lambda_d F = D_x^2 F - D_x^2 F = \lambda_d U - D_x G^x - D_y G^y$  
 
 $F = \dfrac{\lambda_d U - D_x G^x - D_y G^y}{\lambda_d - D^2_x - D^2_y}$  
+
+"Typical choices for these discrete derivatives are forward, backward, or central differences"
+
+The numerator can be converted to fourier space in one pass:  
+$h = \lambda_d u - d_x \circ g^x - d_y \circ g^y$  
+Then compute $H$  
+
+For continuous problems (not what is needed):
+    $D_x = 2i \pi s_x$ (Bracewell Notation)  
+    $D_x^2 = -4 \pi^2 i s_x^2$ 
+    Solution is undefined at $s_x = s_y = 0$. Constant offset (DC term) must be supplied. UNLESS $\alpha > 0$ in which case $F(0,0) = U(0,0)$ (Spatial Frequency are the parameters?)
+
+DFT is worse than DCT as it assumes the input sequence is periodic which it isn't in this case  
+DCT performs reflections across boundaries before tiling the plane periodically 
+
+The paper mentions computing the gradients using backward differences and the derivative filters are forward differences (when computing h)
+
+They say they computed the DCT using "brute force" without explicitly storing it (May not be relevant)
+
+See FFTW library for DCT conversion source code (CPU only). Computes transforms in O(NlogN)
+
+## Code First Draft
+
+```cpp
+// Pseudocode
+
+// Operates over whole texture, computes forward difference between pixels
+float DiscreteDerivativeX(float gradientX)
+{
+    // ?
+}
+
+float DiscreteDerivativeY(float gradientY)
+{
+
+}
+
+float Dx2(int frequency, int imageWidth)
+{
+    // input frequency
+    // Code is different depending on DiscreteDerivativeX()
+
+    // Keywords: Eigenvalues, Reflected/Neumann DCT formulation
+}
+
+float Dy2(int frequency, int imageHeight)
+{
+
+}
+
+// Spatial-space textures -> fourier-space textures
+// Note: May be multiple passes/iterations
+void SPR_FirstPass(float3 primal, float3 gradient, float alpha)
+{
+    // Do I use float gradient.x, gradient.y or float3 gradientX, gradientY?
+    float dxgx = DiscreteDerivativeX(gradient.x);
+    float dygy = DiscreteDerivativeY(gradient.y);
+
+    float3 h = alpha * primal - dxgx - dygy;
+    FFT_TransformToDCT(gTexH, h);
+}
+
+// Perform operation on the fourier-space textures
+void SPR_SecondPass(uint2 frequencyCoord, float alpha)
+{
+    float3 H = gTexH[frequencyCoord];
+
+    // These are eigenvalues?
+    float Dx2 = Dx2(frequencyCoord.x, IMAGE_WIDTH);
+    float Dy2 = Dy2(frequencyCoord.y, IMAGE_HEIGHT);
+
+    float3 F = H / (alpha - Dx2 - Dy2);
+    
+    gTexF[frequencyCoord] = F;
+}
+
+// Fourier-space textures -> spatial-space textures
+// Note: May be multiple passes/iterations
+float3 SPR_ThirdPass(uint2 pixelCoord)
+{
+    return FFT_TransformFromDCT(gTexF);
+}
+```
+
+## Code Second Draft
+
+```cpp
+
+void SPR_ComputeHSpatial(uint2 pixelCoord, float alpha)
+{
+    float3 gradient = gTexGradient[pixelCoord];
+    float3 gradientX = gTexGradient[pixelCoord + uint2(1,0)];
+    float3 gradientY = gTexGradient[pixelCoord + uint2(0,1)];
+
+    // Forward Difference
+    float3 dxgx = gradientX - gradient;
+    float3 dygy = gradientY - gradient;
+
+    float3 primal = gTexPrimal[pixelCoord];
+    
+    float3 h = alpha * primal - dxgx - dygy;
+    gTexHSpatial[pixelCoord] = h;
+}
+
+void SPR_ComputeHFourier()
+{
+    // Apply FFT (DCT) to convert gTexHSpatial to gTexHFourier 
+}
+
+void SPR_Core(uint2 frequencyCoord, float alpha)
+{
+    float3 H = gTexHFourier[frequencyCoord];
+
+    float Dx2 = Dx2(frequencyCoord.x, IMAGE_WIDTH);
+    float Dy2 = Dy2(frequencyCoord.y, IMAGE_HEIGHT);
+
+    float3 F = H / (alpha - Dx2 - Dy2);
+    
+    gTexFFourier[frequencyCoord] = F;
+}
+
+void SPR_ComputeFSpatial()
+{
+    // Apply Inverse-FFT (DCT) to convert gTexFFourier to gTexFSpatial
+}
+
+```
