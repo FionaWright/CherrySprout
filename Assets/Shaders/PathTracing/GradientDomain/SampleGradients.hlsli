@@ -11,10 +11,17 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
 {
     float3 gradientSum = float3(0,0,0);
 
-    for (uint j = 0; j < gSettings.GradientNumSamples; j++)
+#define MAX_GRADIENT_NUM_SAMPLES 4
+    const uint2 OFFSETS[MAX_GRADIENT_NUM_SAMPLES] = {
+        uint2(1, 0),
+        uint2(0, 1),
+        uint2(-1, 0),
+        uint2(0, -1)
+    };
+
+    for (uint j = 0; j < min(MAX_GRADIENT_NUM_SAMPLES, gSettings.GradientNumSamples); j++)
 	{
-		// TODO: Pick a neighbour
-        uint2 shiftedCoord = mainCoord + uint2(1,0);
+        uint2 shiftedCoord = mainCoord + OFFSETS[j];
 
         float3 shiftedRayOrigin;
         float3 shiftedRayDirection;
@@ -30,6 +37,8 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
 		float pdfPrimaryShifted = 1.0f;
 		float pdfRatio = (pdfPrimaryShifted / pdfPrimaryMain);
 
+        DBG_OUTPUT1(pdfRatio, GD_PrimaryPdfRatio);
+
         float3 Lo;
         bool isSymmetric;
         TraceShiftedPath(
@@ -42,6 +51,8 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             pdfRatio,
             isSymmetric);
 
+        // TODO: Lo also multiplied by jacobian?
+
         float m = 1.0f;
         if (isSymmetric)
         {
@@ -49,6 +60,11 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             m = BalanceHeuristicRatio(pdfRatio, 1, gSettings.GradientNumSamples);
         }
         Lo *= m;
+
+        DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
+        DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
+        DBG_OUTPUT1(m, GD_MIS);
+        DBG_OUTPUT3(Lo, GD_Lo);
 
         gradientSum += mainPath.Lo - Lo;
 	}

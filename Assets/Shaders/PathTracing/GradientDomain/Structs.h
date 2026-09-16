@@ -25,10 +25,6 @@ struct PathVertexInfo
 
     hlsl::float3 IndirectContribution;
     float PDF;
-
-    VertexType NextVertexType;
-    hlsl::float3 NextVertexPosition;
-    hlsl::float3 NextVertexNormal;
 };
 
 #define PATH_MAX_VERTICES 16 // TODO
@@ -39,7 +35,7 @@ struct PathVertexList
     hlsl::uint NumVertices;
 };
 
-#define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.5f // TODO
+#define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.001f // TODO: Make CBV option?
 
 inline bool GetIsVertexDiffuse(const float roughness)
 {

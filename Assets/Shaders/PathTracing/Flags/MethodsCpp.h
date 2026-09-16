@@ -12,37 +12,15 @@ static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags
         eFeature_Accumulation |
         eFeature_NormalMaps |
         eFeature_EnvironmentMap |
-        eFeature_GlassMaterials |
-        eFeature_NEE |
+        //eFeature_GlassMaterials |
+        //eFeature_NEE |
         eFeature_FireflyThreshold |
-        eFeature_AliasTables |
+        eFeature_AliasTables
         //eFeature_RestirDI |
-        eFeature_RussianRoulette
+        //eFeature_RussianRoulette
     );
 
-static constexpr auto s_defaultFeatureFlagsCbvMode = static_cast<PathTracerFeatureFlags>(
-        eFeature_AliasTables |
-
-        eFeature_Jitter |
-        eFeature_Accumulation |
-        eFeature_EnvironmentMap |
-        eFeature_NormalMaps |
-        eFeature_DirectionalLight |
-        eFeature_DirectionalLightDistant |
-        eFeature_DepthOfField |
-        eFeature_AlphaTesting |
-        eFeature_GlassMaterials |
-        eFeature_NEE |
-        eFeature_FireflyThreshold |
-        eFeature_GammaCorrectionFast |
-        eFeature_Anisotropy |
-        eFeature_Transient |
-        eFeature_ReconstructPrimaryRay |
-        eFeature_RestirDI |
-        eFeature_RestirTargetVisibility |
-        eFeature_GradientDomain |
-        eFeature_RussianRoulette
-    );
+static constexpr auto s_defaultFeatureFlagsCbvMode = static_cast<PathTracerFeatureFlags>(~0);
 
 #ifdef _DEBUG
 static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
@@ -52,22 +30,7 @@ static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_Asserts
     );
 
-static constexpr auto s_defaultDebugFlagsCbvMode = static_cast<PathTracerDebugFlags>(
-        eDebug_OutputColor |
-        eDebug_OutputColorFindAny |
-        eDebug_NaNTests |
-        eDebug_ForceSpecular |
-        eDebug_ForceDiffuse |
-        eDebug_ForceReflect |
-        eDebug_ForceRefract |
-        eDebug_BxdfTestRevaluate |
-        eDebug_BxdfTestHemisphere |
-        eDebug_FurnaceTest |
-        eDebug_PathDumper |
-        eDebug_Scales |
-        eDebug_ForceLightIndex |
-        eDebug_Asserts
-    );
+static constexpr auto s_defaultDebugFlagsCbvMode = static_cast<PathTracerDebugFlags>(~0);
 #else
 static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(0);
 static constexpr auto s_defaultDebugFlagsCbvMode = static_cast<PathTracerDebugFlags>(0);

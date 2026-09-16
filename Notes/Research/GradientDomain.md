@@ -275,7 +275,8 @@ float DiscreteDerivativeY(float gradientY)
 float Dx2(int frequency, int imageWidth)
 {
     // input frequency
-    // Code is different depending on DiscreteDerivativeX()
+    // Code is different depending on whether DiscreteDerivativeX() is forward/backward/central
+    // Also different depending on whether gradient computation is forward/backward/central
 
     // Keywords: Eigenvalues, Reflected/Neumann DCT formulation
 }

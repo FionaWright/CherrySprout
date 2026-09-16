@@ -2,12 +2,13 @@
 #define H_TRACE_SHIFTED_RAY_H
 
 #include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
+#include "Utils/Debug/Palette.h"
 
 enum class ReconnectionState : uint
 {
     eUnconnected,
-    eSemiConnected, // Connected but has different wo so needs BxDF evals
-    eConnected      // Can reuse Hit contribution
+    eSemiConnected,  // Connected but has different wo so needs BxDF evals
+    eConnected,      // Can reuse Hit contribution
 };
 
 void HitShiftedUnconnected(
@@ -16,6 +17,7 @@ void HitShiftedUnconnected(
     inout PathState pathState,
 
     PathVertexInfo v1,
+    PathVertexInfo v2,
     HitInfo hitInfo,
     float3 wo,
     float3 nextOrigin,
@@ -23,42 +25,50 @@ void HitShiftedUnconnected(
     out float3 wi,
 	out float pdf)
 {
-    ShiftResult shiftResult;
-
-    if (v1.NextVertexType == VertexType::eUninitialized) // (Path terminates on v1)
+    if (v2.Type == VertexType::eUninitialized) // (Path terminates on v1)
     {
         // TODO: ?
     }
 
-    if (v1.Type == VertexType::eDiffuse && v1.NextVertexType != VertexType::eGlossy)
+    // TODO: If shifted vertex type != v1.Type, reject?
+
+    ShiftResult shiftResult;
+
+    if (v1.Type == VertexType::eDiffuse)
     {
-        if (v1.NextVertexType == VertexType::eDiffuse)
+        if (v2.Type == VertexType::eDiffuse)
         {
-            shiftResult = ShiftReconnect(v1.Position, nextOrigin, v1.NextVertexPosition, v1.NextVertexNormal);
+            shiftResult = ShiftReconnect(v1.Position, nextOrigin, v2.Position, v2.SFrame.N);
         }
-        else if (v1.NextVertexType == VertexType::eEnvironment)
+        else if (v2.Type == VertexType::eEnvironment)
         {
-            // TODO: This doesn't make sense to me, we already know that this will succeed
-            shiftResult = ShiftReconnectEnvironment(v1.Position, v1.Wi);
+            // TODO: Not confident with parameters
+            shiftResult = ShiftReconnectEnvironment(nextOrigin, v1.Wi);
+        }
+        else if (v2.Type == VertexType::eGlossy)
+        {
+            // TODO
         }
 
         reconnectionState = ReconnectionState::eSemiConnected;
     }
-    else
+    else if (v1.Type == VertexType::eGlossy)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
         float eta = iorNCurrent / iorNNext;
 
+        // Half-Vector shift can also be achieved by copying rngInfo and sampling BxDF, but this seems more complex
         shiftResult = ShiftHalfVector(v1.SFrame, hitInfo.SFrame, v1.Wi, v1.Wo, wo, v1.Eta, eta);
     }
+    else
+        DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
 
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
         pdf = NAN;
         wi = NAN;
-        // TODO: What now?
         return;
     }
 
@@ -72,7 +82,8 @@ void HitShiftedUnconnected(
     float NdL = dot(hitInfo.Ns_ff, wi);
     pathState.Beta *= f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
 
-    pathState.LastBxdfPdf = pdf_bxdf;
+    if (FEATURE_ENABLED(NEE))
+        pathState.LastBxdfPdf = pdf_bxdf;
 
 	pdf = shiftResult.Jacobian * pdf_bxdf;
 
@@ -83,7 +94,7 @@ void TraceShiftedPath(
     PathVertexList mainVertices,
     float3 origin,
     float3 dir,
-    inout RngInfo rngInfo,
+    inout RngInfo rngInfo, // TODO: Unused
     uint2 pixelCoord,
 
     out float3 Lo,
@@ -110,13 +121,23 @@ void TraceShiftedPath(
 
         if (isMiss)
         {
+            if (v1.Type != VertexType::eEnvironment)
+            {
+                isSymmetric = false;
+                Lo = 0.0f;
+                return;
+            }
+
             // TODO: Value can be cached if connected (likely)
             float3 Li = pathState.Beta * Miss(pathState, i);
             pathState.Lo += ApplyFireflyThreshold(Li);
             break;
         }
 
-        float3 L_sample = pathState.Beta * hitInfo.Emission;
+        DBG_SET_CURRENT_RAY_DEPTH(i);
+        DBG_PATH_DUMP_MARK_EXPLORED();
+
+        float3 L_sample = pathState.Beta * hitInfo.Emission; // TODO: Emission can be cached for connected rays
 
         float3 wo = -pathState.Desc.Direction;
         float3 wi;
@@ -157,10 +178,25 @@ void TraceShiftedPath(
         }
         else if (reconnectionState == ReconnectionState::eUnconnected)
         {
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, hitInfo, wo, nextOrigin, wi, pdfShifted);
+            if (i == mainVertices.NumVertices - 1)
+            {
+                // TODO
+                Lo = 0.0f;
+                isSymmetric = false;
+                return;
+            }
+
+            PathVertexInfo v2 = mainVertices.Array[i+1];
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, pdfShifted);
         }
 
-		pdfRatio *= (pdfShifted / pdfMain);
+        if (!isSymmetric)
+        {
+            Lo = 0.0f; // TODO: Probably wrong
+            return;
+        }
+
+		pdfRatio *= (pdfShifted / max(EPSILON, pdfMain));
 
         pathState.Lo += ApplyFireflyThreshold(L_sample);
 
@@ -169,6 +205,8 @@ void TraceShiftedPath(
     }
 
     Lo = pathState.Lo;
+
+    DBG_OUTPUT3(Palette((uint)reconnectionState), GD_FinalReconnectionState);
 }
 
 #endif

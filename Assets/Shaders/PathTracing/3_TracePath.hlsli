@@ -28,10 +28,29 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         HitInfo hitInfo;
         ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
 
+        // Debug
+        {
+            DBG_SET_CURRENT_RAY_DEPTH(i);
+            DBG_PATH_DUMP_MARK_EXPLORED();
+            DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
+            DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
+            DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBufferDepth);
+            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBufferUv);
+            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBufferMv);
+        }
+
         if (isMiss)
         {
             float3 Li = pathState.Beta * Miss(pathState, i);
             pathState.Lo += ApplyFireflyThreshold(Li);
+
+            if (FEATURE_ENABLED(GradientDomain))
+            {
+                PathVertexInfo currentVertexInfo;
+                currentVertexInfo.Type = VertexType::eEnvironment;
+                vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
+                vertexList.NumVertices++;
+            }
             break;
         }
 
@@ -48,17 +67,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             vertexList.NumVertices++;
         }
 
-        // Debug
-        {
-            DBG_SET_CURRENT_RAY_DEPTH(i);
-            DBG_PATH_DUMP_MARK_EXPLORED();
-            DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
-            DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
-            DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBufferDepth);
-            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBufferUv);
-            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBufferMv);
-            DBG_PATH_DUMP_PATH_STATE(pathState);
-        }
+        DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
             break;

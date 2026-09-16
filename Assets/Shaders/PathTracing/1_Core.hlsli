@@ -62,6 +62,13 @@ void Core(uint2 pixelCoord)
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
     average = LRGB_to_SRGB(average); // TODO: Avoid when gradient domain?
 
+    if (FEATURE_ENABLED(ScreenSpaceGradients))
+    {
+        float3 c0 = gTexAccumulation[pixelCoord].rgb;
+        float3 c1 = gTexAccumulation[pixelCoord + uint2(1,0)].rgb;
+        average = c1 - c0;
+    }
+
     DBG_PATH_DUMP_HIGHLIGHT(average);
 
     gTexPrimal[pixelCoord].rgb = average;

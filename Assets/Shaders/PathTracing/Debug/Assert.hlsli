@@ -11,6 +11,7 @@
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/Constants.h"
 
+// Note: Using scalar inputs to avoid DXC bug with [noinline]
 [noinline]
 void dbgAssert(
     float v1_x, float v1_y, float v1_z, float v1_w,

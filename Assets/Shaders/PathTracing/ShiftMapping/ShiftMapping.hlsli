@@ -84,7 +84,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
         float VdH = abs(dot(V_s, H_s)) / max(EPSILON, abs(dot(V_s_shifted, H_s_shifted)));
         result.Jacobian = HLength2 * VdH;
     }
-    else
+    else // Reflection
     {
         float3 H_s = normalize(L_s + V_s);
 
@@ -131,12 +131,12 @@ ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 dest,
     return result;
 }
 
-ShiftResult ShiftReconnectEnvironment(float3 sourceMain, float3 dirMain)
+ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 dirMain)
 {
     ShiftResult result;
 
     bool occluded;
-    TestVisibilityDirection(sourceMain, dirMain, occluded);
+    TestVisibilityDirection(sourceShifted, dirMain, occluded);
 
     if (occluded)
     {

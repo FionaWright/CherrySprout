@@ -64,6 +64,8 @@ static const char* s_debugIdList[] = {
     CREATE_ID(RESTIR_CONF_RANGE   , "ReSTIR: Confidence incorrect value")
     CREATE_ID(RESTIR_DIR_NORM   , "ReSTIR: Direction unnormalized")
 
+    CREATE_ID(GD_INVALID_VERTEX_TYPE   , "GD: Invalid vertex type")
+
 };
 
 #endif
