@@ -250,7 +250,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Text("Direct Light Sampling:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples", &m_config.PathTracerConfig.DirectNumSamples);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples##DirectLighting", &m_config.PathTracerConfig.DirectNumSamples);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();
@@ -273,7 +273,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Text("Gradient Domain PT:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples", &m_config.PathTracerConfig.GradientNumSamples);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples##GradientDomain", &m_config.PathTracerConfig.GradientNumSamples);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

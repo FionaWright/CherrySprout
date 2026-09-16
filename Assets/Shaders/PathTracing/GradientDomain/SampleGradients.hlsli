@@ -25,8 +25,12 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             gSettings.DofFocalDist, gSettings.DofLensRadius,
             shiftedRayOrigin, shiftedRayDirection);
 
+		// TODO: Primary Ray PDF ratio
+		float pdfPrimaryMain = 1.0f;
+		float pdfPrimaryShifted = 1.0f;
+		float pdfRatio = (pdfPrimaryShifted / pdfPrimaryMain);
+
         float3 Lo;
-        float pdf;
         bool isSymmetric;
         TraceShiftedPath(
             mainPath.VertexList,
@@ -35,13 +39,14 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             rngInfo,
             shiftedCoord,
             Lo,
-            pdf,
+            pdfRatio,
             isSymmetric);
 
         float m = 1.0f;
         if (isSymmetric)
         {
-            m = BalanceHeuristic(mainPath.PDF, pdf, 1, gSettings.GradientNumSamples); // ?
+            //m = BalanceHeuristic(mainPath.PDF, pdf, 1, gSettings.GradientNumSamples); // ?
+            m = BalanceHeuristicRatio(pdfRatio, 1, gSettings.GradientNumSamples);
         }
         Lo *= m;
 

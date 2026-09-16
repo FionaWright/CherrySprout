@@ -34,11 +34,8 @@ void Hit(inout PathState pathState,
         float3 E_direct = 0;
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            float pdf;
+            float pdf; // Unused
             E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, pdf);
-
-            if (FEATURE_ENABLED(GradientDomain))
-                pathState.PDF += pdf;
         }
 
         L_sample += E_direct * pathState.Beta / float(gSettings.DirectNumSamples);
@@ -51,9 +48,6 @@ void Hit(inout PathState pathState,
 
     if (FEATURE_ENABLED(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
-
-    if (FEATURE_ENABLED(GradientDomain))
-        pathState.PDF *= pdf_bxdf;
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = nextOrigin;
@@ -71,7 +65,7 @@ void Hit(inout PathState pathState,
         currentVertexInfo.Wi = wi;
         currentVertexInfo.Eta = eta;
         currentVertexInfo.IndirectContribution = E_indirect;
-        currentVertexInfo.BxdfPdf = pdf_bxdf;
+        currentVertexInfo.PDF = pdf_bxdf; // TODO: ?
     }
 }
 

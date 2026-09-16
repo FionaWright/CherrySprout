@@ -5,6 +5,7 @@
 
 #include "PathTracing/Debug/Globals.hlsli"
 
+[noinline]
 void ClearBuffer()
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -28,6 +29,7 @@ void ClearBuffer()
     }
 }
 
+[noinline]
 void AssignDebugOutput(float3 value, uint dbgIdx)
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -40,6 +42,7 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx] = true;
 }
 
+[noinline]
 void AssignPathState(PathState pathState)
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -51,6 +54,7 @@ void AssignPathState(PathState pathState)
     gPathDump[gDebugCurrentRayDepth].PathState = pathState;
 }
 
+[noinline]
 void MarkExplored()
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -65,6 +69,7 @@ void MarkExplored()
 #define HIGHLIGHT_CIRCLE_MIN 3
 #define HIGHLIGHT_CIRCLE_MAX 8
 
+[noinline]
 void Highlight(inout float3 color)
 {
     if (!DEBUG_ENABLED(PathDumper))

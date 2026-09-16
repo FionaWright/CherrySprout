@@ -41,7 +41,6 @@ struct PathState
     RayDesc Desc;
 
     hlsl::float3 Beta;
-    float PDF; // Note: Using log(PDF) for better fp-precision
 
     hlsl::float3 Lo;
     float LastBxdfPdf;
@@ -56,8 +55,6 @@ struct PathState
 struct PathSample
 {
     hlsl::float3 Lo;
-    float PDF;
-
     PathVertexList VertexList;
 };
 

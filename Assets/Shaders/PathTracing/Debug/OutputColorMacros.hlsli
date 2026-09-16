@@ -10,6 +10,7 @@
 #include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
 
+[noinline]
 void dbgOutput3(float3 value, uint index)
 {
     DBG_PATH_DUMP_DEBUG_OUTPUT(value, index);
@@ -32,6 +33,7 @@ void dbgOutput3(float3 value, uint index)
     gDebugValue = value;
 }
 
+[noinline]
 void dbgOutputSet(inout float3 output)
 {
     if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == 0)

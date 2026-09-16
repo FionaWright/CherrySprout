@@ -11,6 +11,7 @@
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/Constants.h"
 
+[noinline]
 void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
 {
     if (!DEBUG_ENABLED(Asserts))
@@ -81,8 +82,13 @@ void dbgAssert(float4 v1, float4 v2, float4 v3, bool4 expr, uint dbgID)
     }
 }
 
+[noinline]
 void dbgAssert(float3 v1, float3 v2, float3 v3, bool3 expr, uint dbgID)          { dbgAssert(v1.xyzz, v2.xyzz, v3.xyzz, expr.xyzz, dbgID); }
+
+[noinline]
 void dbgAssert(float2 v1, float2 v2, float2 v3, bool2 expr, uint dbgID)          { dbgAssert(v1.xyyy, v2.xyyy, v3.xyyy, expr.xyyy, dbgID); }
+
+[noinline]
 void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)          { dbgAssert(v1.xxxx, v2.xxxx, v3.xxxx, expr.xxxx, dbgID); }
 
 #define DBG_ASSERT_EXPR(expr, dbgID)                  dbgAssert(0, 0, 0, expr, dbgID);

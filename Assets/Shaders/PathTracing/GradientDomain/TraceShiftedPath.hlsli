@@ -20,7 +20,8 @@ void HitShiftedUnconnected(
     float3 wo,
     float3 nextOrigin,
 
-    out float3 wi)
+    out float3 wi,
+	out float pdf)
 {
     ShiftResult shiftResult;
 
@@ -55,22 +56,25 @@ void HitShiftedUnconnected(
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
+        pdf = NAN;
+        wi = NAN;
         // TODO: What now?
         return;
     }
 
-    pathState.PDF *= shiftResult.Jacobian;
     wi = shiftResult.Wi;
 
     BxDF bxdf;
     float3 f_bxdf;
-    float pdf_bxdf; // TODO: pathState.PDF
+    float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
     pathState.Beta *= f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
 
     pathState.LastBxdfPdf = pdf_bxdf;
+
+	pdf = shiftResult.Jacobian * pdf_bxdf;
 
     // TODO: Direct lighting
 }
@@ -83,7 +87,7 @@ void TraceShiftedPath(
     uint2 pixelCoord,
 
     out float3 Lo,
-    out float pdf,
+    inout float pdfRatio,
     out bool isSymmetric)
 {
     RayQuery<RAY_FLAGS> q;
@@ -120,14 +124,17 @@ void TraceShiftedPath(
         float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
         float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
 
+		float pdfMain = v1.PDF;
+		float pdfShifted;
+
         if (reconnectionState == ReconnectionState::eConnected)
         {
             wi = v1.Wi;
             pathState.Beta *= v1.IndirectContribution;
-            // TODO: pathState.PDF
+			pdfShifted = v1.PDF; // Note: PDFs match, ratio unchanged
 
             if (FEATURE_ENABLED(NEE))
-                pathState.LastBxdfPdf = v1.BxdfPdf;
+                pathState.LastBxdfPdf = NAN;
         }
         else if (reconnectionState == ReconnectionState::eSemiConnected)
         {
@@ -135,7 +142,7 @@ void TraceShiftedPath(
 
             BxDF bxdf;
             float3 f_bxdf;
-            float pdf_bxdf; // TODO: pathState.PDF
+            float pdf_bxdf;
             bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
             float NdL = dot(hitInfo.Ns_ff, wi);
@@ -144,12 +151,16 @@ void TraceShiftedPath(
             if (FEATURE_ENABLED(NEE))
                 pathState.LastBxdfPdf = pdf_bxdf;
 
+			float pdfShifted = pdf_bxdf;
+
             reconnectionState = ReconnectionState::eConnected;
         }
         else if (reconnectionState == ReconnectionState::eUnconnected)
         {
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, hitInfo, wo, nextOrigin, wi);
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, hitInfo, wo, nextOrigin, wi, pdfShifted);
         }
+
+		pdfRatio *= (pdfShifted / pdfMain);
 
         pathState.Lo += ApplyFireflyThreshold(L_sample);
 
@@ -158,7 +169,6 @@ void TraceShiftedPath(
     }
 
     Lo = pathState.Lo;
-    pdf = pathState.PDF;
 }
 
 #endif

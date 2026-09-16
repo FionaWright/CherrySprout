@@ -24,7 +24,7 @@ struct PathVertexInfo
     float Eta;
 
     hlsl::float3 IndirectContribution;
-    float BxdfPdf;
+    float PDF;
 
     VertexType NextVertexType;
     hlsl::float3 NextVertexPosition;

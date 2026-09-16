@@ -18,4 +18,10 @@ float BalanceHeuristic(float pdf1, float pdf2, uint N1, uint N2)
     return GenPowerHeuristic(pdf1, pdf2, N1, N2, 1);
 }
 
+float BalanceHeuristicRatio(float pdfRatio, uint N1, uint N2)
+{
+    float NRatio = N2 / N1;
+    return 1.0f / (1.0f + pdfRatio * NRatio);
+}
+
 #endif
