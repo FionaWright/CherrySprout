@@ -367,53 +367,74 @@ void SPR_ComputeFSpatial()
 ## Jacobi Approach
 
 ```cpp
-float3 BackwardsDivergence(uint2 pixelCoord)
+// Note: GRADIENT_X_IMAGE_WIDTH == IMAGE_WIDTH - 1
+// Note: GRADIENT_X_IMAGE_HEIGHT == IMAGE_HEIGHT
+
+float3 SampleSafeZero(Texture2D tex, int2 pixelCoord)
+{
+    if (pixelCoord.x < 0 || pixelCoord.y < 0)
+        return 0;
+
+    if (pixelCoord.x == IMAGE_WIDTH || pixelCoord.y == IMAGE_HEIGHT)
+        return 0;
+
+    return tex[pixelCoord];
+}
+
+float3 SampleSafeClamp(Texture2D tex, int2 pixelCoord)
+{
+    pixelCoord.x = min(IMAGE_WIDTH, max(0, pixelCoord.x));
+    pixelCoord.y = min(IMAGE_HEIGHT, max(0, pixelCoord.y));
+
+    return tex[pixelCoord];
+}
+
+float3 BackwardsDivergence(int2 pixelCoord)
 {
     float3 v = 0.0f;
 
-    if (pixelCoord.x < IMAGE_WIDTH-1)
-        v += gTexPrimal[pixelCoord];
-
-    if (pixelCoord.x > 0)
-        v -= gTexPrimal[pixelCoord + uint2(-1,0)];
-    
-    if (pixelCoord.y < IMAGE_HEIGHT)
-        v += gTexPrimal[pixelCoord];
-
-    if (pixelCoord.y > 0)
-        v -= gTexPrimal[pixelCoord + uint2(0,-1)];
+    v += SampleSafeZero(gTexGradientX, pixelCoord) - SampleSafeZero(gTexGradientX, pixelCoord + int2(-1,0));
+    v += SampleSafeZero(gTexGradientY, pixelCoord) - SampleSafeZero(gTexGradientY, pixelCoord + int2(0,-1));
 
     return v;
 }
 
-float3 ComputeB(uint2 pixelCoord, float alpha)
+float3 ComputeB(int2 pixelCoord, float alpha)
 {
     float3 primal = gTexPrimal[pixelCoord];
-    float3 gradientX = gTexGradientX[pixelCoord];
-    float3 gradientY = gTexGradientY[pixelCoord];
-
-    // TODO: Wrong?
-    return alpha * primal - gradientX - gradientY; 
+    return alpha * primal - BackwardsDivergence(pixelCoord); 
 }
 
 // default c = 0.25f
-float3 ComputeAMinusI(float alpha, float c, uint2 pixelCoord, float3 b)
+float3 ComputeAMinusI(float alpha, float c, int2 pixelCoord, float3 b, Texture2D<float4> prevTex)
 {
-    float3 primal = gTexPrimal[pixelCoord];
+    float3 prev = prevTex[pixelCoord];
 
-    float3 prev = gTexOutput[pixelCoord];
+    float3 v = gTexPrimal[pixelCoord] - 1 + alpha + (c * 4.0f) * prev;
 
-    float3 v = primal - 1 + alpha + (c * 4.0f) * prev;
+    v -= c * SampleSafeClamp(prevTex, pixelCoord + int2(-1,0));
+    v -= c * SampleSafeClamp(prevTex, pixelCoord + int2(0,-1));
+    v -= c * SampleSafeClamp(prevTex, pixelCoord + int2(1, 0));
+    v -= c * SampleSafeClamp(prevTex, pixelCoord + int2(0, 1));
 
-    if (pixelCoord.x > 0)
-        v -= c * gTexOutput[pixelCoord + uint2(-1,0)];
-    else 
-        v -= c * prev;
-
-    if (pixelCoord.y > 0)
-        v -= c * gTexOutput[pixelCoord + uint2(0,-1)];
-    else 
-        v -= c * prev;
+    return v;
 }
 
+void SPR_Jacobi(float alpha, float c, int2 pixelCoord)
+{
+    float3 b = ComputeB(pixelCoord, alpha);
+
+    // Initialized to primal?
+    gTexPingPong0[pixelCoord] = gTexPrimal[pixelCoord];
+
+    // Seperate CS pass for each iteration
+    for (int i = 0; i < ITERATIONS; i++)
+    {
+        Texture2D pingPongNext = i%2==0 ? gTexPingPong1 : gTexPingPong0;
+        Texture2D pingPongPrev = i%2==0 ? gTexPingPong0 : gTexPingPong1;
+
+        float3 next = ComputeAMinusI(alpha, c, pixelCoord, b, pingPongPrev);
+        pingPongNext[pixelCoord] = next;
+    }
+}
 ```
