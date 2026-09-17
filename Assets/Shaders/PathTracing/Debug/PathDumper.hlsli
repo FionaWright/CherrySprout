@@ -4,6 +4,7 @@
 #if DEBUG_ENABLED_PP(PathDumper)
 
 #include "PathTracing/Debug/Globals.hlsli"
+#include "PathTracing/Debug/PathDumpOutputColor.hlsli"
 
 void ClearBuffer()
 {
@@ -22,28 +23,9 @@ void ClearBuffer()
 
         for (int j = 0; j < (int)DebugOutputIndex::eCount; j++)
         {
-            gPathDump[i].DebugOutputs.Float3List[j] = NAN;
-            gPathDump[i].DebugOutputs.IsAssignedValueList[j] = false;
+            StoreOutputColor(i, j, NAN, false);
         }
     }
-}
-
-[noinline]
-void AssignDebugOutput(float value_x, float value_y, float value_z, uint dbgIdx)
-{
-    if (!DEBUG_ENABLED(PathDumper))
-        return;
-
-    if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
-        return;
-
-    if (gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx])
-        return;
-
-    float3 value = float3(value_x, value_y, value_z);
-
-    gPathDump[gDebugCurrentRayDepth].DebugOutputs.Float3List[dbgIdx] = value;
-    gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx] = true;
 }
 
 void DumpPathState(PathState pathState)

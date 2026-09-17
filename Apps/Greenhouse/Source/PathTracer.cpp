@@ -81,6 +81,11 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_pathDumpBufferRW.Init_Buffer("Path Dump Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_pathDumpBufferReadback.Init_Buffer("Path Dump Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
+    {
+        constexpr size_t bufferSize = sizeof(DebugOutputStruct) * PATH_DUMP_MAX_RAY_DEPTH;
+        m_pathDumpOCBufferRW.Init_Buffer("Path Dump OC Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_pathDumpOCBufferReadback.Init_Buffer("Path Dump OC Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
+    }
 #endif
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
@@ -130,6 +135,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 5, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 6, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 7, &m_pathDumpOCBufferRW, PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -222,14 +228,19 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         m_pathDumpBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
         m_pathDumpBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
+        m_pathDumpOCBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        m_pathDumpOCBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
         constexpr size_t bufferSize = PATH_DUMP_MAX_RAY_DEPTH * sizeof(RayDump);
         cmdList->CopyBufferRegion(m_pathDumpBufferReadback.GetResource(), 0, m_pathDumpBufferRW.GetResource(), 0, bufferSize);
+        cmdList->CopyBufferRegion(m_pathDumpOCBufferReadback.GetResource(), 0, m_pathDumpOCBufferRW.GetResource(), 0, bufferSize);
 
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
         d3d->Flush();
 
         m_pathDumpBufferReadback.Readback(&m_cpuPathDump);
+        m_pathDumpOCBufferReadback.Readback(&m_cpuPathDumpOutputColor);
 
         m_dumpedPathPixelCoords = scheduledRun ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
         m_dumpedPathFrameIdx = scheduledRun ? m_scheduledRunFrameIdx : m_frameIdx;
@@ -402,7 +413,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 {
     constexpr uint32_t numCBV = 2;
     constexpr uint32_t numSRV = 15;
-    constexpr uint32_t numUAV = 7;
+    constexpr uint32_t numUAV = 8;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);

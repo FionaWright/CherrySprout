@@ -72,11 +72,13 @@ private:
     bool m_scheduleClearErrors = false;
 
     RayDump m_cpuPathDump[PATH_DUMP_MAX_RAY_DEPTH] = {};
+    DebugOutputStruct m_cpuPathDumpOutputColor[PATH_DUMP_MAX_RAY_DEPTH] = {};
     hlsl::uint2 m_dumpedPathPixelCoords = {};
     uint32_t m_dumpedPathFrameIdx = 0;
     XMFLOAT3 m_dumpedPathCameraPosition = {};
     XMMATRIX m_dumpedPathViewMatrix = {};
     D12Resource m_pathDumpBufferRW, m_pathDumpBufferReadback;
+    D12Resource m_pathDumpOCBufferRW, m_pathDumpOCBufferReadback;
     bool m_isPathDumpAutomatic = true;
 
     enum class ScheduledRunState

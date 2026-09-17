@@ -50,7 +50,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
             if (FEATURE_ENABLED(GradientDomain))
             {
-                PathVertexInfo currentVertexInfo;
+                PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
                 currentVertexInfo.Type = VertexType::eEnvironment;
                 vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
                 vertexList.NumVertices++;

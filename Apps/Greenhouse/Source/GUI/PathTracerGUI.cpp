@@ -189,12 +189,13 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 
                         for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
                         {
-                            const bool isAssignedValue = m_cpuPathDump[i].DebugOutputs.IsAssignedValueList[j];
+                            const hlsl::float3 value = m_cpuPathDumpOutputColor[i].Array[j].Value;
+                            const bool isAssignedValue = m_cpuPathDumpOutputColor[i].Array[j].IsAssigned;
 
-                            if (m_cpuPathDump[i].DebugOutputs.Float3List[j].x == m_cpuPathDump[i].DebugOutputs.Float3List[j].y && m_cpuPathDump[i].DebugOutputs.Float3List[j].x == m_cpuPathDump[i].DebugOutputs.Float3List[j].z)
-                                RowFloat(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j].x, isAssignedValue);
+                            if (value.x == value.y && value.x == value.z)
+                                RowFloat(s_debugOutputIdxNames[j], value.x, isAssignedValue);
                             else
-                                RowFloat3(s_debugOutputIdxNames[j], m_cpuPathDump[i].DebugOutputs.Float3List[j], isAssignedValue);
+                                RowFloat3(s_debugOutputIdxNames[j], value, isAssignedValue);
                         }
 
                         ImGui::EndTable();

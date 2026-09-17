@@ -60,6 +60,7 @@ public:
     void SetUAV_Tex1D(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, DXGI_FORMAT format);
     void SetUAV_Buffer(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, uint32_t numElements,
                        size_t stride);
+    void SetUAV_ByteAddressBuffer(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, size_t size);
 
     void SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const;
     void SetDescriptorTables_Compute(ID3D12GraphicsCommandList* cmdList) const;

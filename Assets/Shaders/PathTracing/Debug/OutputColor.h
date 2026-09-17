@@ -19,10 +19,15 @@ static constexpr auto s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Disa
 #endif
 
 #if defined(__cplusplus) || DEBUG_ENABLED_PP(PathDumper)
+struct DebugOutputPair
+{
+    hlsl::float3 Value;
+    hlsl::uint IsAssigned;
+};
+
 struct DebugOutputStruct
 {
-    hlsl::float3 Float3List[(hlsl::uint)DebugOutputIndex::eCount];
-    hlsl::uint IsAssignedValueList[(hlsl::uint)DebugOutputIndex::eCount];
+    DebugOutputPair Array[(hlsl::uint)DebugOutputIndex::eCount];
 };
 #else
 struct DebugOutputStruct {};

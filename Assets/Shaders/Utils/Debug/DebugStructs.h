@@ -42,7 +42,6 @@ struct DebugErrorInfo
 struct RayDump
 {
     hlsl::uint Explored;
-    DebugOutputStruct DebugOutputs;
     PathState PathState;
     PathVertexInfo PathVertex;
 };

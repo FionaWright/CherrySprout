@@ -67,6 +67,7 @@ RWTexture2D<float4>                                 gTexGradientY           : re
 // TODO: Handle register spaces properly in root sig. Then have all debug buffers dependent on _DEBUG
 RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u5, REGISTER_SPACE_DEFAULT);
 RWStructuredBuffer<RayDump>                         gPathDump               : register(u6, REGISTER_SPACE_DEFAULT);
+RWByteAddressBuffer                                 gPathDumpDebugOutput    : register(u7, REGISTER_SPACE_DEFAULT);
 
 // =================== S Registers ===============================================================================
 

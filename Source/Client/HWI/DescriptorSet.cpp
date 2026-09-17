@@ -250,6 +250,20 @@ void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, c
     SetUAV(device, uavIdx, d12Resource, desc);
 }
 
+void DescriptorSet::SetUAV_ByteAddressBuffer(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, const size_t size)
+{
+    D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+    desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+    desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    desc.Buffer.FirstElement = 0;
+    desc.Buffer.NumElements = size / 4; // Num 32-bit words
+    desc.Buffer.StructureByteStride = 0;
+    desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+
+    const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
+    SetUAV(device, uavIdx, d12Resource, desc);
+}
+
 void DescriptorSet::SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const
 {
     setDescriptorTables(cmdList, false);
