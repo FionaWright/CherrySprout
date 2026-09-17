@@ -31,9 +31,17 @@ struct DebugErrorInfo
     hlsl::float4x4 InvV;
 };
 
+// sizeof(DebugOutputStruct) = (143 x 3 x 4) + (143 x 4) = 2288
+// sizeof(PathState) = 4 x (4 + 4 + 4 + 4 + 4) = 80
+// sizeof(PathVertexInfo) = 4 x (1 + 3 + 3x3 + 3 + 3 + 1 + 3 + 1) = 96
+// Total = 1 + 2288 + 80 + 96 = 2465
+
+// Solution:
+// - Put debug output struct on their own byte address buffer
+
 struct RayDump
 {
-    bool Explored;
+    hlsl::uint Explored;
     DebugOutputStruct DebugOutputs;
     PathState PathState;
     PathVertexInfo PathVertex;

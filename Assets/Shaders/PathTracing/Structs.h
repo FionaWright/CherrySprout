@@ -41,14 +41,14 @@ struct PathState
     RayDesc Desc;
 
     hlsl::float3 Beta;
+    float RollingPathDistance;
 
     hlsl::float3 Lo;
     float LastBxdfPdf;
 
-    float RollingPathDistance;
     hlsl::uint LastRayWasDiracDelta;
     hlsl::uint RaySegmentIdx;
-    float p;
+    hlsl::float2 p;
 };
 
 // Note: Unaligned, do not use in C++

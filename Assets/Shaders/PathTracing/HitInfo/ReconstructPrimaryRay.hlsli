@@ -87,7 +87,7 @@ void ReconstructPrimaryRayHit(
         DBG_OUTPUT3(hitInfo.Mat.TransmissionColor,                                            TransmissionColor);
         DBG_OUTPUT1(hitInfo.Mat.Roughness,                                                    Roughness);
         DBG_OUTPUT1(hitInfo.Mat.Metallic,                                                     Metallic);
-        DBG_OUTPUT3(hitInfo.Mat.SpecularFactor,                                               SpecularFactor);
+        DBG_OUTPUT1(hitInfo.Mat.SpecularFactor,                                               SpecularFactor);
         DBG_OUTPUT1(hitInfo.Mat.AnisoStrength,                                                AnisoStrength);
         DBG_OUTPUT1(hitInfo.Mat.IOR_N,                                                        IorN);
     }

@@ -56,7 +56,7 @@ LightSample SampleLight(
         float xi = Rand01(rngInfo);
         sampleLSD(xi, lightIdx, pdf_lsd);
 
-        DBG_OUTPUT3(xi, NEE_xi);
+        DBG_OUTPUT1(xi, NEE_xi);
     }
 
     LightSample lightSample;

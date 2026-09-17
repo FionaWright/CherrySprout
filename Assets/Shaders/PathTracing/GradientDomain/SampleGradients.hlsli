@@ -51,12 +51,12 @@ float3 SampleGradient(RngInfo rngInfo, uint2 shiftedCoord, PathSample mainPath)
     DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
     DBG_OUTPUT1(0.0f, GD_RejectionShiftMapping);
     DBG_OUTPUT1(0.0f, GD_RejectionVertexMismatch);
-    DBG_OUTPUT3(0.0f, GD_FinalReconnectionState);
-    DBG_OUTPUT3(0.0f, GD_V2Type);
+    DBG_OUTPUT1(0.0f, GD_FinalReconnectionState);
+    DBG_OUTPUT1(0.0f, GD_V2Type);
     DBG_OUTPUT1(0.0f, GD_PdfShifted);
-    DBG_OUTPUT3(0.0f, GD_L_w);
-    DBG_OUTPUT3(0.0f, GD_L_s);
-    DBG_OUTPUT3(1.0f, GD_Jacobian);
+    DBG_OUTPUT1(0.0f, GD_L_w);
+    DBG_OUTPUT1(0.0f, GD_L_s);
+    DBG_OUTPUT1(1.0f, GD_Jacobian);
 
     float3 gradient = mainPath.Lo - Lo;
     gradient *= m;

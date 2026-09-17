@@ -233,8 +233,8 @@ void TraceShiftedPath(
 
         DBG_OUTPUT3(wi, GD_L_w);
         DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi), GD_L_s);
-        DBG_OUTPUT3(pdfShifted, GD_PdfShifted);
-        DBG_OUTPUT3(0.0f, GD_V2Type);
+        DBG_OUTPUT1(pdfShifted, GD_PdfShifted);
+        DBG_OUTPUT1(0.0f, GD_V2Type);
     }
 
     Lo = pathState.Lo;

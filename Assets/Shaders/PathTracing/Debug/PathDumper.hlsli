@@ -5,7 +5,6 @@
 
 #include "PathTracing/Debug/Globals.hlsli"
 
-[noinline]
 void ClearBuffer()
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -30,7 +29,7 @@ void ClearBuffer()
 }
 
 [noinline]
-void AssignDebugOutput(float3 value, uint dbgIdx)
+void AssignDebugOutput(float value_x, float value_y, float value_z, uint dbgIdx)
 {
     if (!DEBUG_ENABLED(PathDumper))
         return;
@@ -41,11 +40,12 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
     if (gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx])
         return;
 
+    float3 value = float3(value_x, value_y, value_z);
+
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.Float3List[dbgIdx] = value;
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx] = true;
 }
 
-[noinline]
 void DumpPathState(PathState pathState)
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -57,7 +57,6 @@ void DumpPathState(PathState pathState)
     gPathDump[gDebugCurrentRayDepth].PathState = pathState;
 }
 
-[noinline]
 void DumpPathVertexInfo(PathVertexInfo vertexInfo)
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -69,7 +68,6 @@ void DumpPathVertexInfo(PathVertexInfo vertexInfo)
     gPathDump[gDebugCurrentRayDepth].PathVertex = vertexInfo;
 }
 
-[noinline]
 void MarkExplored()
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -84,7 +82,6 @@ void MarkExplored()
 #define HIGHLIGHT_CIRCLE_MIN 3
 #define HIGHLIGHT_CIRCLE_MAX 8
 
-[noinline]
 void Highlight(inout float3 color)
 {
     if (!DEBUG_ENABLED(PathDumper))
@@ -119,7 +116,7 @@ void Highlight(inout float3 color)
 }
 
 #   define DBG_PATH_DUMP_CLEAR() { ClearBuffer(); }
-#   define DBG_PATH_DUMP_DEBUG_OUTPUT(value, dbgIdx) { AssignDebugOutput(value, dbgIdx); }
+#   define DBG_PATH_DUMP_DEBUG_OUTPUT(value, dbgIdx) { AssignDebugOutput(value.x, value.y, value.z, dbgIdx); }
 #   define DBG_PATH_DUMP_PATH_STATE(pathState) { DumpPathState(pathState); }
 #   define DBG_PATH_DUMP_PATH_VERTEX_INFO(vertexInfo) { DumpPathVertexInfo(vertexInfo); }
 #   define DBG_PATH_DUMP_MARK_EXPLORED() { MarkExplored(); }

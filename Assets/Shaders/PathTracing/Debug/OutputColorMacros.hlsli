@@ -11,8 +11,10 @@
 #include "PathTracing/Debug/OutputColorRemap.h"
 
 [noinline]
-void dbgOutput3(float3 value, uint index)
+void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 {
+    float3 value = float3(value_x, value_y, value_z);
+
     DBG_PATH_DUMP_DEBUG_OUTPUT(value, index);
 
     if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == (uint)DebugOutputIndex::eDebugOutput_Disabled)
@@ -33,7 +35,6 @@ void dbgOutput3(float3 value, uint index)
     gDebugValue = value;
 }
 
-[noinline]
 void dbgOutputSet(inout float3 output)
 {
     if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == 0)
@@ -42,8 +43,8 @@ void dbgOutputSet(inout float3 output)
     output = gDebugValue;
 }
 
-#    define DBG_OUTPUT3(value, label) dbgOutput3(value, (uint)DebugOutputIndex::eDebugOutput_##label);
-#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)
+#    define DBG_OUTPUT3(value, label) dbgOutput3(value.x, value.y, value.z, (uint)DebugOutputIndex::eDebugOutput_##label);
+#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 #    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; }
 
