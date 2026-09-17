@@ -410,7 +410,8 @@ float3 ComputeAMinusI(float alpha, float c, int2 pixelCoord, float3 b, Texture2D
 {
     float3 prev = prevTex[pixelCoord];
 
-    float3 v = gTexPrimal[pixelCoord] - 1 + alpha + (c * 4.0f) * prev;
+    float3 v = prev;
+    v += (alpha - 1 + (c * 4.0f)) * prev;
 
     v -= c * SampleSafeClamp(prevTex, pixelCoord + int2(-1,0));
     v -= c * SampleSafeClamp(prevTex, pixelCoord + int2(0,-1));
@@ -438,3 +439,63 @@ void SPR_Jacobi(float alpha, float c, int2 pixelCoord)
     }
 }
 ```
+
+## Mitsuba Approach
+
+dx == GradientX
+dy == GradientY
+throughput == ? (Not beta surely)
+direct == Primal?
+
+```cpp
+N = WIDTH * HEIGHT;
+
+struct b
+{
+    float3 ThroughputAlpha;
+    float3 GradientX;
+    float3 GradientY;
+}[N];
+
+struct e
+{
+    float3 ?,?,?;
+}[N];
+
+struct w2
+{
+    float ?,?,?;
+}[N];
+
+float3 x[N] = gTexThroughput; // Solution
+float3 r[N];
+float3 z[N];
+float3 p[N];
+float3 Ap[N];
+float3 rr;
+float3 rz;
+float3 rz2;
+float3 pAp;
+bool isToneMapped[N];
+
+struct PoissonMatrix
+{
+    uint2 Dimensions; // Equal to primal dim?
+    float Alpha;
+};
+
+PoissonMatrix P;
+
+float CalcPx(uint2 pixelCoord)
+{
+    float3 x = gTex_x[pixelCoord];
+    float3 Px 
+}
+
+void SolveIndirect()
+{
+    for (int i = 0; i < IRLS_ITER_MAX; i++)
+    {
+        
+    }
+}
