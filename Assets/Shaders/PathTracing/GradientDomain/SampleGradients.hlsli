@@ -34,11 +34,7 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             gSettings.DofFocalDist, gSettings.DofLensRadius,
             shiftedRayOrigin, shiftedRayDirection);
 
-		// TODO: Primary Ray PDF ratio
-		float pdfPrimaryMain = 1.0f;
-		float pdfPrimaryShifted = 1.0f;
-		float pdfRatio = (pdfPrimaryShifted / pdfPrimaryMain);
-
+		float pdfRatio = 1.0f;
         DBG_OUTPUT1(pdfRatio, GD_PrimaryPdfRatio);
 
         float3 Lo;
@@ -78,7 +74,8 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
         DBG_OUTPUT3(0.0f, GD_FinalReconnectionState);
         DBG_OUTPUT3(0.0f, GD_V2Type);
         DBG_OUTPUT1(0.0f, GD_PdfShifted);
-        DBG_OUTPUT3(0.0f, GD_Wi);
+        DBG_OUTPUT3(0.0f, GD_L_w);
+        DBG_OUTPUT3(0.0f, GD_L_s);
         DBG_OUTPUT3(1.0f, GD_Jacobian);
 	}
 

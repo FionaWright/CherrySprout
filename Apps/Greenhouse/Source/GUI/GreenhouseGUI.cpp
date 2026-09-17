@@ -473,13 +473,13 @@ void Greenhouse::renderGuiCore()
         }
         ImGui::Spacing();
 
-        if (!GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
+        if (!pathTracingDebugEnabled(eDebug_OutputColor))
         {
             m_config.PathTracerConfig.DebugInfo.OutputColorIdx = DebugOutputIndex::eDebugOutput_Disabled;
             m_config.PathTracerConfig.DebugInfo.OutputColorRemap = DebugOutputColorRemap::eNone;
         }
 
-        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_Scales))
+        if (pathTracingDebugEnabled(eDebug_Scales))
         {
             if (ImGui::CollapsingHeader("Scales"))
             {
@@ -537,13 +537,13 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_ForceLightIndex))
+        if (pathTracingDebugEnabled(eDebug_ForceLightIndex))
         {
             m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
             ImGui::Spacing();
         }
 
-        if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor))
+        if (pathTracingDebugEnabled(eDebug_OutputColor))
         {
             if (ImGui::CollapsingHeader("Debug Output Colors"))
             {

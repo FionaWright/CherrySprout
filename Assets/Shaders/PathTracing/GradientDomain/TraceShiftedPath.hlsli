@@ -29,6 +29,8 @@ void HitShiftedUnconnected(
     {
         // TODO
         isSymmetric = false;
+        wi = NAN;
+        pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionUninit);
         return;
     }
@@ -37,6 +39,8 @@ void HitShiftedUnconnected(
     if (v1.Type != shiftedType)
     {
         isSymmetric = false;
+        wi = NAN;
+        pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
         return;
     }
@@ -47,12 +51,11 @@ void HitShiftedUnconnected(
     {
         if (v2.Type == VertexType::eDiffuse)
         {
-            shiftResult = ShiftReconnect(v1.Position, nextOrigin, v2.Position, v2.SFrame.N);
+            shiftResult = ShiftReconnect(v1.Position, nextOrigin, hitInfo.Ng_ff, v2.Position, v2.SFrame.N);
         }
         else if (v2.Type == VertexType::eEnvironment)
         {
-            // TODO: Not confident with parameters
-            shiftResult = ShiftReconnectEnvironment(nextOrigin, v1.Wi);
+            shiftResult = ShiftReconnectEnvironment(nextOrigin, hitInfo.Ng_ff, v1.Wi);
         }
         else if (v2.Type == VertexType::eGlossy)
         {
@@ -76,6 +79,8 @@ void HitShiftedUnconnected(
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
+        wi = NAN;
+        pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
         return;
     }
@@ -122,6 +127,8 @@ void TraceShiftedPath(
     {
         PathVertexInfo v1 = mainVertices.Array[i];
 
+        DBG_SET_CURRENT_RAY_DEPTH(i);
+        DBG_PATH_DUMP_MARK_EXPLORED();
         DBG_OUTPUT3(Palette((uint)v1.Type), GD_V1Type);
 
         pathState.RaySegmentIdx = i;
@@ -132,16 +139,17 @@ void TraceShiftedPath(
         HitInfo hitInfo;
         ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
 
+        bool mainIsMiss = v1.Type == VertexType::eEnvironment;
+        if (isMiss != mainIsMiss)
+        {
+            isSymmetric = false;
+            Lo = 0.0f;
+            DBG_OUTPUT1(1.0f, GD_RejectionEnvMap);
+            break;
+        }
+
         if (isMiss)
         {
-            if (v1.Type != VertexType::eEnvironment)
-            {
-                isSymmetric = false;
-                Lo = 0.0f;
-                DBG_OUTPUT1(1.0f, GD_RejectionEnvMap);
-                return;
-            }
-
             // TODO: Value can be cached if connected (likely)
             float3 Li = pathState.Beta * Miss(pathState, i);
             pathState.Lo += ApplyFireflyThreshold(Li);
@@ -153,9 +161,8 @@ void TraceShiftedPath(
         float3 wo = -pathState.Desc.Direction;
         float3 wi;
 
-        DBG_SET_CURRENT_RAY_DEPTH(i);
-        DBG_PATH_DUMP_MARK_EXPLORED();
-        DBG_OUTPUT3(wo, GD_Wo);
+        DBG_OUTPUT3(wo, GD_V_w);
+        DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wo), GD_V_s);
         DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
         DBG_OUTPUT3(hitInfo.Emission, GD_Emission);
 
@@ -201,7 +208,7 @@ void TraceShiftedPath(
                 Lo = 0.0f;
                 isSymmetric = false;
                 DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
-                return;
+                break;
             }
 
             PathVertexInfo v2 = mainVertices.Array[i+1];
@@ -215,7 +222,7 @@ void TraceShiftedPath(
         if (!isSymmetric)
         {
             Lo = 0.0f; // TODO: Probably wrong
-            return;
+            break;
         }
 
 		pdfRatio *= (pdfShifted / max(EPSILON, pdfMain));
@@ -225,7 +232,8 @@ void TraceShiftedPath(
         pathState.Desc.Direction = wi;
         pathState.Desc.Origin = nextOrigin;
 
-        DBG_OUTPUT3(wi, GD_Wi);
+        DBG_OUTPUT3(wi, GD_L_w);
+        DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi), GD_L_s);
         DBG_OUTPUT3(pdfShifted, GD_PdfShifted);
         DBG_OUTPUT3(0.0f, GD_V2Type);
     }

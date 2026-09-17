@@ -102,7 +102,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
     return result;
 }
 
-ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 dest, float3 destNormal)
+ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 normalShifted, float3 dest, float3 normalDest)
 {
     ShiftResult result;
 
@@ -120,20 +120,34 @@ ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 dest,
 
     result.Wi = normalize(-edgeShifted);
 
+    float NdL = dot(normalShifted, result.Wi);
+    if (NdL <= 0.0f)
+    {
+        result.IsSuccessful = false;
+        return result;
+    }
+
     float length2Main = LengthSquared(edgeMain);
     float length2Shifted = LengthSquared(edgeShifted);
 
-    float cosThetaMain = dot(edgeMain, destNormal) / sqrt(length2Main); // ?
-    float cosThetaShifted = dot(result.Wi, destNormal); // ?
+    float cosThetaMain = dot(edgeMain, normalDest) / sqrt(length2Main); // ?
+    float cosThetaShifted = dot(result.Wi, normalDest); // ?
 
     result.IsSuccessful = true;
     result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
     return result;
 }
 
-ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 dirMain)
+ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted, float3 dirMain)
 {
     ShiftResult result;
+
+    float NdL = dot(normalShifted, dirMain);
+    if (NdL <= 0.0f)
+    {
+        result.IsSuccessful = false;
+        return result;
+    }
 
     bool occluded;
     TestVisibilityDirection(sourceShifted, dirMain, occluded);

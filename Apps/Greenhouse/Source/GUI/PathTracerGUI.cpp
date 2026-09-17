@@ -7,10 +7,28 @@
 #include "System/Input.h"
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
+bool getPtFeatureEnabled(const PathTracerConfig& config, const PathTracerFeatureFlags flag)
+{
+    bool result = GetPathTracerFeatureFlag(config.FeatureFlags, flag);
+
+    if (config.DebugInfo.CbvFlagsModeEnabled)
+        result &= GetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, flag);
+
+    return result;
+}
+bool getPtDebugEnabled(const PathTracerConfig& config, const PathTracerDebugFlags flag)
+{
+    bool result = GetPathTracerDebugFlag(config.DebugInfo.Flags, flag);
+
+    if (config.DebugInfo.CbvFlagsModeEnabled)
+        result &= GetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, flag);
+
+    return result;
+}
+
 void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 {
-    if (GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper) &&
-        (!config.DebugInfo.CbvFlagsModeEnabled || GetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, eDebug_PathDumper)))
+    if (getPtDebugEnabled(config, eDebug_PathDumper))
     {
         if (ImGui::CollapsingHeader("Path Dump"))
         {
@@ -42,8 +60,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                 m_scheduledRunCameraPosition = m_dumpedPathCameraPosition;
                 m_scheduledRunViewMatrix = m_dumpedPathViewMatrix;
 
-                if (GetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation) ||
-                    (config.DebugInfo.CbvFlagsModeEnabled && GetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, eFeature_Accumulation)))
+                if (getPtFeatureEnabled(config, eFeature_Accumulation))
                 {
                     m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
                     SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);
@@ -192,7 +209,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
         }
     }
 
-    if (!GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_Asserts))
+    if (!getPtDebugEnabled(config, eDebug_Asserts))
         return;
 
     std::vector<uint32_t> errors;
@@ -262,7 +279,6 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 
                 if (ImGui::Button((std::string("Dump Path##") + std::to_string(dbgId)).c_str()))
                 {
-                    m_scheduledRunState = ScheduledRunState::eRunFrame;
                     m_isPathDumpAutomatic = false;
 
                     m_scheduledRunPixelCoords = m_cpuErrorInfo[dbgId].PixelCoord;
@@ -271,8 +287,16 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 
                     m_scheduledRunViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_cpuErrorInfo[dbgId].InvV));
 
-                    SetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper, true);
-                    SetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, eDebug_PathDumper, true);
+                    if (getPtFeatureEnabled(config, eFeature_Accumulation) || !getPtDebugEnabled(config, eDebug_PathDumper))
+                    {
+                        m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
+                        SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);
+                        SetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, eFeature_Accumulation, false);
+                        SetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper, true);
+                        SetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, eDebug_PathDumper, true);
+                    }
+                    else
+                        m_scheduledRunState = ScheduledRunState::eRunFrame;
                 }
             }
             ImGui::Unindent(IM_GUI_INDENTATION);

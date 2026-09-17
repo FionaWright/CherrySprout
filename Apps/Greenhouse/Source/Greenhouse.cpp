@@ -167,7 +167,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_lsdDirty = true;
     }
 
-    if ((!m_lightImportanceSampler.IsInitialized() || m_lsdDirty) && pathTracingFeatureEnabled(eFeature_NEE))
+    if (!m_lightImportanceSampler.IsInitialized() || m_lsdDirty)
     {
         const bool envMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
         const bool aliasEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
@@ -397,7 +397,25 @@ bool Greenhouse::pathTracingFeatureEnabled(const PathTracerFeatureFlags flag) co
     if (m_config.RenderBackend != RenderBackendMode::ePathTracer)
         return false;
 
-    return GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
+    bool result = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
+
+    if (m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled)
+        result &= GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
+
+    return result;
+}
+
+bool Greenhouse::pathTracingDebugEnabled(const PathTracerDebugFlags flag) const
+{
+    if (m_config.RenderBackend != RenderBackendMode::ePathTracer)
+        return false;
+
+    bool result = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
+
+    if (m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled)
+        result &= GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag);
+
+    return result;
 }
 
 void Greenhouse::OnResize(uint32_t width, uint32_t height)
