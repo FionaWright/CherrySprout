@@ -58,11 +58,10 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
         float m = 1.0f;
         if (isSymmetric)
         {
-            //m = BalanceHeuristic(mainPath.PDF, pdf, 1, gSettings.GradientNumSamples); // ?
             m = BalanceHeuristicRatio(pdfRatio, 1, gSettings.GradientNumSamples);
         }
-        //Lo *= m;
 
+        // TODO: Split into X and Y
         float3 gradient = mainPath.Lo - Lo;
         gradient *= m;
         gradientSum += gradient;
