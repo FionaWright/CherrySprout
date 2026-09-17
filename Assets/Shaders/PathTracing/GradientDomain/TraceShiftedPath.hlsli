@@ -109,7 +109,6 @@ void TraceShiftedPath(
     PathVertexList mainVertices,
     float3 origin,
     float3 dir,
-    inout RngInfo rngInfo, // TODO: Unused
     uint2 pixelCoord,
 
     out float3 Lo,

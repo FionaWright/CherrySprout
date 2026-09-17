@@ -273,7 +273,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Text("Gradient Domain PT:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Samples##GradientDomain", &m_config.PathTracerConfig.GradientNumSamples);
+
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

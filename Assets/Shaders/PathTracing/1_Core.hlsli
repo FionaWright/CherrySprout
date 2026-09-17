@@ -5,6 +5,7 @@
 #include "PathTracing/2_SamplePath.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
 #include "PathTracing/GradientDomain/SampleGradients.hlsli"
+#include "PathTracing/GradientDomain/SetTexGradients.hlsli"
 #include "PathTracing/Utils.hlsli"
 
 #include "PathTracing/Debug/Globals.hlsli"
@@ -30,7 +31,8 @@ void Core(uint2 pixelCoord)
     float3 origin = gSettings.CameraPositionWorld;
 
     float3 primalSum = float3(0,0,0);
-	float3 gradientSum = float3(0,0,0);
+	float3 gradientXSum = float3(0,0,0);
+	float3 gradientYSum = float3(0,0,0);
 
     for (uint i = 0; i < gSettings.SPP; i++)
     {
@@ -44,31 +46,27 @@ void Core(uint2 pixelCoord)
 
 		if (FEATURE_ENABLED(GradientDomain))
 		{
-            float3 gradient = SampleGradients(rngInfo, pixelCoord, pathSample);
-            gradientSum += gradient;
+            float3 gradientX, gradientY;
+            SampleGradients(rngInfo, pixelCoord, pathSample, gradientX, gradientY);
+
+            gradientXSum += gradientX;
+            gradientYSum += gradientY;
 		}
     }
 
     primalSum /= float(gSettings.SPP);
 
     if (FEATURE_ENABLED(GradientDomain))
-    {
-        gradientSum /= float(gSettings.SPP * gSettings.GradientNumSamples);
-        AccumulateGradient(pixelCoord, gradientSum);
-        DBG_OUTPUT3(gradientSum, GD_Gradient);
-    }
+        SetTexGradients(pixelCoord, gradientXSum, gradientYSum);
 
-    DBG_OUTPUT_SET(primalSum);
+    if (!FEATURE_ENABLED(ScreenSpaceGradients)) // TODO: Ugly
+        DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
     average = LRGB_to_SRGB(average); // TODO: Avoid when gradient domain?
 
     if (FEATURE_ENABLED(ScreenSpaceGradients))
-    {
-        float3 c0 = gTexAccumulation[pixelCoord].rgb;
-        float3 c1 = gTexAccumulation[pixelCoord + uint2(1,0)].rgb;
-        average = c1 - c0;
-    }
+        DBG_OUTPUT_SET(average);
 
     DBG_PATH_DUMP_HIGHLIGHT(average);
 

@@ -54,18 +54,19 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
-    // TODO: Lazy init
+    // TODO: Lazy init and move to GradientDomainManager
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // TODO: Rgba16f?
         desc.Width = Config::GetSystem().RtvWidth;
         desc.Height = Config::GetSystem().RtvHeight;
         desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
-        m_gradient.Init("Gradient", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
+        m_gradientX.Init("GradientX", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
+        m_gradientY.Init("GradientY", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
@@ -123,11 +124,12 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_primal, m_primal.GetDesc().Format);
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, m_restirManager.GetReservoirBuffer(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 3, &m_gradient, m_gradient.GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 3, &m_gradientX, m_gradientX.GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 4, &m_gradientY, m_gradientY.GetDesc().Format);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 4, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 5, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 5, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 6, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -326,7 +328,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
         settings.RestirConfidenceCap = renderInfo.PathTracerConfig->RestirConfidenceCap;
         settings.RestirNumCandidates = renderInfo.PathTracerConfig->RestirNumCandidates;
-        settings.GradientNumSamples = renderInfo.PathTracerConfig->GradientNumSamples;
 
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
@@ -401,7 +402,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 {
     constexpr uint32_t numCBV = 2;
     constexpr uint32_t numSRV = 15;
-    constexpr uint32_t numUAV = 6;
+    constexpr uint32_t numUAV = 7;
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
