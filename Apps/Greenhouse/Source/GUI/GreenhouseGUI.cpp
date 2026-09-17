@@ -125,6 +125,25 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        // MM Type
+        {
+            ImGui::Text("Microfacet Model:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                static int e = static_cast<int>(m_config.PathTracerConfig.MicrofacetModelType);
+                int c = 0;
+                for (auto & mmName : s_mmNames)
+                {
+                    if (c % 2 == 1)
+                        ImGui::SameLine();
+                    m_ptPipelineDirty |= ImGui::RadioButton(mmName, &e, c++);
+                }
+                m_config.PathTracerConfig.MicrofacetModelType = static_cast<MicrofacetModelType>(e);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
         const bool prevCbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
         m_ptPipelineDirty |= ImGui::Checkbox("CBV Flags Debug Mode", &m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled);
         ImGui::Spacing();

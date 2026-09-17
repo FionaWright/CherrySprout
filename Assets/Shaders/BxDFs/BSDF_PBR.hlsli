@@ -58,9 +58,9 @@ void BxDF::Sample(
     float u2 = Rand01(rngInfo);
 
     MicrofacetModel mm;
-    InitializeMM(mm, hitInfo.Mat.Roughness, rngInfo, V_s);
+    mm.Init(hitInfo.Mat.Roughness, rngInfo, V_s);
     if (FEATURE_ENABLED(Anisotropy))
-        InitializeMMAniso(mm, hitInfo);
+        mm.InitAniso(hitInfo);
 
     float3 H_s = mm.Sample(u1, u2);
     float VdH = dot(H_s, V_s);
@@ -196,9 +196,9 @@ void BxDF::Evaluate(
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
 
     MicrofacetModel mm;
-    InitializeMM(mm, hitInfo.Mat.Roughness, V_s);
+    mm.Init(hitInfo.Mat.Roughness, V_s);
     if (FEATURE_ENABLED(Anisotropy))
-        InitializeMMAniso(mm, hitInfo);
+        mm.InitAniso(hitInfo);
 
     float VdH = dot(H_s, V_s);
 

@@ -13,6 +13,7 @@
 #include "HWI/RootSig.h"
 #include "HWI/RtasBuilder.h"
 #include "HWI/Pipeline.h"
+#include "MicrofacetModels/MMTypes.h"
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags/MethodsCpp.h"
 #include "Render/RestirManager.h"
@@ -37,7 +38,7 @@ public:
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle) override;
     void UnreserveData() override;
-    void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode);
+    void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode, const MicrofacetModelType& microfacetModelType);
     void Reset();
 
     size_t TotalCbvRequiredSize() override

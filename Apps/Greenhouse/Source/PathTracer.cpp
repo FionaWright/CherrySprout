@@ -92,7 +92,11 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     Config::SetBoolFromArg(&debugInfo.CbvFlagsModeEnabled, "--cbvFlagMode");
     const auto featureFlags = debugInfo.CbvFlagsModeEnabled ? s_defaultFeatureFlagsCbvMode : s_defaultFeatureFlags;
     debugInfo.Flags = debugInfo.CbvFlagsModeEnabled ? s_defaultDebugFlagsCbvMode : s_defaultDebugFlags;
-    UpdatePipeline(d3d->GetDevice(), featureFlags, debugInfo, s_defaultBxdfMode);
+    UpdatePipeline(d3d->GetDevice(),
+        featureFlags,
+        debugInfo,
+        s_defaultBxdfMode,
+        s_defaultMMType);
 
     m_descriptorSet.Init         (heap, true);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
@@ -301,7 +305,11 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         if (m_scheduledRunState == ScheduledRunState::eRecompilePipelineAndRunFrame)
         {
             d3d->Flush();
-            UpdatePipeline(d3d->GetDevice(), renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo, renderInfo.PathTracerConfig->BxdfMode);
+            UpdatePipeline(d3d->GetDevice(),
+                renderInfo.PathTracerConfig->FeatureFlags,
+                renderInfo.PathTracerConfig->DebugInfo,
+                renderInfo.PathTracerConfig->BxdfMode,
+                renderInfo.PathTracerConfig->MicrofacetModelType);
 
             m_scheduledRunState = ScheduledRunState::eRunFrame;
         }
@@ -409,7 +417,11 @@ void PathTracer::UnreserveData()
     m_currentlyLoadedScene = "";
 }
 
-void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode)
+void PathTracer::UpdatePipeline(ID3D12Device* device,
+    const PathTracerFeatureFlags& featureFlags,
+    const PathTracingDebugInfo& debugInfo,
+    const BxdfMode& bxdfMode,
+    const MicrofacetModelType& microfacetModelType)
 {
     constexpr uint32_t numCBV = 2;
     constexpr uint32_t numSRV = 15;
@@ -421,6 +433,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFla
 
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
+    compileArgs.emplace_back("-DMICROFACET_MODEL_TYPE=" + std::to_string(static_cast<uint32_t>(microfacetModelType)));
 
     compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     for (int i = 0; i < FEATURE_COUNT; i++)

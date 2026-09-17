@@ -22,7 +22,6 @@ struct MicrofacetModel
 {
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
-    void Init(float roughness, RngInfo rngInfo, float3 V);
     float m_alpha;
     float m_u3;
     float3 m_V;
@@ -36,6 +35,15 @@ void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
     //m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
     m_V = V;
 }
+
+void MicrofacetModel::Init(float roughness, float3 V)
+{
+    m_alpha = RoughnessToAlpha(roughness);
+    //m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
+    m_V = V;
+}
+
+void MicrofacetModel::InitAniso(HitInfo _) { }
 
 float MicrofacetModel::RoughnessToAlpha(float roughness)
 {
@@ -104,18 +112,17 @@ float MicrofacetModel::D(float3 H)
     return a2 / max(0.001f, PI * denominator * denominator);
 }
 
-float MicrofacetModel::G1(float3 W)
+float MicrofacetModel::G1(float NdW)
 {
     float a2 = m_alpha * m_alpha;
-    float NdW = W.z;
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
     return saturate(2 * NdW / max(0.001f, denom));
 }
 
-float MicrofacetModel::G2(float3 L, float3 V)
+float MicrofacetModel::G2(float NdL, float NdV)
 {
-    return G1(L) * G1(V);
+    return G1(NdL) * G1(NdV);
 }
 
 float MicrofacetModel::PDF(float D, float3 H, float3 V)

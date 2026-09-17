@@ -215,7 +215,11 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     if (m_ptPipelineDirty)
     {
         d3d->Flush();
-        m_pathTracer.UpdatePipeline(d3d->GetDevice(), m_config.PathTracerConfig.FeatureFlags, m_config.PathTracerConfig.DebugInfo, m_config.PathTracerConfig.BxdfMode);
+        m_pathTracer.UpdatePipeline(d3d->GetDevice(),
+            m_config.PathTracerConfig.FeatureFlags,
+            m_config.PathTracerConfig.DebugInfo,
+            m_config.PathTracerConfig.BxdfMode,
+            m_config.PathTracerConfig.MicrofacetModelType);
         m_ptPipelineDirty = false;
     }
 

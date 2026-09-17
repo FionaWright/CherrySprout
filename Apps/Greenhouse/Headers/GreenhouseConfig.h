@@ -3,9 +3,11 @@
 
 #include "PathTracer.h"
 #include "BxDFs/BxDFMode.h"
+#include "MicrofacetModels/MMTypes.h"
 #include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
 #include "PathTracing/Flags/MethodsCpp.h"
+#include "MicrofacetModels/MMTypes.h"
 
 constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
 
@@ -69,6 +71,7 @@ struct PathTracerConfig
 
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
+    MicrofacetModelType        MicrofacetModelType = s_defaultMMType;
 
     PathTracingDebugInfo       DebugInfo        = {};
 };

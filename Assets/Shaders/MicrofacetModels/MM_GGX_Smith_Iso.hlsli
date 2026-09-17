@@ -7,14 +7,20 @@ struct MicrofacetModel
 {
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
-    void Init(float roughness);
     float m_alpha;
 };
 
-void MicrofacetModel::Init(float roughness)
+void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
 }
+
+void MicrofacetModel::Init(float roughness, float3 V)
+{
+    m_alpha = RoughnessToAlpha(roughness);
+}
+
+void MicrofacetModel::InitAniso(HitInfo _) { }
 
 float MicrofacetModel::RoughnessToAlpha(float roughness)
 {

@@ -7,7 +7,6 @@ struct MicrofacetModel
 {
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
-    void Init(float roughness, RngInfo rngInfo, float3 V);
     float m_alpha;
     float m_u3;
     float3 m_V;
@@ -21,6 +20,15 @@ void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
     m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
     m_V = V;
 }
+
+void MicrofacetModel::Init(float roughness, float3 V)
+{
+    m_alpha = RoughnessToAlpha(roughness);
+    m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
+    m_V = V;
+}
+
+void MicrofacetModel::InitAniso(HitInfo _) { }
 
 float MicrofacetModel::RoughnessToAlpha(float roughness)
 {

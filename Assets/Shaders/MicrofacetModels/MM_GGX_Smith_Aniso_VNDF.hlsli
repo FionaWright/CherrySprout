@@ -18,8 +18,6 @@ struct MicrofacetModel
 {
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
-    void Init(float roughness, RngInfo rngInfo, float3 V);
-    void InitAniso(float3 anisoDirStrength);
     float2 Sample11(float cosTheta, float u1, float u2);
     float Lambda(float3 W);
 
@@ -34,6 +32,12 @@ struct MicrofacetModel
 };
 
 void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
+{
+    m_alpha = RoughnessToAlpha(roughness);
+    m_V = V;
+}
+
+void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
     m_V = V;

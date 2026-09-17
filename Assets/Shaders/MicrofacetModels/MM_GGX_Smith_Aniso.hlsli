@@ -10,9 +10,6 @@ struct MicrofacetModel
 {
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
-    void Init(float roughness);
-    void InitAniso(HitInfo hitInfo);
-
     float m_alpha;
     float m_alphaX, m_alphaY;
 
@@ -21,7 +18,12 @@ struct MicrofacetModel
     float3 m_anisoT, m_anisoB, m_anisoN;
 };
 
-void MicrofacetModel::Init(float roughness)
+void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
+{
+    m_alpha = RoughnessToAlpha(roughness);
+}
+
+void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
 }
@@ -93,10 +95,9 @@ float MicrofacetModel::D(float3 H)
     return a2 / max(0.001f, PI * denominator * denominator);
 }
 
-float G1CustomAlpha(float3 W, float alpha)
+float G1CustomAlpha(float NdW, float alpha)
 {
     float a2 = alpha * alpha;
-    float NdW = W.z;
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
     return saturate(2 * NdW / max(0.001f, denom));
@@ -110,10 +111,10 @@ float Lambda(float3 W, float alphaX, float alphaY)
     return 0.5f * (-1 + sqrt(1 + k));
 }
 
-float MicrofacetModel::G1(float3 W)
+float MicrofacetModel::G1(float NdW)
 {
     //return 1.0f / max(0.001f, 1 + Lambda(W, alphaX, alphaY));
-    return G1CustomAlpha(W, m_alpha);
+    return G1CustomAlpha(NdW, m_alpha);
 }
 
 float MicrofacetModel::G2(float3 L, float3 V)
