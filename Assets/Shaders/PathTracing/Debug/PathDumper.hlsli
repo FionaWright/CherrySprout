@@ -38,6 +38,9 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
         return;
 
+    if (gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx])
+        return;
+
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.Float3List[dbgIdx] = value;
     gPathDump[gDebugCurrentRayDepth].DebugOutputs.IsAssignedValueList[dbgIdx] = true;
 }

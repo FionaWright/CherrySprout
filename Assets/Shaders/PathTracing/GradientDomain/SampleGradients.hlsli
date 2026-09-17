@@ -61,7 +61,11 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
             //m = BalanceHeuristic(mainPath.PDF, pdf, 1, gSettings.GradientNumSamples); // ?
             m = BalanceHeuristicRatio(pdfRatio, 1, gSettings.GradientNumSamples);
         }
-        Lo *= m;
+        //Lo *= m;
+
+        float3 gradient = mainPath.Lo - Lo;
+        gradient *= m;
+        gradientSum += gradient;
 
         DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
         DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
@@ -77,8 +81,6 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
         DBG_OUTPUT1(0.0f, GD_PdfShifted);
         DBG_OUTPUT3(0.0f, GD_Wi);
         DBG_OUTPUT3(1.0f, GD_Jacobian);
-
-        gradientSum += mainPath.Lo - Lo;
 	}
 
     return gradientSum;

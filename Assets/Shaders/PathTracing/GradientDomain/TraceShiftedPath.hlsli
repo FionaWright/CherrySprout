@@ -156,6 +156,8 @@ void TraceShiftedPath(
         DBG_SET_CURRENT_RAY_DEPTH(i);
         DBG_PATH_DUMP_MARK_EXPLORED();
         DBG_OUTPUT3(wo, GD_Wo);
+        DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
+        DBG_OUTPUT3(hitInfo.Emission, GD_Emission);
 
         float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
         float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
@@ -196,9 +198,9 @@ void TraceShiftedPath(
             if (i == mainVertices.NumVertices - 1)
             {
                 // TODO
-                //Lo = 0.0f;
-                //isSymmetric = false;
-                //DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
+                Lo = 0.0f;
+                isSymmetric = false;
+                DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
                 return;
             }
 
@@ -207,6 +209,8 @@ void TraceShiftedPath(
 
             HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, pdfShifted);
         }
+
+        DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
 
         if (!isSymmetric)
         {

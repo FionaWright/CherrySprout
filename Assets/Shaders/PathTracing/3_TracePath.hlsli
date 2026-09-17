@@ -19,7 +19,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     PathVertexList vertexList;
     vertexList.NumVertices = 0;
 
-    for (uint i = 0; i < gSettings.MaxRayDepth; i++)
+    uint i;
+    for (i = 0; i < gSettings.MaxRayDepth; i++)
     {
         pathState.RaySegmentIdx = i;
         pathState.LastRayWasDiracDelta = false;
@@ -45,6 +46,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             pathState.Lo += ApplyFireflyThreshold(Li);
 
             DBG_OUTPUT3(Li, MissContrib);
+            DBG_OUTPUT1(1.0f, KilledByMiss);
 
             if (FEATURE_ENABLED(GradientDomain))
             {
@@ -74,7 +76,10 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
+        {
+            DBG_OUTPUT1(1.0f, KilledByBetaLoss);
             break;
+        }
 
         pathState.Lo += ApplyFireflyThreshold(L_sample);
 
@@ -86,12 +91,20 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             p = max(p, 0.05f);
             float rRR = Rand01(rngInfo);
             if (rRR > p)
+            {
+                DBG_OUTPUT1(1.0f, KilledByRR);
                 break;
+            }
             pathState.Beta /= p;
         }
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
     }
+
+    DBG_OUTPUT1(i == gSettings.MaxRayDepth, KilledByMaxDepth);
+    DBG_OUTPUT1(0.0f, KilledByBetaLoss);
+    DBG_OUTPUT1(0.0f, KilledByRR);
+    DBG_OUTPUT1(0.0f, KilledByMiss);
 
     PathSample pathSample;
     pathSample.Lo = pathState.Lo;

@@ -82,6 +82,7 @@ private:
     enum class ScheduledRunState
     {
         eIdle,
+        eRecompilePipelineAndRunFrame,
         eRunFrame,
         eReadbackPathDump,
         eDisplay

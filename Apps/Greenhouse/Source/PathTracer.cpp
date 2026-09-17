@@ -285,15 +285,19 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 
+        if (m_scheduledRunState == ScheduledRunState::eRecompilePipelineAndRunFrame)
+        {
+            d3d->Flush();
+            UpdatePipeline(d3d->GetDevice(), renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo, renderInfo.PathTracerConfig->BxdfMode);
+
+            m_scheduledRunState = ScheduledRunState::eRunFrame;
+        }
+
         if (m_scheduledRunState == ScheduledRunState::eRunFrame)
         {
             settings.FrameIdx = m_scheduledRunFrameIdx;
             settings.CameraPositionWorld = m_scheduledRunCameraPosition;
             XMStoreFloat4x4(&settings.InvV, XMMatrixInverse(nullptr, m_scheduledRunViewMatrix));
-
-            SetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_Accumulation, false);
-            d3d->Flush();
-            UpdatePipeline(d3d->GetDevice(), renderInfo.PathTracerConfig->FeatureFlags, renderInfo.PathTracerConfig->DebugInfo, renderInfo.PathTracerConfig->BxdfMode);
 
             m_scheduledRunState = ScheduledRunState::eReadbackPathDump;
         }

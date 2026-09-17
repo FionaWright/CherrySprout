@@ -4,11 +4,13 @@
 
 #include "imgui.h"
 #include "GreenhouseConfig.h"
+#include "System/Input.h"
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
 void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 {
-    if (GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper))
+    if (GetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper) &&
+        (!config.DebugInfo.CbvFlagsModeEnabled || GetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, eDebug_PathDumper)))
     {
         if (ImGui::CollapsingHeader("Path Dump"))
         {
@@ -18,19 +20,40 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
             ImGui::Text("Frame Index:     %i", m_dumpedPathFrameIdx);
             ImGui::Text("Camera Position: (%f, %f, %f)", m_dumpedPathCameraPosition.x, m_dumpedPathCameraPosition.y, m_dumpedPathCameraPosition.z);
 
-            if (ImGui::Button("Re-Run Path"))
+            bool scheduleRun = false;
+
+            if (ImGui::Button("Re-Run Existing Path (P)") || Input::IsKey(KeyCode::P))
             {
-                m_scheduledRunState = ScheduledRunState::eRunFrame;
+                m_scheduledRunFrameIdx = m_dumpedPathFrameIdx;
+                scheduleRun = true;
+            }
+
+            if (ImGui::Button("Run New Path (O)") || Input::IsKey(KeyCode::O))
+            {
+                m_scheduledRunFrameIdx = m_dumpedPathFrameIdx + 1;
+                scheduleRun = true;
+            }
+
+            if (scheduleRun)
+            {
                 m_isPathDumpAutomatic = false;
 
                 m_scheduledRunPixelCoords = m_dumpedPathPixelCoords;
-                m_scheduledRunFrameIdx = m_dumpedPathFrameIdx;
                 m_scheduledRunCameraPosition = m_dumpedPathCameraPosition;
                 m_scheduledRunViewMatrix = m_dumpedPathViewMatrix;
+
+                if (GetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation) ||
+                    (config.DebugInfo.CbvFlagsModeEnabled && GetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, eFeature_Accumulation)))
+                {
+                    m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
+                    SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);
+                    SetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, eFeature_Accumulation, false);
+                }
+                else
+                    m_scheduledRunState = ScheduledRunState::eRunFrame;
             }
 
-            if (!m_isPathDumpAutomatic && ImGui::Button("Enable Automatic Path Dump"))
-                m_isPathDumpAutomatic = true;
+            ImGui::Checkbox("Automatic Dump", &m_isPathDumpAutomatic);
 
             uint32_t rowIncrementer = 0;
             for (int i = 0; i < static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH); i++)
