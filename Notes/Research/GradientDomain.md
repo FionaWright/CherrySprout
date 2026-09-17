@@ -363,3 +363,57 @@ void SPR_ComputeFSpatial()
 }
 
 ```
+
+## Jacobi Approach
+
+```cpp
+float3 BackwardsDivergence(uint2 pixelCoord)
+{
+    float3 v = 0.0f;
+
+    if (pixelCoord.x < IMAGE_WIDTH-1)
+        v += gTexPrimal[pixelCoord];
+
+    if (pixelCoord.x > 0)
+        v -= gTexPrimal[pixelCoord + uint2(-1,0)];
+    
+    if (pixelCoord.y < IMAGE_HEIGHT)
+        v += gTexPrimal[pixelCoord];
+
+    if (pixelCoord.y > 0)
+        v -= gTexPrimal[pixelCoord + uint2(0,-1)];
+
+    return v;
+}
+
+float3 ComputeB(uint2 pixelCoord, float alpha)
+{
+    float3 primal = gTexPrimal[pixelCoord];
+    float3 gradientX = gTexGradientX[pixelCoord];
+    float3 gradientY = gTexGradientY[pixelCoord];
+
+    // TODO: Wrong?
+    return alpha * primal - gradientX - gradientY; 
+}
+
+// default c = 0.25f
+float3 ComputeAMinusI(float alpha, float c, uint2 pixelCoord, float3 b)
+{
+    float3 primal = gTexPrimal[pixelCoord];
+
+    float3 prev = gTexOutput[pixelCoord];
+
+    float3 v = primal - 1 + alpha + (c * 4.0f) * prev;
+
+    if (pixelCoord.x > 0)
+        v -= c * gTexOutput[pixelCoord + uint2(-1,0)];
+    else 
+        v -= c * prev;
+
+    if (pixelCoord.y > 0)
+        v -= c * gTexOutput[pixelCoord + uint2(0,-1)];
+    else 
+        v -= c * prev;
+}
+
+```
