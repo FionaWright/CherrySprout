@@ -4,6 +4,7 @@
 #include "PathTracing/Structs.h"
 #include "Utils/HlslGlue.h"
 #include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/GradientDomain/Structs.h"
 
 enum DebugErrorInfoLock : hlsl::uint
 {
@@ -35,6 +36,7 @@ struct RayDump
     bool Explored;
     DebugOutputStruct DebugOutputs;
     PathState PathState;
+    PathVertexInfo PathVertex;
 };
 
 #endif

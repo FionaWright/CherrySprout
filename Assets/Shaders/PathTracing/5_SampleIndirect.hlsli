@@ -53,9 +53,9 @@ float3 SampleIndirectLighting(
 
     float NdL = dot(hitInfo.Ns_ff, wi);
 
-    DBG_OUTPUT3(f,                                 f);
-    DBG_OUTPUT1(pdf,                               PDF);
-    DBG_OUTPUT3(wi,                                L_w);
+    DBG_OUTPUT3(f,                                 BxDF_f);
+    DBG_OUTPUT1(pdf,                               BxDF_PDF);
+    DBG_OUTPUT3(wi,                                BxDF_L_w);
 
     return f * abs(NdL) / max(1e-6, pdf);
 }

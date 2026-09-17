@@ -45,8 +45,8 @@ void TransmissiveLobe_Sample(
     float G = mm.G2(abs(NdL), abs(NdV));
     float mmPdf = mm.PDF(D, H_s, V_s);
 
-    DBG_OUTPUT1(F,                F);
-    DBG_OUTPUT1(G,                G);
+    DBG_OUTPUT1(F,                BxDF_F);
+    DBG_OUTPUT1(G,                BxDF_G);
 
     float denom = nCurrent * VdH + nNext * LdH;
     float denom2 = denom * denom;
@@ -110,8 +110,8 @@ void TransmissiveLobe_Evaluate(
     float G = mm.G2(abs(NdL), abs(NdV));
     float mmPdf = mm.PDF(D, H_s, V_s);
 
-    DBG_OUTPUT1(F,                F);
-    DBG_OUTPUT1(G,                G);
+    DBG_OUTPUT1(F,                Eval_F);
+    DBG_OUTPUT1(G,                Eval_G);
 
     float denom = nCurrent * VdH + nNext * LdH;
     float denom2 = denom * denom;

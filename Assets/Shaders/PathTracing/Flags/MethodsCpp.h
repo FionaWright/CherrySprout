@@ -8,13 +8,14 @@
 #include "PathTracing/Flags/Flags.h"
 
 static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(
-        eFeature_Jitter |
+        //eFeature_Jitter |
         eFeature_Accumulation |
         eFeature_NormalMaps |
         eFeature_EnvironmentMap |
         //eFeature_GlassMaterials |
         //eFeature_NEE |
         eFeature_FireflyThreshold |
+        eFeature_GradientDomain |
         eFeature_AliasTables
         //eFeature_RestirDI |
         //eFeature_RussianRoulette

@@ -43,7 +43,7 @@ void AssignDebugOutput(float3 value, uint dbgIdx)
 }
 
 [noinline]
-void AssignPathState(PathState pathState)
+void DumpPathState(PathState pathState)
 {
     if (!DEBUG_ENABLED(PathDumper))
         return;
@@ -52,6 +52,18 @@ void AssignPathState(PathState pathState)
         return;
 
     gPathDump[gDebugCurrentRayDepth].PathState = pathState;
+}
+
+[noinline]
+void DumpPathVertexInfo(PathVertexInfo vertexInfo)
+{
+    if (!DEBUG_ENABLED(PathDumper))
+        return;
+
+    if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
+        return;
+
+    gPathDump[gDebugCurrentRayDepth].PathVertex = vertexInfo;
 }
 
 [noinline]
@@ -105,7 +117,8 @@ void Highlight(inout float3 color)
 
 #   define DBG_PATH_DUMP_CLEAR() { ClearBuffer(); }
 #   define DBG_PATH_DUMP_DEBUG_OUTPUT(value, dbgIdx) { AssignDebugOutput(value, dbgIdx); }
-#   define DBG_PATH_DUMP_PATH_STATE(pathState) { AssignPathState(pathState); }
+#   define DBG_PATH_DUMP_PATH_STATE(pathState) { DumpPathState(pathState); }
+#   define DBG_PATH_DUMP_PATH_VERTEX_INFO(vertexInfo) { DumpPathVertexInfo(vertexInfo); }
 #   define DBG_PATH_DUMP_MARK_EXPLORED() { MarkExplored(); }
 #   define DBG_PATH_DUMP_HIGHLIGHT(color) { Highlight(color); }
 
@@ -114,6 +127,7 @@ void Highlight(inout float3 color)
 #   define DBG_PATH_DUMP_CLEAR()
 #   define DBG_PATH_DUMP_DEBUG_OUTPUT(dbgIdx, value)
 #   define DBG_PATH_DUMP_PATH_STATE(pathState)
+#   define DBG_PATH_DUMP_PATH_VERTEX_INFO(vertexInfo)
 #   define DBG_PATH_DUMP_MARK_EXPLORED()
 #   define DBG_PATH_DUMP_HIGHLIGHT(color)
 

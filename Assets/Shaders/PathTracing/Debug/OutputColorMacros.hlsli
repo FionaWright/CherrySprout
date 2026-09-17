@@ -45,7 +45,7 @@ void dbgOutputSet(inout float3 output)
 #    define DBG_OUTPUT3(value, label) dbgOutput3(value, (uint)DebugOutputIndex::eDebugOutput_##label);
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
-#    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; return; }
+#    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; }
 
 #    define DBG_OUTPUT_SET(output) dbgOutputSet(output);
 #    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }

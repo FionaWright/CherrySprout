@@ -38,14 +38,15 @@ void Core(uint2 pixelCoord)
         DBG_OUTPUT1(Rand01_Const(rngInfo), RNG);
 
         PathSample pathSample = SamplePath(rngInfo, pixelCoord);
+        primalSum += pathSample.Lo;
+
+        DBG_OUTPUT3(pathSample.Lo, PathSampleLo);
 
 		if (FEATURE_ENABLED(GradientDomain))
 		{
             float3 gradient = SampleGradients(rngInfo, pixelCoord, pathSample);
             gradientSum += gradient;
 		}
-
-        primalSum += pathSample.Lo;
     }
 
     primalSum /= float(gSettings.SPP);

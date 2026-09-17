@@ -13,6 +13,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
     {
         float2 uv = EaSphereToSquare(pathState.Desc.Direction);
         float3 Le = gTexEnvMap.Sample(gSampler, uv).rgb;
+
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
 
         if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
@@ -21,6 +22,8 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
             float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
             Le *= m;
         }
+
+        DBG_OUTPUT3(Le, EnvironmentMap);
 
         Li += Le;
     }

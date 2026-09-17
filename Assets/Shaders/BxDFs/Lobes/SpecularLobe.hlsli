@@ -25,8 +25,8 @@ void SpecularLobe_Sample(
         f = 0.0f;
         pdf = 1.0f;
         isDiracDelta = false;
-        DBG_OUTPUT1(0,                F);
-        DBG_OUTPUT1(0,                G);
+        DBG_OUTPUT1(0,                BxDF_F);
+        DBG_OUTPUT1(0,                BxDF_G);
         return;
     }
 
@@ -41,8 +41,8 @@ void SpecularLobe_Sample(
 
     pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
 
-    DBG_OUTPUT3(F,                F);
-    DBG_OUTPUT1(G,                G);
+    DBG_OUTPUT3(F,                BxDF_F);
+    DBG_OUTPUT1(G,                BxDF_G);
 
     // Dirac Delta
     if (hitInfo.Mat.Roughness < ROUGHNESS_DIRAC_THRESHOLD)
@@ -78,8 +78,8 @@ void SpecularLobe_Evaluate(
     {
         f = 0.0f;
         pdf = 1.0f;
-        DBG_OUTPUT1(0,                F);
-        DBG_OUTPUT1(0,                G);
+        DBG_OUTPUT1(0,                Eval_F);
+        DBG_OUTPUT1(0,                Eval_G);
         return;
     }
 

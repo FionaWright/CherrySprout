@@ -27,10 +27,19 @@ void HitShiftedUnconnected(
 {
     if (v2.Type == VertexType::eUninitialized) // (Path terminates on v1)
     {
-        // TODO: ?
+        // TODO
+        isSymmetric = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionUninit);
+        return;
     }
 
-    // TODO: If shifted vertex type != v1.Type, reject?
+    VertexType shiftedType = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
+    if (v1.Type != shiftedType)
+    {
+        isSymmetric = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
+        return;
+    }
 
     ShiftResult shiftResult;
 
@@ -67,8 +76,7 @@ void HitShiftedUnconnected(
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
-        pdf = NAN;
-        wi = NAN;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
         return;
     }
 
@@ -87,6 +95,8 @@ void HitShiftedUnconnected(
 
 	pdf = shiftResult.Jacobian * pdf_bxdf;
 
+    DBG_OUTPUT1(shiftResult.Jacobian, GD_Jacobian);
+
     // TODO: Direct lighting
 }
 
@@ -99,7 +109,7 @@ void TraceShiftedPath(
 
     out float3 Lo,
     inout float pdfRatio,
-    out bool isSymmetric)
+    out bool isSymmetric) // TODO: Differentiate between isSymmetric and isValid. Can be asymmetric AND valid path that doesn't need to return 0?
 {
     RayQuery<RAY_FLAGS> q;
 
@@ -112,9 +122,12 @@ void TraceShiftedPath(
     {
         PathVertexInfo v1 = mainVertices.Array[i];
 
+        DBG_OUTPUT3(Palette((uint)v1.Type), GD_V1Type);
+
         pathState.RaySegmentIdx = i;
         pathState.LastRayWasDiracDelta = false;
 
+        // TODO: Skip tracing once connected
         bool isMiss;
         HitInfo hitInfo;
         ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
@@ -125,6 +138,7 @@ void TraceShiftedPath(
             {
                 isSymmetric = false;
                 Lo = 0.0f;
+                DBG_OUTPUT1(1.0f, GD_RejectionEnvMap);
                 return;
             }
 
@@ -134,13 +148,14 @@ void TraceShiftedPath(
             break;
         }
 
-        DBG_SET_CURRENT_RAY_DEPTH(i);
-        DBG_PATH_DUMP_MARK_EXPLORED();
-
         float3 L_sample = pathState.Beta * hitInfo.Emission; // TODO: Emission can be cached for connected rays
 
         float3 wo = -pathState.Desc.Direction;
         float3 wi;
+
+        DBG_SET_CURRENT_RAY_DEPTH(i);
+        DBG_PATH_DUMP_MARK_EXPLORED();
+        DBG_OUTPUT3(wo, GD_Wo);
 
         float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
         float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
@@ -172,7 +187,7 @@ void TraceShiftedPath(
             if (FEATURE_ENABLED(NEE))
                 pathState.LastBxdfPdf = pdf_bxdf;
 
-			float pdfShifted = pdf_bxdf;
+			pdfShifted = pdf_bxdf;
 
             reconnectionState = ReconnectionState::eConnected;
         }
@@ -181,12 +196,15 @@ void TraceShiftedPath(
             if (i == mainVertices.NumVertices - 1)
             {
                 // TODO
-                Lo = 0.0f;
-                isSymmetric = false;
+                //Lo = 0.0f;
+                //isSymmetric = false;
+                //DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
                 return;
             }
 
             PathVertexInfo v2 = mainVertices.Array[i+1];
+            DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
+
             HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, pdfShifted);
         }
 
@@ -202,6 +220,10 @@ void TraceShiftedPath(
 
         pathState.Desc.Direction = wi;
         pathState.Desc.Origin = nextOrigin;
+
+        DBG_OUTPUT3(wi, GD_Wi);
+        DBG_OUTPUT3(pdfShifted, GD_PdfShifted);
+        DBG_OUTPUT3(0.0f, GD_V2Type);
     }
 
     Lo = pathState.Lo;

@@ -21,6 +21,8 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
 
     for (uint j = 0; j < min(MAX_GRADIENT_NUM_SAMPLES, gSettings.GradientNumSamples); j++)
 	{
+        DBG_SET_CURRENT_RAY_DEPTH(0);
+
         uint2 shiftedCoord = mainCoord + OFFSETS[j];
 
         float3 shiftedRayOrigin;
@@ -65,6 +67,16 @@ float3 SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
         DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
         DBG_OUTPUT1(m, GD_MIS);
         DBG_OUTPUT3(Lo, GD_Lo);
+        DBG_OUTPUT1(0.0f, GD_RejectionUninit);
+        DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
+        DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
+        DBG_OUTPUT1(0.0f, GD_RejectionShiftMapping);
+        DBG_OUTPUT1(0.0f, GD_RejectionVertexMismatch);
+        DBG_OUTPUT3(0.0f, GD_FinalReconnectionState);
+        DBG_OUTPUT3(0.0f, GD_V2Type);
+        DBG_OUTPUT1(0.0f, GD_PdfShifted);
+        DBG_OUTPUT3(0.0f, GD_Wi);
+        DBG_OUTPUT3(1.0f, GD_Jacobian);
 
         gradientSum += mainPath.Lo - Lo;
 	}

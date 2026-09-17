@@ -44,12 +44,15 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             float3 Li = pathState.Beta * Miss(pathState, i);
             pathState.Lo += ApplyFireflyThreshold(Li);
 
+            DBG_OUTPUT3(Li, MissContrib);
+
             if (FEATURE_ENABLED(GradientDomain))
             {
                 PathVertexInfo currentVertexInfo;
                 currentVertexInfo.Type = VertexType::eEnvironment;
                 vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
                 vertexList.NumVertices++;
+                DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);
             }
             break;
         }
@@ -65,6 +68,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         {
             vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
             vertexList.NumVertices++;
+            DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);
         }
 
         DBG_PATH_DUMP_PATH_STATE(pathState);

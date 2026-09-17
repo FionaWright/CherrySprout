@@ -19,8 +19,8 @@ void LambertianLobe_Sample(
     f = hitInfo.Mat.Albedo.rgb / PI;
     pdf = NdL / PI;
 
-    DBG_OUTPUT1(0,                F);
-    DBG_OUTPUT1(0,                G);
+    DBG_OUTPUT1(0,                BxDF_F);
+    DBG_OUTPUT1(0,                BxDF_G);
 }
 
 void LambertianLobe_Evaluate(

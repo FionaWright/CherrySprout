@@ -25,7 +25,7 @@ void BxDF::Sample(
 
     wi = hitInfo.SFrame.ToWorld(L_s);
 
-    DBG_OUTPUT3(L_s,        L_s);
+    DBG_OUTPUT3(L_s,        BxDF_L_s);
 }
 
 void BxDF::Evaluate(
@@ -40,7 +40,7 @@ void BxDF::Evaluate(
     float3 L_s = hitInfo.SFrame.ToLocal(wi);
     LambertianLobe_Evaluate(hitInfo, L_s, f, pdf);
 
-    DBG_OUTPUT3(L_s,        L_s);
+    DBG_OUTPUT3(L_s,        Eval_L_s);
 }
 
 #endif

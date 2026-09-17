@@ -73,18 +73,18 @@ void BxDF::Sample(
     DBG_ASSERT_APPROX(length(H_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
     DBG_ASSERT_APPROX(length(wo), 1.0f, 0.02f,   UNNORMALIZED_VECTOR);
     DBG_ASSERT_VALUE(H_s,                        BxDF_PBR_H_S);
-    DBG_OUTPUT1(isTransmission,                  IsTransmission);
-    DBG_OUTPUT3(H_s,                             H_s);
-    DBG_OUTPUT3(N_s,                             N_s);
-    DBG_OUTPUT3(V_s,                             V_s);
-    DBG_OUTPUT3(NdV,                             NdV);
-    DBG_OUTPUT3(VdH,                             VdH);
-    DBG_OUTPUT3(F0,                              F0);
-    DBG_OUTPUT3(u1,                              u1);
-    DBG_OUTPUT3(u2,                              u2);
-    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     H_w);
-    DBG_OUTPUT1(mm.m_alpha,                      Alpha);
-    DBG_OUTPUT1(mm.D(H_s),                       D);
+    DBG_OUTPUT1(isTransmission,                  BxDF_IsTransmission);
+    DBG_OUTPUT3(H_s,                             BxDF_H_s);
+    DBG_OUTPUT3(N_s,                             BxDF_N_s);
+    DBG_OUTPUT3(V_s,                             BxDF_V_s);
+    DBG_OUTPUT3(NdV,                             BxDF_NdV);
+    DBG_OUTPUT3(VdH,                             BxDF_VdH);
+    DBG_OUTPUT3(F0,                              BxDF_F0);
+    DBG_OUTPUT3(u1,                              BxDF_u1);
+    DBG_OUTPUT3(u2,                              BxDF_u2);
+    DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     BxDF_H_w);
+    DBG_OUTPUT1(mm.m_alpha,                      BxDF_Alpha);
+    DBG_OUTPUT1(mm.D(H_s),                       BxDF_D);
 
     if (FEATURE_ENABLED(GlassMaterials) && isTransmission)
     {
@@ -96,11 +96,11 @@ void BxDF::Sample(
 
         DBG_ASSERT_ZERO(hitInfo.Mat.Metallic,         NO_METAL_GLASS);
         DBG_ASSERT_ZERO(hitInfo.Emission,             NO_EMISSIVE_GLASS);
-        DBG_OUTPUT1(reflectProb,                      ReflectProb);
-        DBG_OUTPUT1(isReflect,                        IsReflect);
-        DBG_OUTPUT1(iorNCurrent,                      iorNCurrent);
-        DBG_OUTPUT1(iorNNext,                         iorNNext);
-        DBG_OUTPUT1(iorNCurrent/iorNNext,             eta);
+        DBG_OUTPUT1(reflectProb,                      BxDF_ReflectProb);
+        DBG_OUTPUT1(isReflect,                        BxDF_IsReflect);
+        DBG_OUTPUT1(iorNCurrent,                      BxDF_iorNCurrent);
+        DBG_OUTPUT1(iorNNext,                         BxDF_iorNNext);
+        DBG_OUTPUT1(iorNCurrent/iorNNext,             BxDF_eta);
 
         if (isReflect)
         {
@@ -132,15 +132,15 @@ void BxDF::Sample(
         DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
         DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
         DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
-        DBG_OUTPUT3(L_s,        L_s);
+        DBG_OUTPUT3(L_s,        BxDF_L_s);
         return;
     }
 
     float specProb = GetSpecularProb(NdV, F0);
     bool isSpecular = specProb > 0 && Rand01(rngInfo) <= specProb;
 
-    DBG_OUTPUT1(specProb,                      SpecProb);
-    DBG_OUTPUT1(isSpecular,                    IsSpecular);
+    DBG_OUTPUT1(specProb,                      BxDF_SpecProb);
+    DBG_OUTPUT1(isSpecular,                    BxDF_IsSpecular);
 
     if (isSpecular)
     {
@@ -174,7 +174,7 @@ void BxDF::Sample(
     DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
     DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
     DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
-    DBG_OUTPUT3(L_s,        L_s);
+    DBG_OUTPUT3(L_s,        BxDF_L_s);
 }
 
 void BxDF::Evaluate(

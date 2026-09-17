@@ -130,13 +130,22 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                             rowIncrementer++;
                         };
 
-                        RowInt("Ray Segment", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
-                        RowFloat3("Ray Origin", m_cpuPathDump[i].PathState.Desc.Origin, true);
-                        RowFloat3("Ray Direction", m_cpuPathDump[i].PathState.Desc.Direction, true);
-                        RowFloat3("Beta", m_cpuPathDump[i].PathState.Beta, true);
-                        RowFloat3("Lo", m_cpuPathDump[i].PathState.Lo, true);
-                        RowInt("Last Ray Was Dirac Delta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
-                        RowFloat("Last Ray PDF", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
+                        RowInt("PS_RaySegmentIdx", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
+                        RowFloat3("PS_RayOrigin", m_cpuPathDump[i].PathState.Desc.Origin, true);
+                        RowFloat3("PS_RayDirection", m_cpuPathDump[i].PathState.Desc.Direction, true);
+                        RowFloat3("PS_Beta", m_cpuPathDump[i].PathState.Beta, true);
+                        RowFloat3("PS_Lo", m_cpuPathDump[i].PathState.Lo, true);
+                        RowInt("PS_LastRayWasDiracDelta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
+                        RowFloat("PS_LastBxdfPdf", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
+
+                        RowInt("PVI_Type", static_cast<int>(m_cpuPathDump[i].PathVertex.Type));
+                        RowFloat3("PVI_Position", m_cpuPathDump[i].PathVertex.Position, true);
+                        RowFloat3("PVI_Normal", m_cpuPathDump[i].PathVertex.SFrame.N, true);
+                        RowFloat3("PVI_Wo", m_cpuPathDump[i].PathVertex.Wo, true);
+                        RowFloat3("PVI_Wi", m_cpuPathDump[i].PathVertex.Wi, true);
+                        RowFloat("PVI_Eta", m_cpuPathDump[i].PathVertex.Eta, true);
+                        RowFloat3("PVI_Indirect", m_cpuPathDump[i].PathVertex.IndirectContribution, true);
+                        RowFloat("PVI_PDF", m_cpuPathDump[i].PathVertex.PDF, true);
 
                         for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
                         {
@@ -240,6 +249,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                     m_scheduledRunViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_cpuErrorInfo[dbgId].InvV));
 
                     SetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper, true);
+                    SetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, eDebug_PathDumper, true);
                 }
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
