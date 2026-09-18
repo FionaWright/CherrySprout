@@ -366,6 +366,39 @@ void SPR_ComputeFSpatial()
 
 ## Jacobi Approach
 
+Inputs:  
+$u_{i,j}$ = Primal  
+$g_{x,i,j}$ = Gradient X  
+$g_{y,i,j}$ = Gradient Y  
+$\alpha$  
+$c$ = Jacobi Coefficient   
+$x$ = Solved Output  
+.  
+$d_x$ = Discrete Derivative Filter (X) (Backward Difference)  
+$d_y$ = Discrete Derivative Filter (Y) (Backward Difference)  
+$\Delta$ = Laplacian Operator (Central Difference)
+.  
+$d_x \circ g_{x,i,j} = g_{x,i,j} - g_{x,i-1,j}$  
+$d_y \circ g_{y,i,j} = g_{x,i,j} - g_{x,i,j-1}$  
+.  
+$b_{i,j} = \alpha * u_{i,j} - d_x \circ g_{x,i,j} - d_y \circ g_{y,i,j}$  
+.  
+$\Delta x = \dfrac{x_{i+1,j} + x_{i,j+1} + x_{i-1,j} + x_{i,j-1} - 4 x_{i,j}}{h^2}$  
+$h = 1$ (Equal grid spacing)  
+$\Delta x = x_{i+1,j} + x_{i,j+1} + x_{i-1,j} + x_{i,j-1} - 4 x_{i,j}$  
+.  
+$A = \alpha I - \Delta x$   
+$Ax = \alpha x - \Delta x$  
+$(Ax)_{i,j} = \alpha x_{i,j} - \Delta x_{i,j}$  
+.    
+$Ax = b$   
+$Ax - b = 0$  
+$cAx - cb = 0$  
+$cAx - cx - cb = -cx$  
+$c(A-I)x - cb = -cx$  
+$\dfrac{b}{x} - (A-I)x = x$  
+$x^{(k+1)} = \dfrac{b}{x^{(k)}} - (A-I)x^{(k)}$  
+
 ```cpp
 // Note: GRADIENT_X_IMAGE_WIDTH == IMAGE_WIDTH - 1
 // Note: GRADIENT_X_IMAGE_HEIGHT == IMAGE_HEIGHT
