@@ -20,7 +20,7 @@ private:
 
     UploadHeap m_uploadHeap;
 
-    D12Resource m_gradientTerms, m_pingPong0, m_pingPong1;
+    D12Resource m_gradientTerms, m_pingPong0, m_pingPong1, m_black;
     RootSig m_rootSigJacobi;
     DescriptorSet m_setJacobi0to1, m_setJacobi1to0;
     Pipeline m_pipelineJacobi, m_pipelineJacobiPre;

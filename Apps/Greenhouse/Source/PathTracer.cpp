@@ -416,7 +416,15 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     // Poisson Solving
     if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain))
     {
-        finalOutput = m_poissonSolver.Solve(d3d, cmdList, heap, &m_primal, &m_gradientX, &m_gradientY, 6, 0.5f, 0.25f);
+        finalOutput = m_poissonSolver.Solve(d3d,
+            cmdList,
+            heap,
+            &m_primal,
+            &m_gradientX,
+            &m_gradientY,
+            renderInfo.PathTracerConfig->SprNumIterations,
+            renderInfo.PathTracerConfig->SprAlpha,
+            renderInfo.PathTracerConfig->SprJacobiCoefficient);
     }
 
     // Copy to RTV

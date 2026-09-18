@@ -292,7 +292,9 @@ void Greenhouse::renderGuiCore()
             ImGui::Text("Gradient Domain PT:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("SPR Iterations", &m_config.PathTracerConfig.SprNumIterations);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("SPR Alpha", &m_config.PathTracerConfig.SprAlpha);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("SPR Jacobi Coefficient", &m_config.PathTracerConfig.SprJacobiCoefficient);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

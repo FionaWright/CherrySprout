@@ -88,20 +88,18 @@ D12Resource* PoissonSolver::Solve(const D3D* d3d,
 
             if (i == 0)
             {
-                primal->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+                D12Resource* initial = primal;
+                //D12Resource* initial = &m_black;
+                initial->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
                 prev.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-                prev.CopyTextureInto(cmdList, primal->GetResource());
+                prev.CopyTextureInto(cmdList, initial->GetResource());
             }
 
             primal->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
             prev.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
             next.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-            //set.SetSRV_Tex2D(d3d->GetDevice(), 3, &prev, prev.GetDesc().Format);
-            //set.SetUAV_Tex2D(d3d->GetDevice(), 1, &next, next.GetDesc().Format);
-
             set.SetDescriptorTables_Compute(cmdList);
-            //set.TransitionAllSRVToShaderResource(cmdList);
 
             DispatchOverTexture(cmdList, 16, next.GetDesc().Width, next.GetDesc().Height);
 
@@ -122,6 +120,7 @@ void PoissonSolver::initResources(D3D* d3d, Heap* heap)
     m_gradientTerms.Init_Tex2D("Poisson Gradient Terms", d3d->GetDevice(), w, h, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_pingPong0.Init_Tex2D("Poisson PingPong 0", d3d->GetDevice(), w, h, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_pingPong1.Init_Tex2D("Poisson PingPong 1", d3d->GetDevice(), w, h, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_black.Init_Tex2D("TEMP BLACK", d3d->GetDevice(), w, h, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     m_rootConstantsJacobi.Init(0, 0, sizeof(CbvSprJacobi));
     m_rootSigJacobi.SmartInit(d3d->GetDevice(), 0, 4, 2, false, nullptr, 0, &m_rootConstantsJacobi);

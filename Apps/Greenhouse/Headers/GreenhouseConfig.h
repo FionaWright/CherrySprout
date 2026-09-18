@@ -53,21 +53,27 @@ struct PathTracerConfig
     uint32_t RussianRouletteMinBounces = 1;
     uint32_t DirectNumSamples = 1;
 
+    uint32_t RestirConfidenceCap = 30;
+    uint32_t RestirNumCandidates = 8;
+
+    uint32_t TransientRenderNumSamples = 1000;
+    uint32_t TransientRenderNumFrames = 60;
+
+    uint32_t SprNumIterations = 6;
+
+    int TransientLightIndex = -1;
+
+    float TransientTimeSinceStart = 0.0f;
+    float TransientPulseDuration = 1.0f;
+    float TransientSpeedOfLight = 1.0f;
+    float TransientRenderTotalTime = 10.0f;
+
     float FireFlyThreshold = 2.5f;
     float DofFocalDist = 0.1f;
     float DofLensRadius = 0.003f;
 
-    int TransientLightIndex = -1;
-    float TransientTimeSinceStart = 0.0f;
-    float TransientPulseDuration = 1.0f;
-    float TransientSpeedOfLight = 1.0f;
-
-    uint32_t TransientRenderNumSamples = 1000;
-    uint32_t TransientRenderNumFrames = 60;
-    float TransientRenderTotalTime = 10.0f;
-
-    uint32_t RestirConfidenceCap = 30;
-    uint32_t RestirNumCandidates = 8;
+    float SprAlpha = 0.5f;
+    float SprJacobiCoefficient = 0.25f;
 
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
