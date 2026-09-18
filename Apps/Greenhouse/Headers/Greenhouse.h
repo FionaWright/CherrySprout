@@ -51,8 +51,6 @@ public:
     [[nodiscard]] bool GBufferRequired() const;
 
 private:
-    bool pathTracingFeatureEnabled(PathTracerFeatureFlags flag) const;
-    bool pathTracingDebugEnabled(PathTracerDebugFlags flag) const;
     void renderGuiCore();
     void renderGuiSceneData();
 

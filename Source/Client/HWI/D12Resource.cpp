@@ -175,6 +175,12 @@ void D12Resource::Transition(ID3D12GraphicsCommandList* cmdList, const D3D12_RES
     m_currentState = newState;
 }
 
+void D12Resource::UavBarrier(ID3D12GraphicsCommandList* cmdList) const
+{
+    const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_resource.Get());
+    cmdList->ResourceBarrier(1, &uavBarrier);
+}
+
 void D12Resource::CopyTextureInto(ID3D12GraphicsCommandList* cmdList, ID3D12Resource* srcResource, const uint32_t dstX, const uint32_t dstY, const uint32_t dstZ, const D3D12_BOX* srcBox) const
 {
     D3D12_TEXTURE_COPY_LOCATION srcLocation = {};

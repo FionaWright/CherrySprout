@@ -1,25 +1,20 @@
 #include "Utils/SharedUtils.h"
 #include "Utils/CBVs.h"
 
-Texture2D<float4> gPreviousIteration : register(t0);
-Texture2D<float4> gGradientTerms : register(t1); // b_{i,j}
-
-RWTexture2D<float4> gNextIteration : register(u0);
-
-ConstantBuffer<CbvSprJacobi> gCBV : register(b0);
+#include "Compute/PoissonSolvers/JacobiBuffers.hlsli"
 
 float3 SampleSafeClamp(Texture2D tex, int2 pixelCoord, uint width, uint height)
 {
     pixelCoord.x = min(width, max(0, pixelCoord.x));
     pixelCoord.y = min(height, max(0, pixelCoord.y));
 
-    return tex[pixelCoord];
+    return tex[pixelCoord].rgb;
 }
 
 // default c = 0.25f
 float3 ComputeAMinusI(int2 pixelCoord, float3 b)
 {
-    float3 v = (gCBV.Alpha - 1 + (gCBV.JacobiCoefficient * 4.0f)) * gPreviousIteration[pixelCoord];
+    float3 v = (gCBV.Alpha - 1 + (gCBV.JacobiCoefficient * 4.0f)) * gPreviousIteration[pixelCoord].rgb;
 
     uint w = gCBV.PrimalWidth;
     uint h = gCBV.PrimalWidth;
@@ -40,7 +35,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gCBV.PrimalWidth || pixelCoord.y >= gCBV.PrimalHeight)
         return;
 
-    float3 b = gGradientTerms[pixelCoord];
+    float3 b = gGradientTerms[pixelCoord].rgb;
 
-    float3 aMinusI = ComputeAMinusI(pixelCoord, b, gPreviousIteration);
+    float3 aMinusI = ComputeAMinusI(pixelCoord, b);
+    gNextIteration[pixelCoord].rgb = aMinusI;
 }

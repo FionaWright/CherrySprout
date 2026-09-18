@@ -1,0 +1,33 @@
+#ifndef H_POISSON_SOLVER_H
+#define H_POISSON_SOLVER_H
+
+#include "HWI/D3D.h"
+#include "HWI/D12Resource.h"
+#include "HWI/DescriptorSet.h"
+#include "HWI/Pipeline.h"
+#include "HWI/RootSig.h"
+#include "HWI/UploadHeap.h"
+
+class PoissonSolver
+{
+public:
+    void Prepare(D3D* d3d, Heap* heap);
+    D12Resource* Solve(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, D12Resource* primal, D12Resource* gradientX, D12Resource
+                       * gradientY, uint32_t numIterations, float alpha, float jacobiCoefficient);
+
+private:
+    void initResources(D3D* d3d, Heap* heap);
+
+    UploadHeap m_uploadHeap;
+
+    D12Resource m_gradientTerms, m_pingPong0, m_pingPong1;
+    RootSig m_rootSigJacobi;
+    DescriptorSet m_setJacobi0to1, m_setJacobi1to0;
+    Pipeline m_pipelineJacobi, m_pipelineJacobiPre;
+    RootConstants m_rootConstantsJacobi;
+
+    bool m_isInitialized = false;
+
+};
+
+#endif

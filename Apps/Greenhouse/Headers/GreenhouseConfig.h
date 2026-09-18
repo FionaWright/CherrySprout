@@ -74,6 +74,30 @@ struct PathTracerConfig
     MicrofacetModelType        MicrofacetModelType = s_defaultMMType;
 
     PathTracingDebugInfo       DebugInfo        = {};
+
+    bool FeatureEnabled(const PathTracerFeatureFlags flag) const
+    {
+        bool result = GetPathTracerFeatureFlag(FeatureFlags, flag);
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        if (DebugInfo.CbvFlagsModeEnabled)
+            result &= GetPathTracerFeatureFlag(DebugInfo.CbvFeatureFlags, flag);
+#endif
+
+        return result;
+    }
+
+    bool DebugEnabled(const PathTracerDebugFlags flag) const
+    {
+        bool result = GetPathTracerDebugFlag(DebugInfo.Flags, flag);
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        if (DebugInfo.CbvFlagsModeEnabled)
+            result &= GetPathTracerDebugFlag(DebugInfo.CbvDebugFlags, flag);
+#endif
+
+        return result;
+    }
 };
 
 struct ForwardConfig

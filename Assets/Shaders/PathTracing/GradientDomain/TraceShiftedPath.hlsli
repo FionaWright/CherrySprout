@@ -151,7 +151,7 @@ void TraceShiftedPath(
         {
             // TODO: Value can be cached if connected (likely)
             float3 Li = pathState.Beta * Miss(pathState, i);
-            pathState.Lo += ApplyFireflyThreshold(Li);
+            pathState.Lo += ApplyFireflyThreshold(Li, gSettings.FireflyThreshold);
             break;
         }
 
@@ -226,7 +226,7 @@ void TraceShiftedPath(
 
 		pdfRatio *= (pdfShifted / max(EPSILON, pdfMain));
 
-        pathState.Lo += ApplyFireflyThreshold(L_sample);
+        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
         pathState.Desc.Direction = wi;
         pathState.Desc.Origin = nextOrigin;

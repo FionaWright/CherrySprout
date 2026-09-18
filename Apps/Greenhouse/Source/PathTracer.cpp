@@ -28,6 +28,21 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     CherryPrint("Initializing Path-Tracer...");
 
+    // TODO: Is primal and accum doing the exact same job now? Can be combined maybe
+    {
+        D3D12_RESOURCE_DESC desc = {};
+        desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        //desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // TODO: Only necessary for GDPT?
+        desc.Width = Config::GetSystem().RtvWidth;
+        desc.Height = Config::GetSystem().RtvHeight;
+        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        desc.DepthOrArraySize = 1;
+        desc.MipLevels = 1;
+        desc.SampleDesc.Count = 1;
+        m_primal.Init("Primal", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
+    }
+
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -38,7 +53,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
-        m_primal.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
+        m_output.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
     {
@@ -54,7 +69,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
-    // TODO: Lazy init and move to GradientDomainManager
+    // TODO: Lazy init
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -87,6 +102,11 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_pathDumpOCBufferReadback.Init_Buffer("Path Dump OC Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
 #endif
+
+    {
+        m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
+        m_setBlit.Init(heap);
+    }
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
     Config::SetBoolFromArg(&debugInfo.CbvFlagsModeEnabled, "--cbvFlagMode");
@@ -166,15 +186,15 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
 }
 
-void PathTracer::Update(D3D* d3d, TimeArgs timeArgs)
+void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 {
-
+    m_poissonSolver.Prepare(d3d, heap);
 }
 
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_Asserts))
+    if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_Asserts))
     {
         d3d->Flush();
 
@@ -214,7 +234,7 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 
     const bool scheduledRun = m_scheduledRunState == ScheduledRunState::eReadbackPathDump;
     const bool needPathDump = m_isPathDumpAutomatic || scheduledRun;
-    if (GetPathTracerDebugFlag(renderInfo.PathTracerConfig->DebugInfo.Flags, eDebug_PathDumper) && needPathDump)
+    if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_PathDumper) && needPathDump)
     {
         static int s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
         if (s_pathDumpTimer > 0 && !scheduledRun)
@@ -365,7 +385,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-    if (GetPathTracerFeatureFlag(renderInfo.PathTracerConfig->FeatureFlags, eFeature_RestirDI))
+    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_RestirDI))
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         heap->Bind(cmdList);
@@ -386,20 +406,47 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
         m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
-        constexpr uint32_t THREAD_COUNTS = 16;
-        DispatchOverTexture(cmdList, THREAD_COUNTS, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         m_frameIdx++;
     }
 
+    D12Resource* finalOutput = &m_primal;
+
+    // Poisson Solving
+    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain))
+    {
+        finalOutput = m_poissonSolver.Solve(d3d, cmdList, heap, &m_primal, &m_gradientX, &m_gradientY, 6, 0.5f, 0.25f);
+    }
+
     // Copy to RTV
     {
-        GPU_SCOPE(cmdList, "Copy PT Output to RTV");
+        GPU_SCOPE(cmdList, "Copy Output to RTV");
 
-        m_primal.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+        {
+            GPU_SCOPE(cmdList, "Blit to Rgba8Unorm");
 
-        RTV->CopyTextureInto(cmdList, m_primal.GetResource(), 0, 0, 0);
+            finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            m_output.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+            cmdList->SetPipelineState(m_pipelineBlit.GetPSO());
+            cmdList->SetComputeRootSignature(m_rootSigBlit.Get());
+
+            m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, finalOutput, finalOutput->GetDesc().Format);
+            m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_output, m_output.GetDesc().Format);
+            m_setBlit.SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        }
+
+        {
+            GPU_SCOPE(cmdList, "Copy to RTV");
+
+            m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+            RTV->CopyTextureInto(cmdList, m_output.GetResource());
+        }
     }
 }
 
@@ -460,6 +507,8 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
     auto desc = CreateComputePipelineDesc(m_rootSig.Get());
     m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
+
+    m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs);
 
 #ifdef _DEBUG
     Profiler::PopAndPrint();

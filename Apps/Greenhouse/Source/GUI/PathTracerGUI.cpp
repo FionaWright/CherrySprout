@@ -7,28 +7,9 @@
 #include "System/Input.h"
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-bool getPtFeatureEnabled(const PathTracerConfig& config, const PathTracerFeatureFlags flag)
-{
-    bool result = GetPathTracerFeatureFlag(config.FeatureFlags, flag);
-
-    if (config.DebugInfo.CbvFlagsModeEnabled)
-        result &= GetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, flag);
-
-    return result;
-}
-bool getPtDebugEnabled(const PathTracerConfig& config, const PathTracerDebugFlags flag)
-{
-    bool result = GetPathTracerDebugFlag(config.DebugInfo.Flags, flag);
-
-    if (config.DebugInfo.CbvFlagsModeEnabled)
-        result &= GetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, flag);
-
-    return result;
-}
-
 void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 {
-    if (getPtDebugEnabled(config, eDebug_PathDumper))
+    if (config.DebugEnabled(eDebug_PathDumper))
     {
         if (ImGui::CollapsingHeader("Path Dump"))
         {
@@ -60,7 +41,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
                 m_scheduledRunCameraPosition = m_dumpedPathCameraPosition;
                 m_scheduledRunViewMatrix = m_dumpedPathViewMatrix;
 
-                if (getPtFeatureEnabled(config, eFeature_Accumulation))
+                if (config.FeatureEnabled(eFeature_Accumulation))
                 {
                     m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
                     SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);
@@ -210,7 +191,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
         }
     }
 
-    if (!getPtDebugEnabled(config, eDebug_Asserts))
+    if (!config.DebugEnabled(eDebug_Asserts))
         return;
 
     std::vector<uint32_t> errors;
@@ -288,7 +269,7 @@ void PathTracer::RenderGUI_DebugInfo(PathTracerConfig& config)
 
                     m_scheduledRunViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_cpuErrorInfo[dbgId].InvV));
 
-                    if (getPtFeatureEnabled(config, eFeature_Accumulation) || !getPtDebugEnabled(config, eDebug_PathDumper))
+                    if (config.FeatureEnabled(eFeature_Accumulation) || !config.DebugEnabled(eDebug_PathDumper))
                     {
                         m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
                         SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);

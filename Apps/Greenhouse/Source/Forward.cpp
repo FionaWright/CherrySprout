@@ -61,7 +61,7 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     }
 }
 
-void Forward::Update(D3D* d3d, TimeArgs timeArgs)
+void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 {
 }
 

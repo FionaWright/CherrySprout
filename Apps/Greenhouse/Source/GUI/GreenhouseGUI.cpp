@@ -199,8 +199,8 @@ void Greenhouse::renderGuiCore()
             }
         }
 
-        const bool prevEnvMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
-        const bool prevAliasTablesEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
+        const bool prevEnvMapEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
+        const bool prevAliasTablesEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
 
         const uint32_t numFlagColumns = cbvFlagsEnabled ? 4 : 2;
 
@@ -247,10 +247,10 @@ void Greenhouse::renderGuiCore()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-        m_lsdDirty |= prevEnvMapEnabled != pathTracingFeatureEnabled(eFeature_EnvironmentMap);
-        m_lsdDirty |= prevAliasTablesEnabled != pathTracingFeatureEnabled(eFeature_AliasTables);
+        m_lsdDirty |= prevEnvMapEnabled != m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
+        m_lsdDirty |= prevAliasTablesEnabled != m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
 
-        if (pathTracingFeatureEnabled(eFeature_DirectionalLight))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_DirectionalLight))
         {
             ImGui::Text("Directional Light:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -264,7 +264,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (pathTracingFeatureEnabled(eFeature_NEE))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE))
         {
             ImGui::Text("Direct Light Sampling:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -275,7 +275,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (pathTracingFeatureEnabled(eFeature_RestirDI))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_RestirDI))
         {
             ImGui::Text("ReSTIR:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -287,7 +287,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (pathTracingFeatureEnabled(eFeature_GradientDomain))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_GradientDomain))
         {
             ImGui::Text("Gradient Domain PT:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -298,7 +298,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (pathTracingFeatureEnabled(eFeature_DepthOfField))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_DepthOfField))
         {
             ImGui::Text("Depth of Field:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -310,7 +310,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (pathTracingFeatureEnabled(eFeature_Transient))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_Transient))
         {
             ImGui::Text("Transient Rendering:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -348,7 +348,7 @@ void Greenhouse::renderGuiCore()
         }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (pathTracingFeatureEnabled(eFeature_NEE))
+        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE))
         {
             if (ImGui::CollapsingHeader("LSD"))
             {
@@ -360,7 +360,7 @@ void Greenhouse::renderGuiCore()
                 m_lsdDirty |= ImGui::Button("Reload Light LSDs");
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
-                const bool aliasTablesEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
+                const bool aliasTablesEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
                 const int numColumns = aliasTablesEnabled ? 5 : 4;
 
                 if (ImGui::BeginTable("LSD Table", numColumns))
@@ -492,13 +492,13 @@ void Greenhouse::renderGuiCore()
         }
         ImGui::Spacing();
 
-        if (!pathTracingDebugEnabled(eDebug_OutputColor))
+        if (!m_config.PathTracerConfig.DebugEnabled(eDebug_OutputColor))
         {
             m_config.PathTracerConfig.DebugInfo.OutputColorIdx = DebugOutputIndex::eDebugOutput_Disabled;
             m_config.PathTracerConfig.DebugInfo.OutputColorRemap = DebugOutputColorRemap::eNone;
         }
 
-        if (pathTracingDebugEnabled(eDebug_Scales))
+        if (m_config.PathTracerConfig.DebugEnabled(eDebug_Scales))
         {
             if (ImGui::CollapsingHeader("Scales"))
             {
@@ -556,13 +556,13 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (pathTracingDebugEnabled(eDebug_ForceLightIndex))
+        if (m_config.PathTracerConfig.DebugEnabled(eDebug_ForceLightIndex))
         {
             m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
             ImGui::Spacing();
         }
 
-        if (pathTracingDebugEnabled(eDebug_OutputColor))
+        if (m_config.PathTracerConfig.DebugEnabled(eDebug_OutputColor))
         {
             if (ImGui::CollapsingHeader("Debug Output Colors"))
             {

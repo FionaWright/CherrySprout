@@ -169,8 +169,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
     if (!m_lightImportanceSampler.IsInitialized() || m_lsdDirty)
     {
-        const bool envMapEnabled = pathTracingFeatureEnabled(eFeature_EnvironmentMap);
-        const bool aliasEnabled = pathTracingFeatureEnabled(eFeature_AliasTables);
+        const bool envMapEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
+        const bool aliasEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
         m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), envMapEnabled, aliasEnabled);
         loadSceneDataIntoRenderBackend = true;
         m_lsdDirty = false;
@@ -223,7 +223,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_ptPipelineDirty = false;
     }
 
-    m_currRenderBackend->Update(d3d, timeArgs);
+    m_currRenderBackend->Update(d3d, &m_heap, timeArgs);
 }
 
 void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
@@ -394,32 +394,6 @@ void Greenhouse::PostUpdate(D3D* d3d)
 #endif
 
     m_envMapDirty = false;
-}
-
-bool Greenhouse::pathTracingFeatureEnabled(const PathTracerFeatureFlags flag) const
-{
-    if (m_config.RenderBackend != RenderBackendMode::ePathTracer)
-        return false;
-
-    bool result = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
-
-    if (m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled)
-        result &= GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
-
-    return result;
-}
-
-bool Greenhouse::pathTracingDebugEnabled(const PathTracerDebugFlags flag) const
-{
-    if (m_config.RenderBackend != RenderBackendMode::ePathTracer)
-        return false;
-
-    bool result = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
-
-    if (m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled)
-        result &= GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag);
-
-    return result;
 }
 
 void Greenhouse::OnResize(uint32_t width, uint32_t height)

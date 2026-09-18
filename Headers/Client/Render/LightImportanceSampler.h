@@ -1,8 +1,6 @@
 #ifndef H_LIGHT_IMPORTANCE_SAMPLER_H
 #define H_LIGHT_IMPORTANCE_SAMPLER_H
 
-#include <d3d12.h>
-
 #include "HWI/D12Resource.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/Pipeline.h"

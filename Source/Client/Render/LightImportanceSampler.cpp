@@ -91,8 +91,7 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
 
         cmdList->Dispatch(1, 1, 1);
 
-        const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_lsdRW.GetResource());
-        cmdList->ResourceBarrier(1, &uavBarrier);
+        m_lsdRW.UavBarrier(cmdList);
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
@@ -198,8 +197,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
 
             DispatchOverTexture(cmdList, 64, m_envMapPdf.GetDesc().Width);
 
-            const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfConditional.GetResource());
-            cmdList->ResourceBarrier(1, &uavBarrier);
+            m_envMapCdfConditional.UavBarrier(cmdList);
         }
 
         // CDF Marginal Pass
@@ -216,8 +214,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
 
             cmdList->Dispatch(1, 1, 1);
 
-            const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfMarginal.GetResource());
-            cmdList->ResourceBarrier(1, &uavBarrier);
+            m_envMapCdfMarginal.UavBarrier(cmdList);
         }
 
         // CDF Conditional Normalize Pass
@@ -233,8 +230,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
 
             DispatchOverTexture(cmdList, 64, m_envMapCdfConditional.GetDesc().Width);
 
-            const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfConditional.GetResource());
-            cmdList->ResourceBarrier(1, &uavBarrier);
+            m_envMapCdfConditional.UavBarrier(cmdList);
         }
 
         // CDF Marginal Normalize Pass
@@ -250,8 +246,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12R
 
             DispatchOverTexture(cmdList, 64, m_envMapCdfMarginal.GetDesc().Width);
 
-            const auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_envMapCdfMarginal.GetResource());
-            cmdList->ResourceBarrier(1, &uavBarrier);
+            m_envMapCdfMarginal.UavBarrier(cmdList);
         }
 
         m_envMapPdf.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);

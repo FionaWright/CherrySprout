@@ -42,6 +42,7 @@ public:
 
     void Transition(ID3D12GraphicsCommandList* cmdList, const D3D12_RESOURCE_STATES& newState,
                     UINT subresourceIdx = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    void UavBarrier(ID3D12GraphicsCommandList* cmdList) const;
     void CopyTextureInto(ID3D12GraphicsCommandList* cmdList, ID3D12Resource* srcResource, uint32_t dstX = 0,
                          uint32_t dstY = 0,
                          uint32_t dstZ = 0, const D3D12_BOX* srcBox = nullptr) const;

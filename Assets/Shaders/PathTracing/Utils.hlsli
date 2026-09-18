@@ -3,6 +3,10 @@
 
 #define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
 
+#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Structs.h"
+#include "Utils/HlslUtils.hlsli"
+
 PathState CreatePathState(float3 origin, float3 dir)
 {
     PathState pathState = (PathState)0;
@@ -39,13 +43,13 @@ float3 SRGB_to_LRGB(float3 color)
     return SRGB_to_LRGB_Exact(color);
 }
 
-float3 ApplyFireflyThreshold(float3 radiance)
+float3 ApplyFireflyThreshold(float3 radiance, float fireflyThreshold)
 {
     if (FEATURE_ENABLED(FireflyThreshold))
     {
         float L_lum = Luminance(radiance);
-        if (L_lum > gSettings.FireflyThreshold)
-            radiance *= gSettings.FireflyThreshold / L_lum;
+        if (L_lum > fireflyThreshold)
+            radiance *= fireflyThreshold / L_lum;
     }
     return radiance;
 }

@@ -1,13 +1,7 @@
 #include "Utils/SharedUtils.h"
 #include "Utils/CBVs.h"
 
-Texture2D<float4> gTexPrimal : register(t0);
-Texture2D<float4> gTexGradientX : register(t1);
-Texture2D<float4> gTexGradientY : register(t2);
-
-RWTexture2D<float4> gGradientTerms : register(u0); // b_{i,j}
-
-ConstantBuffer<CbvSprJacobi> gCBV : register(b0);
+#include "Compute/PoissonSolvers/JacobiBuffers.hlsli"
 
 float3 SampleSafeZero(Texture2D tex, int2 pixelCoord, uint width, uint height)
 {
@@ -17,7 +11,7 @@ float3 SampleSafeZero(Texture2D tex, int2 pixelCoord, uint width, uint height)
     if (pixelCoord.x == width || pixelCoord.y == height)
         return 0;
 
-    return tex[pixelCoord];
+    return tex[pixelCoord].rgb;
 }
 
 float3 BackwardsDivergence(int2 pixelCoord)
@@ -43,9 +37,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gCBV.PrimalWidth || pixelCoord.y >= gCBV.PrimalHeight)
         return;
 
-    float3 primal = gTexPrimal[pixelCoord];
+    float3 primal = gTexPrimal[pixelCoord].rgb;
 
     float3 b = gCBV.Alpha * primal - BackwardsDivergence(pixelCoord);
 
-    gGradientTerms[pixelCoord] = b;
+    gGradientTerms[pixelCoord].rgb = b;
 }

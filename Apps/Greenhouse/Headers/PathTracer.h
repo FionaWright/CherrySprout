@@ -16,6 +16,7 @@
 #include "MicrofacetModels/MMTypes.h"
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags/MethodsCpp.h"
+#include "Render/PoissonSolver.h"
 #include "Render/RestirManager.h"
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
@@ -34,7 +35,7 @@ class PathTracer final : public IRenderBackend
 public:
     void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) override;
     void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer) override;
-    void Update(D3D* d3d, TimeArgs timeArgs) override;
+    void Update(D3D* d3d, Heap* heap, TimeArgs timeArgs) override;
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle) override;
     void UnreserveData() override;
@@ -59,6 +60,7 @@ public:
 private:
     RtasBuilder m_rtasBuilder;
     RestirManager m_restirManager;
+    PoissonSolver m_poissonSolver;
 
     uint32_t m_frameIdx = 0;
 
@@ -66,7 +68,13 @@ private:
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
     D12Resource m_primal, m_accum, m_gradientX, m_gradientY;
+    D12Resource m_output;
 
+    Pipeline m_pipelineBlit;
+    RootSig m_rootSigBlit;
+    DescriptorSet m_setBlit;
+
+    // TODO: Put all this junk into its own class
 #if CHERRY_DEBUG_FEATURES_ENABLED
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;
     DebugErrorInfo m_cpuErrorInfo[_countof(s_debugIdList)] = {};

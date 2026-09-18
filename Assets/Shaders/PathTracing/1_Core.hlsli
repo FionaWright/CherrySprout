@@ -63,7 +63,7 @@ void Core(uint2 pixelCoord)
         DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
-    average = LRGB_to_SRGB(average); // TODO: Avoid when gradient domain?
+    //average = LRGB_to_SRGB(average); // TODO: Avoid when gradient domain?
 
     if (FEATURE_ENABLED(ScreenSpaceGradients))
         DBG_OUTPUT_SET(average);
