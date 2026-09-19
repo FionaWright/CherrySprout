@@ -399,6 +399,151 @@ $c(A-I)x - cb = -cx$
 $\dfrac{b}{x} - (A-I)x = x$  
 $x^{(k+1)} = \dfrac{b}{x^{(k)}} - (A-I)x^{(k)}$  
 
+### Scratch 2
+
+Inputs:  
+$u_{i,j}$ = Primal  
+$g_{x,i,j}$ = Gradient X  
+$g_{y,i,j}$ = Gradient Y  
+$\alpha$  
+$c$ = Jacobi Coefficient   
+$x$ = Solved Output  
+.  
+$d_x$ = Discrete Derivative Filter (X) (Backward Difference)  
+$d_y$ = Discrete Derivative Filter (Y) (Backward Difference)  
+$\Delta$ = Laplacian Operator (Central Difference)
+.  
+$d_x \circ g_{x,i,j} = g_{x,i,j} - g_{x,i-1,j}$  
+$d_y \circ g_{y,i,j} = g_{x,i,j} - g_{x,i,j-1}$  
+.  
+$b_{i,j} = \alpha * u_{i,j} - d_x \circ g_{x,i,j} - d_y \circ g_{y,i,j}$  
+.  
+$\Delta x = \dfrac{x_{i+1,j} + x_{i,j+1} + x_{i-1,j} + x_{i,j-1} - 4 x_{i,j}}{h^2}$  
+$h = 1$ (Equal grid spacing)  
+$\Delta x = x_{i+1,j} + x_{i,j+1} + x_{i-1,j} + x_{i,j-1} - 4 x_{i,j}$  
+.  
+$\nabla f = (\dfrac{\partial f}{\partial x}, \dfrac{\partial f}{\partial y}, \dfrac{\partial f}{\partial z}) = [\dfrac{\partial f}{\partial x}, \dfrac{\partial f}{\partial y}, \dfrac{\partial f}{\partial z}]^T$  
+$\nabla^T f = [\dfrac{\partial f}{\partial x}, \dfrac{\partial f}{\partial y}, \dfrac{\partial f}{\partial z}]$  
+Let $g : \mathbb{R}^n \mapsto \mathbb{R}^m$  
+$g^i : \mathbb{R}^n \mapsto \mathbb{R}$  
+$g(x) = \begin{bmatrix} g^1(x_1, x_2, \dots, x_n) \\ g^2(x_1, x_2, \dots, x_n) \\ \dots \\ g^m(x_1, x_2, \dots, x_n) \end{bmatrix}$  
+$J_g = \begin{bmatrix} \nabla^T g_1 \\ \dots \\ \nabla^T g_m \end{bmatrix}$  
+$h : \mathbb{R}^n \mapsto \mathbb{R}$  
+Hessian Matrix:  
+$H_h = \begin{bmatrix} \dfrac{\partial^2 h}{\partial x_1^2} & \dfrac{\partial^2 h}{\partial x_1 \partial x_2} & \dots & \dfrac{\partial^2 h}{\partial x_1 \partial x_n} \\ \dfrac{\partial^2 h}{\partial x_2 \partial x_1} & \dfrac{\partial^2 h}{\partial x_2^2} & \dots & \dfrac{\partial^2 h}{\partial x_2 \partial x_n} \\ \dots & \dots & \dots & \dots \\ \dfrac{\partial^2 h}{\partial x_n \partial x_1} & \dfrac{\partial^2 h}{\partial x_n \partial x_2} & \dots & \dfrac{\partial^2 h}{\partial x_n^2} \end{bmatrix}$    
+$\nabla \cdot f = div(f) = \sum \dfrac{\partial f^i}{\partial x_i}$   
+$\nabla \cdot : \mathbb{R}^n \mapsto \mathbb{R}^n$  
+$trace(A)$ where A is a matrix, is the sum of the diagonal elements  
+$\Delta f = \nabla \cdot \nabla f = \sum \dfrac{\partial^2 f}{\partial x_i \partial x_i} = trace(H_f)$  
+$\dfrac{\partial f}{\partial x_i} = f_{x_i} = f_i$  
+.  
+$\underset{u}{min} \int \alpha (u - f)^2 - (\nabla u - g)^2 \ dx$    
+All variables are functions on $x$ (the pixel coords)  
+Lagrange Equations:  
+$L(x, u, \nabla u) = \alpha (u - f)^2 - (\nabla u - g)^2$  
+
+$\dfrac{\partial L}{\partial u} - \sum \dfrac{\partial}{\partial x_i} \dfrac{\partial L}{\partial u_i} = 0$  
+
+$\dfrac{\partial L}{\partial u} = 2 \alpha (u - f)$  
+
+$\dfrac{\partial L}{\partial u_i} = \dfrac{\partial}{\partial u_i} ((\dfrac{\partial u}{\partial x_1}, \dfrac{\partial u}{\partial x_2}) - (g^1, g^2))^2$   
+
+$\dfrac{\partial L}{\partial u_i} = \dfrac{\partial}{\partial u_i} ((\dfrac{\partial u}{\partial x_1} - g^1, \dfrac{\partial u}{\partial x_2}) - g^2)^2$   
+
+$\dfrac{\partial L}{\partial u_i} = \dfrac{\partial}{\partial u_i} ((\dfrac{\partial u}{\partial x_1} - g^1)^2 + (\dfrac{\partial u}{\partial x_2} - g^2)^2)$   
+
+$\dfrac{\partial L}{\partial u_i} = \dfrac{\partial}{\partial u_i} (\sum (\dfrac{\partial u}{\partial x_i} - g^i)^2)$   
+
+$\dfrac{\partial L}{\partial u_i} = \dfrac{\partial}{\partial u_i} (\sum (u_i - g^i)^2)$   
+
+$\dfrac{\partial L}{\partial u_i} = 2(u_i - g^i)$  
+
+$\dfrac{\partial}{\partial x_i} \dfrac{\partial L}{\partial u_i} = 2(\dfrac{\partial u_{i}}{\partial x_i} - \dfrac{\partial g^i}{\partial x_i})$  
+
+$\dfrac{\partial}{\partial x_i} \dfrac{\partial L}{\partial u_i} = 2(u_{ii} - g^i_i)$  
+
+$2 \alpha (u-f) - \sum 2(u_{ii} - \dfrac{\partial g^i}{\partial x_i}) = 0$  
+
+$\alpha (u-f) - \sum u_{ii} + \sum \dfrac{\partial g^i}{\partial x_i} = 0$  
+
+$\alpha (u-f) - \Delta u + \nabla \cdot g = 0$  
+
+$u$ = Solved  
+$f$ = Primal  
+$g$ = Gradients  
+$A = \alpha - \Delta$  
+$b = - \alpha f + div(g)$  
+$Au + b = 0$  
+.  
+$\alpha u$ = Multiply $\alpha$ by image  
+$\Delta u$ = 
+
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.   
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+.  
+
 ```cpp
 // Note: GRADIENT_X_IMAGE_WIDTH == IMAGE_WIDTH - 1
 // Note: GRADIENT_X_IMAGE_HEIGHT == IMAGE_HEIGHT

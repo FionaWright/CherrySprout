@@ -75,6 +75,8 @@ struct PathTracerConfig
     float SprAlpha = 0.5f;
     float SprJacobiCoefficient = 0.25f;
 
+    bool PoissonReconstructionEnabled = false;
+
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;
     MicrofacetModelType        MicrofacetModelType = s_defaultMMType;

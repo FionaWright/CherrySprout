@@ -414,7 +414,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     D12Resource* finalOutput = &m_primal;
 
     // Poisson Solving
-    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain))
+    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain) && renderInfo.PathTracerConfig->PoissonReconstructionEnabled)
     {
         finalOutput = m_poissonSolver.Solve(d3d,
             cmdList,

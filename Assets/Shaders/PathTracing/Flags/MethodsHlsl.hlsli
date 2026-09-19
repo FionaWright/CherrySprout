@@ -17,7 +17,7 @@
 
 bool featureEnabled(uint flagValue, uint linearIndex)
 {
-#if DEBUG_CBV_FLAGS_MODE_ENABLED
+#if DEBUG_CBV_FLAGS_MODE_ENABLED && defined(PT_BUFFERS_DEFINED)
     bool canBeCbvValue = s_canBeCbvValueFlagListFeature[linearIndex];
     return ((FEATURE_FLAGS & flagValue) &&                         // Comptime enabled
         canBeCbvValue &&                                       // Has runtime functionality
@@ -29,7 +29,7 @@ bool featureEnabled(uint flagValue, uint linearIndex)
 
 bool debugEnabled(uint flagValue, uint linearIndex)
 {
-#if DEBUG_CBV_FLAGS_MODE_ENABLED
+#if DEBUG_CBV_FLAGS_MODE_ENABLED && defined(PT_BUFFERS_DEFINED)
     bool canBeCbvValue = s_canBeCbvValueFlagListDebug[linearIndex];
     return ((DEBUG_FLAGS & flagValue) &&                          // Comptime enabled
         canBeCbvValue &&                                      // Has runtime functionality

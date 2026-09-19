@@ -11,6 +11,8 @@
 #define REGISTER_SPACE_SCENE_TEXTURES     space1
 #define REGISTER_SPACE_DEBUG              space2
 
+#define PT_BUFFERS_DEFINED
+
 // =================== B Registers ===============================================================================
 
 ConstantBuffer<CbvPathTracingSettings>              gSettings               : register(b0, REGISTER_SPACE_DEFAULT);

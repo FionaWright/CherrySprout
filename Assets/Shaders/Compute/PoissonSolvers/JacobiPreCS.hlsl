@@ -14,6 +14,7 @@ float3 SampleSafeZero(Texture2D tex, int2 pixelCoord, uint width, uint height)
     return tex[pixelCoord].rgb;
 }
 
+// Note: Needs to be opposite of { forward, backward } difference that gradients were computed by such that the computation is for the central difference
 float3 BackwardsDivergence(int2 pixelCoord)
 {
     float3 v = 0.0f;
@@ -39,7 +40,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float3 primal = gTexPrimal[pixelCoord].rgb;
 
-    float3 b = gCBV.Alpha * primal - BackwardsDivergence(pixelCoord);
+    float3 b = -gCBV.Alpha * primal + BackwardsDivergence(pixelCoord);
 
     gGradientTerms[pixelCoord].rgb = b;
 }

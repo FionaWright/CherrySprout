@@ -64,15 +64,15 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
 
 void AccumulateGradients(uint2 pixelCoord, float3 gradientX, float3 gradientY)
 {
-    if (!FEATURE_ENABLED(Accumulation))
+    if (!FEATURE_ENABLED(Accumulation) || gSettings.FrameIdx == 0)
     {
         gTexGradientX[pixelCoord].rgb = gradientX;
         gTexGradientY[pixelCoord].rgb = gradientY;
         return;
     }
 
-    float3 accumColorX = gSettings.FrameIdx == 0 ? 0 : gTexGradientX.Load(pixelCoord).rgb;
-    float3 accumColorY = gSettings.FrameIdx == 0 ? 0 : gTexGradientY.Load(pixelCoord).rgb;
+    float3 accumColorX = gTexGradientX.Load(pixelCoord).rgb;
+    float3 accumColorY = gTexGradientY.Load(pixelCoord).rgb;
 
     float accumFrameCount = (float)gSettings.FrameIdx;
     float totalFrames = accumFrameCount + 1.0f;
