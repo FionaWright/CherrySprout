@@ -3,6 +3,8 @@
 
 #include "Compute/PoissonSolvers/JacobiBuffers.hlsli"
 
+// See Notes/Research/JacobiSPR.md
+
 float3 SampleSafeZero(Texture2D tex, int2 pixelCoord, uint width, uint height, inout float a_coef)
 {
     bool invalidPixel = false;
