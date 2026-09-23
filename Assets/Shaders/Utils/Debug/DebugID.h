@@ -24,6 +24,8 @@ static const char* s_debugIdList[] = {
 
     // TODO: Use a single param and convert MY_DEBUG_ID -> "My Debug Id" ?
 
+    CREATE_ID(_PATH_DUMP            , "Manually selected for dump")
+
     CREATE_ID(NO_METAL_GLASS            , "Transmissive material is metal")
     CREATE_ID(NO_EMISSIVE_GLASS         , "Transmissive material is emissive")
 

@@ -2,9 +2,11 @@
 #define H_ASSERT_H
 
 #include "PathTracing/Flags/MethodsHlsl.hlsli"
-#include "PathTracing/Debug/Globals.hlsli"
 
 #if DEBUG_ENABLED_PP(Asserts)
+
+#include "PathTracing/Debug/Globals.hlsli"
+#include "PathTracing/Debug/Mutex.hlsli"
 
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/NaNTests.hlsli"
@@ -48,14 +50,7 @@ void dbgAssert(
     if (gDebugFrameIndex == UINT_MAX || gDebugPixelCoord.x == UINT_MAX || gDebugPixelCoord.y == UINT_MAX)
         return;
 
-    hlsl::uint oldLock = DebugErrorInfoLock::eLocked;
-    InterlockedCompareExchange(
-        gDbgBufferErrorInfo[dbgID].Lock,
-        (hlsl::uint)DebugErrorInfoLock::eUnlocked,
-        (hlsl::uint)DebugErrorInfoLock::eLocked,
-        oldLock);
-
-    if (oldLock == DebugErrorInfoLock::eUnlocked)
+    if (TryAcquireMutex(dbgID))
     {
         uint _i;
         float _f;
@@ -89,7 +84,42 @@ void dbgAssert(
             for (int c = 0; c < 4; c++)
                 InterlockedExchange(gDbgBufferErrorInfo[dbgID].InvV[r][c], gSettings.InvV[r][c], _f);
 
-        InterlockedExchange(gDbgBufferErrorInfo[dbgID].Lock, (hlsl::uint)DebugErrorInfoLock::eUnlocked, _i);
+        ReleaseMutex(dbgID);
+    }
+}
+
+// TODO: Does this belong here? Maybe under a different name?
+[noinline]
+void dbgMarkForDump()
+{
+    if (!DEBUG_ENABLED(Asserts))
+        return;
+
+    InterlockedAdd(gDbgBufferErrorInfo[_PATH_DUMP].ExprCounter, 1);
+
+    if (gDebugFrameIndex == UINT_MAX || gDebugPixelCoord.x == UINT_MAX || gDebugPixelCoord.y == UINT_MAX)
+        return;
+
+    if (TryAcquireMutex(_PATH_DUMP))
+    {
+        uint _i;
+        float _f;
+
+        InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].PixelCoord.x, gDebugPixelCoord.x, _i);
+        InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].PixelCoord.y, gDebugPixelCoord.y, _i);
+        InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].FrameIndex, gDebugFrameIndex, _i);
+
+        InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].CameraPositionWorld.x, gSettings.CameraPositionWorld.x, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].CameraPositionWorld.y, gSettings.CameraPositionWorld.y, _f);
+        InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].CameraPositionWorld.z, gSettings.CameraPositionWorld.z, _f);
+
+        [unroll]
+        for (int r = 0; r < 4; r++)
+            [unroll]
+            for (int c = 0; c < 4; c++)
+                InterlockedExchange(gDbgBufferErrorInfo[_PATH_DUMP].InvV[r][c], gSettings.InvV[r][c], _f);
+
+        ReleaseMutex(_PATH_DUMP);
     }
 }
 
@@ -115,6 +145,8 @@ void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)         
 
 #define DBG_ASSERT_APPROX(v1, v2, threshold, dbgID)       dbgAssert(v1, v2, 0, all(abs(v1 - v2) <= threshold), dbgID);
 
+#define DBG_DUMP_PATH() dbgMarkForDump();
+
 #else
 
 #define DBG_ASSERT_EXPR(expr, dbgID)
@@ -129,6 +161,7 @@ void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)         
 #define DBG_ASSERT_ZERO(v, dbgID)
 #define DBG_ASSERT_RANGE(min, v, max, dbgID)
 #define DBG_ASSERT_APPROX(v1, v2, threshold, dbgID)
+#define DBG_DUMP_PATH()
 
 #endif
 
