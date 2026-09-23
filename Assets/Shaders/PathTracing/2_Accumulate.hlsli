@@ -62,10 +62,12 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
     return average;
 }
 
-void AccumulateGradients(uint2 pixelCoord, float3 gradientX, float3 gradientY)
+void AccumulateGradientsAndFetch(uint2 pixelCoord, float3 gradientX, float3 gradientY, out float3 gSumX, out float3 gSumY)
 {
     if (!FEATURE_ENABLED(Accumulation) || gSettings.FrameIdx == 0)
     {
+        gSumX = gradientX;
+        gSumY = gradientY;
         gTexGradientX[pixelCoord].rgb = gradientX;
         gTexGradientY[pixelCoord].rgb = gradientY;
         return;
@@ -77,10 +79,10 @@ void AccumulateGradients(uint2 pixelCoord, float3 gradientX, float3 gradientY)
     float accumFrameCount = (float)gSettings.FrameIdx;
     float totalFrames = accumFrameCount + 1.0f;
 
-    float3 averageX = (accumColorX * accumFrameCount + gradientX) / totalFrames;
-    float3 averageY = (accumColorY * accumFrameCount + gradientY) / totalFrames;
-    gTexGradientX[pixelCoord].rgb = averageX;
-    gTexGradientY[pixelCoord].rgb = averageY;
+    gSumX = (accumColorX * accumFrameCount + gradientX) / totalFrames;
+    gSumY = (accumColorY * accumFrameCount + gradientY) / totalFrames;
+    gTexGradientX[pixelCoord].rgb = gSumX;
+    gTexGradientY[pixelCoord].rgb = gSumY;
 }
 
 #endif

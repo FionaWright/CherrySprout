@@ -74,6 +74,10 @@ private:
     RootSig m_rootSigBlit;
     DescriptorSet m_setBlit;
 
+    Pipeline m_pipelineGradientsSS;
+    RootSig m_rootSigGradientsSS;
+    DescriptorSet m_setGradientsSS;
+
     // TODO: Put all this junk into its own class
 #if CHERRY_DEBUG_FEATURES_ENABLED
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;

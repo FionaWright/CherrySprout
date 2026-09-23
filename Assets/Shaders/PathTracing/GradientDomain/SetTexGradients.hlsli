@@ -4,26 +4,16 @@
 void SetTexGradients(uint2 pixelCoord, float3 gradientX, float3 gradientY)
 {
     if (FEATURE_ENABLED(ScreenSpaceGradients))
-    {
-        float3 c0 = gTexPrimal[pixelCoord].rgb;
-        float3 cX = gTexPrimal[pixelCoord + uint2(1,0)].rgb;
-        float3 cY = gTexPrimal[pixelCoord + uint2(0,1)].rgb;
-
-        gradientX = cX - c0;
-        gradientY = cY - c0;
-        AccumulateGradients(pixelCoord, gradientX, gradientY);
-
-        DBG_OUTPUT3(gradientX, GD_GradientX);
-        DBG_OUTPUT3(gradientY, GD_GradientY);
         return;
-    }
 
     gradientX /= float(gSettings.SPP);
     gradientY /= float(gSettings.SPP);
-    AccumulateGradients(pixelCoord, gradientX, gradientY);
 
-    DBG_OUTPUT3(gradientX, GD_GradientX);
-    DBG_OUTPUT3(gradientY, GD_GradientY);
+    float3 gSumX, gSumY;
+    AccumulateGradientsAndFetch(pixelCoord, gradientX, gradientY, gSumX, gSumY);
+
+    DBG_OUTPUT3(gSumX, GD_GradientX);
+    DBG_OUTPUT3(gSumY, GD_GradientY);
 }
 
 #endif

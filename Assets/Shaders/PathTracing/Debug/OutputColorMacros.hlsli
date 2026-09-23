@@ -35,20 +35,24 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
     gDebugValue = value;
 }
 
-void dbgOutputSet(inout float3 output)
-{
-    if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == 0)
-        return;
-
-    output = gDebugValue;
-}
+#define DBG_OUTPUT_SET_INTERNAL(output, setWhenNotFound) \
+{ \
+    if (DEBUG_ENABLED(OutputColor) && \
+        gDebugSettings.OutputColorIdx != 0 && \
+            (setWhenNotFound || gDebugValueFound)) \
+    { \
+        output = gDebugValue; \
+        gDebugValueFound = false; \
+    } \
+} \
 
 #    define DBG_OUTPUT3(value, label) dbgOutput3(value.x, value.y, value.z, (uint)DebugOutputIndex::eDebugOutput_##label);
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 #    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; }
 
-#    define DBG_OUTPUT_SET(output) dbgOutputSet(output);
+#    define DBG_OUTPUT_SET_IF_FOUND(output) DBG_OUTPUT_SET_INTERNAL(output, false);
+#    define DBG_OUTPUT_SET(output) DBG_OUTPUT_SET_INTERNAL(output, true);
 #    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }
 
 #elif DEBUG_ENABLED_PP(PathDumper)
@@ -58,6 +62,7 @@ void dbgOutputSet(inout float3 output)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 
 #    define DBG_FORCE_OUTPUT3(value)
+#    define DBG_OUTPUT_SET_IF_FOUND(output)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()
 
@@ -67,6 +72,7 @@ void dbgOutputSet(inout float3 output)
 #    define DBG_OUTPUT2(value, label)
 #    define DBG_OUTPUT1(value, label)
 #    define DBG_FORCE_OUTPUT3(value)
+#    define DBG_OUTPUT_SET_IF_FOUND(output)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()
 

@@ -14,6 +14,36 @@ void PoissonSolver::Prepare(D3D* d3d, Heap* heap)
     }
 }
 
+void PoissonSolver::SetupDescriptorSets(D3D* d3d,
+                            Heap* heap,
+                            D12Resource* primal,
+                            D12Resource* gradientX,
+                            D12Resource* gradientY)
+{
+    if (!m_isInitialized)
+    {
+        initResources(d3d, heap);
+        m_isInitialized = true;
+    }
+
+    m_setJacobi0to1.Init(heap, false, true);
+    m_setJacobi1to0.Init(heap, false, true);
+
+    m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 0, primal, primal->GetDesc().Format);
+    m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 1, gradientX, gradientX->GetDesc().Format);
+    m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 2, gradientY, gradientY->GetDesc().Format);
+    m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 3, &m_pingPong0, m_pingPong0.GetDesc().Format);
+    m_setJacobi0to1.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientTerms, m_gradientTerms.GetDesc().Format);
+    m_setJacobi0to1.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_pingPong1, m_pingPong1.GetDesc().Format);
+
+    m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 0, primal, primal->GetDesc().Format);
+    m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 1, gradientX, gradientX->GetDesc().Format);
+    m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 2, gradientY, gradientY->GetDesc().Format);
+    m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 3, &m_pingPong1, m_pingPong1.GetDesc().Format);
+    m_setJacobi1to0.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientTerms, m_gradientTerms.GetDesc().Format);
+    m_setJacobi1to0.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_pingPong0, m_pingPong0.GetDesc().Format);
+}
+
 D12Resource* PoissonSolver::Solve(const D3D* d3d,
                           ID3D12GraphicsCommandList* cmdList,
                           const Heap* heap,
@@ -31,20 +61,6 @@ D12Resource* PoissonSolver::Solve(const D3D* d3d,
 
     // Setup
     {
-        m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 0, primal, primal->GetDesc().Format);
-        m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 1, gradientX, gradientX->GetDesc().Format);
-        m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 2, gradientY, gradientY->GetDesc().Format);
-        m_setJacobi0to1.SetSRV_Tex2D(d3d->GetDevice(), 3, &m_pingPong0, m_pingPong0.GetDesc().Format);
-        m_setJacobi0to1.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientTerms, m_gradientTerms.GetDesc().Format);
-        m_setJacobi0to1.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_pingPong1, m_pingPong1.GetDesc().Format);
-
-        m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 0, primal, primal->GetDesc().Format);
-        m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 1, gradientX, gradientX->GetDesc().Format);
-        m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 2, gradientY, gradientY->GetDesc().Format);
-        m_setJacobi1to0.SetSRV_Tex2D(d3d->GetDevice(), 3, &m_pingPong1, m_pingPong1.GetDesc().Format);
-        m_setJacobi1to0.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientTerms, m_gradientTerms.GetDesc().Format);
-        m_setJacobi1to0.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_pingPong0, m_pingPong0.GetDesc().Format);
-
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigJacobi.Get());
 
@@ -124,9 +140,6 @@ void PoissonSolver::initResources(D3D* d3d, Heap* heap)
 
     m_rootConstantsJacobi.Init(0, 0, sizeof(CbvSprJacobi));
     m_rootSigJacobi.SmartInit(d3d->GetDevice(), 0, 4, 2, false, nullptr, 0, &m_rootConstantsJacobi);
-
-    m_setJacobi0to1.Init(heap, false, true);
-    m_setJacobi1to0.Init(heap, false, true);
 
     m_pipelineJacobiPre.InitCompute(d3d->GetDevice(), "Compute/PoissonSolvers/JacobiPreCS.hlsl", m_rootSigJacobi.Get());
     m_pipelineJacobi.InitCompute(d3d->GetDevice(), "Compute/PoissonSolvers/JacobiCS.hlsl", m_rootSigJacobi.Get());

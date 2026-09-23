@@ -106,6 +106,10 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     {
         m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
         m_setBlit.Init(heap);
+
+        m_setGradientsSS.Init(heap);
+        m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientX, m_gradientX.GetDesc().Format);
+        m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_gradientY, m_gradientY.GetDesc().Format);
     }
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
@@ -184,6 +188,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
+
+    m_poissonSolver.SetupDescriptorSets(d3d, heap, &m_primal, &m_gradientX, &m_gradientY);
 }
 
 void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -412,6 +418,44 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     }
 
     D12Resource* finalOutput = &m_primal;
+
+    // Screen-Space Gradients
+    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain) && renderInfo.PathTracerConfig->FeatureEnabled(eFeature_ScreenSpaceGradients))
+    {
+        if (!m_rootSigGradientsSS.Get())
+        {
+            m_rootSigGradientsSS.SmartInit(d3d->GetDevice(), 0, 1, 2);
+            m_pipelineGradientsSS.InitCompute(d3d->GetDevice(), "Compute/TexGradientsCS.hlsl", m_rootSigGradientsSS.Get());
+        }
+
+        finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gradientX.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_gradientY.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        cmdList->SetPipelineState(m_pipelineGradientsSS.GetPSO());
+        cmdList->SetComputeRootSignature(m_rootSigGradientsSS.Get());
+
+        m_setGradientsSS.SetSRV_Tex2D(d3d->GetDevice(), 0, finalOutput, finalOutput->GetDesc().Format);
+        m_setGradientsSS.SetDescriptorTables_Compute(cmdList);
+
+        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+        if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_OutputColor))
+        {
+            if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientX)
+            {
+                m_gradientX.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+                finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+                finalOutput->CopyTextureInto(cmdList, m_gradientX.GetResource());
+            }
+            else if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientY)
+            {
+                m_gradientY.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+                finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+                finalOutput->CopyTextureInto(cmdList, m_gradientY.GetResource());
+            }
+        }
+    }
 
     // Poisson Solving
     if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain) && renderInfo.PathTracerConfig->PoissonReconstructionEnabled)

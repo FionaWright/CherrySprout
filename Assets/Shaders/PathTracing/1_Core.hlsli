@@ -56,21 +56,18 @@ void Core(uint2 pixelCoord)
 
     primalSum /= float(gSettings.SPP);
 
-    if (FEATURE_ENABLED(GradientDomain))
-        SetTexGradients(pixelCoord, gradientXSum, gradientYSum);
-
-    if (!FEATURE_ENABLED(ScreenSpaceGradients)) // TODO: Ugly
+    if (!FEATURE_ENABLED(ScreenSpaceGradients))
         DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
-    //average = LRGB_to_SRGB(average); // TODO: Avoid when gradient domain?
-
-    if (FEATURE_ENABLED(ScreenSpaceGradients))
-        DBG_OUTPUT_SET(average);
-
     DBG_PATH_DUMP_HIGHLIGHT(average);
 
     gTexPrimal[pixelCoord].rgb = average;
+
+    if (FEATURE_ENABLED(GradientDomain))
+        SetTexGradients(pixelCoord, gradientXSum, gradientYSum);
+
+    DBG_OUTPUT_SET_IF_FOUND(gTexPrimal[pixelCoord].rgb);
 }
 
 #endif

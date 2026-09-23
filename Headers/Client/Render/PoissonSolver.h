@@ -12,6 +12,7 @@ class PoissonSolver
 {
 public:
     void Prepare(D3D* d3d, Heap* heap);
+    void SetupDescriptorSets(D3D* d3d, Heap* heap, D12Resource* primal, D12Resource* gradientX, D12Resource* gradientY);
     D12Resource* Solve(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, D12Resource* primal, D12Resource* gradientX, D12Resource
                        * gradientY, uint32_t numIterations, float alpha, float jacobiCoefficient);
 
