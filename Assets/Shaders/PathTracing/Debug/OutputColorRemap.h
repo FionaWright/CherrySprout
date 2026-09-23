@@ -9,7 +9,6 @@ enum class Internal_DebugOutputColorRemapIdx : hlsl::uint
     eIdx_UnormToSnorm,
     eIdx_SnormToUnorm,
     eIdx_Normalize,
-    eIdx_MarkNegative,
     eIdx_Absolute,
     eIdx_SquareRoot,
     eIdx_MaxComponent,
@@ -27,7 +26,6 @@ enum class DebugOutputColorRemap : hlsl::uint
     eUnormToSnorm = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_UnormToSnorm,
     eSnormToUnorm = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_SnormToUnorm,
     eNormalize = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_Normalize,
-    eMarkNegative = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_MarkNegative,
     eAbsolute = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_Absolute,
     eSquareRoot = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_SquareRoot,
     eMaxComponent = 1u << (hlsl::uint)Internal_DebugOutputColorRemapIdx::eIdx_MaxComponent,
@@ -44,7 +42,6 @@ static const char* s_debugOutputColorRemapNames[static_cast<hlsl::uint>(Internal
     "UnormToSnorm",
     "SnormToUnorm",
     "Normalize",
-    "MarkNegative",
     "Absolute",
     "SquareRoot",
     "MaxComponent",
@@ -69,9 +66,6 @@ float3 ApplyRemap(float3 color, uint outputColorRemap)
 
     if (outputColorRemap & (uint)DebugOutputColorRemap::eNormalize)
         color = normalize(color);
-
-    if (outputColorRemap & (uint)DebugOutputColorRemap::eMarkNegative && any(color != abs(color)))
-        color = float3(1, 0, 0);
 
     if (outputColorRemap & (uint)DebugOutputColorRemap::eAbsolute)
         color = abs(color);

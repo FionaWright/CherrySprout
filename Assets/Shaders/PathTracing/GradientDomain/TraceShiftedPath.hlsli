@@ -139,7 +139,7 @@ void TraceShiftedPath(
         ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
 
         bool mainIsMiss = v1.Type == VertexType::eEnvironment;
-        if (isMiss != mainIsMiss)
+        if (isMiss != mainIsMiss && false)
         {
             isSymmetric = false;
             Lo = 0.0f;

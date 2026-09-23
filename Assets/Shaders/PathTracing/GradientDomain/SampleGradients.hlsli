@@ -39,7 +39,7 @@ float3 SampleGradient(RngInfo rngInfo, uint2 shiftedCoord, PathSample mainPath)
     float m = 1.0f;
     if (isSymmetric)
     {
-        m = BalanceHeuristicRatio(pdfRatio, 1, 2); // TODO: 2 or 1?
+        m = BalanceHeuristicRatio(pdfRatio, 2, 1); // TODO: 2 or 1?
     }
 
     DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
@@ -58,6 +58,7 @@ float3 SampleGradient(RngInfo rngInfo, uint2 shiftedCoord, PathSample mainPath)
     DBG_OUTPUT1(0.0f, GD_L_s);
     DBG_OUTPUT1(1.0f, GD_Jacobian);
 
+    //float3 gradient = mainPath.Lo - Lo;
     float3 gradient = Lo - mainPath.Lo;
     gradient *= m;
     return gradient;
