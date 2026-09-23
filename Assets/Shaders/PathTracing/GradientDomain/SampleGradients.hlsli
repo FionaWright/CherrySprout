@@ -58,7 +58,7 @@ float3 SampleGradient(RngInfo rngInfo, uint2 shiftedCoord, PathSample mainPath)
     DBG_OUTPUT1(0.0f, GD_L_s);
     DBG_OUTPUT1(1.0f, GD_Jacobian);
 
-    float3 gradient = mainPath.Lo - Lo;
+    float3 gradient = Lo - mainPath.Lo;
     gradient *= m;
     return gradient;
 }
