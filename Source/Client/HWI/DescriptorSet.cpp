@@ -81,6 +81,7 @@ void DescriptorSet::AddSRV(ID3D12Device* device, D12Resource* d12Resource,
     device->CreateShaderResourceView(resource, &desc, handle);
 
     srv.D12Resource = d12Resource;
+    srv.Resource = resource;
     m_srvs.emplace_back(srv);
 }
 
@@ -99,10 +100,11 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resou
     ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
     SRV& srv = m_srvs.at(srvIdx);
-    if (srv.D12Resource == d12Resource)
+    if (resource && srv.Resource == resource)
         return;
 
     srv.D12Resource = d12Resource;
+    srv.Resource = resource;
     const auto handle = m_pHeap->GetDescriptorHandleAtIndex(srv.HeapIndex);
     device->CreateShaderResourceView(resource, &desc, handle);
 }
@@ -163,11 +165,11 @@ void DescriptorSet::SetSRV_RTAS(ID3D12Device* device, const uint32_t srvIdx, con
 
 void DescriptorSet::TransitionAllSRVToShaderResource(ID3D12GraphicsCommandList* cmdList) const
 {
-    for (int i = 0; i < m_srvs.size(); i++)
+    for (const auto & m_srv : m_srvs)
     {
-        if (m_srvs[i].D12Resource)
+        if (m_srv.D12Resource)
         {
-            m_srvs[i].D12Resource->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            m_srv.D12Resource->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         }
     }
 }

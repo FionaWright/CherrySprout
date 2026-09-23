@@ -10,7 +10,7 @@
 
 void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene)
 {
-    std::cout << "Building RTAS..." << std::endl;
+    CherryPrint("Building RTAS...");
 
     scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
@@ -19,10 +19,9 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
     m_megaBufferInstanceData.clear();
 
     m_uploadHeap = {};
-    m_uploadHeap.Init(device, 64 + scene->CPU.ObjectCount * sizeof(InstanceData));
-
-    m_tlasScratch = {};
-    m_tlasResult = {};
+    const size_t instanceSizeUser = sizeof(InstanceData) * scene->CPU.ObjectCount;
+    const size_t instanceSizeInternal = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * scene->CPU.ObjectCount;
+    m_uploadHeap.Init(device, 64 + instanceSizeUser + instanceSizeInternal);
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
@@ -35,19 +34,22 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         const Object& obj = scene->CPU.Objects[i];
         const D12Resource& blasResult = m_blasList[i].Result;
 
-        XMMATRIX M = XMMatrixSet(
+        const XMMATRIX M = XMMatrixSet(
             obj.M[0], obj.M[1], obj.M[2], obj.M[3],
             obj.M[4], obj.M[5], obj.M[6], obj.M[7],
             obj.M[8], obj.M[9], obj.M[10], obj.M[11],
             obj.M[12], obj.M[13], obj.M[14], obj.M[15]
-            );
-
-        //M = XMMatrixTranspose(M);
+        );
 
         const XMMATRIX MTI = XMMatrixTranspose(XMMatrixInverse(nullptr, M));
 
+        XMFLOAT3X4 M3x4{};
+        XMStoreFloat3x4(&M3x4, M);
+
         D3D12_RAYTRACING_INSTANCE_DESC blasInstance = {};
-        XMStoreFloat3x4(reinterpret_cast<XMFLOAT3X4*>(&blasInstance.Transform), M);
+        for (int c = 0; c < 3; c++)
+            for (int r = 0; r < 4; r++)
+                blasInstance.Transform[c][r] = M3x4.m[c][r];
         blasInstance.InstanceID = i;
         blasInstance.InstanceContributionToHitGroupIndex = 0;
         blasInstance.InstanceMask = 0xFF;
@@ -55,7 +57,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         blasInstance.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
         blasInstances.emplace_back(blasInstance);
 
-        InstanceData instanceData;
+        InstanceData instanceData{};
         XMStoreFloat4x4(&instanceData.M, M);
         XMStoreFloat4x4(&instanceData.MTI, MTI);
         instanceData.MegaBufferOffsetVertex = obj.MegaBufferVertexOffset;
@@ -64,14 +66,13 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         m_megaBufferInstanceData.emplace_back(instanceData);
     }
 
-    const size_t megaBufferInstanceDataSize = scene->CPU.ObjectCount * sizeof(InstanceData);
-    scene->GPU.MegaBufferInstanceData = {};
-    scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, megaBufferInstanceDataSize);
-    scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, &m_uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataSize);
+    scene->GPU.MegaBufferInstanceData.Release();
+    scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, instanceSizeUser);
+    scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, &m_uploadHeap, m_megaBufferInstanceData.data(), instanceSizeUser);
 
     buildTlas(device, cmdList, blasInstances);
 
-    std::cout << "RTAS Built." << std::endl;
+    CherryPrint("RTAS Built.");
 }
 
 void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object* object)
@@ -120,7 +121,7 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     D3D12_RESOURCE_BARRIER barrier = {};
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    barrier.UAV.pResource = entry.Result.GetResource();
+    barrier.UAV.pResource = nullptr;
     cmdList->ResourceBarrier(1, &barrier);
 
     m_blasList.emplace_back(std::move(entry));
@@ -129,35 +130,27 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 void RtasBuilder::buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, const std::vector<D3D12_RAYTRACING_INSTANCE_DESC>& blasInstances)
 {
     const UINT64 bufferSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * blasInstances.size();
-    const CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-    const CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
-    V(device->CreateCommittedResource(
-        &uploadHeapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &bufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&m_tlasInstanceBuffer)));
-    V(m_tlasInstanceBuffer->SetName(L"TLAS Instance Upload Buffer"));
-
-    void* mappedData = nullptr;
-    V(m_tlasInstanceBuffer->Map(0, nullptr, &mappedData));
-    memcpy(mappedData, blasInstances.data(), bufferSize);
-    m_tlasInstanceBuffer->Unmap(0, nullptr);
+    m_tlasInstanceBuffer.Release();
+    m_tlasInstanceBuffer.Init_Buffer("TLAS Instance Upload Buffer", device, bufferSize);
+    m_tlasInstanceBuffer.UploadBuffer(cmdList, &m_uploadHeap, blasInstances.data(), bufferSize);
+    m_tlasInstanceBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
     inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
     inputs.NumDescs = static_cast<UINT>(blasInstances.size());
-    inputs.InstanceDescs = m_tlasInstanceBuffer->GetGPUVirtualAddress();
+    inputs.InstanceDescs = m_tlasInstanceBuffer.GetResource()->GetGPUVirtualAddress();
 
     // Compute GPU memory size needed
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
     device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
 
+    m_tlasScratch.Release();
     m_tlasScratch.Init_Buffer("TLAS Scratch", device, prebuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+    m_tlasResult.Release();
     m_tlasResult.Init_Buffer("TLAS Result", device, prebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
@@ -169,6 +162,6 @@ void RtasBuilder::buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     D3D12_RESOURCE_BARRIER barrier = {};
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    barrier.UAV.pResource = m_tlasResult.GetResource();
+    barrier.UAV.pResource = nullptr;
     cmdList->ResourceBarrier(1, &barrier);
 }

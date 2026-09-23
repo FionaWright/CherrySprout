@@ -89,8 +89,6 @@ void Greenhouse::Init(D3D* d3d)
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
-    bool loadSceneDataIntoRenderBackend = false;
-
     if (m_envMapDirty)
     {
         m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0); // TODO
@@ -113,6 +111,16 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         }
 
         m_renderBackendDirty = false;
+    }
+
+    if (Input::IsKeyDown(KeyCode::H))
+    {
+        m_uploadHeapCBV.FreeAssignedData();
+        //m_currRenderBackend->UnreserveData();
+        //m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
+        //Sleep(3000);
+        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler, &m_gbufferPrePass);
+        //m_pathTracer.Test(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler, &m_gbufferPrePass);
     }
 
     if (m_sceneDirty)
@@ -167,18 +175,19 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_lsdDirty = true;
     }
 
-    if (!m_lightImportanceSampler.IsInitialized() || m_lsdDirty)
+    if (!m_lightImportanceSampler.IsInitialized() || (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE) && m_lsdDirty))
     {
         const bool envMapEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
         const bool aliasEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
         m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), envMapEnabled, aliasEnabled);
-        loadSceneDataIntoRenderBackend = true;
+        m_renderBackendSceneDataDirty = true;
         m_lsdDirty = false;
     }
 
-    if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || loadSceneDataIntoRenderBackend)
+    if (!m_currRenderBackend->IsSceneDataLoaded(m_sceneManager.GetScene().Filepath) || m_renderBackendSceneDataDirty)
     {
         m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler, &m_gbufferPrePass);
+        m_renderBackendSceneDataDirty = false;
     }
 
     if (m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f))
@@ -406,8 +415,8 @@ bool Greenhouse::GBufferRequired() const
 {
     bool debugNeeds = false;
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    const bool outputColor = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_OutputColor);
-    const bool pathDumper = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_PathDumper);
+    const bool outputColor = m_config.PathTracerConfig.DebugEnabled(eDebug_OutputColor);
+    const bool pathDumper = m_config.PathTracerConfig.DebugEnabled(eDebug_PathDumper);
     const bool debugFlagsNeeds = m_config.RenderBackend == RenderBackendMode::ePathTracer && (outputColor || pathDumper);
     debugNeeds = m_gizmosEnabled || debugFlagsNeeds;
 #endif

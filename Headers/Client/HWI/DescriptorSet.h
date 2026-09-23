@@ -26,6 +26,7 @@ struct SRV
 {
     uint32_t HeapIndex = 0;
     D12Resource* D12Resource = nullptr;
+    ID3D12Resource* Resource = nullptr;
 };
 
 struct UAV

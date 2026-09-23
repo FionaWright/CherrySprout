@@ -230,6 +230,10 @@ void D12Resource::Release()
 void D12Resource::Reset()
 {
     m_resource.Reset();
+    m_currentState = D3D12_RESOURCE_STATE_COMMON;
+    m_desc = {};
+    m_uploadBufferAssignedOffset = 0;
+
 #ifdef _DEBUG
     m_initialized = false;
 #endif

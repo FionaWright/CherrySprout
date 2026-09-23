@@ -4,13 +4,18 @@ project(CherrySprout)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+if (ENABLE_ASAN AND MSVC)
+    add_compile_options(/fsanitize=address)
+    add_link_options(/fsanitize=address)
+endif()
+
 if(MSVC)
     include(cmake/MsvcFlags.cmake)
 endif()
 
 include(cmake/Dependencies.cmake)
 include(cmake/Sources.cmake)
-
 include(cmake/Options.cmake)
 
 add_library(client STATIC

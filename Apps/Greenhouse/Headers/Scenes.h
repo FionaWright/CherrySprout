@@ -44,6 +44,14 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     },
 
     {
+        .Name = "Cornell",
+        .Filepath = "Scenes/USD/Cornell/Cornell.usda",
+        .CameraPosition = {0.093079, 1.183231, -2.560323},
+        .CameraPitchYaw = {0.111301, 0.025632},
+        .SceneScale = 1.0f
+    },
+
+    {
         .Name = "MC",
         .Filepath = "Scenes/USD/MC/McUsd.usda",
         .CameraPosition = {-0.114393, 0.159540, -0.291603},

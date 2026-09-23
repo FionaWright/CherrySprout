@@ -75,6 +75,8 @@ void Greenhouse::renderGuiCore()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
+    m_renderBackendSceneDataDirty |= ImGui::Button("Force Reload Render Backend Scene Data");
+
     ImGui::SeparatorText("Info");
     ImGui::Indent(IM_GUI_INDENTATION);
     {

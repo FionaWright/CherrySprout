@@ -201,9 +201,8 @@ void TraceShiftedPath(
         }
         else if (reconnectionState == ReconnectionState::eUnconnected)
         {
-            if (i == mainVertices.NumVertices - 1)
+            if (i == mainVertices.NumVertices - 1) // Note: Only really happens due to beta loss deaths
             {
-                // TODO
                 Lo = 0.0f;
                 isSymmetric = false;
                 DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);

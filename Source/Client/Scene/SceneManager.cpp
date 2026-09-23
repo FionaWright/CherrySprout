@@ -17,6 +17,13 @@ typedef void (*LoadUSDFunc)(const char* usdPath, float sceneScale, SceneCPU* sce
 
 void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 {
+    {
+        m_scene.GPU.MegaBufferVertex.Reset();
+        m_scene.GPU.MegaBufferIndex.Reset();
+        m_scene.GPU.MegaBufferMaterials.Reset();
+        m_scene.GPU.MegaBufferPunctualLights.Reset();
+    }
+
     m_scene = {};
     m_scene.Filepath = filepath;
 

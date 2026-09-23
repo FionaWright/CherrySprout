@@ -34,7 +34,7 @@ private:
     UploadHeap m_uploadHeap;
     D12Resource m_tlasScratch;
     D12Resource m_tlasResult;
-    ComPtr<ID3D12Resource> m_tlasInstanceBuffer;
+    D12Resource m_tlasInstanceBuffer;
 
     std::vector<BlasEntry> m_blasList;
     std::vector<InstanceData> m_megaBufferInstanceData;

@@ -40,6 +40,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
+        m_primal.Release();
         m_primal.Init("Primal", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
@@ -53,6 +54,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
+        m_output.Release();
         m_output.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
@@ -66,6 +68,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
+        m_accum.Release();
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
@@ -80,6 +83,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
+        m_gradientX.Release();
+        m_gradientY.Release();
         m_gradientX.Init("GradientX", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
         m_gradientY.Init("GradientY", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
@@ -87,17 +92,23 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 #if CHERRY_DEBUG_FEATURES_ENABLED
     {
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
+        m_gpuErrorInfoRW.Release();
+        m_gpuErrorInfoReadback.Release();
         m_gpuErrorInfoRW.Init_Buffer("Error Info (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
         m_gpuErrorInfoReadback.Init_Buffer("Error Info (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
 
     {
         constexpr size_t bufferSize = sizeof(RayDump) * PATH_DUMP_MAX_RAY_DEPTH;
+        m_pathDumpBufferRW.Release();
+        m_pathDumpBufferReadback.Release();
         m_pathDumpBufferRW.Init_Buffer("Path Dump Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_pathDumpBufferReadback.Init_Buffer("Path Dump Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
     {
         constexpr size_t bufferSize = sizeof(DebugOutputStruct) * PATH_DUMP_MAX_RAY_DEPTH;
+        m_pathDumpOCBufferRW.Release();
+        m_pathDumpOCBufferReadback.Release();
         m_pathDumpOCBufferRW.Init_Buffer("Path Dump OC Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_pathDumpOCBufferReadback.Init_Buffer("Path Dump OC Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
@@ -137,16 +148,17 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         CherryPrint("PT: Building RTAS");
 
         // Note: Direct queue is required as you can't transition from D3D12_RESOURCE_STATE_INDEX_BUFFER in a compute queue. Buffer may be left in that state from previous rasterization passes
+        d3d->Flush();
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
+        {
+            ComPtr<ID3D12Device5> device5;
+            V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+            ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+            V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
-        ComPtr<ID3D12Device5> device5;
-        V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
-        ComPtr<ID3D12GraphicsCommandList4> cmdList4;
-        V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
-
-        m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
-
+            m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
+        }
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
         d3d->Flush();
@@ -506,6 +518,9 @@ void PathTracer::UnreserveData()
 {
     m_primal.Release();
     m_accum.Release();
+    m_output.Release();
+    m_gradientX.Release();
+    m_gradientY.Release();
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_gpuErrorInfoRW.Release();
     m_gpuErrorInfoReadback.Release();
