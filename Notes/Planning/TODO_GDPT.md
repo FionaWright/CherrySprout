@@ -2,12 +2,13 @@
 
 - [x] Get gradients on the screen
 - [ ] Fix all TODOs in gradient sampling
-- [ ] Match gradients against SS gradients
+- [x] Match gradients against SS gradients
+- [ ] PBR BxDF Support
 
 -
 
-- [ ] Perform Jacobi SPR on SS gradients 
-- [ ] Perform Jacobi SPR on gradients
+- [x] Perform Jacobi SPR on SS gradients 
+- [x] Perform Jacobi SPR on gradients
 - [ ] Implement mitsuba SPR
 - [ ] Implement FFT SPR
 
@@ -19,8 +20,8 @@
 
 -
 
-- [ ] Reimplement Jitter
 - [ ] Reimplement RR
 - [ ] Reimplement NEE
+- [ ] Reimplement Transmission
 - [ ] Reimplement ReSTIR
 

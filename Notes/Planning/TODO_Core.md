@@ -8,7 +8,6 @@ The main important tasks for the project
 - [x] Env Map NEE
 - [ ] Confirm by RMSE test that it is faster
 - [ ] Confirm there's no bias with new mean test
-- [ ] Shadow Ray transmission handling ?
 - [x] Alias Tables
 - [x] USD Lights loading 
 - [x] Point Light NEE
@@ -16,10 +15,10 @@ The main important tasks for the project
 - [x] Combine different light types for MIS
 - [ ] Emissive NEE
 
-- [ ] RIS
-- [ ] ReSTIR DI
+- [x] RIS
+- [x] ReSTIR DI
 - [ ] Research path guiding
-- [ ] Shift Mapping
+- [x] Shift Mapping
 - [ ] ReSTIR GI
 - [ ] GRIS ?
 - [ ] ReSTIR PT

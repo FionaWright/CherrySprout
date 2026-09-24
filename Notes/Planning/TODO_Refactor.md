@@ -20,7 +20,7 @@ Stuff in the repo that I don't like
 
 - [ ] Change gbuffer normals to Rg16f and pack with UV
 
-- [ ] App GUI disable is in engine GUI, Remove "Hide GUI"
+- [x] App GUI disable is in engine GUI, Remove "Hide GUI"
 
 - [ ] Remove ImGui window rounded corners
 
