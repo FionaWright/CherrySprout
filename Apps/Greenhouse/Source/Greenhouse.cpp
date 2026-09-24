@@ -357,7 +357,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
             set.SetSRV_Tex2D(d3d->GetDevice(), 0, accum, accum->GetDesc().Format);
             set.SetUAV_Tex2D(d3d->GetDevice(), 0, &texGammaCorrected, texGammaCorrected.GetDesc().Format);
 
-            CbvGammaCorrect cbv;
+            CbvGammaCorrect cbv{};
             cbv.Dimensions = hlsl::uint2(accum->GetDesc().Width, accum->GetDesc().Height);
             cbv.IsToSrgb = true;
             set.UpdateCBV(0, &cbv);

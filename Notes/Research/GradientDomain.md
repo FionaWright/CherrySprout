@@ -677,3 +677,17 @@ void SolveIndirect()
         
     }
 }
+
+## Deriving The Equation
+
+$\Delta_{i,j} = (\int f(x) \ dx)(x_i) - (\int f(x) \ dx)(x_j)$
+
+$x = T(y)$  
+
+$y = k(x)$  
+
+$\Delta_{i,j} = (\int f(x) - f(T_{i,j}(x)) | T_{i,j}'| \ dx)(x_i)$ 
+
+$g_{i,j}(x) = f(x) - f(T_{i,j}(x) | T_{i,j}'|)$ 
+
+$\Delta_{i,j} = (\int g_{i,j}(x) \ dx)(x_i)$ 
