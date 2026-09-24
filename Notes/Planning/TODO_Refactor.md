@@ -25,3 +25,5 @@ Stuff in the repo that I don't like
 - [ ] Remove ImGui window rounded corners
 
 - [ ] Make Env Map capped at 50% LSD contribution
+
+- [ ] Consider a way to avoid having the BxDF code inline everywhere? Could be slowing comptime 

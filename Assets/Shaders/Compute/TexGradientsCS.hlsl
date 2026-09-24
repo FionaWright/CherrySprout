@@ -21,10 +21,12 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     float3 cYF = gSource[pixelCoord + uint2(0,1)].rgb;
     float3 cYB = gSource[pixelCoord + uint2(0,-1)].rgb;
 
-    float3 gradientXF = cXF - c0;
-    float3 gradientXB = c0 - cXB;
-    float3 gradientYF = cYF - c0;
-    float3 gradientYB = c0 - cYB;
+    float mis = 0.5f;
+
+    float3 gradientXF = (cXF - c0) * mis;
+    float3 gradientXB = (c0 - cXB) * mis;
+    float3 gradientYF = (cYF - c0) * mis;
+    float3 gradientYB = (c0 - cYB) * mis;
 
     gDestXF[pixelCoord].rgb = gradientXF;
     gDestXB[pixelCoord].rgb = gradientXB;

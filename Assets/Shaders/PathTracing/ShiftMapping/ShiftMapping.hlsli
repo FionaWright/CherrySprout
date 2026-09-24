@@ -143,8 +143,8 @@ ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 norma
     float cosThetaShifted = dot(-result.Wi, normalDest); // ?
 
     result.IsSuccessful = true;
-    //result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
-    result.Jacobian = abs(cosDest * length2Main) / max(EPSILON, abs(cosSource * length2Shifted));
+    result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
+    //result.Jacobian = abs(cosDest * length2Main) / max(EPSILON, abs(cosSource * length2Shifted));
     return result;
 }
 

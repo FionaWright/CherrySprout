@@ -23,7 +23,7 @@ float3 GetTrueGradientX(int2 pixelCoord)
     float3 gradientXF = SampleSafeZero(gTexGradientXF, pixelCoord,              0,  w1, h);
     float3 gradientXB = SampleSafeZero(gTexGradientXB, pixelCoord + uint2(1,0), 1,  w,  h);
 
-    return 0.5f * (gradientXF + gradientXB);
+    return gradientXF + gradientXB;
 }
 
 float3 GetTrueGradientY(int2 pixelCoord)
@@ -35,7 +35,7 @@ float3 GetTrueGradientY(int2 pixelCoord)
     float3 gradientYF = SampleSafeZero(gTexGradientYF, pixelCoord,              0,  w,  h1);
     float3 gradientYB = SampleSafeZero(gTexGradientYB, pixelCoord + uint2(0,1), 1,  w,  h);
 
-    return 0.5f * (gradientYF + gradientYB);
+    return gradientYF + gradientYB;
 }
 
 // Note: Needs to be opposite of { forward, backward } difference that gradients were computed by such that the computation is for the central difference

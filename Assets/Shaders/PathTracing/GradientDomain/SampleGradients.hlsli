@@ -43,8 +43,6 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         pdfRatio,
         isSymmetric);
 
-    // TODO: Lo also multiplied by jacobian?
-
     misWeight = 1.0f;
     if (isSymmetric)
     {
