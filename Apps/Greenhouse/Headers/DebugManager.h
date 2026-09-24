@@ -41,7 +41,7 @@ public:
 
     void SetScheduledRunParameters(CbvPathTracingSettings* settings) const;
 
-    void GUI(PathTracerConfig& config);
+    void GUI(PathTracerConfig& config, bool& ptFrameDirty);
 
 private:
     D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;

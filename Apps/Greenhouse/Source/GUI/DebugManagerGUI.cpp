@@ -6,9 +6,10 @@
 #include "Utils/ConstantsCpp.h"
 #include "imgui.h"
 #include "GreenhouseConfig.h"
+#include "System/GuiUtils.h"
 #include "System/Input.h"
 
-void DebugManager::GUI(PathTracerConfig& config)
+void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
 {
     if (ImGui::CollapsingHeader("RMSE Tool"))
     {
@@ -25,6 +26,10 @@ void DebugManager::GUI(PathTracerConfig& config)
 
         static char buff[256];
         ImGui::InputText("Path", buff, 256);
+
+        const bool isInActiveState = m_rmseTool.GetCurrentState() != RmseToolState::eIdle;
+        if (isInActiveState)
+            ImGui::BeginDisabled();
 
         if (ImGui::Button("Store PT Output"))
         {
@@ -48,7 +53,30 @@ void DebugManager::GUI(PathTracerConfig& config)
             m_rmseTool.TriggerComputeSingleRMSE();
         }
 
+        if (isInActiveState)
+            ImGui::EndDisabled();
+
         ImGui::Text("%s", (std::string("RMSE: ") + std::to_string(m_rmseTool.GetComputedRMSE())).c_str());
+
+        ImGui::Spacing();
+
+        static uint32_t maxFrames = 10000;
+        GuiUtils::FwInputUInt("Max Frames", &maxFrames);
+
+        static uint32_t frameInc = 1;
+        GuiUtils::FwInputUInt("Frame Increment", &frameInc);
+
+        if (isInActiveState)
+            ImGui::BeginDisabled();
+
+        if (ImGui::Button("Compute Convergence"))
+        {
+            m_rmseTool.TriggerComputeConvergence(maxFrames, frameInc);
+            ptFrameDirty = true;
+        }
+
+        if (isInActiveState)
+            ImGui::EndDisabled();
 
         ImGui::Spacing();
         ImGui::Separator();

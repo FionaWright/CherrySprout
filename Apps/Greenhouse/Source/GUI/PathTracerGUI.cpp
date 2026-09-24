@@ -7,6 +7,10 @@
 void PathTracer::GUI(GreenhouseConfig* config)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.GUI(config->PathTracerConfig);
+    bool ptFrameDirty = false;
+    m_debugManager.GUI(config->PathTracerConfig, ptFrameDirty);
+
+    if (ptFrameDirty)
+        Reset();
 #endif
 }

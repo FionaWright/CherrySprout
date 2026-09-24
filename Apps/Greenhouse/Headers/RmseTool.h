@@ -24,7 +24,6 @@ enum class RmseToolState
     eStoreNextOutput,
     eSaveToFile,
     eLoadFromFile,
-    eStoreAtMaxFrames,
     eComputeSingleRMSE,
     eComputeConvergence,
     ePlotConvergence,
@@ -58,29 +57,19 @@ public:
     void TriggerStoreNextOutput();
     void TriggerSaveToFile(const std::string& path);
     void TriggerLoadFromFile(const std::string& path);
-    void TriggerStoreAtMaxFrames(uint32_t maxFrames);
     void TriggerComputeSingleRMSE();
-    void TriggerComputeConvergence();
-    void TriggerPlotConvergence();
+    void TriggerComputeConvergence(uint32_t maxFrames, uint32_t frameInc);
+    void TriggerPlotConvergence(const std::string& testName);
 
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput);
 
     void ComputeSingleRMSE(D3D* d3d, Heap* heap);
     [[nodiscard]] float GetComputedRMSE() const { return m_computedRMSE; }
 
-    //void UpdateComputeGolden(D3D* d3d, uint32_t currFrame, D12Resource* finalRTV);
+    void BeginConvergenceTest(uint32_t maxFrames, const char* testName, uint32_t frameInc, bool plotAndShow);
+    void UpdateConvergenceTest(D3D* d3d, const uint32_t currFrame, Heap* heap, D12Resource* finalRTV);
 
-    //void SaveGolden(const uint8_t* data, size_t bufferSize, int width, int height) const;
-
-    //void PrepareLoadGolden(const char* path);
-    //[[nodiscard]] bool NeedLoadGolden() const { return m_loadGoldenNextFrame; }
-    //void LoadGolden(D3D* d3d, uint32_t slot);
-
-    //void BeginConvergenceTest(uint32_t maxFrames, const char* testName, uint32_t frameInc, bool plotAndShow);
-    //void UpdateConvergenceTest(D3D* d3d, const uint32_t currFrame, Heap* heap, D12Resource* finalRTV);
-    //[[nodiscard]] float GetConvergenceTestPercent() const { return m_lastFrameConvergenceTested / static_cast<float>(m_maxFrames);}
-
-    void CompareTests(const std::vector<std::string>& testNames, bool logPlot);
+    //void CompareTests(const std::vector<std::string>& testNames, bool logPlot);
 
 private:
     D12Resource m_slots[2] = {};
@@ -89,26 +78,20 @@ private:
     RmseToolState m_state = RmseToolState::eIdle;
 
     float m_computedRMSE = NAN;
+    std::vector<float> m_rmses;
 
     std::string m_path = "";
+    uint32_t m_maxFrames = 0;
+    uint32_t m_frameInc = 0;
 
     // ===
 
-    bool m_plotAndShow = false;
-
-    uint32_t m_maxFrames = 0;
-    const char* m_taskName = nullptr;
-    //ReadbackBuffer m_goldenReadbackBuffer;
-
-    uint32_t m_frameIncrement = 0;
-    uint32_t m_lastFrameConvergenceTested = 0;
-    std::vector<float> m_rmses;
-
-    RootSig m_rootSigSumSquaredErr;
-    Pipeline m_pipelineSumSquaredErr;
-    DescriptorSet m_setSumSquaredErr;
     D12Resource m_bufferSumSqrErrRW;
     D12Resource m_bufferSumSqrErrReadback;
+
+    Pipeline m_pipelineSumSquaredErr;
+    RootSig m_rootSigSumSquaredErr;
+    DescriptorSet m_setSumSquaredErr;
 
     Pipeline m_pipelineBlit;
     RootSig m_rootSigBlit;

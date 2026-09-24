@@ -136,40 +136,40 @@ void RmseTool::TriggerLoadFromFile(const std::string& path)
     m_path = path;
 }
 
-void RmseTool::TriggerStoreAtMaxFrames(uint32_t maxFrames)
-{
-    CherryAssert(m_state == RmseToolState::eIdle);
-}
-
 void RmseTool::TriggerComputeSingleRMSE()
 {
     CherryAssert(m_state == RmseToolState::eIdle);
     TransitionState(RmseToolState::eComputeSingleRMSE);
 }
 
-void RmseTool::TriggerComputeConvergence()
+void RmseTool::TriggerComputeConvergence(const uint32_t maxFrames, const uint32_t frameInc)
 {
     CherryAssert(m_state == RmseToolState::eIdle);
+    TransitionState(RmseToolState::eComputeConvergence);
+
+    m_maxFrames = maxFrames;
+    m_frameInc = frameInc;
+    m_rmses.clear();
 }
 
-void RmseTool::TriggerPlotConvergence()
+void RmseTool::TriggerPlotConvergence(const std::string& testName)
 {
     CherryAssert(m_state == RmseToolState::eIdle);
 }
 
 void RmseTool::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)
 {
-    if (m_state == RmseToolState::eComputeSingleRMSE)
-    {
-        ComputeSingleRMSE(d3d, renderInfo.Heap);
-        TransitionState(RmseToolState::eIdle);
-        return;
-    }
-
     if (m_state == RmseToolState::eStoreNextOutput)
     {
         const std::string nameSuffix = " (Frame=" + std::to_string(frameIdx) + ")";
         StoreTextureToSelectedSlot(d3d, renderInfo.Heap, ptOutput, nameSuffix.c_str());
+        TransitionState(RmseToolState::eIdle);
+        return;
+    }
+
+    if (m_state == RmseToolState::eComputeSingleRMSE)
+    {
+        ComputeSingleRMSE(d3d, renderInfo.Heap);
         TransitionState(RmseToolState::eIdle);
         return;
     }
@@ -186,6 +186,33 @@ void RmseTool::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint
         LoadSelectedSlotFromFile(d3d, renderInfo.Heap, m_path.c_str());
         TransitionState(RmseToolState::eIdle);
         return;
+    }
+
+    if (m_state == RmseToolState::eComputeConvergence)
+    {
+        if (frameIdx > m_maxFrames)
+        {
+            // TODO: Save to file
+            TransitionState(RmseToolState::eIdle);
+            return;
+        }
+
+        const uint32_t nonSelectedSlot = m_selectedSlot == 0 ? 1 : 0;
+
+        const std::string nameSuffix = " (Frame=" + std::to_string(frameIdx) + ")";
+        StoreTextureToSlot(d3d, renderInfo.Heap, ptOutput, nonSelectedSlot, nameSuffix.c_str());
+
+        ComputeSingleRMSE(d3d, renderInfo.Heap);
+
+        m_rmses.emplace_back(m_computedRMSE);
+
+        frameIdx += m_frameInc;
+        return;
+    }
+
+    if (m_state == RmseToolState::ePlotConvergence)
+    {
+        // TODO
     }
 }
 
@@ -267,102 +294,10 @@ void RmseTool::ComputeSingleRMSE(D3D* d3d, Heap* heap)
 
 /*
 
-void RmseTool::BeginComputeGolden(uint32_t maxFrames, const char* path)
+void RmseTool::UpdateConvergenceTest(D3D* d3d, Heap* heap, const uint32_t frameIdx, D12Resource* ptOutput)
 {
-    m_runningComputeGolden = true;
-    m_maxFrames = maxFrames;
-    m_taskName = path;
-}
-
-void RmseTool::UpdateComputeGolden(D3D* d3d, const uint32_t currFrame, D12Resource* finalRTV)
-{
-    if (currFrame < m_maxFrames || !m_runningComputeGolden)
-        return;
-
-    if (!m_goldenReadbackBuffer.IsInitialized())
-    {
-        m_goldenReadbackBuffer.Init(d3d, finalRTV);
-    }
-    m_goldenReadbackBuffer.Readback(d3d, finalRTV);
-    const std::vector<uint8_t> readbackData = m_goldenReadbackBuffer.GetData();
-
-    SaveGolden(readbackData.data(), readbackData.size(), finalRTV->GetDesc().Width, finalRTV->GetDesc().Height);
-    m_runningComputeGolden = false;
-}
-
-void RmseTool::SaveGolden(const uint8_t* data, const size_t bufferSize, const int width, const int height) const
-{
-    const std::string filePath = wstringToString(ASSETS_SOURCE_DIR) + "/../Data/GoldenImages/" + m_taskName + ".png";
-
-    const std::filesystem::path path = filePath;
-    std::filesystem::create_directories(path.parent_path());
-
-    FILE* file;
-    fopen_s(&file, filePath.c_str(), "wb");
-    if (!file)
-        throw std::exception("I/O Error");
-
-    int ret;
-    spng_ctx* ctx = spng_ctx_new(SPNG_CTX_ENCODER);
-
-    spng_ihdr ihdr = {};
-    ihdr.width = width;
-    ihdr.height = height;
-    ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
-    ihdr.bit_depth = 8;
-    ret = spng_set_ihdr(ctx, &ihdr);
-    assert(ret == 0);
-    ret = spng_set_png_file(ctx, file);
-    assert(ret == 0);
-    ret = spng_encode_image(ctx, data, bufferSize, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
-    assert(ret == 0);
-    spng_ctx_free(ctx);
-
-    fclose(file);
-}
-
-void RmseTool::PrepareLoadGolden(const char* path)
-{
-    m_taskName = path;
-    m_loadGoldenNextFrame = true;
-}
-
-void RmseTool::LoadGolden(D3D* d3d, const uint32_t slot)
-{
-    auto* slotTex = slot == 0 ? &m_slotA : &m_slotB;
-
-    const std::string filePath = wstringToString(ASSETS_SOURCE_DIR) + "/../Data/GoldenImages/" + m_taskName + ".png";
-
-    d3d->Flush();
-    const auto cmdList = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    slotTex->Init(d3d->GetDevice(), cmdList.Get(), filePath);
-    V(cmdList->Close());
-    d3d->ExecuteCommandList(cmdList.Get());
-    d3d->Flush();
-
-    if (slot == 0)
-        m_slotAFilled = true;
-    else
-        m_slotBFilled = true;
-
-    m_loadGoldenNextFrame = false;
-}
-
-void RmseTool::BeginConvergenceTest(const uint32_t maxFrames, const char* testName, const uint32_t frameInc, const bool plotAndShow)
-{
-    m_maxFrames = maxFrames;
-    m_taskName = testName;
-    m_frameIncrement = frameInc;
-    m_plotAndShow = plotAndShow;
-    m_lastFrameConvergenceTested = 0;
-    m_rmses.clear();
-    m_runningConvergenceTest = true;
-}
-
-void RmseTool::UpdateConvergenceTest(D3D* d3d, const uint32_t currFrame, Heap* heap, D12Resource* finalRTV)
-{
-    if (currFrame - m_lastFrameConvergenceTested < m_frameIncrement)
-        return;
+    //if (currFrame - m_lastFrameConvergenceTested < m_frameIncrement)
+    //    return;
 
     TakeSnapshot(d3d, 1, finalRTV);
     ComputeRMSE(d3d, heap);
