@@ -62,27 +62,44 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
     return average;
 }
 
-void AccumulateGradientsAndFetch(uint2 pixelCoord, float3 gradientX, float3 gradientY, out float3 gSumX, out float3 gSumY)
+void AccumulateGradientsAndFetch(uint2 pixelCoord, Gradients gradients)
 {
     if (!FEATURE_ENABLED(Accumulation) || gSettings.FrameIdx == 0)
     {
-        gSumX = gradientX;
-        gSumY = gradientY;
-        gTexGradientX[pixelCoord].rgb = gradientX;
-        gTexGradientY[pixelCoord].rgb = gradientY;
+        gTexGradientXF[pixelCoord].rgb = gradients.XForward;
+        gTexGradientXB[pixelCoord].rgb = gradients.XBackward;
+        gTexGradientYF[pixelCoord].rgb = gradients.YForward;
+        gTexGradientYB[pixelCoord].rgb = gradients.YBackward;
+
+        DBG_OUTPUT3(gradients.XForward, GD_GradientXF);
+        DBG_OUTPUT3(gradients.XBackward, GD_GradientXB);
+        DBG_OUTPUT3(gradients.YForward, GD_GradientYF);
+        DBG_OUTPUT3(gradients.YBackward, GD_GradientYB);
         return;
     }
 
-    float3 accumColorX = gTexGradientX.Load(pixelCoord).rgb;
-    float3 accumColorY = gTexGradientY.Load(pixelCoord).rgb;
+    float3 accumColorXF = gTexGradientXF.Load(pixelCoord).rgb;
+    float3 accumColorXB = gTexGradientXB.Load(pixelCoord).rgb;
+    float3 accumColorYF = gTexGradientYF.Load(pixelCoord).rgb;
+    float3 accumColorYB = gTexGradientYB.Load(pixelCoord).rgb;
 
     float accumFrameCount = (float)gSettings.FrameIdx;
     float totalFrames = accumFrameCount + 1.0f;
 
-    gSumX = (accumColorX * accumFrameCount + gradientX) / totalFrames;
-    gSumY = (accumColorY * accumFrameCount + gradientY) / totalFrames;
-    gTexGradientX[pixelCoord].rgb = gSumX;
-    gTexGradientY[pixelCoord].rgb = gSumY;
+    float3 averageXF = (accumColorXF * accumFrameCount + gradients.XForward) / totalFrames;
+    float3 averageXB = (accumColorXB * accumFrameCount + gradients.XBackward) / totalFrames;
+    float3 averageYF = (accumColorYF * accumFrameCount + gradients.YForward) / totalFrames;
+    float3 averageYB = (accumColorYB * accumFrameCount + gradients.YBackward) / totalFrames;
+
+    gTexGradientXF[pixelCoord].rgb = averageXF;
+    gTexGradientXB[pixelCoord].rgb = averageXB;
+    gTexGradientYF[pixelCoord].rgb = averageYF;
+    gTexGradientYB[pixelCoord].rgb = averageYB;
+
+    DBG_OUTPUT3(averageXF, GD_GradientXF);
+    DBG_OUTPUT3(averageXB, GD_GradientXB);
+    DBG_OUTPUT3(averageYF, GD_GradientYF);
+    DBG_OUTPUT3(averageYB, GD_GradientYB);
 }
 
 #endif

@@ -59,7 +59,7 @@ void Hit(inout PathState pathState,
         float eta = iorNCurrent / iorNNext;
 
         currentVertexInfo.Type = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-        currentVertexInfo.Position = hitPos;
+        currentVertexInfo.Position = nextOrigin;
         currentVertexInfo.SFrame = hitInfo.SFrame;
         currentVertexInfo.Wo = wo;
         currentVertexInfo.Wi = wi;

@@ -1,19 +1,17 @@
 #ifndef H_SET_TEX_GRADIENTS_H
 #define H_SET_TEX_GRADIENTS_H
 
-void SetTexGradients(uint2 pixelCoord, float3 gradientX, float3 gradientY)
+void SetTexGradients(uint2 pixelCoord, Gradients gradients)
 {
     if (FEATURE_ENABLED(ScreenSpaceGradients))
         return;
 
-    gradientX /= float(gSettings.SPP);
-    gradientY /= float(gSettings.SPP);
+    gradients.XForward /= float(gSettings.SPP);
+    gradients.XBackward /= float(gSettings.SPP);
+    gradients.YForward /= float(gSettings.SPP);
+    gradients.YBackward /= float(gSettings.SPP);
 
-    float3 gSumX, gSumY;
-    AccumulateGradientsAndFetch(pixelCoord, gradientX, gradientY, gSumX, gSumY);
-
-    DBG_OUTPUT3(gSumX, GD_GradientX);
-    DBG_OUTPUT3(gSumY, GD_GradientY);
+    AccumulateGradientsAndFetch(pixelCoord, gradients);
 }
 
 #endif

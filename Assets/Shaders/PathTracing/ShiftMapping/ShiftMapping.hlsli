@@ -56,6 +56,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
     if (etaMain == 1.0f || etaShifted == 1.0f)
     {
         result.IsSuccessful = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingHalfVec);
         return result;
     }
 
@@ -112,29 +113,38 @@ ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 norma
     if (occluded)
     {
         result.IsSuccessful = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecOcc);
         return result;
     }
 
-    float3 edgeMain = sourceMain - dest;
-    float3 edgeShifted = sourceShifted - dest;
+    float3 destToMain = sourceMain - dest;
+    float3 destToShifted = sourceShifted - dest;
 
-    result.Wi = normalize(-edgeShifted);
+    float3 destToShiftedDir = normalize(destToShifted);
+    float3 shiftedToDestDir = -destToShiftedDir;
+
+    float cosSource = dot(normalShifted, shiftedToDestDir);
+    float cosDest   = dot(normalDest, destToShiftedDir);
+
+    result.Wi = normalize(-destToShifted);
 
     float NdL = dot(normalShifted, result.Wi);
     if (NdL <= 0.0f)
     {
         result.IsSuccessful = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecNdL);
         return result;
     }
 
-    float length2Main = LengthSquared(edgeMain);
-    float length2Shifted = LengthSquared(edgeShifted);
+    float length2Main = LengthSquared(destToMain);
+    float length2Shifted = LengthSquared(destToShifted);
 
-    float cosThetaMain = dot(edgeMain, normalDest) / sqrt(length2Main); // ?
-    float cosThetaShifted = dot(result.Wi, normalDest); // ?
+    float cosThetaMain = dot(destToMain, normalDest) / sqrt(length2Main); // ?
+    float cosThetaShifted = dot(-result.Wi, normalDest); // ?
 
     result.IsSuccessful = true;
-    result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
+    //result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
+    result.Jacobian = abs(cosDest * length2Main) / max(EPSILON, abs(cosSource * length2Shifted));
     return result;
 }
 
@@ -146,6 +156,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
     if (NdL <= 0.0f)
     {
         result.IsSuccessful = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingEnvNdL);
         return result;
     }
 
@@ -155,6 +166,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
     if (occluded)
     {
         result.IsSuccessful = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingEnvOcc);
         return result;
     }
 

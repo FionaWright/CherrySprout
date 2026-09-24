@@ -35,6 +35,14 @@ struct PathVertexList
     hlsl::uint NumVertices;
 };
 
+struct Gradients
+{
+    hlsl::float3 XForward;
+    hlsl::float3 XBackward;
+    hlsl::float3 YForward;
+    hlsl::float3 YBackward;
+};
+
 #define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.001f // TODO: Make CBV option?
 
 inline bool GetIsVertexDiffuse(const float roughness)

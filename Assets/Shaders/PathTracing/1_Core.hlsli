@@ -31,8 +31,7 @@ void Core(uint2 pixelCoord)
     float3 origin = gSettings.CameraPositionWorld;
 
     float3 primalSum = float3(0,0,0);
-	float3 gradientXSum = float3(0,0,0);
-	float3 gradientYSum = float3(0,0,0);
+	Gradients gradientsSum = (Gradients)0;
 
     for (uint i = 0; i < gSettings.SPP; i++)
     {
@@ -46,17 +45,18 @@ void Core(uint2 pixelCoord)
 
 		if (FEATURE_ENABLED(GradientDomain))
 		{
-            float3 gradientX, gradientY;
-            SampleGradients(rngInfo, pixelCoord, pathSample, gradientX, gradientY);
+            Gradients gradients = SampleGradients(rngInfo, pixelCoord, pathSample);
 
-            gradientXSum += gradientX;
-            gradientYSum += gradientY;
+            gradientsSum.XForward += gradients.XForward;
+            gradientsSum.XBackward += gradients.XBackward;
+            gradientsSum.YForward += gradients.YForward;
+            gradientsSum.YBackward += gradients.YBackward;
 		}
     }
 
     primalSum /= float(gSettings.SPP);
 
-    if (!FEATURE_ENABLED(ScreenSpaceGradients))
+    if (!FEATURE_ENABLED(ScreenSpaceGradients)) // TODO: Ugly. Remove when SS gradients not needed? Unsure
         DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
@@ -65,7 +65,7 @@ void Core(uint2 pixelCoord)
     gTexPrimal[pixelCoord].rgb = average;
 
     if (FEATURE_ENABLED(GradientDomain))
-        SetTexGradients(pixelCoord, gradientXSum, gradientYSum);
+        SetTexGradients(pixelCoord, gradientsSum);
 
     DBG_OUTPUT_SET_IF_FOUND(gTexPrimal[pixelCoord].rgb);
 }

@@ -67,7 +67,7 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
-    D12Resource m_primal, m_accum, m_gradientX, m_gradientY;
+    D12Resource m_primal, m_accum, m_gradientXF, m_gradientXB, m_gradientYF, m_gradientYB;
     D12Resource m_output;
 
     Pipeline m_pipelineBlit;
