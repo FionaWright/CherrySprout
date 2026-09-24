@@ -109,7 +109,7 @@ void TraceShiftedPath(
     PathVertexList mainVertices,
     float3 origin,
     float3 dir,
-    uint2 pixelCoord,
+    int2 pixelCoord,
 
     out float3 Lo,
     inout float pdfRatio,

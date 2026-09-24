@@ -7,7 +7,7 @@
 #include "PathTracing/GradientDomain/TraceShiftedPath.hlsli"
 #include "PathTracing/MIS.hlsli"
 
-void sampleShiftedPath(RngInfo rngInfo, uint2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
+void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
 {
     if (shiftedCoord.x < 0 ||
         shiftedCoord.y < 0 ||
@@ -76,36 +76,37 @@ void sampleShiftedPath(RngInfo rngInfo, uint2 shiftedCoord, PathSample mainPath,
     }
 }
 
-Gradients SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath)
+Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath)
 {
-    float3 LoXForward;
-    float misXForward;
-    sampleShiftedPath(rngInfo, mainCoord + uint2(1,0), mainPath, LoXForward, misXForward);
+    // XF, XB, YF, YB
+    int2 offsets[4] = {
+        int2(1,0),
+        int2(-1,0),
+        int2(0,1),
+        int2(0,-1)
+    };
 
-    float3 LoXBackward;
-    float misXBackward;
-    sampleShiftedPath(rngInfo, mainCoord + uint2(-1,0), mainPath, LoXBackward, misXBackward);
+    float3 Lo[4];
+    float mis[4];
 
-    float3 LoYForward;
-    float misYForward;
-    sampleShiftedPath(rngInfo, mainCoord + uint2(0,1), mainPath, LoYForward, misYForward);
-
-    float3 LoYBackward;
-    float misYBackward;
-    sampleShiftedPath(rngInfo, mainCoord + uint2(0,-1), mainPath, LoYBackward, misYBackward);
+    [loop] // Note: Do not unroll, otherwise expensive inlining will occur
+    for (int i = 0; i < 4; i++)
+    {
+        sampleShiftedPath(rngInfo, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
+    }
 
     Gradients gradients;
-    gradients.XForward = ((LoXForward - mainPath.Lo) * misXForward);
-    gradients.XBackward = ((mainPath.Lo - LoXBackward) * misXBackward);
-    gradients.YForward = ((LoYForward - mainPath.Lo) * misYForward);
-    gradients.YBackward = ((mainPath.Lo - LoYBackward) * misYBackward);
+    gradients.XForward = ((Lo[0] - mainPath.Lo) * mis[0]);
+    gradients.XBackward = ((mainPath.Lo - Lo[1]) * mis[1]);
 
+    gradients.YForward = ((Lo[2] - mainPath.Lo) * mis[2]);
+    gradients.YBackward = ((mainPath.Lo - Lo[3]) * mis[3]);
     return gradients;
 }
 
 #else
 
-void SampleGradients(RngInfo rngInfo, uint2 mainCoord, PathSample mainPath, out float3 gradientX, out float3 gradientY) { gradientX = NAN; gradientY = NAN; }
+Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath) { return (Gradients)0; }
 
 #endif
 
