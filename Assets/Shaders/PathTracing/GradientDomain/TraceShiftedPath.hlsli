@@ -51,11 +51,11 @@ void HitShiftedUnconnected(
     {
         if (v2.Type == VertexType::eDiffuse)
         {
-            shiftResult = ShiftReconnect(v1.Position, nextOrigin, hitInfo.Ng_ff, v2.Position, v2.SFrame.N);
+            shiftResult = ShiftReconnect(v1.Position, nextOrigin, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
         }
         else if (v2.Type == VertexType::eEnvironment)
         {
-            shiftResult = ShiftReconnectEnvironment(nextOrigin, hitInfo.Ng_ff, v1.Wi);
+            shiftResult = ShiftReconnectEnvironment(nextOrigin, hitInfo.Ns_ff, v1.Wi);
         }
         else if (v2.Type == VertexType::eGlossy)
         {
@@ -218,13 +218,16 @@ void TraceShiftedPath(
 
         DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
 
+        if (pdfMain <= 0.0f || pdfShifted <= 0.0f)
+            isSymmetric = false;
+
         if (!isSymmetric)
         {
             Lo = 0.0f; // TODO: Probably wrong
             break;
         }
 
-		pdfRatio *= (pdfShifted / max(EPSILON, pdfMain));
+		pdfRatio *= (pdfShifted / pdfMain);
 
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 

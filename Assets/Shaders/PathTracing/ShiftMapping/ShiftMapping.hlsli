@@ -26,13 +26,11 @@ void TestVisibilityDirection(float3 source, float3 dir, out bool occluded)
 {
     RayQuery<RAY_FLAGS> q;
 
-    float distance = 1000.0f;
-
     RayDesc ray;
     ray.Origin = source;
     ray.Direction = dir;
     ray.TMin = 0.001;
-    ray.TMax = distance;
+    ray.TMax = INF;
 
     q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
     q.Proceed();
@@ -103,6 +101,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
     return result;
 }
 
+// TODO: Fix mismatch in Ng_ff for jacobian/hitPos but Ns_ff for NdL/bxdf
 ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 normalShifted, float3 dest, float3 normalDest)
 {
     ShiftResult result;
