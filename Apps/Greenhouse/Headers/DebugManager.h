@@ -1,8 +1,10 @@
 #ifndef H_DEBUG_MANAGER_H
 #define H_DEBUG_MANAGER_H
 
+#include "RmseTool.h"
 #include "HWI/D3D.h"
 #include "HWI/D12Resource.h"
+#include "PathTracing/Debug/OutputColor.h"
 
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
@@ -25,9 +27,9 @@ enum class ScheduledRunState
 class DebugManager
 {
 public:
-    void Init(const D3D* d3d);
+    void Init(const D3D* d3d, Heap* heap);
     void UnreserveData();
-    void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx);
+    void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput);
 
     D12Resource* GetBufferGPUErrorInfoRW() { return &m_gpuErrorInfoRW; }
     D12Resource* GetBufferPathDumpRW() { return &m_pathDumpBufferRW; }
@@ -61,6 +63,8 @@ private:
     XMFLOAT3 m_scheduledRunCameraPosition = {};
     XMMATRIX m_scheduledRunViewMatrix = {};
     ScheduledRunState m_scheduledRunState = ScheduledRunState::eIdle;
+
+    RmseTool m_rmseTool;
 };
 
 #endif

@@ -1,12 +1,10 @@
-#include "Buffers.h"
-#include "Cbv.h"
+#include "Utils/Debug/DebugStructs.h"
+#include "Utils/SharedUtils.h"
 
 Texture2D<float4> gTexA : register(t0);
 Texture2D<float4> gTexB : register(t1);
-RWStructuredBuffer<SumSquaredErrorStruct> gOutputBuffer : register(u0);
-SamplerState gSampler : register(s0);
 
-ConstantBuffer<CbvMaxLumRedSearch> cbv : register(b0); // TODO: rename CBV
+RWStructuredBuffer<SumSquaredErrorStruct> gOutputBuffer : register(u0);
 
 #define BLOCK_SIZE 9
 #define WARP_SIZE_1D 16
@@ -41,13 +39,10 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         [unroll]
         for (int x = 0; x < BLOCK_SIZE; x++)
         {
-            float2 uvXY = float2(DTid.xy * BLOCK_SIZE) + float2(x, y);
-            float2 uv = (uvXY + 0.5f) * cbv.TexelSize; // Center in pixel
+            uint2 coord = (DTid.xy * BLOCK_SIZE) + uint2(x, y);
 
-            float3 colorA = gTexA.SampleLevel(gSampler, uv, 0).rgb;
-            float3 colorB = gTexB.SampleLevel(gSampler, uv, 0).rgb;
-            float lumA = dot(colorA, float3(0.2126,0.7152,0.0722));
-            float lumB = dot(colorB, float3(0.2126,0.7152,0.0722));
+            float lumA = Luminance(gTexA[coord].rgb);
+            float lumB = Luminance(gTexB[coord].rgb);
 
             squaredErrSum += (lumA - lumB) * (lumA - lumB);
         }

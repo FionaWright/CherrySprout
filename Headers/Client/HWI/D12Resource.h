@@ -60,8 +60,10 @@ public:
 
 #ifdef _DEBUG
     [[nodiscard]] const char* GetName() const { return m_name.c_str(); }
+    void SetName(const char* name) { m_name = name; }
 #else
     [[nodiscard]] const char* GetName() const { return nullptr; }
+    void SetName(const char* name) {}
 #endif
 
 private:

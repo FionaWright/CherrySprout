@@ -5,7 +5,7 @@
 #include "PathTracing/Flags/MethodsCpp.h"
 #include "Utils/Helper.h"
 
-void DebugManager::Init(const D3D* d3d)
+void DebugManager::Init(const D3D* d3d, Heap* heap)
 {
     {
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
@@ -22,6 +22,7 @@ void DebugManager::Init(const D3D* d3d)
         m_pathDumpBufferRW.Init_Buffer("Path Dump Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_pathDumpBufferReadback.Init_Buffer("Path Dump Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
+
     {
         constexpr size_t bufferSize = sizeof(DebugOutputStruct) * PATH_DUMP_MAX_RAY_DEPTH;
         m_pathDumpOCBufferRW.Release();
@@ -29,9 +30,11 @@ void DebugManager::Init(const D3D* d3d)
         m_pathDumpOCBufferRW.Init_Buffer("Path Dump OC Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_pathDumpOCBufferReadback.Init_Buffer("Path Dump OC Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
+
+    m_rmseTool.Init(d3d, heap);
 }
 
-void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx)
+void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)
 {
     if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_Asserts))
     {
@@ -113,6 +116,8 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
         if (scheduledRun)
             m_scheduledRunState = ScheduledRunState::eDisplay;
     }
+
+    m_rmseTool.PostUpdate(d3d, renderInfo, frameIdx, ptOutput);
 }
 
 void DebugManager::SetScheduledRunParameters(CbvPathTracingSettings* settings) const

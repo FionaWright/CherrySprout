@@ -10,6 +10,115 @@
 
 void DebugManager::GUI(PathTracerConfig& config)
 {
+    if (ImGui::CollapsingHeader("RMSE Tool"))
+    {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
+        ImGui::TextUnformatted("Selected Slot:");
+        int e = m_rmseTool.GetSelectedSlot();
+        int idx = 0;
+        ImGui::Indent(IM_GUI_INDENTATION);
+        ImGui::RadioButton(m_rmseTool.GetSlotName(0).c_str(), &e, idx++);
+        ImGui::RadioButton(m_rmseTool.GetSlotName(1).c_str(), &e, idx++);
+        ImGui::Unindent(IM_GUI_INDENTATION);
+        m_rmseTool.SetSelectedSlot(static_cast<uint32_t>(e));
+
+        if (ImGui::Button("Store Next Output"))
+        {
+            m_rmseTool.TriggerStoreNextOutput();
+        }
+
+        if (ImGui::Button("Compute RMSE"))
+        {
+            m_rmseTool.TriggerComputeSingleRMSE();
+        }
+
+        ImGui::Text("%s", (std::string("RMSE: ") + std::to_string(m_rmseTool.GetComputedRMSE())).c_str());
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        /*
+
+        static uint32_t goldenMaxFrames = 50;
+        ImGuiUtils::FwInputUInt("Golden Frames##xxx", &goldenMaxFrames);
+        static char path[256];
+        ImGui::InputText("Golden File Path", path, 256);
+
+        if (ImGui::Button("Compute Golden"))
+        {
+            m_rmseTool.BeginComputeGolden(goldenMaxFrames, path);
+            m_pathTracer.Reset();
+            ResetCameraToSceneStart();
+        }
+
+        if (m_rmseTool.IsRunningGolden())
+        {
+            ImGui::SameLine(); ImGui::Text("Progress: %.2f/100%%", 100.0f * m_pathTracer.GetContext().GetFrameNum() / static_cast<float>(goldenMaxFrames));
+        }
+
+        if (ImGui::Button("Load Golden Image"))
+        {
+            m_rmseTool.PrepareLoadGolden(path);
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        static uint32_t convergenceMaxFrames = 50;
+        ImGuiUtils::FwInputUInt("Max Frames##xxx", &convergenceMaxFrames);
+        static uint32_t frameInc = 1;
+        ImGuiUtils::FwInputUInt("Frame Inc##xxx", &frameInc);
+        static char testName[256];
+        ImGui::InputText("Test Name", testName, 256);
+        static bool plotAndShow = false;
+        ImGui::Checkbox("Plot and Show", &plotAndShow);
+
+        if (ImGui::Button("Convergence Test"))
+        {
+            m_rmseTool.BeginConvergenceTest(convergenceMaxFrames, testName, frameInc, plotAndShow);
+            m_pathTracer.Reset();
+            ResetCameraToSceneStart();
+        }
+
+        if (m_rmseTool.IsRunningConvergence())
+        {
+            ImGui::SameLine(); ImGui::Text("Progress: %.2f%%", m_rmseTool.GetConvergenceTestPercent() * 100.0f);
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        static std::vector<std::string> testNames = { "", "" };
+        for (int i = 0; i < testNames.size(); i++)
+        {
+            char buff[256] = {};
+            memcpy(buff, testNames[i].data(), testNames[i].size());
+            std::string label = std::string("Test Name ") + std::to_string(i);
+            ImGui::InputText(label.c_str(), buff, 256);
+            testNames[i] = buff;
+        }
+
+        const int lastIdx = testNames.size() - 1;
+        if (lastIdx > 1 && testNames[lastIdx].empty() && testNames[lastIdx - 1].empty())
+            testNames.erase(testNames.end() - 1);
+        else if (!testNames[lastIdx].empty())
+            testNames.emplace_back("");
+
+        static bool logPlot = false;
+        ImGui::Checkbox("Logarithmic Y-Axis", &logPlot);
+
+        if (ImGui::Button("Compare Tests"))
+        {
+            testNames.erase(testNames.end() - 1);
+            m_rmseTool.CompareTests(testNames, logPlot);
+        }
+
+        */
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+
     if (config.DebugEnabled(eDebug_PathDumper))
     {
         if (ImGui::CollapsingHeader("Path Dump"))

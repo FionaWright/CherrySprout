@@ -3,7 +3,6 @@
 
 #include "PathTracing/Structs.h"
 #include "Utils/HlslGlue.h"
-#include "PathTracing/Debug/OutputColor.h"
 #include "PathTracing/GradientDomain/Structs.h"
 
 struct DebugErrorInfo
@@ -30,6 +29,11 @@ struct RayDump
     hlsl::uint Explored;
     PathState PathState;
     PathVertexInfo PathVertex;
+};
+
+struct SumSquaredErrorStruct
+{
+    float SquaredError;
 };
 
 #endif

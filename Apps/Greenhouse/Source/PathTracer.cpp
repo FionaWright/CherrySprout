@@ -73,7 +73,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.Init(d3d);
+    m_debugManager.Init(d3d, heap);
 #endif
 
     {
@@ -174,7 +174,7 @@ void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx);
+    m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx, &m_output);
 #endif
 }
 
