@@ -27,7 +27,6 @@ void HitShiftedUnconnected(
 {
     if (v2.Type == VertexType::eUninitialized) // (Path terminates on v1)
     {
-        // TODO
         isSymmetric = false;
         wi = NAN;
         pdf = NAN;
@@ -113,7 +112,7 @@ void TraceShiftedPath(
 
     out float3 Lo,
     inout float pdfRatio,
-    out bool isSymmetric) // TODO: Differentiate between isSymmetric and isValid. Can be asymmetric AND valid path that doesn't need to return 0?
+    out bool isSymmetric)
 {
     RayQuery<RAY_FLAGS> q;
 
@@ -223,7 +222,7 @@ void TraceShiftedPath(
 
         if (!isSymmetric)
         {
-            Lo = 0.0f; // TODO: Probably wrong
+            Lo = 0.0f;
             break;
         }
 

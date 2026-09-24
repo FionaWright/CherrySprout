@@ -22,7 +22,7 @@ public:
     int GetParamIndexSceneTextures() const { return m_paramIdxSceneTextures; }
 
 private:
-    ComPtr<ID3D12RootSignature> m_rootSignature;
+    ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
 
     int m_paramIdxSRV = -1;
     int m_paramIdxCBV = -1;

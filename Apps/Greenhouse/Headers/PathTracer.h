@@ -6,6 +6,7 @@
 #define CHERRYSPROUT_PATHTRACER_H
 
 #include "GBufferPrePass.h"
+#include "GradientManager.h"
 #include "IRenderBackend.h"
 #include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
@@ -16,7 +17,6 @@
 #include "MicrofacetModels/MMTypes.h"
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags/MethodsCpp.h"
-#include "Render/PoissonSolver.h"
 #include "Render/RestirManager.h"
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
@@ -60,23 +60,19 @@ public:
 private:
     RtasBuilder m_rtasBuilder;
     RestirManager m_restirManager;
-    PoissonSolver m_poissonSolver;
+    GradientManager m_gradientManager;
 
     uint32_t m_frameIdx = 0;
 
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
-    D12Resource m_primal, m_accum, m_gradientXF, m_gradientXB, m_gradientYF, m_gradientYB;
+    D12Resource m_primal, m_accum;
     D12Resource m_output;
 
     Pipeline m_pipelineBlit;
     RootSig m_rootSigBlit;
     DescriptorSet m_setBlit;
-
-    Pipeline m_pipelineGradientsSS;
-    RootSig m_rootSigGradientsSS;
-    DescriptorSet m_setGradientsSS;
 
     // TODO: Put all this junk into its own class
 #if CHERRY_DEBUG_FEATURES_ENABLED

@@ -16,7 +16,7 @@ public:
     ID3D12PipelineState* GetPSO() const { return m_pso.Get(); }
 
 private:
-    ComPtr<ID3D12PipelineState> m_pso;
+    ComPtr<ID3D12PipelineState> m_pso = nullptr;
 };
 
 

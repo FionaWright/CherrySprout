@@ -72,28 +72,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
-    // TODO: Lazy init
-    // TODO: Better system than 4 textures. Compress? Separate CS pass that computes both in one?
-    {
-        D3D12_RESOURCE_DESC desc = {};
-        desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // TODO: Rgba16f?
-        desc.Width = Config::GetSystem().RtvWidth;
-        desc.Height = Config::GetSystem().RtvHeight;
-        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        desc.DepthOrArraySize = 1;
-        desc.MipLevels = 1;
-        desc.SampleDesc.Count = 1;
-        m_gradientXF.Release();
-        m_gradientXB.Release();
-        m_gradientYF.Release();
-        m_gradientYB.Release();
-        m_gradientXF.Init("GradientX (Forward)", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
-        m_gradientXB.Init("GradientX (Backward)", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
-        m_gradientYF.Init("GradientY (Forward)", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
-        m_gradientYB.Init("GradientY (Backward)", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
-    }
-
 #if CHERRY_DEBUG_FEATURES_ENABLED
     {
         constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
@@ -122,12 +100,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     {
         m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
         m_setBlit.Init(heap);
-
-        m_setGradientsSS.Init(heap);
-        m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientXF, m_gradientXF.GetDesc().Format);
-        m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_gradientXB, m_gradientXB.GetDesc().Format);
-        m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 2, &m_gradientYF, m_gradientYF.GetDesc().Format);
-        m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 3, &m_gradientYB, m_gradientYB.GetDesc().Format);
     }
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
@@ -143,6 +115,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.Init         (heap, true);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
+
+    m_gradientManager.Init(d3d);
 
     CherryPrint("Path-Tracer Initialized");
 }
@@ -176,10 +150,10 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_primal, m_primal.GetDesc().Format);
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, m_restirManager.GetReservoirBuffer(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 3, &m_gradientXF, m_gradientXF.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 4, &m_gradientXB, m_gradientXB.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 5, &m_gradientYF, m_gradientYF.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 6, &m_gradientYB, m_gradientYB.GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 3, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 4, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 5, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 6, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 7, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
@@ -210,12 +184,12 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
 
-    m_poissonSolver.SetupDescriptorSets(d3d, heap, &m_primal, &m_gradientXF, &m_gradientXB, &m_gradientYF, &m_gradientYB);
+    m_gradientManager.LoadSceneData(d3d, heap, &m_primal);
 }
 
 void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 {
-    m_poissonSolver.Prepare(d3d, heap);
+    m_gradientManager.Update(d3d, heap);
 }
 
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
@@ -440,74 +414,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     D12Resource* finalOutput = &m_primal;
 
-    // Screen-Space Gradients
-    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain) && renderInfo.PathTracerConfig->FeatureEnabled(eFeature_ScreenSpaceGradients))
-    {
-        if (!m_rootSigGradientsSS.Get())
-        {
-            m_rootSigGradientsSS.SmartInit(d3d->GetDevice(), 0, 1, 4);
-            m_pipelineGradientsSS.InitCompute(d3d->GetDevice(), "Compute/TexGradientsCS.hlsl", m_rootSigGradientsSS.Get());
-        }
-
-        finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gradientXF.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_gradientXB.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_gradientYF.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_gradientYB.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-        cmdList->SetPipelineState(m_pipelineGradientsSS.GetPSO());
-        cmdList->SetComputeRootSignature(m_rootSigGradientsSS.Get());
-
-        m_setGradientsSS.SetSRV_Tex2D(d3d->GetDevice(), 0, finalOutput, finalOutput->GetDesc().Format);
-        m_setGradientsSS.SetDescriptorTables_Compute(cmdList);
-
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
-
-        // TODO: Bad
-        if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_OutputColor))
-        {
-            if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientXF)
-            {
-                m_gradientXF.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-                finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-                finalOutput->CopyTextureInto(cmdList, m_gradientXF.GetResource());
-            }
-            else if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientYF)
-            {
-                m_gradientYF.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-                finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-                finalOutput->CopyTextureInto(cmdList, m_gradientYF.GetResource());
-            }
-            else if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientXB)
-            {
-                m_gradientXB.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-                finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-                finalOutput->CopyTextureInto(cmdList, m_gradientXB.GetResource());
-            }
-            else if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientYB)
-            {
-                m_gradientYB.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-                finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-                finalOutput->CopyTextureInto(cmdList, m_gradientYB.GetResource());
-            }
-        }
-    }
-
-    // Poisson Solving
-    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain) && renderInfo.PathTracerConfig->PoissonReconstructionEnabled)
-    {
-        m_gradientXF.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gradientXB.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gradientYF.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gradientYB.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-        finalOutput = m_poissonSolver.Solve(cmdList,
-                                            heap,
-                                            &m_primal,
-                                            renderInfo.PathTracerConfig->SprNumIterations,
-                                            renderInfo.PathTracerConfig->SprAlpha,
-                                            renderInfo.PathTracerConfig->SprJacobiCoefficient);
-    }
+    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain))
+        finalOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
 
     // Copy to RTV
     {
