@@ -6,6 +6,8 @@
 
 #include "HWI/D12Resource.h"
 #include "HWI/D3D.h"
+#include "HWI/UploadHeap.h"
+#include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
 void CopyTexToBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const D12Resource* tex, const D12Resource* buff)
@@ -51,6 +53,30 @@ void Snapshotter::ResourceToSnapshot(D3D* d3d, D12Resource* d12Resource, uint8_t
 
     data = new uint8_t[dataSize];
     readbackBuffer.Readback(data);
+}
+
+D12Resource Snapshotter::SnapshotToResource(D3D* d3d, const ScratchImage& scratchImage, const char* name)
+{
+    const Image* image = scratchImage.GetImage(0,0,0);
+
+    D12Resource d12Resource;
+    d12Resource.Init_Tex2D(name, d3d->GetDevice(), image->width, image->height, 1, image->format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+    UploadHeap uploadHeap;
+    uploadHeap.Init(d3d->GetDevice(), Align(d12Resource.GetIntermediateSize(), D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT));
+
+    d3d->Flush();
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    const auto cmdList = cmdListPtr.Get();
+    {
+        d12Resource.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+        d12Resource.UploadTexture(cmdList, &uploadHeap, scratchImage.GetPixels(), scratchImage.GetPixelsSize(), image->rowPitch);
+    }
+    V(cmdList->Close());
+    d3d->ExecuteCommandList(cmdList);
+    d3d->Flush();
+
+    return d12Resource;
 }
 
 const Image* Snapshotter::PackData(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, ScratchImage& scratch)
@@ -115,14 +141,29 @@ void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const
 {
     std::filesystem::create_directories(std::filesystem::path(fileName).parent_path());
 
-    const bool isHDR = FormatIsHDR(image->format);
+    const std::filesystem::path path(fileName);
+    const std::wstring extension = path.extension().wstring();
 
-    const std::string fileNameWithExt = std::string(fileName) + (isHDR ? ".hdr" : (ldrIsPNG ? ".png" : ".tga"));
+    const bool fileNameIsHDR = extension == L".hdr";
+    const bool formatIsHDR = FormatIsHDR(image->format);
+
+    if (extension != L"")
+        CherryAssert(fileNameIsHDR == formatIsHDR);
+
+    std::string fileNameWithExt;
+
+    if (fileNameIsHDR)
+        fileNameWithExt = std::string(fileName);
+    else if (formatIsHDR)
+        fileNameWithExt = std::string(fileName) + ".hdr";
+    else
+        fileNameWithExt = std::string(fileName) + (ldrIsPNG ? ".png" : ".tga");
+
     const std::wstring fileNameW = stringToWString(fileNameWithExt);
 
     std::cout << "Saved snapshot to: " << fileNameWithExt << std::endl;
 
-    if (isHDR)
+    if (formatIsHDR)
         V(SaveToHDRFile(*image, fileNameW.c_str()));
     else if (ldrIsPNG)
     {
@@ -136,6 +177,60 @@ void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const
     }
     else
         V(SaveToTGAFile(*image, TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA | TGA_FLAGS_DEFAULT_SRGB, fileNameW.c_str()));
+}
+
+ScratchImage Snapshotter::FileToSnapshot(const char* fileName)
+{
+    const std::filesystem::path path(fileName);
+    CherryAssert(std::filesystem::exists(path));
+
+    TexMetadata metadata{};
+    ScratchImage scratchImage;
+
+    const std::wstring fileNameW = stringToWString(path.string());
+
+    HRESULT hr = E_FAIL;
+
+    const std::wstring extension = path.extension().wstring();
+
+    if (extension == L".hdr")
+    {
+        hr = LoadFromHDRFile(
+            fileNameW.c_str(),
+            &metadata,
+            scratchImage
+        );
+    }
+    else if (extension == L".png")
+    {
+        hr = LoadFromWICFile(
+            fileNameW.c_str(),
+            WIC_FLAGS_FORCE_SRGB,
+            &metadata,
+            scratchImage
+        );
+    }
+    else if (extension == L".tga")
+    {
+        hr = LoadFromTGAFile(
+            fileNameW.c_str(),
+            &metadata,
+            scratchImage
+        );
+    }
+    else
+    {
+        CherryAssert(false && "Unsupported snapshot format");
+        return {};
+    }
+
+    if (FAILED(hr))
+    {
+        CherryAssert(false && "Failed to load snapshot");
+        return {};
+    }
+
+    return scratchImage;
 }
 
 void Snapshotter::Rgba8SnapshotToClipboard(const Image* image)

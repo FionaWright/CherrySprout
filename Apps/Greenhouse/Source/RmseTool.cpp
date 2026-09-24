@@ -10,6 +10,7 @@
 #include "Greenhouse.h"
 #include "Debug/GPUEventScoped.h"
 #include "Debug/PythonExecutor.h"
+#include "Debug/Snapshotter.h"
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
 #include "System/FileHelper.h"
@@ -69,12 +70,36 @@ D12Resource* RmseTool::LoadTextureFromSlot(const uint32_t slotIdx) const
     return nullptr;
 }
 
-void RmseTool::SaveSlotToFile(const char* path, uint32_t slotIdx)
+void RmseTool::SaveSlotToFile(D3D* d3d, const char* path, const uint32_t slotIdx)
 {
+    D12Resource* slot = &m_slots[slotIdx];
+    CherryAssert(slot->GetResource());
+
+    uint8_t* data = nullptr;
+    size_t dataSize = 0;
+    Snapshotter::ResourceToSnapshot(d3d, slot, data, dataSize);
+
+    ScratchImage scratch;
+    const Image* packed = Snapshotter::PackData(d3d, data, slot, scratch);
+
+    // Copy to clipboard
+    {
+        ScratchImage rgba8;
+        Snapshotter::SnapshotToRgba8(packed, rgba8);
+        Snapshotter::Rgba8SnapshotToClipboard(rgba8.GetImage(0,0,0));
+    }
+
+    Snapshotter::SnapshotToFile(packed, path);
 }
 
-void RmseTool::LoadSlotFromFile(const char* path, uint32_t slotIdx)
+void RmseTool::LoadSlotFromFile(D3D* d3d, Heap* heap, const char* path, const uint32_t slotIdx)
 {
+    const std::string filename = std::filesystem::path(path).filename().string();
+
+    const ScratchImage scratch = Snapshotter::FileToSnapshot(path);
+    D12Resource resource = Snapshotter::SnapshotToResource(d3d, scratch, filename.c_str());
+
+    StoreTextureToSlot(d3d, heap, &resource, slotIdx);
 }
 
 std::string RmseTool::GetSlotName(const uint32_t slotIdx) const
@@ -93,6 +118,22 @@ void RmseTool::TriggerStoreNextOutput()
 {
     CherryAssert(m_state == RmseToolState::eIdle);
     TransitionState(RmseToolState::eStoreNextOutput);
+}
+
+void RmseTool::TriggerSaveToFile(const std::string& path)
+{
+    CherryAssert(m_state == RmseToolState::eIdle);
+    TransitionState(RmseToolState::eSaveToFile);
+
+    m_path = path;
+}
+
+void RmseTool::TriggerLoadFromFile(const std::string& path)
+{
+    CherryAssert(m_state == RmseToolState::eIdle);
+    TransitionState(RmseToolState::eLoadFromFile);
+
+    m_path = path;
 }
 
 void RmseTool::TriggerStoreAtMaxFrames(uint32_t maxFrames)
@@ -129,6 +170,20 @@ void RmseTool::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint
     {
         const std::string nameSuffix = " (Frame=" + std::to_string(frameIdx) + ")";
         StoreTextureToSelectedSlot(d3d, renderInfo.Heap, ptOutput, nameSuffix.c_str());
+        TransitionState(RmseToolState::eIdle);
+        return;
+    }
+
+    if (m_state == RmseToolState::eSaveToFile)
+    {
+        SaveSelectedSlotToFile(d3d, m_path.c_str());
+        TransitionState(RmseToolState::eIdle);
+        return;
+    }
+
+    if (m_state == RmseToolState::eLoadFromFile)
+    {
+        LoadSelectedSlotFromFile(d3d, renderInfo.Heap, m_path.c_str());
         TransitionState(RmseToolState::eIdle);
         return;
     }

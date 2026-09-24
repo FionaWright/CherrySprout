@@ -113,16 +113,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_renderBackendDirty = false;
     }
 
-    if (Input::IsKeyDown(KeyCode::H))
-    {
-        m_uploadHeapCBV.FreeAssignedData();
-        //m_currRenderBackend->UnreserveData();
-        //m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
-        //Sleep(3000);
-        m_currRenderBackend->LoadSceneData(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler, &m_gbufferPrePass);
-        //m_pathTracer.Test(d3d, &m_sceneManager.GetScene(), &m_heap, &m_uploadHeapCBV, &m_envMap, &m_lightImportanceSampler, &m_gbufferPrePass);
-    }
-
     if (m_sceneDirty)
     {
         d3d->Flush();

@@ -22,6 +22,8 @@ enum class RmseToolState
 {
     eIdle,
     eStoreNextOutput,
+    eSaveToFile,
+    eLoadFromFile,
     eStoreAtMaxFrames,
     eComputeSingleRMSE,
     eComputeConvergence,
@@ -39,11 +41,11 @@ public:
     D12Resource* LoadTextureFromSlot(uint32_t slotIdx) const;
     D12Resource* LoadTextureFromSelectedSlot() const { return LoadTextureFromSlot(m_selectedSlot); }
 
-    void SaveSlotToFile(const char* path, uint32_t slotIdx);
-    void SaveSelectedSlotToFile(const char* path) { SaveSlotToFile(path, m_selectedSlot); }
+    void SaveSlotToFile(D3D* d3d, const char* path, uint32_t slotIdx);
+    void SaveSelectedSlotToFile(D3D* d3d, const char* path) { SaveSlotToFile(d3d, path, m_selectedSlot); }
 
-    void LoadSlotFromFile(const char* path, uint32_t slotIdx);
-    void LoadSelectedSlotFromFile(const char* path) { LoadSlotFromFile(path, m_selectedSlot); }
+    void LoadSlotFromFile(D3D* d3d, Heap* heap, const char* path, uint32_t slotIdx);
+    void LoadSelectedSlotFromFile(D3D* d3d, Heap* heap, const char* path) { LoadSlotFromFile(d3d, heap, path, m_selectedSlot); }
 
     RmseToolState GetCurrentState() const { return m_state; }
     void TransitionState(const RmseToolState newState) { m_state = newState; }
@@ -54,6 +56,8 @@ public:
     std::string GetSlotName(uint32_t slotIdx) const;
 
     void TriggerStoreNextOutput();
+    void TriggerSaveToFile(const std::string& path);
+    void TriggerLoadFromFile(const std::string& path);
     void TriggerStoreAtMaxFrames(uint32_t maxFrames);
     void TriggerComputeSingleRMSE();
     void TriggerComputeConvergence();
@@ -85,6 +89,10 @@ private:
     RmseToolState m_state = RmseToolState::eIdle;
 
     float m_computedRMSE = NAN;
+
+    std::string m_path = "";
+
+    // ===
 
     bool m_plotAndShow = false;
 

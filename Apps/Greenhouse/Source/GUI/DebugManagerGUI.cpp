@@ -23,9 +23,24 @@ void DebugManager::GUI(PathTracerConfig& config)
         ImGui::Unindent(IM_GUI_INDENTATION);
         m_rmseTool.SetSelectedSlot(static_cast<uint32_t>(e));
 
-        if (ImGui::Button("Store Next Output"))
+        static char buff[256];
+        ImGui::InputText("Path", buff, 256);
+
+        if (ImGui::Button("Store PT Output"))
         {
             m_rmseTool.TriggerStoreNextOutput();
+        }
+
+        if (ImGui::Button("Save To File"))
+        {
+            const std::string fullPath = std::string(BUILD_DIR) + "/Snapshots/Golden/" + buff + ".hdr";
+            m_rmseTool.TriggerSaveToFile(fullPath);
+        }
+
+        if (ImGui::Button("Load From File"))
+        {
+            const std::string fullPath = std::string(BUILD_DIR) + "/Snapshots/Golden/" + buff + ".hdr";
+            m_rmseTool.TriggerLoadFromFile(fullPath);
         }
 
         if (ImGui::Button("Compute RMSE"))
