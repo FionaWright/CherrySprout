@@ -5,12 +5,12 @@
 #ifndef CHERRYSPROUT_PATHTRACER_H
 #define CHERRYSPROUT_PATHTRACER_H
 
+#include "DebugManager.h"
 #include "GBufferPrePass.h"
 #include "GradientManager.h"
 #include "IRenderBackend.h"
 #include "PathTracer.h"
 #include "HWI/DescriptorSet.h"
-#include "HWI/Heap.h"
 #include "HWI/RootSig.h"
 #include "HWI/RtasBuilder.h"
 #include "HWI/Pipeline.h"
@@ -18,8 +18,6 @@
 #include "Utils/CBVs.h"
 #include "PathTracing/Flags/MethodsCpp.h"
 #include "Render/RestirManager.h"
-#include "Utils/Debug/DebugID.h"
-#include "Utils/Debug/DebugStructs.h"
 
 class Camera;
 struct PathTracingDebugInfo;
@@ -27,8 +25,6 @@ struct PathTracerConfig;
 enum class BxdfMode : hlsl::uint;
 enum class DebugOutputIndex : hlsl::uint;
 struct TimeArgs;
-
-#define PATH_DUMP_MAX_RAY_DEPTH 32
 
 class PathTracer final : public IRenderBackend
 {
@@ -53,9 +49,7 @@ public:
     D12Resource* GetTexAccum() { return &m_accum; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    void RenderGUI_DebugInfo(PathTracerConfig& config);
-#endif
+    void GUI(GreenhouseConfig* config) override;
 
 private:
     RtasBuilder m_rtasBuilder;
@@ -74,36 +68,8 @@ private:
     RootSig m_rootSigBlit;
     DescriptorSet m_setBlit;
 
-    // TODO: Put all this junk into its own class
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    D12Resource m_gpuErrorInfoRW, m_gpuErrorInfoReadback;
-    DebugErrorInfo m_cpuErrorInfo[_countof(s_debugIdList)] = {};
-    bool m_scheduleClearErrors = false;
-
-    RayDump m_cpuPathDump[PATH_DUMP_MAX_RAY_DEPTH] = {};
-    DebugOutputStruct m_cpuPathDumpOutputColor[PATH_DUMP_MAX_RAY_DEPTH] = {};
-    hlsl::uint2 m_dumpedPathPixelCoords = {};
-    uint32_t m_dumpedPathFrameIdx = 0;
-    XMFLOAT3 m_dumpedPathCameraPosition = {};
-    XMMATRIX m_dumpedPathViewMatrix = {};
-    D12Resource m_pathDumpBufferRW, m_pathDumpBufferReadback;
-    D12Resource m_pathDumpOCBufferRW, m_pathDumpOCBufferReadback;
-    bool m_isPathDumpAutomatic = true;
-
-    enum class ScheduledRunState
-    {
-        eIdle,
-        eRecompilePipelineAndRunFrame,
-        eRunFrame,
-        eReadbackPathDump,
-        eDisplay
-    };
-
-    hlsl::uint2 m_scheduledRunPixelCoords = {};
-    uint32_t m_scheduledRunFrameIdx = 0;
-    XMFLOAT3 m_scheduledRunCameraPosition = {};
-    XMMATRIX m_scheduledRunViewMatrix = {};
-    ScheduledRunState m_scheduledRunState = ScheduledRunState::eIdle;
+    DebugManager m_debugManager;
 #endif
 };
 

@@ -205,7 +205,6 @@ void TraceShiftedPath(
                 Lo = 0.0f;
                 isSymmetric = false;
                 DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
-                DBG_DUMP_PATH();
                 break;
             }
 

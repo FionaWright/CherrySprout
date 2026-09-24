@@ -73,28 +73,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    {
-        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
-        m_gpuErrorInfoRW.Release();
-        m_gpuErrorInfoReadback.Release();
-        m_gpuErrorInfoRW.Init_Buffer("Error Info (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false);
-        m_gpuErrorInfoReadback.Init_Buffer("Error Info (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
-    }
-
-    {
-        constexpr size_t bufferSize = sizeof(RayDump) * PATH_DUMP_MAX_RAY_DEPTH;
-        m_pathDumpBufferRW.Release();
-        m_pathDumpBufferReadback.Release();
-        m_pathDumpBufferRW.Init_Buffer("Path Dump Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_pathDumpBufferReadback.Init_Buffer("Path Dump Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
-    }
-    {
-        constexpr size_t bufferSize = sizeof(DebugOutputStruct) * PATH_DUMP_MAX_RAY_DEPTH;
-        m_pathDumpOCBufferRW.Release();
-        m_pathDumpOCBufferReadback.Release();
-        m_pathDumpOCBufferRW.Init_Buffer("Path Dump OC Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_pathDumpOCBufferReadback.Init_Buffer("Path Dump OC Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
-    }
+    m_debugManager.Init(d3d);
 #endif
 
     {
@@ -156,9 +135,9 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 6, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 7, &m_gpuErrorInfoRW, _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 8, &m_pathDumpBufferRW, PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 9, &m_pathDumpOCBufferRW, PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 7, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 8, m_debugManager.GetBufferPathDumpRW(), PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 9, m_debugManager.GetBufferPathDumpOCRW(), PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -195,86 +174,7 @@ void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_Asserts))
-    {
-        d3d->Flush();
-
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        const auto cmdList = cmdListPtr.Get();
-
-        m_gpuErrorInfoRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        m_gpuErrorInfoReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
-        cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
-
-        UploadHeap uploadHeapClear;
-        if (m_scheduleClearErrors)
-        {
-            uploadHeapClear.Init(d3d->GetDevice(), Align(m_gpuErrorInfoRW.GetIntermediateSize(), 512));
-
-            DebugErrorInfo debugErrorInfoClear{};
-            debugErrorInfoClear.ExprCounter = 0;
-            debugErrorInfoClear.NaNCounter = 0;
-            debugErrorInfoClear.InfCounter = 0;
-
-            const std::vector<DebugErrorInfo> cpuClearBuffer(_countof(s_debugIdList), debugErrorInfoClear);
-            m_gpuErrorInfoRW.UploadBuffer(cmdList, &uploadHeapClear, cpuClearBuffer.data(), bufferSize);
-
-            m_scheduleClearErrors = false;
-        }
-
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
-
-        m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
-    }
-
-#define PATH_DUMP_UPDATE_COOLDOWN 300
-
-    const bool scheduledRun = m_scheduledRunState == ScheduledRunState::eReadbackPathDump;
-    const bool needPathDump = m_isPathDumpAutomatic || scheduledRun;
-    if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_PathDumper) && needPathDump)
-    {
-        static int s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
-        if (s_pathDumpTimer > 0 && !scheduledRun)
-        {
-            s_pathDumpTimer--;
-            return;
-        }
-        s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
-
-        d3d->Flush();
-
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        const auto cmdList = cmdListPtr.Get();
-
-        m_pathDumpBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        m_pathDumpBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        m_pathDumpOCBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        m_pathDumpOCBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        constexpr size_t bufferSize = PATH_DUMP_MAX_RAY_DEPTH * sizeof(RayDump);
-        cmdList->CopyBufferRegion(m_pathDumpBufferReadback.GetResource(), 0, m_pathDumpBufferRW.GetResource(), 0, bufferSize);
-        cmdList->CopyBufferRegion(m_pathDumpOCBufferReadback.GetResource(), 0, m_pathDumpOCBufferRW.GetResource(), 0, bufferSize);
-
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
-
-        m_pathDumpBufferReadback.Readback(&m_cpuPathDump);
-        m_pathDumpOCBufferReadback.Readback(&m_cpuPathDumpOutputColor);
-
-        m_dumpedPathPixelCoords = scheduledRun ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
-        m_dumpedPathFrameIdx = scheduledRun ? m_scheduledRunFrameIdx : m_frameIdx;
-        m_dumpedPathCameraPosition = scheduledRun ? m_scheduledRunCameraPosition : renderInfo.Camera->GetPosition();
-        m_dumpedPathViewMatrix = scheduledRun ? m_scheduledRunViewMatrix : renderInfo.Camera->GetViewMatrix();
-
-        if (scheduledRun)
-            m_scheduledRunState = ScheduledRunState::eDisplay;
-    }
+    m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx);
 #endif
 }
 
@@ -296,7 +196,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 #if CHERRY_DEBUG_FEATURES_ENABLED
         if (renderInfo.PathTracerConfig->DebugInfo.Flags != 0)
         {
-            const hlsl::uint2 chosenPixelCoords = m_scheduledRunState == ScheduledRunState::eRunFrame ? m_scheduledRunPixelCoords : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
+            const hlsl::uint2 chosenPixelCoords = m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame) ? m_debugManager.GetScheduledRunPixelCoords() : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
 
             CbvPathTracingDebugSettings debugSettings{};
             debugSettings.OutputColorIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx);
@@ -323,7 +223,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 
-        if (m_scheduledRunState == ScheduledRunState::eRecompilePipelineAndRunFrame)
+        if (m_debugManager.IsScheduledRunState(ScheduledRunState::eRecompilePipelineAndRunFrame))
         {
             d3d->Flush();
             UpdatePipeline(d3d->GetDevice(),
@@ -332,16 +232,13 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
                 renderInfo.PathTracerConfig->BxdfMode,
                 renderInfo.PathTracerConfig->MicrofacetModelType);
 
-            m_scheduledRunState = ScheduledRunState::eRunFrame;
+            m_debugManager.ScheduledRunTransition(ScheduledRunState::eRunFrame);
         }
 
-        if (m_scheduledRunState == ScheduledRunState::eRunFrame)
+        if (m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame))
         {
-            settings.FrameIdx = m_scheduledRunFrameIdx;
-            settings.CameraPositionWorld = m_scheduledRunCameraPosition;
-            XMStoreFloat4x4(&settings.InvV, XMMatrixInverse(nullptr, m_scheduledRunViewMatrix));
-
-            m_scheduledRunState = ScheduledRunState::eReadbackPathDump;
+            m_debugManager.SetScheduledRunParameters(&settings);
+            m_debugManager.ScheduledRunTransition(ScheduledRunState::eReadbackPathDump);
         }
 #endif
 
@@ -398,7 +295,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     // Main Pass
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (m_scheduledRunState != ScheduledRunState::eDisplay)
+    if (!m_debugManager.IsScheduledRunState(ScheduledRunState::eDisplay))
 #endif
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
@@ -453,13 +350,8 @@ void PathTracer::UnreserveData()
     m_primal.Release();
     m_accum.Release();
     m_output.Release();
-    //m_gradientX.Release();
-    //m_gradientY.Release();
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_gpuErrorInfoRW.Release();
-    m_gpuErrorInfoReadback.Release();
-    m_pathDumpBufferRW.Release();
-    m_pathDumpBufferReadback.Release();
+    m_debugManager.UnreserveData();
 #endif
     m_isInitialized = false;
     m_currentlyLoadedScene = "";
@@ -526,7 +418,7 @@ void PathTracer::Reset()
     m_frameIdx = 0;
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (m_scheduledRunState == ScheduledRunState::eDisplay)
-        m_scheduledRunState = ScheduledRunState::eIdle;
+    if (m_debugManager.IsScheduledRunState(ScheduledRunState::eDisplay))
+        m_debugManager.ScheduledRunTransition(ScheduledRunState::eIdle);
 #endif
 }

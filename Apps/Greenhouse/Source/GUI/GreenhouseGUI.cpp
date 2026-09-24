@@ -28,6 +28,12 @@ void Greenhouse::RenderGUI()
             ImGui::EndTabItem();
         }
 
+        if (ImGui::BeginTabItem("Backend"))
+        {
+            m_currRenderBackend->GUI(&m_config);
+            ImGui::EndTabItem();
+        }
+
         ImGui::EndTabBar();
     }
 
@@ -84,10 +90,6 @@ void Greenhouse::renderGuiCore()
         ImGui::Text("Samples: %i", m_pathTracer.GetCurrentFrameIdx() * m_config.PathTracerConfig.SPP);
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
-
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    m_pathTracer.RenderGUI_DebugInfo(m_config.PathTracerConfig);
-#endif
 
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);

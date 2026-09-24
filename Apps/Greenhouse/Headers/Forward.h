@@ -25,6 +25,7 @@ public:
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle) override;
     void UnreserveData() override {};
+    void GUI(GreenhouseConfig* config) override {};
 
     size_t TotalCbvRequiredSize() override
     {
