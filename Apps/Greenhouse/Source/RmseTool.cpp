@@ -114,6 +114,12 @@ std::string RmseTool::GetSlotName(const uint32_t slotIdx) const
     return name;
 }
 
+void RmseTool::CancelOperation()
+{
+    CherryAssert(m_state != RmseToolState::eIdle);
+    TransitionState(RmseToolState::eIdle);
+}
+
 void RmseTool::TriggerStoreNextOutput()
 {
     CherryAssert(m_state == RmseToolState::eIdle);
@@ -145,16 +151,11 @@ void RmseTool::TriggerComputeSingleRMSE()
 void RmseTool::TriggerComputeConvergence(const uint32_t maxFrames, const uint32_t frameInc)
 {
     CherryAssert(m_state == RmseToolState::eIdle);
-    TransitionState(RmseToolState::eComputeConvergence);
+    TransitionState(RmseToolState::eResetPTForConvergence);
 
     m_maxFrames = maxFrames;
     m_frameInc = frameInc;
     m_rmses.clear();
-}
-
-void RmseTool::TriggerPlotConvergence(const std::string& testName)
-{
-    CherryAssert(m_state == RmseToolState::eIdle);
 }
 
 void RmseTool::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)
@@ -192,7 +193,6 @@ void RmseTool::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint
     {
         if (frameIdx > m_maxFrames)
         {
-            // TODO: Save to file
             TransitionState(RmseToolState::eIdle);
             return;
         }
@@ -210,9 +210,10 @@ void RmseTool::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint
         return;
     }
 
-    if (m_state == RmseToolState::ePlotConvergence)
+    if (m_state == RmseToolState::eResetPTForConvergence)
     {
-        // TODO
+        TransitionState(RmseToolState::eComputeConvergence);
+        return;
     }
 }
 
@@ -292,64 +293,68 @@ void RmseTool::ComputeSingleRMSE(D3D* d3d, Heap* heap)
     CherryPrint("RMSE: " << m_computedRMSE);
 }
 
-/*
-
-void RmseTool::UpdateConvergenceTest(D3D* d3d, Heap* heap, const uint32_t frameIdx, D12Resource* ptOutput)
+void RmseTool::SaveTest(const char* testName) const
 {
-    //if (currFrame - m_lastFrameConvergenceTested < m_frameIncrement)
-    //    return;
-
-    TakeSnapshot(d3d, 1, finalRTV);
-    ComputeRMSE(d3d, heap);
-    m_rmses.emplace_back(m_lastComputedRMSE);
-    m_lastFrameConvergenceTested = currFrame;
-
-    if (currFrame < m_maxFrames)
+    if (strcmp(testName, "") == 0)
+    {
+        CherryPrint("Invalid Test Name!");
         return;
-
-    const std::string filePath = wstringToString(ASSETS_SOURCE_DIR) + "/../Data/RMSEs/" + m_taskName + ".csv";
-
-    // Write RMSEs to file
-    {
-        const std::filesystem::path path = filePath;
-        std::filesystem::create_directories(path.parent_path());
-
-        std::fstream f;
-        f.open(filePath.c_str(), std::ios::binary | std::fstream::out | std::ios::trunc);
-        f.clear();
-        f << "RMSE" << std::endl;
-        for (int i = 0; i < m_rmses.size(); i++)
-            f << std::to_string(m_rmses[i]) << std::endl;
-        f.close();
     }
 
-    // Plot graph
-    if (m_plotAndShow)
+    CherryAssert(m_state == RmseToolState::eIdle);
+    CherryAssert(m_rmses.size() > 0);
+
+    std::string csvData = "RMSE\n";
+    for (size_t i = 0; i < m_rmses.size(); i++)
     {
-        std::vector<const char*> args = {
-            filePath.c_str(),
-            "--show", "--save"
-        };
-        PythonExecutor::ExecutePython("PlotConvergence.py", args);
+        csvData += std::to_string(m_rmses[i]) + "\n";
     }
 
-    m_runningConvergenceTest = false;
+    const std::string dataFilePath = std::string(BUILD_DIR) + "/Data/Temp/" + std::string(testName) + ".bin";
+
+    std::filesystem::create_directories(std::filesystem::path(dataFilePath).parent_path());
+
+    std::ofstream fs(dataFilePath, std::ios::out | std::ios::binary);
+    fs.write(csvData.data(), csvData.size());
+    fs.close();
 }
 
-void RmseTool::CompareTests(const std::vector<std::string>& testNames, const bool logPlot)
+void RmseTool::PlotConvergence(const char* testName) const
+{
+    if (strcmp(testName, "") == 0)
+    {
+        CherryPrint("Invalid Test Name!");
+        return;
+    }
+
+    CherryAssert(m_state == RmseToolState::eIdle);
+    CherryAssert(m_rmses.size() > 0);
+
+    std::string csvData = "RMSE\n";
+    for (size_t i = 0; i < m_rmses.size(); i++)
+    {
+        csvData += std::to_string(m_rmses[i]) + "\n";
+    }
+
+    const std::vector<std::string> args = { testName, "--show", "--save" };
+
+    PythonExecutor::ExecutePythonWithData("Plot1D.py", testName, csvData.c_str(), csvData.size(), args);
+}
+
+void RmseTool::PlotMultiConvergence(const std::vector<std::string>& testNames, const bool logPlot)
 {
     // Plot graph
     {
-        std::vector<const char*> args;
+        std::vector<std::string> args = { "--show", "--save" };
         for (int i = 0; i < testNames.size(); i++)
         {
-            const std::string filePath = "\"" + wstringToString(ASSETS_SOURCE_DIR) + "/../Data/RMSEs/" + testNames[i] + ".csv\"";
-            args.push_back(_strdup(filePath.c_str()));
+            const std::string dataFilePath = std::string(BUILD_DIR) + "/Data/Temp/" + std::string(testNames[i]) + ".bin";
+            args.emplace_back(dataFilePath);
         }
+
         if (logPlot)
             args.push_back("--log");
+
         PythonExecutor::ExecutePython("PlotMultiConvergence.py", args);
     }
 }
-
-*/

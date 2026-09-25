@@ -97,6 +97,5 @@ D12Resource* GradientManager::Render(const D3D* d3d, ID3D12GraphicsCommandList* 
                                 renderInfo.Heap,
                                 primal,
                                 renderInfo.PathTracerConfig->SprNumIterations,
-                                renderInfo.PathTracerConfig->SprAlpha,
-                                renderInfo.PathTracerConfig->SprJacobiCoefficient);
+                                renderInfo.PathTracerConfig->SprAlpha);
 }

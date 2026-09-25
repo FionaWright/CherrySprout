@@ -99,13 +99,30 @@ void Greenhouse::renderGuiCore()
 #endif
         ImGui::Spacing();
 
+        if (ImGui::Button("Reset Camera to Default"))
+        {
+            m_cameraController.GetCamera().SetPosition(s_sceneConfigs[m_currentSceneIdx].CameraPosition);
+            m_cameraController.GetCamera().SetRotation(s_sceneConfigs[m_currentSceneIdx].CameraPitchYaw);
+            m_renderInfo.V = m_cameraController.GetViewMatrix();
+            m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
+            m_ptFrameDirty = true;
+        }
+        if (ImGui::Button("Reset Camera to Origin"))
+        {
+            m_cameraController.GetCamera().SetPosition(0,0,0);
+            m_cameraController.GetCamera().SetRotation(0,0);
+            m_renderInfo.V = m_cameraController.GetViewMatrix();
+            m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
+            m_ptFrameDirty = true;
+        }
+        ImGui::Spacing();
+
         m_ptFrameDirty |= GuiUtils::FwInputUInt("SPP", &m_config.PathTracerConfig.SPP);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Ray Depth", &m_config.PathTracerConfig.MaxRayDepth);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Shadow Depth", &m_config.PathTracerConfig.MaxShadowRayDepth);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Frames", &m_config.PathTracerConfig.MaxFrameNumber);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("RR Min Bounces", &m_config.PathTracerConfig.RussianRouletteMinBounces);
         m_ptFrameDirty |= GuiUtils::FwInputFloat("Firefly Threshold", &m_config.PathTracerConfig.FireFlyThreshold);
-
         ImGui::Spacing();
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
@@ -299,7 +316,6 @@ void Greenhouse::renderGuiCore()
                 m_ptFrameDirty |= ImGui::Checkbox("SPR Enabled", &m_config.PathTracerConfig.PoissonReconstructionEnabled);
                 m_ptFrameDirty |= GuiUtils::FwInputUInt("SPR Iterations", &m_config.PathTracerConfig.SprNumIterations);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("SPR Alpha", &m_config.PathTracerConfig.SprAlpha);
-                m_ptFrameDirty |= GuiUtils::FwInputFloat("SPR Jacobi Coefficient", &m_config.PathTracerConfig.SprJacobiCoefficient);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

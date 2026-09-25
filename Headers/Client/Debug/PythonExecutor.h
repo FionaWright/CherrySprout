@@ -10,9 +10,9 @@
 class PythonExecutor
 {
 public:
-    static void ExecutePython(const char* pythonFile, const std::vector<const char*>& args);
-    static void ExecutePythonWithData(const char* pythonFile, const char* data, size_t size,
-                                      const std::vector<const char*>& args);
+    static void ExecutePython(const char* pythonFile, const std::vector<std::string>& args);
+    static void ExecutePythonWithData(const char* pythonFile, const char* dataFileName, const char* data, size_t size,
+                                      const std::vector<std::string>& args);
 };
 
 

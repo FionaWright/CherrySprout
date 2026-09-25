@@ -5,31 +5,37 @@
 #include "System/pch.h"
 #include "Debug/PythonExecutor.h"
 
-void PythonExecutor::ExecutePython(const char* pythonFile, const std::vector<const char*>& args)
+#include "Utils/Helper.h"
+
+void PythonExecutor::ExecutePython(const char* pythonFile, const std::vector<std::string>& args)
 {
     std::string command = "python ";
 
-    command += "\"" + std::string(SOURCE_DIR) + "/Python Scripts/" + std::string(pythonFile) + "\"";
+    command += "\"" + std::string(SOURCE_DIR) + "/Scripts/Python/" + std::string(pythonFile) + "\"";
 
     for (int i = 0; i < args.size(); i++)
         command += " " + std::string(args[i]);
 
+    CherryPrint("\n" << command << std::endl);
+
     system(command.c_str());
 }
 
-void PythonExecutor::ExecutePythonWithData(const char* pythonFile, const char* data, size_t size, const std::vector<const char*>& args)
+void PythonExecutor::ExecutePythonWithData(const char* pythonFile, const char* dataFileName, const char* data, const size_t size, const std::vector<std::string>& args)
 {
-    const std::string dataFile = std::string(BUILD_DIR) + "/Data/Temp/" + std::string(pythonFile) + ".bin";
+    const std::string dataFilePath = std::string(BUILD_DIR) + "/Data/Temp/" + std::string(dataFileName) + ".bin";
 
-    std::ofstream fs(dataFile, std::ios::out | std::ios::binary | std::ios::app);
+    std::filesystem::create_directories(std::filesystem::path(dataFilePath).parent_path());
+
+    std::ofstream fs(dataFilePath, std::ios::out | std::ios::binary);
     fs.write(data, size);
     fs.close();
 
-    std::vector<const char*> newArgs = {};
-    newArgs.emplace_back(dataFile.c_str());
+    std::vector<std::string> newArgs = {};
+    newArgs.emplace_back("\"" + dataFilePath + "\"");
 
     for (int i = 0; i < args.size(); i++)
         newArgs.emplace_back(args[i]);
 
-    ExecutePython(pythonFile, args);
+    ExecutePython(pythonFile, newArgs);
 }

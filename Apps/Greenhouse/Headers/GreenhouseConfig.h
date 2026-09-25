@@ -73,7 +73,6 @@ struct PathTracerConfig
     float DofLensRadius = 0.003f;
 
     float SprAlpha = 0.5f;
-    float SprJacobiCoefficient = 0.25f;
 
     bool PoissonReconstructionEnabled = false;
 

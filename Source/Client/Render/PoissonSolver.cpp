@@ -54,8 +54,7 @@ D12Resource* PoissonSolver::Solve(ID3D12GraphicsCommandList* cmdList,
                           const Heap* heap,
                           D12Resource* primal,
                           const uint32_t numIterations,
-                          const float alpha,
-                          const float jacobiCoefficient)
+                          const float alpha)
 {
     if (numIterations == 0)
         return primal;
@@ -69,7 +68,6 @@ D12Resource* PoissonSolver::Solve(ID3D12GraphicsCommandList* cmdList,
 
         CbvSprJacobi cbv;
         cbv.Alpha = alpha;
-        cbv.JacobiCoefficient = jacobiCoefficient;
         cbv.PrimalWidth = primal->GetDesc().Width;
         cbv.PrimalHeight = primal->GetDesc().Height;
         m_rootConstantsJacobi.Bind_Compute(cmdList, &cbv, 0);

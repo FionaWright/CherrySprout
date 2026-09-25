@@ -14,8 +14,7 @@ public:
     void Prepare(D3D* d3d, Heap* heap);
     void SetupDescriptorSets(D3D* d3d, Heap* heap, D12Resource* primal, D12Resource* gradientXF, D12Resource* gradientXB, D12Resource* gradientYF, D12Resource
                              * gradientYB);
-    D12Resource* Solve(ID3D12GraphicsCommandList* cmdList, const Heap* heap, D12Resource* primal, uint32_t numIterations, float alpha, float
-                       jacobiCoefficient);
+    D12Resource* Solve(ID3D12GraphicsCommandList* cmdList, const Heap* heap, D12Resource* primal, uint32_t numIterations, float alpha);
 
 private:
     void initResources(D3D* d3d, Heap* heap);

@@ -30,29 +30,29 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         const bool isInActiveState = m_rmseTool.GetCurrentState() != RmseToolState::eIdle;
         if (isInActiveState)
             ImGui::BeginDisabled();
-
-        if (ImGui::Button("Store PT Output"))
         {
-            m_rmseTool.TriggerStoreNextOutput();
-        }
+            if (ImGui::Button("Store PT Output"))
+            {
+                m_rmseTool.TriggerStoreNextOutput();
+            }
 
-        if (ImGui::Button("Save To File"))
-        {
-            const std::string fullPath = std::string(BUILD_DIR) + "/Snapshots/Golden/" + buff + ".hdr";
-            m_rmseTool.TriggerSaveToFile(fullPath);
-        }
+            if (ImGui::Button("Save To File"))
+            {
+                const std::string fullPath = std::string(BUILD_DIR) + "/Snapshots/Golden/" + buff + ".hdr";
+                m_rmseTool.TriggerSaveToFile(fullPath);
+            }
 
-        if (ImGui::Button("Load From File"))
-        {
-            const std::string fullPath = std::string(BUILD_DIR) + "/Snapshots/Golden/" + buff + ".hdr";
-            m_rmseTool.TriggerLoadFromFile(fullPath);
-        }
+            if (ImGui::Button("Load From File"))
+            {
+                const std::string fullPath = std::string(BUILD_DIR) + "/Snapshots/Golden/" + buff + ".hdr";
+                m_rmseTool.TriggerLoadFromFile(fullPath);
+            }
 
-        if (ImGui::Button("Compute RMSE"))
-        {
-            m_rmseTool.TriggerComputeSingleRMSE();
+            if (ImGui::Button("Compute RMSE"))
+            {
+                m_rmseTool.TriggerComputeSingleRMSE();
+            }
         }
-
         if (isInActiveState)
             ImGui::EndDisabled();
 
@@ -66,16 +66,89 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         static uint32_t frameInc = 1;
         GuiUtils::FwInputUInt("Frame Increment", &frameInc);
 
-        if (isInActiveState)
-            ImGui::BeginDisabled();
+        static char buffGraph[256];
+        ImGui::InputText("Test Name", buffGraph, 256);
 
-        if (ImGui::Button("Compute Convergence"))
+        static std::vector<std::string> testNamesForMulti;
+
+        ImGui::SameLine();
+        if (ImGui::Button("+"))
         {
-            m_rmseTool.TriggerComputeConvergence(maxFrames, frameInc);
-            ptFrameDirty = true;
+            testNamesForMulti.emplace_back(buffGraph);
+            buffGraph[0] = '\0';
         }
 
         if (isInActiveState)
+            ImGui::BeginDisabled();
+        {
+            if (ImGui::Button("Compute Convergence"))
+            {
+                m_rmseTool.TriggerComputeConvergence(maxFrames, frameInc);
+                ptFrameDirty = true;
+            }
+
+            const bool noConvergenceData = strcmp(buffGraph, "") == 0 || m_rmseTool.GetConvergenceSampleSize() == 0;
+
+            if (noConvergenceData)
+                ImGui::BeginDisabled();
+            {
+                if (ImGui::Button("Plot Convergence"))
+                {
+                    m_rmseTool.PlotConvergence(buffGraph);
+                    m_rmseTool.ClearConvergenceData();
+                }
+
+                if (ImGui::Button("Save Test"))
+                {
+                    m_rmseTool.SaveTest(buffGraph);
+                    m_rmseTool.ClearConvergenceData();
+                }
+            }
+            if (noConvergenceData)
+                ImGui::EndDisabled();
+
+            ImGui::TextUnformatted("Multi-Convergence Test List:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                for (int i = testNamesForMulti.size() - 1; i >= 0; i--)
+                {
+                    ImGui::Text("(%i) %s", i, testNamesForMulti[i].c_str());
+
+                    ImGui::SameLine();
+                    if (ImGui::Button(("-##" + testNamesForMulti[i]).c_str()))
+                    {
+                        testNamesForMulti.erase(testNamesForMulti.begin() + i);
+                    }
+                }
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+
+            if (testNamesForMulti.size() < 2)
+                ImGui::BeginDisabled();
+            {
+                static bool logPlot = false;
+                ImGui::Checkbox("Log Plot", &logPlot);
+
+                if (ImGui::Button("Plot Multi-Convergence"))
+                {
+                    m_rmseTool.PlotMultiConvergence(testNamesForMulti, logPlot);
+                }
+            }
+            if (testNamesForMulti.size() < 2)
+                ImGui::EndDisabled();
+        }
+        if (isInActiveState)
+            ImGui::EndDisabled();
+
+        if (!isInActiveState)
+            ImGui::BeginDisabled();
+        {
+            if (ImGui::Button("Cancel"))
+            {
+                m_rmseTool.CancelOperation();
+            }
+        }
+        if (!isInActiveState)
             ImGui::EndDisabled();
 
         ImGui::Spacing();

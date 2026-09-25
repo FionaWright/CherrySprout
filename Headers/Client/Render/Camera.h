@@ -20,6 +20,7 @@ public:
     [[nodiscard]] float GetYaw() const { return m_yaw; }
 
     void SetPosition(const XMFLOAT3& pos) { m_pos = pos; }
+    void SetPosition(const float x, const float y, const float z) { m_pos = XMFLOAT3(x,y,z); }
     void AddPosition(const XMFLOAT3 offset) { m_pos.x += offset.x; m_pos.y += offset.y; m_pos.z += offset.z; }
 
 private:

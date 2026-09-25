@@ -25,8 +25,8 @@ enum class RmseToolState
     eSaveToFile,
     eLoadFromFile,
     eComputeSingleRMSE,
+    eResetPTForConvergence,
     eComputeConvergence,
-    ePlotConvergence,
 };
 
 class RmseTool
@@ -53,23 +53,25 @@ public:
     void SetSelectedSlot(const uint32_t slotIdx) { m_selectedSlot = slotIdx; }
 
     std::string GetSlotName(uint32_t slotIdx) const;
+    void CancelOperation();
+
+    size_t GetConvergenceSampleSize() const { return m_rmses.size(); }
+    void ClearConvergenceData() { m_rmses.clear(); }
 
     void TriggerStoreNextOutput();
     void TriggerSaveToFile(const std::string& path);
     void TriggerLoadFromFile(const std::string& path);
     void TriggerComputeSingleRMSE();
     void TriggerComputeConvergence(uint32_t maxFrames, uint32_t frameInc);
-    void TriggerPlotConvergence(const std::string& testName);
 
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput);
 
     void ComputeSingleRMSE(D3D* d3d, Heap* heap);
+    void SaveTest(const char* testName) const;
     [[nodiscard]] float GetComputedRMSE() const { return m_computedRMSE; }
 
-    void BeginConvergenceTest(uint32_t maxFrames, const char* testName, uint32_t frameInc, bool plotAndShow);
-    void UpdateConvergenceTest(D3D* d3d, const uint32_t currFrame, Heap* heap, D12Resource* finalRTV);
-
-    //void CompareTests(const std::vector<std::string>& testNames, bool logPlot);
+    void PlotConvergence(const char* testName) const;
+    void PlotMultiConvergence(const std::vector<std::string>& testNames, bool logPlot);
 
 private:
     D12Resource m_slots[2] = {};

@@ -147,7 +147,6 @@ struct CbvSprJacobi
     hlsl::uint PrimalWidth;
     hlsl::uint PrimalHeight;
     float Alpha;
-    float JacobiCoefficient;
 };
 
 #endif
