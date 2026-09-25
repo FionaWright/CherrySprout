@@ -39,7 +39,7 @@ struct CbvPathTracingSettings
     hlsl::uint DirectNumSamples;
     hlsl::uint RestirConfidenceCap;
     hlsl::uint RestirNumCandidates;
-    float p;
+    hlsl::uint Seed;
 };
 
 struct CbvPanoToEA

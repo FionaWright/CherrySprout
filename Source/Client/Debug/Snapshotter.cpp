@@ -76,7 +76,7 @@ D12Resource Snapshotter::SnapshotToResource(D3D* d3d, const ScratchImage& scratc
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
 
-    return d12Resource;
+    return std::move(d12Resource);
 }
 
 const Image* Snapshotter::PackData(const D3D* d3d, uint8_t* data, const D12Resource* d12Resource, ScratchImage& scratch)

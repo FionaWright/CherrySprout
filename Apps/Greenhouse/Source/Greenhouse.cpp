@@ -205,7 +205,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     }
 #endif
 
-    if (m_ptFrameDirty)
+    if (m_ptFrameDirty || Input::IsKeyDown(KeyCode::R))
     {
         m_pathTracer.Reset();
         m_ptFrameDirty = false;

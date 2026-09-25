@@ -243,6 +243,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         }
 #endif
 
+        settings.Seed = renderInfo.PathTracerConfig->Seed;
         settings.MaxRayDepth = renderInfo.PathTracerConfig->MaxRayDepth;
         settings.MaxShadowRayDepth = renderInfo.PathTracerConfig->MaxShadowRayDepth;
         settings.RussianRouletteMinBounces = renderInfo.PathTracerConfig->RussianRouletteMinBounces;

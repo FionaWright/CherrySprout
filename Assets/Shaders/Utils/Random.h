@@ -22,22 +22,23 @@ inline hlsl::uint wang_hash(hlsl::uint a) {
     return a;
 }
 
-inline hlsl::uint PrngSeed(hlsl::uint2 pixel, hlsl::uint sample_i, hlsl::uint temporal_i) {
+inline hlsl::uint PrngSeed(hlsl::uint2 pixel, hlsl::uint sample_i, hlsl::uint temporal_i, hlsl::uint seed) {
     // Random big primes
     // XOR the temporal frame number to avoid accumulated patterns
     return wang_hash(
         pixel.x * 374761393u +
         pixel.y * 668265263u +
         (sample_i * 1597334677u) ^
-        (temporal_i * 3812015801u)
+        (temporal_i * 3812015801u) ^
+        (seed * 2319296101u)
     );
 }
 
-inline RngInfo InitializeRngInfo(hlsl::uint2 pixel, hlsl::uint sample_i, hlsl::uint temporal_i)
+inline RngInfo InitializeRngInfo(hlsl::uint2 pixel, hlsl::uint sample_i, hlsl::uint temporal_i, hlsl::uint seed)
 {
     RngInfo rngInfo;
     rngInfo.SampleIdx = sample_i;
-    rngInfo.IndependentRngState = PrngSeed(pixel, sample_i, temporal_i);
+    rngInfo.IndependentRngState = PrngSeed(pixel, sample_i, temporal_i, seed);
     return rngInfo;
 }
 

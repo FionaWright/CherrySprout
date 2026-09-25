@@ -35,7 +35,7 @@ void Core(uint2 pixelCoord)
 
     for (uint i = 0; i < gSettings.SPP; i++)
     {
-        const RngInfo rngInfo = InitializeRngInfo(pixelCoord, i, gSettings.FrameIdx);
+        const RngInfo rngInfo = InitializeRngInfo(pixelCoord, i, gSettings.FrameIdx, gSettings.Seed);
         DBG_OUTPUT1(Rand01_Const(rngInfo), RNG);
 
         PathSample pathSample = SamplePath(rngInfo, pixelCoord);
