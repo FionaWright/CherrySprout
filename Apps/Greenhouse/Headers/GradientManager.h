@@ -23,7 +23,13 @@ private:
     RootSig m_rootSigGradientsSS;
     DescriptorSet m_setGradientsSS;
 
+    Pipeline m_pipelineGradientsCombine;
+    RootSig m_rootSigGradientsCombine;
+    DescriptorSet m_setGradientsCombine;
+
     D12Resource m_gradientXF, m_gradientXB, m_gradientYF, m_gradientYB;
+
+    D12Resource m_debugGradientX, m_debugGradientY;
 
     PoissonSolver m_poissonSolver;
 };

@@ -79,6 +79,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     {
         m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
         m_setBlit.Init(heap);
+        m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_output, m_output.GetDesc().Format);
     }
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
@@ -327,8 +328,12 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             cmdList->SetPipelineState(m_pipelineBlit.GetPSO());
             cmdList->SetComputeRootSignature(m_rootSigBlit.Get());
 
-            m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, finalOutput, finalOutput->GetDesc().Format);
-            m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_output, m_output.GetDesc().Format);
+            if (m_setBlit.GetSRV(0) != finalOutput)
+            {
+                d3d->Flush();
+                m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, finalOutput, finalOutput->GetDesc().Format);
+            }
+
             m_setBlit.SetDescriptorTables_Compute(cmdList);
 
             DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);

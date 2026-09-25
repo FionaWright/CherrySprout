@@ -140,6 +140,6 @@ void PoissonSolver::initResources(D3D* d3d, Heap* heap)
     m_rootConstantsJacobi.Init(0, 0, sizeof(CbvSprJacobi));
     m_rootSigJacobi.SmartInit(d3d->GetDevice(), 0, 6, 2, false, nullptr, 0, &m_rootConstantsJacobi);
 
-    m_pipelineJacobiPre.InitCompute(d3d->GetDevice(), "Compute/PoissonSolvers/JacobiPreCS.hlsl", m_rootSigJacobi.Get());
-    m_pipelineJacobi.InitCompute(d3d->GetDevice(), "Compute/PoissonSolvers/JacobiCS.hlsl", m_rootSigJacobi.Get());
+    m_pipelineJacobiPre.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/PoissonSolvers/JacobiPreCS.hlsl", m_rootSigJacobi.Get());
+    m_pipelineJacobi.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/PoissonSolvers/JacobiCS.hlsl", m_rootSigJacobi.Get());
 }

@@ -316,6 +316,10 @@ void Greenhouse::renderGuiCore()
                 m_ptFrameDirty |= ImGui::Checkbox("SPR Enabled", &m_config.PathTracerConfig.PoissonReconstructionEnabled);
                 m_ptFrameDirty |= GuiUtils::FwInputUInt("SPR Iterations", &m_config.PathTracerConfig.SprNumIterations);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("SPR Alpha", &m_config.PathTracerConfig.SprAlpha);
+                ImGui::Spacing();
+
+                m_ptFrameDirty |= ImGui::Checkbox("Display Gradient X", &m_config.PathTracerConfig.DisplayGradientX);
+                m_ptFrameDirty |= ImGui::Checkbox("Display Gradient Y", &m_config.PathTracerConfig.DisplayGradientY);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

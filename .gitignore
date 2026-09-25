@@ -9,3 +9,5 @@
 
 Assets/Scenes/USD/GitIgnored/*
 !Assets/Scenes/USD/GitIgnored/.gitkeep
+
+*Plots/*

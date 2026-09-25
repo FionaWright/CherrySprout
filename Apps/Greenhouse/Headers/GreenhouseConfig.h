@@ -75,6 +75,8 @@ struct PathTracerConfig
     float SprAlpha = 0.5f;
 
     bool PoissonReconstructionEnabled = false;
+    bool DisplayGradientX = false;
+    bool DisplayGradientY = false;
 
     PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
     BxdfMode                   BxdfMode         = s_defaultBxdfMode;

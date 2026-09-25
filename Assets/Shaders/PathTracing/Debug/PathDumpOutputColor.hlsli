@@ -1,6 +1,8 @@
 #ifndef H_PATH_DUMP_OUTPUT_COLOR_H
 #define H_PATH_DUMP_OUTPUT_COLOR_H
 
+#include "PathTracing/Debug/OutputColor.h"
+
 uint GetByteOffset(uint rayIdx, uint dbgIdx)
 {
     return rayIdx * sizeof(DebugOutputStruct) + dbgIdx * sizeof(DebugOutputPair);

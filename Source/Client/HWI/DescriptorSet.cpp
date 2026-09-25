@@ -319,3 +319,11 @@ void DescriptorSet::setDescriptorTables(ID3D12GraphicsCommandList* cmdList, cons
         paramIdx++;
     }
 }
+
+D12Resource* DescriptorSet::GetSRV(const uint32_t idx) const
+{
+    if (m_srvs.size() <= idx)
+        return nullptr;
+
+    return m_srvs[idx].D12Resource;
+}

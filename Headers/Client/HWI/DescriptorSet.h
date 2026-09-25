@@ -63,6 +63,8 @@ public:
                        size_t stride);
     void SetUAV_ByteAddressBuffer(ID3D12Device* device, uint32_t uavIdx, const D12Resource* d12Resource, size_t size);
 
+    D12Resource* GetSRV(uint32_t idx) const;
+
     void SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const;
     void SetDescriptorTables_Compute(ID3D12GraphicsCommandList* cmdList) const;
 
