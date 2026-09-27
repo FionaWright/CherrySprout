@@ -8,7 +8,9 @@ D3D12 Path-Tracer Research Engine
 
 Using CMAKE, C++, HLSL and Python  
 
-Created for my bachelors final year project at Trinity College Dublin  
+Created for my bachelors final year project at Trinity College Dublin (Due April 2027)  
+
+Plan is to combine Gradient-Domain Path-Tracing with ReSTIR PT and Path-Guiding 
 
 ## Features
 
@@ -23,7 +25,6 @@ Created for my bachelors final year project at Trinity College Dublin
 
 ### Path-Tracer
 
-#### Basic
 - Determinstic
 - Jitter
 - Alpha Testing
@@ -34,16 +35,15 @@ Created for my bachelors final year project at Trinity College Dublin
 - Transmission
 - Anisotropy
 - GBuffer Pre-Pass for Primary Ray Reconstruction
-
-#### Advanced
 - Transient Rendering + Video Generator
 - Abstracted BxDF System
 - Principled BSDF
-- Environment Map + Punctual Light NEE
-- Alias Tables
+- Modular Microfacet Model System (Smith, VCavity, VNDF, Anisotropic, etc) 
+- Environment Map + Punctual Light NEE with MIS 
+- Alias Tables for fast light sampling
 - Modular Feature Flags System
 - ReSTIR DI
-- Gradient Domain Path-Tracing 
+- Gradient Domain Path-Tracing using Jacobi-Iterator Screened Poisson Reconstruction
 
 ### Debug Tools
 
@@ -53,11 +53,12 @@ Created for my bachelors final year project at Trinity College Dublin
 - Output Color System + Remaps
 - Intensity Scales System
 - Path Dumper System
-- BxDF Tests
+- BxDF Sample/Eval Tests
 - Furnance Test
 - Gizmos
+- Image Comparison / Convergence Testing Tool
 
-## Third Party
+## Third Party Dependencies 
 
 - D3D12
 - DirectXTex
