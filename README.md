@@ -43,7 +43,7 @@ Created for my bachelors final year project at Trinity College Dublin
 - Alias Tables
 - Modular Feature Flags System
 - ReSTIR DI
-- Gradient Domain Path-Tracing (WIP)
+- Gradient Domain Path-Tracing 
 
 ### Debug Tools
 
