@@ -57,6 +57,7 @@ Plan is to combine Gradient-Domain Path-Tracing with ReSTIR PT and Path-Guiding
 - Furnance Test
 - Gizmos
 - Image Comparison / Convergence Testing Tool
+- Python Plotting using Bokeh
 
 ## Third Party Dependencies 
 
@@ -66,6 +67,12 @@ Plan is to combine Gradient-Domain Path-Tracing with ReSTIR PT and Path-Guiding
 - OpenUSD
 - WinPixEventRuntime
 - ffmpeg
+
+### Python
+
+- Bokeh
+- Scipy
+- Numpy
 
 ## Images
 
