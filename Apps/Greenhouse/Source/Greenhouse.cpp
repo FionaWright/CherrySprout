@@ -323,61 +323,16 @@ void Greenhouse::PostUpdate(D3D* d3d)
 
     if (!m_scheduledSnapshotPT.empty())
     {
-        D12Resource* accum = m_pathTracer.GetTexAccum();
+        D12Resource* ptOut = m_pathTracer.GetHdrOutput();
 
-        D12Resource texGammaCorrected;
-        {
-            D3D12_STATIC_SAMPLER_DESC sampler;
-            InitializeSamplerLinearClamp(&sampler);
-
-            RootSig rootSig;
-            rootSig.SmartInit(d3d->GetDevice(), 1, 1, 1, false, &sampler, 1);
-
-            texGammaCorrected.Init_Tex2D("Accum Gamma Corrected", d3d->GetDevice(), accum->GetDesc().Width, accum->GetDesc().Height, 1, accum->GetDesc().Format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-            Pipeline pipeline;
-            pipeline.InitCompute(d3d->GetDevice(), "Compute/GammaCorrectCS.hlsl", rootSig.Get());
-
-            UploadHeap uploadHeap;
-            uploadHeap.Init(d3d->GetDevice(), Align(sizeof(CbvGammaCorrect), 256));
-
-            DescriptorSet set;
-            set.Init(&m_heap);
-            set.AddCBV(d3d->GetDevice(), sizeof(CbvGammaCorrect), &uploadHeap);
-            set.SetSRV_Tex2D(d3d->GetDevice(), 0, accum, accum->GetDesc().Format);
-            set.SetUAV_Tex2D(d3d->GetDevice(), 0, &texGammaCorrected, texGammaCorrected.GetDesc().Format);
-
-            CbvGammaCorrect cbv{};
-            cbv.Dimensions = hlsl::uint2(accum->GetDesc().Width, accum->GetDesc().Height);
-            cbv.IsToSrgb = true;
-            set.UpdateCBV(0, &cbv);
-
-            d3d->Flush();
-            const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-            const auto cmdList = cmdListPtr.Get();
-            {
-                accum->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-                m_heap.Bind(cmdList);
-                cmdList->SetComputeRootSignature(rootSig.Get());
-                cmdList->SetPipelineState(pipeline.GetPSO());
-                set.TransitionAllSRVToShaderResource(cmdList);
-                set.SetDescriptorTables_Compute(cmdList);
-
-                constexpr uint32_t THREAD_COUNTS = 16;
-                DispatchOverTexture(cmdList, THREAD_COUNTS, accum->GetDesc().Width, accum->GetDesc().Height);
-            }
-            V(cmdList->Close());
-            d3d->ExecuteCommandList(cmdList);
-            d3d->Flush();
-        }
+        d3d->Flush();
 
         uint8_t* data = nullptr;
         size_t dataSize = 0;
-        Snapshotter::ResourceToSnapshot(d3d, &texGammaCorrected, data, dataSize);
+        Snapshotter::ResourceToSnapshot(d3d, ptOut, data, dataSize);
 
         ScratchImage scratch;
-        const Image* packed = Snapshotter::PackData(d3d, data, &texGammaCorrected, scratch);
+        const Image* packed = Snapshotter::PackData(d3d, data, ptOut, scratch);
 
         ScratchImage rgba8;
         Snapshotter::SnapshotToRgba8(packed, rgba8);

@@ -47,6 +47,7 @@ public:
 
     D12Resource* GetTexPrimal() { return &m_primal; }
     D12Resource* GetTexAccum() { return &m_accum; }
+    D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
     void GUI(GreenhouseConfig* config) override;
@@ -62,7 +63,8 @@ private:
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
     D12Resource m_primal, m_accum;
-    D12Resource m_output;
+    D12Resource m_outputRgba8Unorm;
+    D12Resource* m_finalHdrOutput = nullptr;
 
     Pipeline m_pipelineBlit;
     RootSig m_rootSigBlit;

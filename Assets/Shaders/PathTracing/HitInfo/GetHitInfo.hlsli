@@ -49,6 +49,12 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     // Debug
     {
+        if (DEBUG_ENABLED(Checkerboard))
+        {
+            uint2 uvQuant = uint2(uv * 100);
+            hitInfo.Mat.Albedo.xyz = ((uvQuant.x + uvQuant.y) % 2 == 0) ? 1.0f : 0.0f;
+        }
+
         DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
         DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);
         DBG_OUTPUT3(Ns,                                                                       Normals);

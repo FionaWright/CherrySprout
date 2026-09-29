@@ -54,8 +54,8 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
-        m_output.Release();
-        m_output.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
+        m_outputRgba8Unorm.Release();
+        m_outputRgba8Unorm.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
     {
@@ -79,7 +79,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     {
         m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
         m_setBlit.Init(heap);
-        m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_output, m_output.GetDesc().Format);
+        m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_outputRgba8Unorm, m_outputRgba8Unorm.GetDesc().Format);
     }
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
@@ -175,7 +175,7 @@ void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx, &m_output);
+    m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx, &m_outputRgba8Unorm);
 #endif
 }
 
@@ -311,10 +311,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         m_frameIdx++;
     }
 
-    D12Resource* finalOutput = &m_primal;
+    m_finalHdrOutput = &m_primal;
 
     if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain))
-        finalOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
+        m_finalHdrOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
 
     // Copy to RTV
     {
@@ -323,16 +323,16 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         {
             GPU_SCOPE(cmdList, "Blit to Rgba8Unorm");
 
-            finalOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-            m_output.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_finalHdrOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            m_outputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
             cmdList->SetPipelineState(m_pipelineBlit.GetPSO());
             cmdList->SetComputeRootSignature(m_rootSigBlit.Get());
 
-            if (m_setBlit.GetSRV(0) != finalOutput)
+            if (m_setBlit.GetSRV(0) != m_finalHdrOutput)
             {
                 d3d->Flush();
-                m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, finalOutput, finalOutput->GetDesc().Format);
+                m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, m_finalHdrOutput, m_finalHdrOutput->GetDesc().Format);
             }
 
             m_setBlit.SetDescriptorTables_Compute(cmdList);
@@ -343,10 +343,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         {
             GPU_SCOPE(cmdList, "Copy to RTV");
 
-            m_output.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            m_outputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
             RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-            RTV->CopyTextureInto(cmdList, m_output.GetResource());
+            RTV->CopyTextureInto(cmdList, m_outputRgba8Unorm.GetResource());
         }
     }
 }
@@ -355,7 +355,7 @@ void PathTracer::UnreserveData()
 {
     m_primal.Release();
     m_accum.Release();
-    m_output.Release();
+    m_outputRgba8Unorm.Release();
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_debugManager.UnreserveData();
 #endif

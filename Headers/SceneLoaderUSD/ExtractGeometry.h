@@ -168,7 +168,7 @@ namespace SceneLoaderUSD
         if (stPrimvar && stPrimvar.IsDefined())
         {
             stPrimvar.Get(&uvs);
-            stPrimvar.Get(&uvIndices);
+            stPrimvar.GetIndices(&uvIndices);
             uvInterp = stPrimvar.GetInterpolation();
             hasUV = !uvs.empty();
         }
@@ -283,7 +283,6 @@ namespace SceneLoaderUSD
 
                 FaceInfo faceInfo;
                 faceInfo.faceIdx = faceIdx;
-                faceIdx++;
 
                 for (int vi : {0, v1, v2})
                 {
@@ -335,6 +334,7 @@ namespace SceneLoaderUSD
                     faceInfos.emplace_back(std::move(faceInfo));
             }
 
+            faceIdx++; // TODO: Correct?
             currVertexIndex += verticesInFace;
         }
 

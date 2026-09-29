@@ -18,3 +18,5 @@ FLAG_PROCESS(PathDumper, true)
 
 FLAG_PROCESS(Scales, true)
 FLAG_PROCESS(ForceLightIndex, true)
+
+FLAG_PROCESS(Checkerboard, true)

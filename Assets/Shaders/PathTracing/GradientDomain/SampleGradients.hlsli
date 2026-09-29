@@ -46,9 +46,9 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
     misWeight = 1.0f;
     if (isSymmetric)
     {
+        // Two estimators, forward + backward
         misWeight = BalanceHeuristicRatio(pdfRatio, 1, 1);
     }
-    //misWeight *= 0.5f;
 
     // Debug
     {

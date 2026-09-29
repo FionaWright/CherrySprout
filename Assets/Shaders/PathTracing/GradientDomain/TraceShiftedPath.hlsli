@@ -23,11 +23,13 @@ void HitShiftedUnconnected(
     float3 nextOrigin,
 
     out float3 wi,
+    out float3 L_sample,
 	out float pdf)
 {
     if (v2.Type == VertexType::eUninitialized) // (Path terminates on v1)
     {
         isSymmetric = false;
+        L_sample = 1.0f;
         wi = NAN;
         pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionUninit);
@@ -38,6 +40,7 @@ void HitShiftedUnconnected(
     if (v1.Type != shiftedType)
     {
         isSymmetric = false;
+        L_sample = 1.0f;
         wi = NAN;
         pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
@@ -78,6 +81,7 @@ void HitShiftedUnconnected(
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
+        L_sample = 1.0f;
         wi = NAN;
         pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
@@ -86,16 +90,17 @@ void HitShiftedUnconnected(
 
     wi = shiftResult.Wi;
 
+    float NdL = dot(hitInfo.Ns_ff, wi);
+
     BxDF bxdf;
     float3 f_bxdf;
     float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
-    float NdL = dot(hitInfo.Ns_ff, wi);
-    pathState.Beta *= f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
-
     if (FEATURE_ENABLED(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
+
+    L_sample = f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
 
 	pdf = shiftResult.Jacobian * pdf_bxdf;
 
@@ -211,7 +216,10 @@ void TraceShiftedPath(
             PathVertexInfo v2 = mainVertices.Array[i+1];
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
 
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, pdfShifted);
+            float3 L_sample;
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, L_sample, pdfShifted);
+
+            pathState.Beta *= L_sample;
         }
 
         DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
