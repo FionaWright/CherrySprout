@@ -243,6 +243,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         }
 #endif
 
+        if (renderInfo.PathTracerConfig->TrueRandomSeedMode)
+            renderInfo.PathTracerConfig->Seed = std::rand();
+
         settings.Seed = renderInfo.PathTracerConfig->Seed;
         settings.MaxRayDepth = renderInfo.PathTracerConfig->MaxRayDepth;
         settings.MaxShadowRayDepth = renderInfo.PathTracerConfig->MaxShadowRayDepth;

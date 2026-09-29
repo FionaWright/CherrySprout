@@ -75,6 +75,7 @@ struct PathTracerConfig
 
     float SprAlpha = 0.5f;
 
+    bool TrueRandomSeedMode = false;
     bool PoissonReconstructionEnabled = false;
     bool DisplayGradientX = false;
     bool DisplayGradientY = false;

@@ -47,7 +47,10 @@ void ApplyMaterialTextures(inout HitInfo hitInfo)
     hitInfo.Mat.Roughness *= roughnessSample;
     hitInfo.Mat.Metallic *= metallicSample;
 
-    hitInfo.Emission = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor * emissionSample.rgb;
+    if (FEATURE_ENABLED(Emission))
+        hitInfo.Emission = hitInfo.Mat.EmissiveStrength * hitInfo.Mat.EmissiveColor * emissionSample.rgb;
+    else
+        hitInfo.Emission = 0.0f;
 }
 
 void ApplyNormalMap(inout HitInfo hitInfo, inout float3 Ns)

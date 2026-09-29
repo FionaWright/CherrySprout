@@ -98,7 +98,7 @@ void HitShiftedUnconnected(
 
     pdf = shiftResult.Jacobian * pdf_bxdf;
 
-    E_indirect = f_bxdf * abs(NdL) / max(1e-6, pdf);
+    E_indirect = f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
 
     DBG_OUTPUT1(shiftResult.Jacobian, GD_Jacobian);
 

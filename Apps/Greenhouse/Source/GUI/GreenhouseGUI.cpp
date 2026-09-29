@@ -117,6 +117,7 @@ void Greenhouse::renderGuiCore()
         }
         ImGui::Spacing();
 
+        m_ptFrameDirty |= ImGui::Checkbox("True Random Seed", &m_config.PathTracerConfig.TrueRandomSeedMode);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Seed", &m_config.PathTracerConfig.Seed);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("SPP", &m_config.PathTracerConfig.SPP);
         m_ptFrameDirty |= GuiUtils::FwInputUInt("Max Ray Depth", &m_config.PathTracerConfig.MaxRayDepth);

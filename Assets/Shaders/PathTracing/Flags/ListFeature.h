@@ -20,7 +20,7 @@ FLAG_PROCESS(FireflyThreshold, true)
 FLAG_PROCESS(GammaCorrectionFast, true)
 
 FLAG_PROCESS(Anisotropy, true)
-FLAG_PROCESS(Transient, true)
+FLAG_PROCESS(Emission, true)
 
 FLAG_PROCESS(RestirDI, true)
 FLAG_PROCESS(RestirTargetVisibility, true)
@@ -29,3 +29,4 @@ FLAG_PROCESS(GradientDomain, true)
 FLAG_PROCESS(ScreenSpaceGradients, true)
 
 FLAG_PROCESS(ReconstructPrimaryRay, true)
+FLAG_PROCESS(Transient, true)
