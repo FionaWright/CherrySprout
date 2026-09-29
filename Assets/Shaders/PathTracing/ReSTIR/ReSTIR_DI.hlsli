@@ -18,7 +18,8 @@ LightSample Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info)
     BxDF bxdf;
     PathState pathState;
 
-    return SampleLight(rngInfo, info.HitInfo, pathState, bxdf, info.Dir_wo, info.HitPos, info.HitPosOffset);
+    // TODO: Careful, this function has changed a lot since. No longer does visibility tests
+    return SampleLight(rngInfo, info.HitInfo, pathState, bxdf, info.Dir_wo, info.HitPos);
 }
 
 float Target(LightSample X_i, LightSampleSelectionInfo info)

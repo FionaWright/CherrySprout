@@ -1,7 +1,7 @@
 #include "Utils/SharedUtils.h"
 #include "Utils/CBVs.h"
 #include "PathTracing/Structs.h"
-#include "PathTracing/NEE/Alias.h"
+#include "PathTracing/NEE/LSD/Alias.h"
 
 #include "Utils/Constants.h"
 

@@ -61,7 +61,7 @@ void Gui::BeginWindow(const char* name, const ImVec2& pos, const ImVec2& size)
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
     ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
-    ImGui::Begin(name, nullptr, ImGuiWindowFlags_None);
+    ImGui::Begin(name, nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 }
 
 // Called for each window within a cmdList

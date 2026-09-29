@@ -140,7 +140,7 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position)
     return sample;
 }
 
-LightSample EvaluateLight(PunctualLight light, float3 position)
+LightSample EvaluatePunctualLight(PunctualLight light, float3 position)
 {
     switch (light.Type)
     {

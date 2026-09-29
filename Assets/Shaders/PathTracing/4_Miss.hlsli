@@ -2,7 +2,7 @@
 #define H_MISS_H
 
 #include "PathTracing/MIS.hlsli"
-#include "PathTracing/NEE/SampleEnvMapCdf.hlsli"
+#include "PathTracing/NEE/LSD/SampleEnvMapCdf.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
 float3 Miss(inout PathState pathState, uint bounceIdx)

@@ -1,36 +1,13 @@
 #ifndef H_SAMPLE_LIGHT_H
 #define H_SAMPLE_LIGHT_H
 
-#include "PathTracing/MIS.hlsli"
-#include "PathTracing/NEE/BinarySearch.hlsli"
-#include "PathTracing/NEE/SampleEnvMapCdf.hlsli"
-#include "PathTracing/NEE/TraceShadowRay.hlsli"
 #include "Scene/PunctualLight.h"
 #include "Utils/Math/Punctual.hlsli"
+#include "PathTracing/MIS.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
-#if FEATURE_ENABLED_PP(AliasTables)
-void sampleLSD(float xi, out uint lightIdx, out float pdf)
-{
-    uint lightCount, _;
-    gLightAliasTable.GetDimensions(lightCount, _);
-
-    xi *= lightCount;
-    uint xiIdx = floor(xi);
-    float xi01 = frac(xi);
-
-    AliasEntry entry = gLightAliasTable[xiIdx];
-    lightIdx = xi01 < entry.Threshold ? xiIdx : entry.Alias;
-
-    pdf = gLightAliasTable[lightIdx].PDF;
-}
-#else
-void sampleLSD(float xi, out uint lightIdx, out float pdf)
-{
-    lightIdx = BinarySearch(gLightCDF, xi);
-    pdf = gLightCDF[lightIdx].PDF;
-}
-#endif
+#include "PathTracing/NEE/TraceShadowRay.hlsli"
+#include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 
 LightSample SampleLight(
     inout RngInfo rngInfo,
@@ -39,25 +16,11 @@ LightSample SampleLight(
     BxDF bxdf,
 
     float3 wo,
-    float3 hitPos,
-    float3 nextOrigin
-)
+    float3 hitPos)
 {
     uint lightIdx;
     float pdf_lsd;
-
-    if (DEBUG_ENABLED(ForceLightIndex) && gDebugSettings.ForcedLightIndex != -1)
-    {
-        lightIdx = gDebugSettings.ForcedLightIndex;
-        pdf_lsd = 1.0f;
-    }
-    else
-    {
-        float xi = Rand01(rngInfo);
-        sampleLSD(xi, lightIdx, pdf_lsd);
-
-        DBG_OUTPUT1(xi, NEE_xi);
-    }
+    SampleLSD(rngInfo, lightIdx, pdf_lsd);
 
     LightSample lightSample;
 
@@ -91,7 +54,7 @@ LightSample SampleLight(
         uint punctualLightIdx = lightIdx - 1;
         PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];
 
-        lightSample = EvaluateLight(light, hitPos);
+        lightSample = EvaluatePunctualLight(light, hitPos);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
 
         lightSample.PDF = pdf_lsd;
@@ -105,6 +68,56 @@ LightSample SampleLight(
     DBG_OUTPUT1(lightSample.Distance, NEE_Distance);
     DBG_OUTPUT3(lightSample.Direction, NEE_L_w);
     DBG_OUTPUT1(lightSample.PDF, NEE_PDF);
+
+    return lightSample;
+}
+
+LightSample EvaluateLight(
+    HitInfo hitInfo,
+    PathState pathState,
+    BxDF bxdf,
+
+    uint lightIdx,
+    float3 wi,
+
+    float3 wo,
+    float3 hitPos)
+{
+    float pdf_lsd;
+    EvaluateLSD(lightIdx, pdf_lsd);
+
+    LightSample lightSample;
+
+    if (lightIdx == 0)
+    {
+        DBG_ASSERT_EXPR(FEATURE_ENABLED(EnvironmentMap), DISABLED_LIGHT_INDEX);
+
+        float2 uv_env = EaSphereToSquare(wi);
+
+        lightSample.Radiance = gTexEnvMap.Sample(gSampler, uv_env).rgb;
+        DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
+
+        float pdf_env = GetEnvMapPdf(uv_env);
+        lightSample.PDF = pdf_env * pdf_lsd;
+
+        lightSample.Direction = wi;
+        lightSample.Distance = INF;
+        lightSample.IsDelta = false;
+    }
+    else
+    {
+        uint punctualLightIdx = lightIdx - 1;
+        PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];
+
+        lightSample = EvaluatePunctualLight(light, hitPos);
+        DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
+
+        lightSample.PDF = pdf_lsd;
+
+        lightSample.IsDelta = true;
+    }
+
+    lightSample.Index = lightIdx;
 
     return lightSample;
 }

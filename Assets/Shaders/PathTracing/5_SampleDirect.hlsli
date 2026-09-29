@@ -17,13 +17,11 @@ float3 SampleDirectLighting(
     float3 hitPos,
     float3 nextOrigin,
 
-    out float pdf)
+    inout PathVertexInfo currentVertexInfo)
 {
     float3 E_direct = 0;
 
     LightSample lightSample = (LightSample)0;
-
-    pdf = NAN; // TODO
 
     if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
     {
@@ -31,8 +29,20 @@ float3 SampleDirectLighting(
     }
     else
     {
-        E_direct += SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample);
+        float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample);
+
+        if (DEBUG_ENABLED(NeeTestRevaluate))
+        {
+            float _;
+            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample.Index, lightSample.Direction, _);
+        }
+
+        E_direct += L_nee;
     }
+
+    currentVertexInfo.PDF *= lightSample.PDF;
+    currentVertexInfo.NeeLightIdx = lightSample.Index;
+    currentVertexInfo.NeeLightDirection = lightSample.Direction;
 
     if (FEATURE_ENABLED(Transient))
     {

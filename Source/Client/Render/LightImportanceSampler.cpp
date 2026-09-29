@@ -6,7 +6,7 @@
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
 #include "HWI/UploadHeap.h"
-#include "PathTracing/NEE/Alias.h"
+#include "PathTracing/NEE/LSD/Alias.h"
 #include "Render/EnvironmentMap.h"
 #include "Scene/Scene.h"
 #include "Utils/CBVs.h"

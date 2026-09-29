@@ -6,7 +6,7 @@
 #include "Utils/Constants.h"
 #include "Utils/SharedUtils.h"
 
-#include "PathTracing/NEE/BinarySearch.hlsli"
+#include "PathTracing/NEE/LSD/BinarySearch.hlsli"
 
 void SampleEnvMapCdf(float xi1, float xi2, out float2 uv, out float3 wi, out float pdf)
 {

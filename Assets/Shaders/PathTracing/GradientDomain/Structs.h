@@ -24,7 +24,12 @@ struct PathVertexInfo
     float Eta;
 
     hlsl::float3 IndirectContribution;
-    float PDF;
+    hlsl::float3 DirectContribution;
+    float PDF_Bxdf;
+    float PDF; // BXDF + NEE
+
+    hlsl::uint NeeLightIdx;
+    hlsl::float3 NeeLightDirection;
 };
 
 #define PATH_MAX_VERTICES 16 // TODO
@@ -49,5 +54,12 @@ inline bool GetIsVertexDiffuse(const float roughness)
 {
     return (roughness >= GDPT_VERTEX_DIFFUSE_THRESHOLD);
 }
+
+enum class ReconnectionState : hlsl::uint
+{
+    eUnconnected,
+    eSemiConnected,  // Connected but has different wo so needs BxDF evals
+    eConnected,      // Can reuse Hit contribution
+};
 
 #endif

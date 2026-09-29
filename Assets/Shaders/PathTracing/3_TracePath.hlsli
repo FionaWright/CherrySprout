@@ -64,6 +64,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         float3 L_sample;
         PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
+        currentVertexInfo.PDF = 1.0f;
         Hit(pathState, rngInfo, hitInfo, pixelCoord, L_sample, currentVertexInfo);
 
         if (FEATURE_ENABLED(GradientDomain))

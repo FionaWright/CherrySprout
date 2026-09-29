@@ -18,7 +18,7 @@ void Hit(inout PathState pathState,
         uint2 pixelCoord,
 
         out float3 L_sample,
-        out PathVertexInfo currentVertexInfo)
+        inout PathVertexInfo currentVertexInfo)
 {
     float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
     float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
@@ -29,13 +29,12 @@ void Hit(inout PathState pathState,
 
     BxDF bxdf;
 
+    float3 E_direct = 0;
     if (FEATURE_ENABLED(NEE))
     {
-        float3 E_direct = 0;
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            float pdf; // Unused
-            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, pdf);
+            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, currentVertexInfo);
         }
 
         L_sample += E_direct * pathState.Beta / float(gSettings.DirectNumSamples);
@@ -65,7 +64,9 @@ void Hit(inout PathState pathState,
         currentVertexInfo.Wi = wi;
         currentVertexInfo.Eta = eta;
         currentVertexInfo.IndirectContribution = E_indirect;
-        currentVertexInfo.PDF = pdf_bxdf; // TODO: ?
+        currentVertexInfo.DirectContribution = E_direct;
+        currentVertexInfo.PDF_Bxdf = pdf_bxdf;
+        currentVertexInfo.PDF *= pdf_bxdf;
     }
 }
 

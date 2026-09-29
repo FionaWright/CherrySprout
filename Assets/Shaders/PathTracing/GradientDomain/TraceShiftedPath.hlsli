@@ -1,108 +1,8 @@
 #ifndef H_TRACE_SHIFTED_RAY_H
 #define H_TRACE_SHIFTED_RAY_H
 
-#include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
+#include "PathTracing/GradientDomain/HitShiftedUnconnected.hlsli"
 #include "Utils/Debug/Palette.h"
-
-enum class ReconnectionState : uint
-{
-    eUnconnected,
-    eSemiConnected,  // Connected but has different wo so needs BxDF evals
-    eConnected,      // Can reuse Hit contribution
-};
-
-void HitShiftedUnconnected(
-    inout ReconnectionState reconnectionState,
-    inout bool isSymmetric,
-    inout PathState pathState,
-
-    PathVertexInfo v1,
-    PathVertexInfo v2,
-    HitInfo hitInfo,
-    float3 wo,
-    float3 nextOrigin,
-
-    out float3 wi,
-    out float3 E_indirect,
-    inout float jacobian,
-	out float pdf_bxdf)
-{
-    if (v2.Type == VertexType::eUninitialized || v2.Type == VertexType::eGlossy) // (Path terminates on v1)
-    {
-        isSymmetric = false;
-        E_indirect = 1.0f;
-        wi = NAN;
-        pdf_bxdf = NAN;
-        DBG_OUTPUT1(1.0f, GD_RejectionUninit);
-        return;
-    }
-
-    VertexType shiftedType = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-    if (v1.Type != shiftedType)
-    {
-        isSymmetric = false;
-        E_indirect = 1.0f;
-        wi = NAN;
-        pdf_bxdf = NAN;
-        DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
-        return;
-    }
-
-    ShiftResult shiftResult;
-
-    if (v1.Type == VertexType::eDiffuse)
-    {
-        if (v2.Type == VertexType::eDiffuse)
-        {
-            shiftResult = ShiftReconnect(v1.Position, nextOrigin, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
-        }
-        else if (v2.Type == VertexType::eEnvironment)
-        {
-            shiftResult = ShiftReconnectEnvironment(nextOrigin, hitInfo.Ns_ff, v1.Wi);
-        }
-
-        reconnectionState = ReconnectionState::eSemiConnected;
-    }
-    else if (v1.Type == VertexType::eGlossy)
-    {
-        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
-        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
-        float eta = iorNCurrent / iorNNext;
-
-        // Half-Vector shift can also be achieved by copying rngInfo and sampling BxDF, but this seems more complex
-        shiftResult = ShiftHalfVector(v1.SFrame, hitInfo.SFrame, v1.Wi, v1.Wo, wo, v1.Eta, eta);
-    }
-    else
-        DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
-
-    if (!shiftResult.IsSuccessful)
-    {
-        isSymmetric = false;
-        E_indirect = 1.0f;
-        wi = NAN;
-        pdf_bxdf = NAN;
-        DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
-        return;
-    }
-
-    wi = shiftResult.Wi;
-    jacobian *= shiftResult.Jacobian;
-
-    float NdL = dot(hitInfo.Ns_ff, wi);
-
-    BxDF bxdf;
-    float3 f_bxdf;
-    bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
-
-    if (FEATURE_ENABLED(NEE))
-        pathState.LastBxdfPdf = pdf_bxdf;
-
-    E_indirect = f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
-
-    DBG_OUTPUT1(shiftResult.Jacobian, GD_Jacobian);
-
-    // TODO: Direct lighting
-}
 
 void TraceShiftedPath(
     PathVertexList mainVertices,
@@ -175,11 +75,15 @@ void TraceShiftedPath(
         if (reconnectionState == ReconnectionState::eConnected)
         {
             wi = v1.Wi;
-            pathState.Beta *= v1.IndirectContribution;
-			pdfShifted = v1.PDF; // Note: PDFs match, ratio unchanged
 
             if (FEATURE_ENABLED(NEE))
-                pathState.LastBxdfPdf = NAN;
+            {
+                L_sample += v1.DirectContribution * pathState.Beta;
+                pathState.LastBxdfPdf = v1.PDF_Bxdf;
+            }
+
+            pathState.Beta *= v1.IndirectContribution;
+			pdfShifted = v1.PDF;
         }
         else if (reconnectionState == ReconnectionState::eSemiConnected)
         {
@@ -190,11 +94,14 @@ void TraceShiftedPath(
             float pdf_bxdf;
             bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
+            if (FEATURE_ENABLED(NEE))
+            {
+                L_sample += v1.DirectContribution * pathState.Beta;
+                pathState.LastBxdfPdf = pdf_bxdf;
+            }
+
             float NdL = dot(hitInfo.Ns_ff, wi);
             pathState.Beta *= f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
-
-            if (FEATURE_ENABLED(NEE))
-                pathState.LastBxdfPdf = pdf_bxdf;
 
 			pdfShifted = pdf_bxdf;
 
@@ -214,7 +121,7 @@ void TraceShiftedPath(
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
 
             float3 E_indirect;
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, E_indirect, jacobian, pdfShifted);
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, hitPos, nextOrigin, wi, E_indirect, jacobian, pdfShifted);
 
             pathState.Beta *= E_indirect;
         }
