@@ -7,6 +7,11 @@
 
 float3 Miss(inout PathState pathState, uint bounceIdx)
 {
+    if (DEBUG_ENABLED(FurnaceTestHHE))
+        return 0.0f;
+    if (DEBUG_ENABLED(FurnaceTestHDR))
+        return 1.0f;
+
     float3 Li = float3(0, 0, 0);
 
     if (FEATURE_ENABLED(EnvironmentMap))

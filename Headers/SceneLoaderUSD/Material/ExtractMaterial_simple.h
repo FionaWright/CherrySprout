@@ -114,13 +114,16 @@ namespace SceneLoaderUSD
         };
 
         readFloat3                  ("diffuseColor",        &material.Albedo);
-        readFloat3                  ("emissiveColor",       &material.EmissiveColor);
+        bool emissiveColorFilled = readFloat3                  ("emissiveColor",       &material.EmissiveColor);
         readFloat3                  ("transmissionColor",   &material.TransmissionColor);
 
         readFloatAssignedTexture    ("roughness",           material.TexIdxRoughness,           material.Roughness);
         readFloatAssignedTexture    ("metallic",            material.TexIdxMetallic,            material.Metallic);
-        readFloatAssignedTexture    ("emissiveStrength",    material.TexIdxEmissive,    material.EmissiveStrength);
+        bool emissiveStrengthFilled = readFloatAssignedTexture    ("emissiveStrength",    material.TexIdxEmissive,            material.EmissiveStrength);
         readFloatAssignedTexture    ("transmission",        material.TexIdxTransmissionFactor,  material.TransmissionFactor);
+
+        if (!emissiveStrengthFilled && emissiveColorFilled)
+            material.EmissiveStrength = 1.0f;
 
         readFloat                   ("specularFactor",  material.SpecularFactor);
         readFloat                   ("anisoStrength",   material.AnisoStrength);

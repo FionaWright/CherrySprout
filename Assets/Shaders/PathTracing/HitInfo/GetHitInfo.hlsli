@@ -55,6 +55,18 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
             hitInfo.Mat.Albedo.xyz = ((uvQuant.x + uvQuant.y) % 2 == 0) ? 1.0f : 0.0f;
         }
 
+        if (DEBUG_ENABLED(FurnaceTestHHE))
+        {
+            hitInfo.Mat.Albedo.xyz = 1.0f;
+            hitInfo.Emission = 0.0f;
+        }
+
+        if (DEBUG_ENABLED(FurnaceTestHDR))
+        {
+            hitInfo.Mat.Albedo.xyz = 0.0f;
+            hitInfo.Emission = 1.0f;
+        }
+
         DBG_OUTPUT3(Palette(instanceIdx),                                                     InstanceIdx);
         DBG_OUTPUT3(Palette(instance.MaterialIndex),                                          MaterialIdx);
         DBG_OUTPUT3(Ns,                                                                       Normals);

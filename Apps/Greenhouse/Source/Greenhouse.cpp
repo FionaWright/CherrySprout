@@ -205,7 +205,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     }
 #endif
 
-    if (m_ptFrameDirty || Input::IsKeyDown(KeyCode::R))
+    const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
+    if (m_ptFrameDirty || (!inTextField && Input::IsKeyDown(KeyCode::R)))
     {
         m_pathTracer.Reset();
         m_ptFrameDirty = false;

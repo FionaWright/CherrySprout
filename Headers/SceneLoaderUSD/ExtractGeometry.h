@@ -334,7 +334,7 @@ namespace SceneLoaderUSD
                     faceInfos.emplace_back(std::move(faceInfo));
             }
 
-            faceIdx++; // TODO: Correct?
+            faceIdx++;
             currVertexIndex += verticesInFace;
         }
 

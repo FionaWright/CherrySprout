@@ -75,13 +75,13 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
 
+        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+
         if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
         {
             DBG_OUTPUT1(1.0f, KilledByBetaLoss);
             break;
         }
-
-        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
 
