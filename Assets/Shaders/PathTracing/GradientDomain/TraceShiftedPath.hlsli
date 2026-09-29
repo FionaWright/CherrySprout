@@ -24,14 +24,15 @@ void HitShiftedUnconnected(
 
     out float3 wi,
     out float3 E_indirect,
-	out float pdf)
+    inout float jacobian,
+	out float pdf_bxdf)
 {
     if (v2.Type == VertexType::eUninitialized || v2.Type == VertexType::eGlossy) // (Path terminates on v1)
     {
         isSymmetric = false;
         E_indirect = 1.0f;
         wi = NAN;
-        pdf = NAN;
+        pdf_bxdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionUninit);
         return;
     }
@@ -42,7 +43,7 @@ void HitShiftedUnconnected(
         isSymmetric = false;
         E_indirect = 1.0f;
         wi = NAN;
-        pdf = NAN;
+        pdf_bxdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
         return;
     }
@@ -79,24 +80,22 @@ void HitShiftedUnconnected(
         isSymmetric = false;
         E_indirect = 1.0f;
         wi = NAN;
-        pdf = NAN;
+        pdf_bxdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
         return;
     }
 
     wi = shiftResult.Wi;
+    jacobian *= shiftResult.Jacobian;
 
     float NdL = dot(hitInfo.Ns_ff, wi);
 
     BxDF bxdf;
     float3 f_bxdf;
-    float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
     if (FEATURE_ENABLED(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
-
-    pdf = shiftResult.Jacobian * pdf_bxdf;
 
     E_indirect = f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
 
@@ -112,6 +111,7 @@ void TraceShiftedPath(
     int2 pixelCoord,
 
     out float3 Lo,
+    out float jacobian,
     inout float pdfRatio,
     out bool isSymmetric)
 {
@@ -119,6 +119,7 @@ void TraceShiftedPath(
 
     ReconnectionState reconnectionState = ReconnectionState::eUnconnected;
     isSymmetric = true;
+    jacobian = 1.0f;
 
     PathState pathState = CreatePathState(origin, dir);
 
@@ -213,7 +214,7 @@ void TraceShiftedPath(
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
 
             float3 E_indirect;
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, E_indirect, pdfShifted);
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, E_indirect, jacobian, pdfShifted);
 
             pathState.Beta *= E_indirect;
         }

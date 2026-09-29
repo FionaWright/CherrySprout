@@ -33,6 +33,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
 	float pdfRatio = 1.0f; // Shifted / Main
     DBG_OUTPUT1(pdfRatio, GD_PrimaryPdfRatio);
 
+    float jacobian;
     bool isSymmetric;
     TraceShiftedPath(
         mainPath.VertexList,
@@ -40,8 +41,12 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         shiftedRayDirection,
         shiftedCoord,
         Lo,
+        jacobian,
         pdfRatio,
         isSymmetric);
+
+    Lo *= jacobian;
+    pdfRatio *= jacobian;
 
     misWeight = 1.0f;
     if (isSymmetric)
