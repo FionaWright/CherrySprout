@@ -51,6 +51,8 @@ void Gui::BeginFrame()
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+
+    ImGui::GetStyle().WindowRounding = 0.0f;
 }
 
 // Called for each window within a cmdList
@@ -60,7 +62,6 @@ void Gui::BeginWindow(const char* name, const ImVec2& pos, const ImVec2& size)
     ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
     ImGui::Begin(name, nullptr, ImGuiWindowFlags_None);
-    //ms_windowSize = ImGui::GetWindowSize();
 }
 
 // Called for each window within a cmdList

@@ -322,7 +322,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
         }
     }
 
-    if (!m_scheduledSnapshotPT.empty())
+    if (!m_scheduledSnapshotPT.empty() && m_pathTracer.GetHdrOutput())
     {
         D12Resource* ptOut = m_pathTracer.GetHdrOutput();
 

@@ -23,13 +23,13 @@ void HitShiftedUnconnected(
     float3 nextOrigin,
 
     out float3 wi,
-    out float3 L_sample,
+    out float3 E_indirect,
 	out float pdf)
 {
-    if (v2.Type == VertexType::eUninitialized) // (Path terminates on v1)
+    if (v2.Type == VertexType::eUninitialized || v2.Type == VertexType::eGlossy) // (Path terminates on v1)
     {
         isSymmetric = false;
-        L_sample = 1.0f;
+        E_indirect = 1.0f;
         wi = NAN;
         pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionUninit);
@@ -40,7 +40,7 @@ void HitShiftedUnconnected(
     if (v1.Type != shiftedType)
     {
         isSymmetric = false;
-        L_sample = 1.0f;
+        E_indirect = 1.0f;
         wi = NAN;
         pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
@@ -58,10 +58,6 @@ void HitShiftedUnconnected(
         else if (v2.Type == VertexType::eEnvironment)
         {
             shiftResult = ShiftReconnectEnvironment(nextOrigin, hitInfo.Ns_ff, v1.Wi);
-        }
-        else if (v2.Type == VertexType::eGlossy)
-        {
-            // TODO
         }
 
         reconnectionState = ReconnectionState::eSemiConnected;
@@ -81,7 +77,7 @@ void HitShiftedUnconnected(
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
-        L_sample = 1.0f;
+        E_indirect = 1.0f;
         wi = NAN;
         pdf = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
@@ -100,9 +96,9 @@ void HitShiftedUnconnected(
     if (FEATURE_ENABLED(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
 
-    L_sample = f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
+    pdf = shiftResult.Jacobian * pdf_bxdf;
 
-	pdf = shiftResult.Jacobian * pdf_bxdf;
+    E_indirect = f_bxdf * abs(NdL) / max(1e-6, pdf);
 
     DBG_OUTPUT1(shiftResult.Jacobian, GD_Jacobian);
 
@@ -216,15 +212,18 @@ void TraceShiftedPath(
             PathVertexInfo v2 = mainVertices.Array[i+1];
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
 
-            float3 L_sample;
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, L_sample, pdfShifted);
+            float3 E_indirect;
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, E_indirect, pdfShifted);
 
-            pathState.Beta *= L_sample;
+            pathState.Beta *= E_indirect;
         }
 
         DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
 
         if (pdfMain <= 0.0f || pdfShifted <= 0.0f)
+            isSymmetric = false;
+
+        if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
             isSymmetric = false;
 
         if (!isSymmetric)

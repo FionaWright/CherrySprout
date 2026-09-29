@@ -11,7 +11,7 @@ FLAG_PROCESS(DepthOfField, true)
 FLAG_PROCESS(RussianRoulette, true)
 
 FLAG_PROCESS(AlphaTesting, true)
-FLAG_PROCESS(GlassMaterials, true)
+FLAG_PROCESS(Transmission, true)
 
 FLAG_PROCESS(NEE, true)
 FLAG_PROCESS(AliasTables, false) // !

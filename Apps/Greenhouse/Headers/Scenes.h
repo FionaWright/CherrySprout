@@ -54,8 +54,10 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     {
         .Name = "Quad",
         .Filepath = "Scenes/USD/Quad/Quad.usda",
-        .CameraPosition = {1.5, 0.0, 0.0},
-        .CameraPitchYaw = {0.0, -PI/2},
+        //.CameraPosition = {1.5, 0.0, 0.0},
+        //.CameraPitchYaw = {0.0, -PI/2},
+        .CameraPosition = {0.144306, 0.518994, 0.201417},
+        .CameraPitchYaw = {0.020000, -0.860796},
         .SceneScale = 1.0f
     },
 

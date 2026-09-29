@@ -155,6 +155,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
     if (NdL <= 0.0f)
     {
         result.IsSuccessful = false;
+        result.Jacobian = 1.0f;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingEnvNdL);
         return result;
     }
@@ -165,6 +166,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
     if (occluded)
     {
         result.IsSuccessful = false;
+        result.Jacobian = 1.0f;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingEnvOcc);
         return result;
     }

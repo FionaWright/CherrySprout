@@ -86,7 +86,7 @@ void BxDF::Sample(
     DBG_OUTPUT1(mm.m_alpha,                      BxDF_Alpha);
     DBG_OUTPUT1(mm.D(H_s),                       BxDF_D);
 
-    if (FEATURE_ENABLED(GlassMaterials) && isTransmission)
+    if (FEATURE_ENABLED(Transmission) && isTransmission)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -167,7 +167,7 @@ void BxDF::Sample(
         DBG_ASSERT_VALUE(L_s,         BxDF_PBR_Diff_L_S);
     }
 
-    if (FEATURE_ENABLED(GlassMaterials))
+    if (FEATURE_ENABLED(Transmission))
         pdf *= 1.0f - hitInfo.Mat.TransmissionFactor;
 
     wi = hitInfo.SFrame.ToWorld(L_s);
@@ -217,7 +217,7 @@ void BxDF::Evaluate(
     f = 0;
     pdf = 0;
 
-    if (FEATURE_ENABLED(GlassMaterials) && hitInfo.Mat.TransmissionFactor > 0)
+    if (FEATURE_ENABLED(Transmission) && hitInfo.Mat.TransmissionFactor > 0)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -324,7 +324,7 @@ void BxDF::Evaluate(
         }
     }
 
-    if (FEATURE_ENABLED(GlassMaterials))
+    if (FEATURE_ENABLED(Transmission))
     {
         f_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;
         pdf_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;
