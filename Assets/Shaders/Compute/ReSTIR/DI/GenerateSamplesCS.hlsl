@@ -19,7 +19,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
 
-    RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx);
+    RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     rngInfo.IndependentRngState ^= SEED_DECORRELATOR;
 
     HitInfo hitInfo;

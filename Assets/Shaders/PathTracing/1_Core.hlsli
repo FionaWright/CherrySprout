@@ -22,9 +22,7 @@ void Core(uint2 pixelCoord)
 
     if (gSettings.IsMaxFramesReached)
     {
-        float3 average = gTexAccumulation[pixelCoord].rgb;
-        average = pow(average, 1.0f/2.2f);
-        gTexPrimal[pixelCoord].rgb = average;
+        gTexPrimal[pixelCoord].rgb = gTexAccumulation[pixelCoord].rgb;
         return;
     }
 
