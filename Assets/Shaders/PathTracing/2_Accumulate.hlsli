@@ -64,6 +64,18 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
 
 void AccumulateGradientsAndFetch(uint2 pixelCoord, Gradients gradients)
 {
+    if (DEBUG_ENABLED(NaNTests))
+    {
+        if (IsNaN3(gradients.XForward) || IsNaN3(gTexGradientXF[pixelCoord].rgb))
+            gradients.XForward = GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
+        if (IsNaN3(gradients.XBackward) || IsNaN3(gTexGradientXB[pixelCoord].rgb))
+            gradients.XBackward = GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
+        if (IsNaN3(gradients.YForward) || IsNaN3(gTexGradientYF[pixelCoord].rgb))
+            gradients.YForward = GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
+        if (IsNaN3(gradients.YBackward) || IsNaN3(gTexGradientYB[pixelCoord].rgb))
+            gradients.YBackward = GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
+    }
+
     if (!FEATURE_ENABLED(Accumulation) || gSettings.FrameIdx == 0)
     {
         gTexGradientXF[pixelCoord].rgb = gradients.XForward;

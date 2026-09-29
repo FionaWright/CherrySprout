@@ -31,13 +31,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (gTotalLums.PunctualTotalLuminance == 0.0f)
         punctualLightCount = 0;
 
-    float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000; // TODO: Figure out better weight
-    // Use 50/50 split between env map and others?
-
-    float totalLuminance = gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance;
+    float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000;
+    float maxEnvMapLuminance = 0.5f * (gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance);
+    float envMapWeight = max(maxEnvMapLuminance, averageEnvMapLuminance);
+    float totalLuminance = gTotalLums.PunctualTotalLuminance + envMapWeight;
 
     // Env Map assigned to Idx 0
-    float envMapPDF = averageEnvMapLuminance / totalLuminance;
+    float envMapPDF = envMapWeight / totalLuminance;
     gAliasTable[idx].PDF = envMapPDF;
     gAliasTable[idx].Alias = -1;
     rollingSum += envMapPDF;

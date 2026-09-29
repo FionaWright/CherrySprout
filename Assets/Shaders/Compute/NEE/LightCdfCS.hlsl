@@ -35,16 +35,12 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float delta = 1.0f / (punctualLightCount + 1);
 
-    float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000; // TODO: Figure out better weight
-    // Use 50/50 split between env map and others?
-
-    //float totalLuminance = gTotalLums.PunctualTotalLuminance + ENV_MAP_IMPORTANCE_RADIANT_INTENSITY;
-    //float totalLuminance = gTotalLums.PunctualTotalLuminance + gTotalLums.EnvMapTotalLuminance;
-    float totalLuminance = gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance;
+    float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000;
+    float maxEnvMapLuminance = 0.5f * (gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance);
+    float envMapWeight = max(maxEnvMapLuminance, averageEnvMapLuminance);
+    float totalLuminance = gTotalLums.PunctualTotalLuminance + envMapWeight;
 
     // Env Map assigned to Idx 0
-    //float envMapPDF = ENV_MAP_IMPORTANCE_RADIANT_INTENSITY * delta / totalLuminance;
-    //float envMapPDF = gTotalLums.EnvMapTotalLuminance * delta / totalLuminance;
     float envMapPDF = averageEnvMapLuminance * delta / totalLuminance;
     AddCdfPdf(envMapPDF, rollingSum, idx);
 
