@@ -21,7 +21,7 @@ public:
     uint32_t GetNextDescriptorIdx_SceneTexture(const char* debugName = nullptr);
     uint32_t AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* resource);
     void FreeSceneTextures();
-    [[nodiscard]] uint32_t GetBindlessTexBase() const { return m_baseSceneTextures; }
+    [[nodiscard]] uint32_t GetBindlessTexBase() const { return static_cast<uint32_t>(m_baseSceneTextures); }
 
     void Bind(ID3D12GraphicsCommandList* cmdList) const;
     void BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList, uint32_t paramIdx) const;
@@ -34,8 +34,8 @@ public:
     [[nodiscard]] D3D12_DESCRIPTOR_HEAP_TYPE GetType() const { return m_type; }
     [[nodiscard]] const std::vector<const char*>& GetDebugDescriptorList() const { return m_debugDescriptorNames; }
     [[nodiscard]] const std::vector<const char*>& GetDebugDescriptorListBindless() const { return m_debugDescriptorNamesBindless; }
-    [[nodiscard]] uint32_t GetCurrBindedDescriptorCount() const { return m_currentHeapIndex; }
-    [[nodiscard]] uint32_t GetCurrBindlessDescriptorCount() const { return m_currentHeapIndexSceneTextures - m_baseSceneTextures; }
+    [[nodiscard]] uint32_t GetCurrBindedDescriptorCount() const { return static_cast<uint32_t>(m_currentHeapIndex); }
+    [[nodiscard]] uint32_t GetCurrBindlessDescriptorCount() const { return static_cast<uint32_t>(m_currentHeapIndexSceneTextures - m_baseSceneTextures); }
 
 private:
     std::string m_name;

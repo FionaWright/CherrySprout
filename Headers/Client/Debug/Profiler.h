@@ -5,7 +5,7 @@
 #ifndef H_PROFILER_H
 #define H_PROFILER_H
 
-#ifndef _DEBUG
+#if NDEBUG
 #error
 #endif
 

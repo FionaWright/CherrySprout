@@ -91,7 +91,7 @@ private:
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;
 
-#if _DEBUG
+#if !NDEBUG
     std::string m_scheduledSnapshotPT = "";
     bool m_isSnapshotPtLDR = false;
 

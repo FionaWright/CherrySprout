@@ -8,7 +8,7 @@
 
 #include "Utils/Helper.h"
 
-#ifdef _DEBUG
+#if NDEBUG
 #   include <WinPixEventRuntime/pix3.h>
 #endif
 

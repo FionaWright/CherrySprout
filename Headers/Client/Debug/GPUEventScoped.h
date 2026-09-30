@@ -5,7 +5,7 @@
 #ifndef PT_GPUEVENTSCOPED_H
 #define PT_GPUEVENTSCOPED_H
 
-#ifdef _DEBUG
+#if !NDEBUG
 
 #define CONCAT_INNER(a, b) a##b
 #define CONCAT(a, b) CONCAT_INNER(a, b)

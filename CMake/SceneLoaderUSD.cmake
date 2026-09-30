@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.14)
 project(CherrySprout)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -220,7 +220,7 @@ add_executable(SceneLoaderUSD_Test
 target_link_libraries(SceneLoaderUSD_Test PRIVATE SceneLoaderUSD)
 target_link_directories(SceneLoaderUSD_Test PRIVATE "${USD_BIN_DIR}")
 
-add_custom_command(TARGET SceneLoaderUSD POST_BUILD
+add_custom_command(TARGET SceneLoaderUSD_Test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${USD_BIN_DIR}"
         $<TARGET_FILE_DIR:SceneLoaderUSD_Test>

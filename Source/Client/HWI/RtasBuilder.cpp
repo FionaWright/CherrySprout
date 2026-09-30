@@ -86,6 +86,8 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     CherryAssert(vertexBuffer);
     CherryAssert(vertexBuffer->GetGPUVirtualAddress());
+    CherryAssert(vertexByteOffset < vertexBuffer->GetDesc().Width);
+    CherryAssert(indexByteOffset < indexBuffer->GetDesc().Width);
 
     geomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress() + vertexByteOffset;
     geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);

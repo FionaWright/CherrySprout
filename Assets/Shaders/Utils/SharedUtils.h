@@ -32,8 +32,8 @@ inline hlsl::float3 EaSquareToSphere(hlsl::float2 uv)
     // Compute radius and angle
     const float signedDist = 1 - (absax + absay); // Signed distance to the u + v = 1 diagonal diamond
     const float d = abs(signedDist);
-    const float r = 1 - d;
-    const float phi = (r == 0 ? 1 : (absay - absax) / r + 1) * PI / 4;
+    const float r = 1.0f - d;
+    const float phi = (r == 0 ? 1 : (absay - absax) / r + 1.0f) * PI / 4.0f;
 
     // Compute vector
     const float y = CopySign(1 - r * r, signedDist);
@@ -50,23 +50,23 @@ inline hlsl::float2 EaSphereToSquare(hlsl::float3 d)
     float r = SafeSqrt(1 - y);
     float a = max(x, z);
     float b = min(x, z);
-    b = a == 0 ? 0 : b / a;
+    b = a == 0.0f ? 0.0f : b / a;
 
     float phi = atan(b) * 2.0f / PI; // Can use polynomial to optimize here?
     if (x < z)
-        phi = 1 - phi;
+        phi = 1.0f - phi;
 
     float v = phi * r;
     float u = r - v;
-    if (d.y < 0)
+    if (d.y < 0.0f)
     {
         float t = u;
-        u = 1 - v;
-        v = 1 - t;
+        u = 1.0f - v;
+        v = 1.0f - t;
     }
     u = CopySign(u, d.x);
     v = CopySign(v, d.z);
-    return hlsl::float2(0.5f * (u + 1), 0.5f * (v + 1));
+    return hlsl::float2(0.5f * (u + 1.0f), 0.5f * (v + 1.0f));
 }
 
 inline hlsl::float2 PanoSphereToSquare(hlsl::float3 d)

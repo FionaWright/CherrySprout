@@ -61,8 +61,6 @@ if(TARGET DirectXTex)
     add_library(DirectXTex::DirectXTex ALIAS DirectXTex)
 endif()
 
-include(FetchContent)
-
 set(FFMPEG_VERSION "8.1.2")
 set(FFMPEG_URL "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-${FFMPEG_VERSION}-essentials_build.zip")
 

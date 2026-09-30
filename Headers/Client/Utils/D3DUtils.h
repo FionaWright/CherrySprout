@@ -156,11 +156,11 @@ inline size_t FormatBitsPerPixel(_In_ const DXGI_FORMAT fmt, bool& isBC)
 inline void VertexIndexBuffersToViews(const D12Resource* vertexBuffer, const D12Resource* indexBuffer, const size_t vertexCount, const size_t vertexStride, const size_t indexCount, D3D12_VERTEX_BUFFER_VIEW& viewV, D3D12_INDEX_BUFFER_VIEW& viewI)
 {
     viewV.BufferLocation = vertexBuffer->GetResource()->GetGPUVirtualAddress();
-    viewV.SizeInBytes = vertexCount * vertexStride;
-    viewV.StrideInBytes = vertexStride;
+    viewV.SizeInBytes = static_cast<uint32_t>(vertexCount * vertexStride);
+    viewV.StrideInBytes = static_cast<uint32_t>(vertexStride);
 
     viewI.BufferLocation = indexBuffer->GetResource()->GetGPUVirtualAddress();
-    viewI.SizeInBytes = indexCount * sizeof(uint32_t);
+    viewI.SizeInBytes = static_cast<uint32_t>(indexCount * sizeof(uint32_t));
     viewI.Format = DXGI_FORMAT_R32_UINT;
 }
 
@@ -189,7 +189,7 @@ inline D3D12_GRAPHICS_PIPELINE_STATE_DESC CreateGraphicsPipelineDesc(ID3D12RootS
     desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
     desc.NumRenderTargets = numRTVs;
-    for (int i = 0; i < numRTVs; i++)
+    for (uint32_t i = 0; i < numRTVs; i++)
         desc.RTVFormats[i] = Config::GetRender().RtvFormat;
 
     return desc;
