@@ -64,6 +64,16 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
 
 void AccumulateGradientsAndFetch(uint2 pixelCoord, Gradients gradients)
 {
+    DBG_ASSERT_VALUE(gradients.XForward, GRADIENT_OUT);
+    DBG_ASSERT_VALUE(gradients.XBackward, GRADIENT_OUT);
+    DBG_ASSERT_VALUE(gradients.YForward, GRADIENT_OUT);
+    DBG_ASSERT_VALUE(gradients.YBackward, GRADIENT_OUT);
+
+    DBG_OUTPUT3(gradients.XForward, GD_GradientXF);
+    DBG_OUTPUT3(gradients.XBackward, GD_GradientXB);
+    DBG_OUTPUT3(gradients.YForward, GD_GradientYF);
+    DBG_OUTPUT3(gradients.YBackward, GD_GradientYB);
+
     if (DEBUG_ENABLED(NaNTests))
     {
         if (IsNaN3(gradients.XForward) || IsNaN3(gTexGradientXF[pixelCoord].rgb))
@@ -82,11 +92,6 @@ void AccumulateGradientsAndFetch(uint2 pixelCoord, Gradients gradients)
         gTexGradientXB[pixelCoord].rgb = gradients.XBackward;
         gTexGradientYF[pixelCoord].rgb = gradients.YForward;
         gTexGradientYB[pixelCoord].rgb = gradients.YBackward;
-
-        DBG_OUTPUT3(gradients.XForward, GD_GradientXF);
-        DBG_OUTPUT3(gradients.XBackward, GD_GradientXB);
-        DBG_OUTPUT3(gradients.YForward, GD_GradientYF);
-        DBG_OUTPUT3(gradients.YBackward, GD_GradientYB);
         return;
     }
 
@@ -107,11 +112,6 @@ void AccumulateGradientsAndFetch(uint2 pixelCoord, Gradients gradients)
     gTexGradientXB[pixelCoord].rgb = averageXB;
     gTexGradientYF[pixelCoord].rgb = averageYF;
     gTexGradientYB[pixelCoord].rgb = averageYB;
-
-    DBG_OUTPUT3(averageXF, GD_GradientXF);
-    DBG_OUTPUT3(averageXB, GD_GradientXB);
-    DBG_OUTPUT3(averageYF, GD_GradientYF);
-    DBG_OUTPUT3(averageYB, GD_GradientYB);
 }
 
 #endif

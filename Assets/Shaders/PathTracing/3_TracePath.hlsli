@@ -33,11 +33,11 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         {
             DBG_SET_CURRENT_RAY_DEPTH(i);
             DBG_PATH_DUMP_MARK_EXPLORED();
-            DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBufferMatIdx);
-            DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBufferNormalsUnorm);
-            DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBufferDepth);
-            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBufferUv);
-            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBufferMv);
+            DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),           GBuffer_MatIdx);
+            DBG_OUTPUT3(gGBufferNormals[pixelCoord].rgb,                        GBuffer_NormalsUnorm);
+            DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                            GBuffer_Depth);
+            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].rg,                            GBuffer_Uv);
+            DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBuffer_Mv);
         }
 
         if (isMiss)

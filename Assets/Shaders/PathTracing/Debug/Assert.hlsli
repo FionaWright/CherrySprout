@@ -27,11 +27,6 @@ void dbgAssert(
     if (!DEBUG_ENABLED(Asserts))
         return;
 
-    if (gDebugNumAssertsTriggered >= MAX_ASSERTS_PER_PATH)
-        return;
-
-    gDebugNumAssertsTriggered++;
-
     float4 v1 = float4(v1_x, v1_y, v1_z, v1_w);
     float4 v2 = float4(v2_x, v2_y, v2_z, v2_w);
     float4 v3 = float4(v3_x, v3_y, v3_z, v3_w);
@@ -56,6 +51,11 @@ void dbgAssert(
 
     if (gDebugFrameIndex == UINT_MAX || gDebugPixelCoord.x == UINT_MAX || gDebugPixelCoord.y == UINT_MAX)
         return;
+
+    if (gDebugNumAssertsTriggered >= MAX_ASSERTS_PER_PATH)
+        return;
+
+    gDebugNumAssertsTriggered++;
 
     if (TryAcquireMutex(dbgID))
     {

@@ -306,6 +306,22 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 18.0f);
                         ImGui::TableHeadersRow();
 
+                        auto RowBool = [&](const char* key, const uint32_t value)
+                        {
+                            ImGui::TableNextRow(0, MIN_ROW_HEIGHT);
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted(key);
+
+                            ImGui::TableSetColumnIndex(1);
+                            const char* bVal = value == 0 ? "False" : "True";
+                            snprintf(buf, sizeof(buf), "%s##bool-%i", bVal, rowIncrementer);
+                            ImGui::Selectable(buf);
+                            if (ImGui::IsItemClicked())
+                                ImGui::SetClipboardText(std::string(buf).substr(0, std::string(buf).find('#')).c_str());
+
+                            rowIncrementer++;
+                        };
+
                         auto RowInt = [&](const char* key, const int value)
                         {
                             ImGui::TableNextRow(0, MIN_ROW_HEIGHT);
@@ -377,33 +393,87 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                             rowIncrementer++;
                         };
 
-                        RowInt("PS_RaySegmentIdx", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
-                        RowFloat3("PS_RayOrigin", m_cpuPathDump[i].PathState.Desc.Origin, true);
-                        RowFloat3("PS_RayDirection", m_cpuPathDump[i].PathState.Desc.Direction, true);
-                        RowFloat3("PS_Beta", m_cpuPathDump[i].PathState.Beta, true);
-                        RowFloat3("PS_Lo", m_cpuPathDump[i].PathState.Lo, true);
-                        RowInt("PS_LastRayWasDiracDelta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
-                        RowFloat("PS_LastBxdfPdf", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
+                        auto RowSection = [&](const char* lab) -> bool
+                        {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
 
-                        RowInt("PVI_Type", static_cast<int>(m_cpuPathDump[i].PathVertex.Type));
-                        RowFloat3("PVI_Position", m_cpuPathDump[i].PathVertex.Position, true);
-                        RowFloat3("PVI_Normal", m_cpuPathDump[i].PathVertex.SFrame.N, true);
-                        RowFloat3("PVI_Wo", m_cpuPathDump[i].PathVertex.Wo, true);
-                        RowFloat3("PVI_Wi", m_cpuPathDump[i].PathVertex.Wi, true);
-                        RowFloat("PVI_Eta", m_cpuPathDump[i].PathVertex.Eta, true);
-                        RowFloat3("PVI_Indirect", m_cpuPathDump[i].PathVertex.IndirectContribution, true);
-                        RowFloat("PVI_PDF", m_cpuPathDump[i].PathVertex.PDF, true);
+                            const std::string fullLabel = lab + std::string("##section-") + std::to_string(rowIncrementer);
+                            rowIncrementer++;
 
-                        for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j) // Starting from 1 due to ignored eDebugOutput_Disabled
+                            return ImGui::TreeNodeEx(fullLabel.c_str(), ImGuiTreeNodeFlags_SpanAllColumns);
+                        };
+
+                        if (RowSection("Path State"))
+                        {
+                            RowInt("RaySegmentIdx", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));
+                            RowFloat3("RayOrigin", m_cpuPathDump[i].PathState.Desc.Origin, true);
+                            RowFloat3("RayDirection", m_cpuPathDump[i].PathState.Desc.Direction, true);
+                            RowFloat3("Beta", m_cpuPathDump[i].PathState.Beta, true);
+                            RowFloat3("Lo", m_cpuPathDump[i].PathState.Lo, true);
+                            RowBool("LastRayWasDiracDelta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
+                            RowFloat("LastBxdfPdf", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
+                            ImGui::TreePop();
+                        }
+
+                        if (RowSection("Path Vertex Info"))
+                        {
+                            RowInt("Type", static_cast<int>(m_cpuPathDump[i].PathVertex.Type));
+                            RowFloat3("Position", m_cpuPathDump[i].PathVertex.Position, true);
+                            RowFloat3("Normal", m_cpuPathDump[i].PathVertex.SFrame.N, true);
+                            RowFloat3("Wo", m_cpuPathDump[i].PathVertex.Wo, true);
+                            RowFloat3("Wi", m_cpuPathDump[i].PathVertex.Wi, true);
+                            RowFloat("Eta", m_cpuPathDump[i].PathVertex.Eta, true);
+                            RowFloat3("Indirect", m_cpuPathDump[i].PathVertex.IndirectContribution, true);
+                            RowFloat("PDF", m_cpuPathDump[i].PathVertex.PDF, true);
+                            ImGui::TreePop();
+                        }
+
+                        std::string currentHeader;
+                        bool currentHeaderOpen = false;
+
+                        // Note: Starting from 1 due to ignored eDebugOutput_Disabled
+                        for (int j = 1; j < static_cast<int>(DebugOutputIndex::eCount); ++j)
                         {
                             const hlsl::float3 value = m_cpuPathDumpOutputColor[i].Array[j].Value;
                             const bool isAssignedValue = m_cpuPathDumpOutputColor[i].Array[j].IsAssigned;
 
+                            std::string name = s_debugOutputIdxNames[j];
+                            const auto underscoreIdx = name.find_first_of('_');
+
+                            if (underscoreIdx != std::string::npos)
+                            {
+                                const std::string newHeader = name.substr(0, underscoreIdx);
+                                name = name.substr(underscoreIdx + 1);
+
+                                if (currentHeader != newHeader)
+                                {
+                                    if (!currentHeader.empty() && currentHeaderOpen)
+                                        ImGui::TreePop();
+
+                                    currentHeader = newHeader;
+                                    currentHeaderOpen = RowSection(currentHeader.c_str());
+                                }
+                            }
+                            else if (!currentHeader.empty())
+                            {
+                                if (currentHeaderOpen)
+                                    ImGui::TreePop();
+                                currentHeader = "";
+                                currentHeaderOpen = false;
+                            }
+
+                            if (!currentHeader.empty() && !currentHeaderOpen)
+                                continue;
+
                             if (value.x == value.y && value.x == value.z)
-                                RowFloat(s_debugOutputIdxNames[j], value.x, isAssignedValue);
+                                RowFloat(name.c_str(), value.x, isAssignedValue);
                             else
-                                RowFloat3(s_debugOutputIdxNames[j], value, isAssignedValue);
+                                RowFloat3(name.c_str(), value, isAssignedValue);
                         }
+
+                        if (!currentHeader.empty() && currentHeaderOpen)
+                            ImGui::TreePop();
 
                         ImGui::EndTable();
                     }

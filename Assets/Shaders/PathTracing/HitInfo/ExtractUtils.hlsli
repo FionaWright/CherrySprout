@@ -17,7 +17,7 @@ void ExtractVertices(RayQuery<RAY_FLAGS> q, InstanceData instance, out Vertex v0
 float3 ExtractBarycentrics(RayQuery<RAY_FLAGS> q)
 {
     float2 barycentrics = q.CommittedTriangleBarycentrics();
-    DBG_OUTPUT2(barycentrics, Barycentrics);
+    DBG_OUTPUT2(barycentrics, Hit_Barycentrics);
 
     return float3(1 - barycentrics.x - barycentrics.y, barycentrics.x, barycentrics.y);
 }
