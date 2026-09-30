@@ -2,7 +2,7 @@
 #define H_ACCUMULATE_H
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 
 #include "Utils/Debug/NaNTests.hlsli"
 #include "Utils/Constants.h"

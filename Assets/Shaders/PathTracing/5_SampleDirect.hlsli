@@ -40,9 +40,12 @@ float3 SampleDirectLighting(
         E_direct += L_nee;
     }
 
-    currentVertexInfo.PDF *= lightSample.PDF;
-    currentVertexInfo.NeeLightIdx = lightSample.Index;
-    currentVertexInfo.NeeLightDirection = lightSample.Direction;
+	if (FEATURE_ENABLED(GradientDomain))
+	{
+		currentVertexInfo.PDF *= lightSample.PDF;
+    	currentVertexInfo.NeeLightIdx = lightSample.Index;
+    	currentVertexInfo.NeeLightDirection = lightSample.Direction;
+	}
 
     if (FEATURE_ENABLED(Transient))
     {

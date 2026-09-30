@@ -2,7 +2,7 @@
 #define H_GET_PRIMARY_RAY_H
 
 #include "Utils/Random.h"
-#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
 // TODO: Move to Globals.hlsli

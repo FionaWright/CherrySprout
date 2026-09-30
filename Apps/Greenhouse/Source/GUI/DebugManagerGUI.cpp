@@ -2,7 +2,7 @@
 #include "DebugManager.h"
 
 #include "Greenhouse.h"
-#include "PathTracing/Flags/MethodsCpp.h"
+#include "../../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
 #include "Utils/ConstantsCpp.h"
 #include "imgui.h"
 #include "GreenhouseConfig.h"

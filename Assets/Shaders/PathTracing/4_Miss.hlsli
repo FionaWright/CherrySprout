@@ -28,6 +28,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
             Le *= m;
         }
 
+        DBG_OUTPUT2(uv, EnvironmentMapUV);
         DBG_OUTPUT3(Le, EnvironmentMap);
 
         Li += Le;

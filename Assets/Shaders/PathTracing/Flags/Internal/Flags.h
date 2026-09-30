@@ -4,20 +4,20 @@
 // ==================== Feature ====================
 
 #define FLAGS_PROCESS_AS_INDEX
-#   include "PathTracing/Flags/Processing.h"
+#   include "PathTracing/Flags/Internal/Processing.h"
 #undef FLAGS_PROCESS_AS_INDEX
 
 #define FLAGS_PROCESS_AS_FLAG
-#   include "PathTracing/Flags/Processing.h"
+#   include "PathTracing/Flags/Internal/Processing.h"
 #undef FLAGS_PROCESS_AS_FLAG
 
 #define FLAGS_PROCESS_AS_CBCV
-#   include "PathTracing/Flags/Processing.h"
+#   include "PathTracing/Flags/Internal/Processing.h"
 #undef FLAGS_PROCESS_AS_CBCV
 
 #ifdef __cplusplus
 #   define FLAGS_PROCESS_AS_STRING
-#       include "PathTracing/Flags/Processing.h"
+#       include "PathTracing/Flags/Internal/Processing.h"
 #   undef FLAGS_PROCESS_AS_STRING
 #endif
 
@@ -26,20 +26,20 @@
 #define FLAGS_PROCESSING_DEBUG
 
 #define FLAGS_PROCESS_AS_INDEX
-#   include "PathTracing/Flags/Processing.h"
+#   include "PathTracing/Flags/Internal/Processing.h"
 #undef FLAGS_PROCESS_AS_INDEX
 
 #define FLAGS_PROCESS_AS_FLAG
-#   include "PathTracing/Flags/Processing.h"
+#   include "PathTracing/Flags/Internal/Processing.h"
 #undef FLAGS_PROCESS_AS_FLAG
 
 #define FLAGS_PROCESS_AS_CBCV
-#   include "PathTracing/Flags/Processing.h"
+#   include "PathTracing/Flags/Internal/Processing.h"
 #undef FLAGS_PROCESS_AS_CBCV
 
 #ifdef __cplusplus
 #   define FLAGS_PROCESS_AS_STRING
-#       include "PathTracing/Flags/Processing.h"
+#       include "PathTracing/Flags/Internal/Processing.h"
 #   undef FLAGS_PROCESS_AS_STRING
 #endif
 

@@ -3,7 +3,7 @@
 
 #include "Utils/Math/Fresnel.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
-#include "PathTracing/Debug/OutputColorMacros.hlsli"
+#include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "MicrofacetModels/GetMM.hlsli"
 #include "PathTracing/Structs.h"
 

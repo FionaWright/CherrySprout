@@ -4,7 +4,7 @@
 #include "RmseTool.h"
 #include "HWI/D3D.h"
 #include "HWI/D12Resource.h"
-#include "PathTracing/Debug/OutputColor.h"
+#include "../../../Assets/Shaders/PathTracing/Debug/Internal/OutputColor.h"
 
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"

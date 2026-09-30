@@ -16,7 +16,7 @@
 #include "HWI/Pipeline.h"
 #include "MicrofacetModels/MMTypes.h"
 #include "Utils/CBVs.h"
-#include "PathTracing/Flags/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
 #include "Render/RestirManager.h"
 
 class Camera;

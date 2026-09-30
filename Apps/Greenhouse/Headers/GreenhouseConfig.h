@@ -4,9 +4,9 @@
 #include "PathTracer.h"
 #include "BxDFs/BxDFMode.h"
 #include "MicrofacetModels/MMTypes.h"
-#include "PathTracing/Debug/OutputColor.h"
+#include "../../../Assets/Shaders/PathTracing/Debug/Internal/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
-#include "PathTracing/Flags/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
 #include "MicrofacetModels/MMTypes.h"
 
 constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);

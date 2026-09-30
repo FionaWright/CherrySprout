@@ -2,7 +2,7 @@
 #include "GradientManager.h"
 
 #include "Greenhouse.h"
-#include "PathTracing/Flags/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
 
 void GradientManager::Init(const D3D* d3d)
 {

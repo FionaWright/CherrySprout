@@ -1,13 +1,13 @@
 #ifndef H_OUTPUT_COLOR_MACROS_H
 #define H_OUTPUT_COLOR_MACROS_H
 
-#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
 #if DEBUG_ENABLED_PP(OutputColor)
 
-#include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Debug/Internal/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
 
 [noinline]

@@ -2,18 +2,18 @@
 #define H_OUTPUT_COLOR_H
 
 #ifdef __cplusplus
-#   include "PathTracing/Flags/MethodsCpp.h"
+#include "../../Flags/Internal/MethodsCpp.h"
 #else
-#   include "PathTracing/Flags/MethodsHlsl.hlsli"
+#   include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 #endif
 
 #define PROCESS_AS_ENUM
-#include "PathTracing/Debug/OutputColorProcessing.h"
+#include "OutputColorProcessing.h"
 #undef PROCESS_AS_ENUM
 
 #ifdef __cplusplus
 #   define PROCESS_AS_STRINGS
-#   include "PathTracing/Debug/OutputColorProcessing.h"
+#include "OutputColorProcessing.h"
 #   undef PROCESS_AS_STRINGS
 static constexpr auto s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Disabled;
 #endif

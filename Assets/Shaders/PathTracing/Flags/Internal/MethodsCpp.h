@@ -5,7 +5,7 @@
 #   error C++ only
 #endif
 
-#include "PathTracing/Flags/Flags.h"
+#include "Flags.h"
 
 static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags>(
         eFeature_Jitter |

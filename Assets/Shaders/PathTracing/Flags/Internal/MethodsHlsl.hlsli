@@ -5,7 +5,7 @@
 #   error HLSL only
 #endif
 
-#include "PathTracing/Flags/Flags.h"
+#include "PathTracing/Flags/Internal/Flags.h"
 
 #   ifndef FEATURE_FLAGS
 #       define FEATURE_FLAGS 0

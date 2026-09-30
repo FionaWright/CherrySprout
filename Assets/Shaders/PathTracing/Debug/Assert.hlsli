@@ -1,7 +1,7 @@
 #ifndef H_ASSERT_H
 #define H_ASSERT_H
 
-#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 
 #if DEBUG_ENABLED_PP(Asserts)
 

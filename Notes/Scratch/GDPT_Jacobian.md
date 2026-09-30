@@ -7,9 +7,12 @@ $p_s(x_s) = \tilde p_s(x_s) |J|$
 
 $p_s = \tilde p_s |J|$ 
 
+$\tilde f_s(x_s)$ internally divided by $\tilde p_s(x_s)$ 
+
 ## PDF Ratio
 
 $N$ = Number of vertices  
+
 $p_m = p_{m,0} p_{m,1} \dots p_{m,N}$  
 $\tilde p_s = \tilde p_{s,0} \tilde p_{s,1} \dots \tilde p_{s,N}$  
 

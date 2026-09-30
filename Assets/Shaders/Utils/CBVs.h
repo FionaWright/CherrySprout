@@ -3,7 +3,7 @@
 
 #include "Utils/HlslGlue.h"
 
-#include "PathTracing/Flags/Flags.h"
+#include "../PathTracing/Flags/Internal/Flags.h"
 
 struct CbvPathTracingSettings
 {

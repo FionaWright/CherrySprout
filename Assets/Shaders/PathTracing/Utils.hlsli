@@ -3,7 +3,7 @@
 
 #define RAY_FLAGS RAY_FLAG_CULL_NON_OPAQUE|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
 
-#include "PathTracing/Flags/MethodsHlsl.hlsli"
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 #include "PathTracing/Structs.h"
 #include "Utils/HlslUtils.hlsli"
 
