@@ -5,7 +5,7 @@
 
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumpOutputColor.hlsli"
-#include "PathTracing/Debug/OutputColor.h"
+#include "PathTracing/Debug/Internal/OutputColor.h"
 
 void ClearBuffer()
 {

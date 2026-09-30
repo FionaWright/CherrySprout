@@ -120,7 +120,7 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
 #endif
 }
 
-void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap)
+void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, const Heap* heap, const D12Resource* envMap)
 {
     // Get Sum of Luminance Pass
     {

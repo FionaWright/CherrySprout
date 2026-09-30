@@ -13,6 +13,8 @@
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/Constants.h"
 
+#define MAX_ASSERTS_PER_PATH 3
+
 // Note: Using scalar inputs to avoid DXC bug with [noinline]
 [noinline]
 void dbgAssert(
@@ -24,6 +26,11 @@ void dbgAssert(
 {
     if (!DEBUG_ENABLED(Asserts))
         return;
+
+    if (gDebugNumAssertsTriggered >= MAX_ASSERTS_PER_PATH)
+        return;
+
+    gDebugNumAssertsTriggered++;
 
     float4 v1 = float4(v1_x, v1_y, v1_z, v1_w);
     float4 v2 = float4(v2_x, v2_y, v2_z, v2_w);

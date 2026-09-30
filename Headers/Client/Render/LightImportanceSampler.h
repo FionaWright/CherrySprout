@@ -37,7 +37,7 @@ public:
 #endif
 
 private:
-    void buildEnvMapDistributions(D3D* d3d, Heap* heap, D12Resource* envMap);
+    void buildEnvMapDistributions(D3D* d3d, const Heap* heap, const D12Resource* envMap);
     void loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D12Resource* envMap, bool aliasTablesEnabled);
     void initializeResources(const D3D* d3d,D12Resource* envMap);
 
