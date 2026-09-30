@@ -590,62 +590,6 @@ void Greenhouse::renderGuiCore()
             m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
             ImGui::Spacing();
         }
-
-        if (m_config.PathTracerConfig.DebugEnabled(eDebug_OutputColor))
-        {
-            if (ImGui::CollapsingHeader("Debug Output Colors"))
-            {
-                ImGui::Indent(IM_GUI_INDENTATION);
-
-                m_ptFrameDirty |= ImGui::InputInt("Chosen Ray Depth", &m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
-                ImGui::IsItemDeactivatedAfterEdit();
-                m_config.PathTracerConfig.DebugInfo.ChosenRayDepth = max(-1, m_config.PathTracerConfig.DebugInfo.ChosenRayDepth);
-
-                ImGui::Text("Remap:");
-                ImGui::Indent(IM_GUI_INDENTATION);
-                if (ImGui::BeginTable("Debug Output Color Remaps", 3))
-                {
-                    const auto remapAsUint = static_cast<uint32_t>(m_config.PathTracerConfig.DebugInfo.OutputColorRemap);
-                    for (int i = 0; i < _countof(s_debugOutputColorRemapNames); i++)
-                    {
-                        ImGui::TableNextColumn();
-
-                        const uint32_t flag = 1 << i;
-                        bool isEnabled = remapAsUint & flag;
-                        const bool prevIsEnabled = isEnabled;
-                        const bool clicked = ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
-                        m_ptFrameDirty |= clicked;
-                        ImGui::IsItemDeactivatedAfterEdit();
-
-                        if (clicked && isEnabled)
-                            m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint | flag);
-                        else if (clicked && prevIsEnabled)
-                            m_config.PathTracerConfig.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint ^ flag);
-
-                        ImGui::SetItemTooltip("%s", s_debugOutputColorRemapNames[i]);
-                    }
-                }
-                ImGui::Unindent(IM_GUI_INDENTATION);
-                ImGui::EndTable();
-
-                if (ImGui::BeginTable("Debug Outputs", 2))
-                {
-                    static int e = static_cast<int>(m_config.PathTracerConfig.DebugInfo.OutputColorIdx);
-                    int c = 0;
-                    for (int i = 0; i < static_cast<int>(DebugOutputIndex::eCount); i++)
-                    {
-                        ImGui::TableNextColumn();
-                        m_ptFrameDirty |= ImGui::RadioButton(s_debugOutputIdxNames[i], &e, c++);
-                        ImGui::IsItemDeactivatedAfterEdit();
-                        ImGui::SetItemTooltip("%s", s_debugOutputIdxNames[i]);
-                    }
-                    m_config.PathTracerConfig.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);
-                }
-                ImGui::Unindent(IM_GUI_INDENTATION);
-                ImGui::EndTable();
-            }
-            ImGui::Spacing();
-        }
 #endif
 
         ImGui::PopStyleVar();

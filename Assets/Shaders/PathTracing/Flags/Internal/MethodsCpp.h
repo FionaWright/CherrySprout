@@ -29,7 +29,7 @@ static constexpr auto s_defaultDebugFlags = static_cast<PathTracerDebugFlags>(
         eDebug_NaNTests |
         eDebug_Scales |
         eDebug_ForceLightIndex |
-        eDebug_PathDumper |
+        //eDebug_PathDumper |
         eDebug_Asserts
     );
 

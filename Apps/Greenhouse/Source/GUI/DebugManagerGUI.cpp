@@ -487,23 +487,20 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         }
     }
 
-    if (!config.DebugEnabled(eDebug_Asserts))
-        return;
-
     std::vector<uint32_t> errors;
-    for (int i = 0; i < _countof(m_cpuErrorInfo); i++)
+    if (config.DebugEnabled(eDebug_Asserts))
     {
-        if (m_cpuErrorInfo[i].ExprCounter > 0 || m_cpuErrorInfo[i].NaNCounter > 0 || m_cpuErrorInfo[i].InfCounter > 0)
+        for (int i = 0; i < _countof(m_cpuErrorInfo); i++)
         {
-            errors.emplace_back(i);
+            if (m_cpuErrorInfo[i].ExprCounter > 0 || m_cpuErrorInfo[i].NaNCounter > 0 || m_cpuErrorInfo[i].InfCounter > 0)
+            {
+                errors.emplace_back(i);
+            }
         }
     }
 
-    if (errors.empty())
-        return;
-
     const std::string assertLabel = std::string("Assertion Errors (") + std::to_string(errors.size()) + ")";
-    if (ImGui::CollapsingHeader(assertLabel.c_str()))
+    if (!errors.empty() && ImGui::CollapsingHeader(assertLabel.c_str()))
     {
         ImGui::Indent(IM_GUI_INDENTATION);
         for (int i = 0; i < errors.size(); i++)
@@ -584,6 +581,60 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
             m_scheduleClearErrors = true;
 
         ImGui::Unindent(IM_GUI_INDENTATION);
+        ImGui::Spacing();
     }
-    ImGui::Spacing();
+
+    if (config.DebugEnabled(eDebug_OutputColor) && ImGui::CollapsingHeader("Debug Output Colors"))
+    {
+        ImGui::Indent(IM_GUI_INDENTATION);
+
+        ptFrameDirty |= ImGui::InputInt("Chosen Ray Depth", &config.DebugInfo.ChosenRayDepth);
+        ImGui::IsItemDeactivatedAfterEdit();
+        config.DebugInfo.ChosenRayDepth = max(-1, config.DebugInfo.ChosenRayDepth);
+
+        ImGui::Text("Remap:");
+        ImGui::Indent(IM_GUI_INDENTATION);
+        if (ImGui::BeginTable("Debug Output Color Remaps", 3))
+        {
+            const auto remapAsUint = static_cast<uint32_t>(config.DebugInfo.OutputColorRemap);
+            for (int i = 0; i < _countof(s_debugOutputColorRemapNames); i++)
+            {
+                ImGui::TableNextColumn();
+
+                const uint32_t flag = 1 << i;
+                bool isEnabled = remapAsUint & flag;
+                const bool prevIsEnabled = isEnabled;
+                const bool clicked = ImGui::Checkbox(s_debugOutputColorRemapNames[i], &isEnabled);
+                ptFrameDirty |= clicked;
+                ImGui::IsItemDeactivatedAfterEdit();
+
+                if (clicked && isEnabled)
+                    config.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint | flag);
+                else if (clicked && prevIsEnabled)
+                    config.DebugInfo.OutputColorRemap = static_cast<DebugOutputColorRemap>(remapAsUint ^ flag);
+
+                ImGui::SetItemTooltip("%s", s_debugOutputColorRemapNames[i]);
+            }
+        }
+        ImGui::Unindent(IM_GUI_INDENTATION);
+        ImGui::EndTable();
+
+        if (ImGui::BeginTable("Debug Outputs", 2))
+        {
+            static int e = static_cast<int>(config.DebugInfo.OutputColorIdx);
+            int c = 0;
+            for (auto& debugOutputIdxName : s_debugOutputIdxNames)
+            {
+                ImGui::TableNextColumn();
+                ptFrameDirty |= ImGui::RadioButton(debugOutputIdxName, &e, c++);
+                ImGui::IsItemDeactivatedAfterEdit();
+                ImGui::SetItemTooltip("%s", debugOutputIdxName);
+            }
+            config.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);
+        }
+
+        ImGui::Unindent(IM_GUI_INDENTATION);
+        ImGui::EndTable();
+        ImGui::Spacing();
+    }
 }
