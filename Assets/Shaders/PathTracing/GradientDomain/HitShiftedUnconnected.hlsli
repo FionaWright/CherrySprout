@@ -85,22 +85,26 @@ void HitShiftedUnconnected(
 
         // TODO: Multiple NEE samples
 
-        float3 E_direct = 0;
-        //for (uint i = 0; i < gSettings.DirectNumSamples; i++)
-        //{
-        //    E_direct += EvaluateDirectLighting(hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin);
-        //}
-
         uint lightIdx = v1.NeeLightIdx;
         float3 lightDir = v1.NeeLightDirection;
 
+        // TODO: Changes:
+        // - PVI stores full LightSample
+        // - EvaluateLight takes in LightSample and shiftedSourcePosition
+        // - If punctual, use (lightPos - sourcePos)
+        // - If env, use lightDir
+        // - Jacobian ?
+
+        float3 E_direct;
         float pdf_nee;
         E_direct = EvaluateNEE(hitInfo, pathState, bxdf, 1, wo, hitPos, nextOrigin, lightIdx, lightDir, pdf_nee);
 
-        pdf *= pdf_nee;
+        DBG_OUTPUT3(E_direct, GD_NeeContrib);
+        DBG_OUTPUT1(pdf_nee, GD_NeePdf);
+
+        //pdf *= pdf_nee; // TODO: Wrong to combine them?
 
         contrib += E_direct * pathState.Beta;
-        //contrib += E_direct * pathState.Beta / float(gSettings.DirectNumSamples);
     }
 }
 

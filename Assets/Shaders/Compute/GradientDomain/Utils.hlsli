@@ -1,6 +1,17 @@
 #ifndef H_GD_UTILS_H
 #define H_GD_UTILS_H
 
+float3 SampleSafeMirror(Texture2D tex, float3 primal, int2 pixelCoord, uint min, uint width, uint height)
+{
+    if (pixelCoord.x < min || pixelCoord.y < min)
+        return 0;
+
+    if (pixelCoord.x >= width || pixelCoord.y >= height)
+        return 0;
+
+    return tex[pixelCoord].rgb;
+}
+
 float3 SampleSafeZero(Texture2D tex, int2 pixelCoord, uint min, uint width, uint height)
 {
     if (pixelCoord.x < min || pixelCoord.y < min)

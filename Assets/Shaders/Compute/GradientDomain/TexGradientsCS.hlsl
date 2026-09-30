@@ -1,3 +1,5 @@
+#include "Compute/GradientDomain/Utils.hlsli"
+
 Texture2D<float4> gSource : register(t0);
 RWTexture2D<float4> gDestXF : register(u0);
 RWTexture2D<float4> gDestXB : register(u1);
@@ -16,10 +18,10 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     float3 c0 = gSource[pixelCoord].rgb;
-    float3 cXF = gSource[pixelCoord + uint2(1,0)].rgb;
-    float3 cXB = gSource[pixelCoord + uint2(-1,0)].rgb;
-    float3 cYF = gSource[pixelCoord + uint2(0,1)].rgb;
-    float3 cYB = gSource[pixelCoord + uint2(0,-1)].rgb;
+    float3 cXF = SampleSafeMirror(gSource, c0, pixelCoord + uint2(1,0), 0, width, height);
+    float3 cXB = SampleSafeMirror(gSource, c0, pixelCoord + uint2(-1,0), 0, width, height);
+    float3 cYF = SampleSafeMirror(gSource, c0, pixelCoord + uint2(0,1), 0, width, height);
+    float3 cYB = SampleSafeMirror(gSource, c0, pixelCoord + uint2(0,-1), 0, width, height);
 
     float mis = 0.5f;
 

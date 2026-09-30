@@ -38,11 +38,14 @@ float3 SampleDirectLighting(
         }
 
         E_direct += L_nee;
+
+        DBG_OUTPUT3(L_nee, NEE_Contrib);
     }
 
 	if (FEATURE_ENABLED(GradientDomain))
 	{
-		currentVertexInfo.PDF *= lightSample.PDF;
+        // TODO
+		//currentVertexInfo.PDF *= lightSample.PDF;
     	currentVertexInfo.NeeLightIdx = lightSample.Index;
     	currentVertexInfo.NeeLightDirection = lightSample.Direction;
 	}

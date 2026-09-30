@@ -63,11 +63,11 @@ LightSample SampleLight(
 
     lightSample.Index = lightIdx;
 
-    DBG_OUTPUT3(lightSample.Radiance, NEE_Le);
-    DBG_OUTPUT1(lightSample.Index, NEE_LightIdx);
-    DBG_OUTPUT1(lightSample.Distance, NEE_Distance);
-    DBG_OUTPUT3(lightSample.Direction, NEE_L_w);
-    DBG_OUTPUT1(lightSample.PDF, NEE_PDF);
+    DBG_OUTPUT3(lightSample.Radiance, NEE_LightSampleRadiance);
+    DBG_OUTPUT1(lightSample.Index, NEE_LightSampleIdx);
+    DBG_OUTPUT1(lightSample.Distance, NEE_LightSampleDistance);
+    DBG_OUTPUT3(lightSample.Direction, NEE_LightSampleDir);
+    DBG_OUTPUT1(lightSample.PDF, NEE_LightSamplePDF);
 
     return lightSample;
 }

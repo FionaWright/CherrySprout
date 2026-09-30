@@ -34,3 +34,8 @@ $w = \dfrac{1}{1 + \dfrac{\tilde p_s |J|}{p_m}}$
 
 $G = (f_m(x_m) - f_s(x_s)) w$   
 $G = (f_m(x_m) - \tilde f_s(x_s) |J|) w$ 
+
+# With NEE
+
+$p_{m,i} = p^{bxdf}_{m,i} p^{nee}_{m,i}$   
+$p_m = \prod p_{m,i}$ 

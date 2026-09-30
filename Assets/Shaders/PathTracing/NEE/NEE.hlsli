@@ -28,7 +28,7 @@ float3 SampleNEE(
 
     float shadowFactor;
     TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, shadowFactor);
-    DBG_OUTPUT1(shadowFactor,     NEE_Occluded);
+    DBG_OUTPUT1(shadowFactor,     NEE_ShadowFactor);
 
     if (shadowFactor <= 0.0f)
         return 0;
@@ -47,8 +47,7 @@ float3 SampleNEE(
         m = f_bxdf * PowerHeuristic(lightSample.PDF, pdf_bxdf, numSamples, 1);
     }
 
-    DBG_OUTPUT1(m,                       NEE_MIS_Weight);
-    DBG_OUTPUT3(lightSample.Radiance,    NEE_Radiance);
+    DBG_OUTPUT1(m, NEE_MIS);
 
     return shadowFactor * lightSample.Radiance * m * NdL / lightSample.PDF;
 }
