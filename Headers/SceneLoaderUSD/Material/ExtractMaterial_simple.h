@@ -61,9 +61,9 @@ namespace SceneLoaderUSD
             {
                 const char* copyPath = _strdup(path.c_str());
                 textureList.emplace_back(copyPath);
-                return textureList.size() - 1;
+                return static_cast<int>(textureList.size() - 1);
             }
-            return it - textureList.begin();
+            return static_cast<int>(it - textureList.begin());
         }
     }
 

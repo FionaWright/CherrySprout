@@ -21,6 +21,7 @@
 
 #include "Importer.h"
 
+#include <filesystem>
 #include <iostream>
 #include <ostream>
 
@@ -33,6 +34,8 @@ using namespace SceneLoaderUSD;
 ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 {
     std::cout << "Importing USD: " << usdPath << std::endl;
+
+    assert(std::filesystem::exists(usdPath));
 
     ImporterContext context;
 

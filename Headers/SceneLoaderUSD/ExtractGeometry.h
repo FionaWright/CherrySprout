@@ -74,7 +74,7 @@ namespace SceneLoaderUSD
         {
             const size_t vertexCount = faceInfo.faceIndices.size();
 
-            if (!subsetFaces.contains(faceInfo.faceIdx))
+            if (!subsetFaces.contains(static_cast<int>(faceInfo.faceIdx)))
                 continue;
 
             for (int i = 0; i < vertexCount; ++i)
