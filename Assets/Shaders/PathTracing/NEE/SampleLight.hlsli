@@ -15,8 +15,7 @@ LightSample SampleLight(
     PathState pathState,
     BxDF bxdf,
 
-    float3 wo,
-    float3 hitPos)
+    float3 wo)
 {
     uint lightIdx;
     float pdf_lsd;
@@ -54,7 +53,7 @@ LightSample SampleLight(
         uint punctualLightIdx = lightIdx - 1;
         PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];
 
-        lightSample = EvaluatePunctualLight(light, hitPos);
+        lightSample = EvaluatePunctualLight(light, hitInfo.HitPos);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
 
         lightSample.PDF = pdf_lsd;
@@ -80,8 +79,7 @@ LightSample EvaluateLight(
     uint lightIdx,
     float3 wi,
 
-    float3 wo,
-    float3 hitPos)
+    float3 wo)
 {
     float pdf_lsd;
     EvaluateLSD(lightIdx, pdf_lsd);
@@ -109,7 +107,7 @@ LightSample EvaluateLight(
         uint punctualLightIdx = lightIdx - 1;
         PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];
 
-        lightSample = EvaluatePunctualLight(light, hitPos);
+        lightSample = EvaluatePunctualLight(light, hitInfo.HitPos);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
 
         lightSample.PDF = pdf_lsd;

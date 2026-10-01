@@ -12,7 +12,6 @@ void HitShiftedUnconnected(
     PathVertexInfo v2,
     HitInfo hitInfo,
     float3 wo,
-    float3 hitPos,
     float3 nextOrigin,
 
     out float3 wi,
@@ -97,7 +96,7 @@ void HitShiftedUnconnected(
 
         float3 E_direct;
         float pdf_nee;
-        E_direct = EvaluateNEE(hitInfo, pathState, bxdf, 1, wo, hitPos, nextOrigin, lightIdx, lightDir, pdf_nee);
+        E_direct = EvaluateNEE(hitInfo, pathState, bxdf, 1, wo, nextOrigin, lightIdx, lightDir, pdf_nee);
 
         DBG_OUTPUT3(E_direct, GD_NeeContrib);
         DBG_OUTPUT1(pdf_nee, GD_NeePdf);

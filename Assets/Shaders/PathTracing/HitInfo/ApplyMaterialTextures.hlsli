@@ -43,7 +43,7 @@ void ApplyMaterialTextures(inout HitInfo hitInfo)
     albedoSample.xyz = SRGB_to_LRGB(albedoSample.xyz);
     emissionSample.xyz = SRGB_to_LRGB(emissionSample.xyz);
 
-    hitInfo.Mat.Albedo.rgb *= albedoSample.rgb;
+    hitInfo.Mat.Albedo *= albedoSample;
     hitInfo.Mat.Roughness *= roughnessSample;
     hitInfo.Mat.Metallic *= metallicSample;
 

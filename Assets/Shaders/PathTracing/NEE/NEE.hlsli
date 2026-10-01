@@ -13,12 +13,11 @@ float3 SampleNEE(
 
     uint numSamples,
     float3 wo,
-    float3 hitPos,
     float3 nextOrigin,
 
     out LightSample lightSample)
 {
-    lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, hitPos);
+    lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo);
 
     float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
     if (length(lightSample.Radiance) == 0.0f || NdL < 0.0f)
@@ -59,7 +58,6 @@ float3 EvaluateNEE(
 
     uint numSamples,
     float3 wo,
-    float3 hitPos,
     float3 nextOrigin,
 
     uint lightIdx,
@@ -67,7 +65,7 @@ float3 EvaluateNEE(
 
     out float pdf)
 {
-    LightSample lightSample = EvaluateLight(hitInfo, pathState, bxdf, lightIdx, wi, wo, hitPos);
+    LightSample lightSample = EvaluateLight(hitInfo, pathState, bxdf, lightIdx, wi, wo);
 
     pdf = lightSample.PDF;
 
@@ -109,7 +107,6 @@ float3 SampleNEE(
 
     uint numSamples,
     float3 wo,
-    float3 hitPos,
     float3 nextOrigin,
 
     out LightSample lightSample) { return NAN; }
@@ -121,7 +118,6 @@ float3 EvaluateNEE(
 
     uint numSamples,
     float3 wo,
-    float3 hitPos,
     float3 nextOrigin,
 
     uint lightIdx,

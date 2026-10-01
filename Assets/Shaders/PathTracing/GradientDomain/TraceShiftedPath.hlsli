@@ -66,8 +66,7 @@ void TraceShiftedPath(
         DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
         DBG_OUTPUT3(hitInfo.Emission, GD_Emission);
 
-        float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
-        float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
+        float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
 
 		float pdfMain = v1.PDF;
 		float pdfShifted;
@@ -121,7 +120,7 @@ void TraceShiftedPath(
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
 
             float3 E_indirect;
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, hitPos, nextOrigin, wi, E_indirect, jacobian, pdfShifted);
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, E_indirect, jacobian, pdfShifted);
 
             pathState.Beta *= E_indirect;
         }

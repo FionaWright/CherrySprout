@@ -20,8 +20,7 @@ void Hit(inout PathState pathState,
         out float3 L_sample,
         inout PathVertexInfo currentVertexInfo)
 {
-    float3 hitPos = pathState.Desc.Origin + pathState.Desc.Direction * hitInfo.RayT;
-    float3 nextOrigin = hitPos + hitInfo.Ng_ff * EPSILON;
+    float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
 
     L_sample = pathState.Beta * hitInfo.Emission;
 
@@ -34,7 +33,7 @@ void Hit(inout PathState pathState,
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, hitPos, nextOrigin, currentVertexInfo);
+            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, nextOrigin, currentVertexInfo);
         }
 
         L_sample += E_direct * pathState.Beta / float(gSettings.DirectNumSamples);
@@ -58,7 +57,7 @@ void Hit(inout PathState pathState,
         float eta = iorNCurrent / iorNNext;
 
         currentVertexInfo.Type = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-        currentVertexInfo.Position = nextOrigin;
+        currentVertexInfo.Position = nextOrigin; // TODO: Use hitpos?
         currentVertexInfo.SFrame = hitInfo.SFrame;
         currentVertexInfo.Wo = wo;
         currentVertexInfo.Wi = wi;

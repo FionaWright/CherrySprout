@@ -59,6 +59,19 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
         }
 
+        if (FEATURE_ENABLED(AlphaTesting))
+        {
+            float xi = Rand01(rngInfo);
+            float alpha = hitInfo.Mat.Albedo.a;
+            bool cutout = alpha < EPSILON || xi > alpha;
+            if (cutout)
+            {
+                float NdV = dot(hitInfo.Ng_ff, pathState.Desc.Direction);
+                pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON * sign(NdV);
+                continue;
+            }
+        }
+
         if (FEATURE_ENABLED(Transient))
             pathState.RollingPathDistance += hitInfo.RayT;
 

@@ -23,6 +23,8 @@ struct HitInfo
     hlsl::float2 UV;
     bool IsEntering;
     float RayT;
+
+    hlsl::float3 HitPos;
 };
 
 #ifdef __cplusplus

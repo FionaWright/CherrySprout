@@ -14,7 +14,6 @@ float3 SampleDirectLighting(
 
     uint2 pixelCoord,
     float3 wo,
-    float3 hitPos,
     float3 nextOrigin,
 
     inout PathVertexInfo currentVertexInfo)
@@ -29,12 +28,12 @@ float3 SampleDirectLighting(
     }
     else
     {
-        float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample);
+        float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, nextOrigin, lightSample);
 
         if (DEBUG_ENABLED(NeeTestRevaluate))
         {
             float _;
-            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, hitPos, nextOrigin, lightSample.Index, lightSample.Direction, _);
+            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, nextOrigin, lightSample.Index, lightSample.Direction, _);
         }
 
         E_direct += L_nee;
