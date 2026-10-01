@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.31)
 project(CherrySprout)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -126,7 +126,7 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
         )
     endif()
 
-    set(DELETE_BUILD_DIR 0)
+    set(DELETE_BUILD_DIR 1)
 
     # Delete OpenUSD source/build (They are MASSIVE and no longer needed)
     if(DELETE_BUILD_DIR AND EXISTS ${OPEN_USD_DIR})

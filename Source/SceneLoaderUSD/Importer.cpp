@@ -39,8 +39,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
     ImporterContext context;
 
-    //pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdPath);
-    pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(R"(C:\Users\fiona\source\repos\CherrySprout\Assets\Scenes\USD\Quad\Quad.usda)");
+    pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdPath);
     if (!stage)
         throw std::runtime_error("USD file does not exist");
 
