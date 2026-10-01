@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 4.0)
 project(CherrySprout)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -15,7 +15,7 @@ endif()
 
 set(USD_DEBUG 0)
 if(IS_DEBUG)
-    set(USD_DEBUG 1)
+    #set(USD_DEBUG 1)
 endif()
 
 # -------------- DOWNLOAD + BUILD USD ----------------
@@ -126,7 +126,7 @@ if (NOT EXISTS "${USD_BIN_DIR}/usd_ms.lib")
         )
     endif()
 
-    set(DELETE_BUILD_DIR 1)
+    set(DELETE_BUILD_DIR 0)
 
     # Delete OpenUSD source/build (They are MASSIVE and no longer needed)
     if(DELETE_BUILD_DIR AND EXISTS ${OPEN_USD_DIR})
@@ -151,14 +151,19 @@ set_target_properties(usd_m PROPERTIES
 add_dependencies(usd_m USD_EP SceneLoaderUSD_CopyBuild)
 
 add_library(tbb SHARED IMPORTED GLOBAL)
-set_target_properties(tbb PROPERTIES
-        IMPORTED_LOCATION_DEBUG "${USD_BIN_DIR}/tbb_debug.dll"
-        IMPORTED_IMPLIB_DEBUG "${USD_BIN_DIR}/tbb_debug.lib"
-
-        IMPORTED_LOCATION_RELEASE "${USD_BIN_DIR}/tbb.dll"
-        IMPORTED_IMPLIB_RELEASE "${USD_BIN_DIR}/tbb.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
-)
+if (USD_DEBUG)
+    set_target_properties(tbb PROPERTIES
+            IMPORTED_LOCATION "${USD_BIN_DIR}/tbb_debug.dll"
+            IMPORTED_IMPLIB "${USD_BIN_DIR}/tbb_debug.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
+    )
+else()
+    set_target_properties(tbb PROPERTIES
+            IMPORTED_LOCATION "${USD_BIN_DIR}/tbb.dll"
+            IMPORTED_IMPLIB "${USD_BIN_DIR}/tbb.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "${USD_BIN_DIR}/include"
+    )
+endif()
 
 add_dependencies(tbb USD_EP SceneLoaderUSD_CopyBuild)
 
