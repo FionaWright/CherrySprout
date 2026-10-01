@@ -149,4 +149,17 @@ struct CbvSprJacobi
     float Alpha;
 };
 
+enum TextureConvertMode : hlsl::uint
+{
+    eNormalChannels2To3,
+    eOgmSplit,
+    eOrmSplit
+};
+
+struct CbvTextureConvert
+{
+    TextureConvertMode Mode;
+    hlsl::float3 p;
+};
+
 #endif

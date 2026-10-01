@@ -66,14 +66,6 @@ namespace SceneLoaderUSD
     {
         pxr::UsdShadeShader surface;
 
-        for (const auto& output : mat.GetOutputs())
-        {
-            std::cout
-                << "Output : "
-                << output.GetBaseName() << "  "
-                << output.GetFullName() << std::endl;
-        }
-
         // MaterialX
         {
             pxr::TfToken ctx("mtlx");

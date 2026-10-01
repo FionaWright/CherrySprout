@@ -114,24 +114,68 @@ void SceneManager::UploadScene(D3D* d3d)
     UploadHeap uploadHeap;
     uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
-    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
-    const auto cmdList = cmdListPtr.Get();
     {
-        GPU_SCOPE(cmdList, "Upload Scene Data");
-
-        m_scene.GPU.MegaBufferIndex.            UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
-        m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
-        m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
-        m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
-
-        for (int i = 0; i < textureCount; i++)
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+        const auto cmdList = cmdListPtr.Get();
         {
-            TextureLoader::UploadTexture(cmdList, &uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
+            GPU_SCOPE(cmdList, "Upload Scene Data");
+
+            m_scene.GPU.MegaBufferIndex.            UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
+            m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
+            m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
+            m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
+
+            for (int i = 0; i < textureCount; i++)
+            {
+                TextureLoader::UploadTexture(cmdList, &uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
+            }
         }
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
     }
-    V(cmdList->Close());
-    d3d->ExecuteCommandList(cmdList);
-    d3d->Flush();
+
+    std::vector<int> normalMapTexIndices;
+    for (uint32_t i = 0; i < m_scene.CPU.MegaBufferMaterialsCount; i++)
+    {
+        const int texIdx = m_scene.CPU.MegaBufferMaterials[i].TexIdxNormal;
+        if (texIdx >= 0 && std::ranges::find(normalMapTexIndices, texIdx) == normalMapTexIndices.end())
+            normalMapTexIndices.emplace_back(texIdx);
+    }
+
+    Heap heap;
+    heap.Init("Scene Manager Heap", d3d->GetDevice(), normalMapTexIndices.size() * 3, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    m_converter.Init(d3d);
+
+    // Impossible to know if normal maps are stored as 2-channel or 3-channel, so convert all
+    // Textures can be BC format so need to blit to new texture
+    std::vector<std::pair<uint32_t, D12Resource>> textureUpdates;
+    {
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        const auto cmdList = cmdListPtr.Get();
+        {
+            GPU_SCOPE(cmdList, "Convert Textures");
+
+            for (int texIdx : normalMapTexIndices)
+            {
+                D12Resource* normalMap2Channel = &m_scene.GPU.SceneTextures[texIdx];
+
+                D12Resource normalMap3Channel;
+                m_converter.Convert(d3d, &heap, cmdList, normalMap2Channel, eNormalChannels2To3, &normalMap3Channel);
+
+                textureUpdates.emplace_back(texIdx, std::move(normalMap3Channel));
+            }
+        }
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
+    }
+
+    for (auto& pair : textureUpdates)
+    {
+        m_scene.GPU.SceneTextures[pair.first] = std::move(pair.second);
+    }
 
     m_gpuDataDirty = false;
 

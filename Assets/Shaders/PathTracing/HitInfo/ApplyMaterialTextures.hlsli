@@ -61,7 +61,7 @@ void ApplyNormalMap(inout HitInfo hitInfo, inout float3 Ns)
     if (hitInfo.Mat.TexIdxNormal == NO_TEXTURE)
         return;
 
-    float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSamplerLinearClamp, hitInfo.UV).rgb;
+    float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSamplerLinearWrap, hitInfo.UV).rgb;
     bumpSample = RemapUtoS(bumpSample);
     bumpSample.y = -bumpSample.y; // DX-convention
 

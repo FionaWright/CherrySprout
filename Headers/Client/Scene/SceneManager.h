@@ -6,7 +6,9 @@
 #define CHERRYSPROUT_SCENEMANAGER_H
 
 #include "Scene.h"
+#include "TextureConverter.h"
 #include "HWI/UploadHeap.h"
+#include "Utils/D3DUtils.h"
 
 class Heap;
 class D3D;
@@ -18,7 +20,7 @@ public:
     void UploadScene(D3D* d3d);
     void AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const;
 
-    bool IsGpuDataDirty() const { return m_gpuDataDirty; }
+    [[nodiscard]] bool IsGpuDataDirty() const { return m_gpuDataDirty; }
 
     Scene& GetScene() { return m_scene; }
     SceneCPU& GetCPU() { return m_scene.CPU; }
@@ -26,6 +28,8 @@ public:
 
 private:
     Scene m_scene;
+    TextureConverter m_converter;
+
     bool m_gpuDataDirty = false;
 };
 

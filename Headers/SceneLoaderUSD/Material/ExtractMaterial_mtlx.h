@@ -106,11 +106,21 @@ namespace SceneLoaderUSD
             return "";
         }
 
-        inline int TryFetchTexture(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList,
-                                   const char* inputName)
+        inline int TryFetchTexture(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList, const std::vector<const char*>& inputNames)
         {
-            const std::string path = ExtractTextureFile(surface, inputName);
-            if (path.empty())
+            std::string path;
+
+            bool found = false;
+            for (auto& inputName : inputNames)
+            {
+                path = ExtractTextureFile(surface, inputName);
+                if (!path.empty())
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
                 return -1;
 
             const auto it = std::ranges::find(textureList, path);
@@ -155,18 +165,20 @@ namespace SceneLoaderUSD
     {
         Material material{};
 
-        material.TexIdxAlbedo               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "base_color");
-        material.TexIdxNormal               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "normal");
-        material.TexIdxRoughness            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "specular_roughness");
-        material.TexIdxMetallic             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "metalness");
-        material.TexIdxEmissive             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "emission");
-        material.TexIdxAnisotropy           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "anisotropy");
-        material.TexIdxClearcoat            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "clearcoat");
-        material.TexIdxClearcoatRoughness   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "clearcoatRoughness");
-        material.TexIdxClearcoatNormal      = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "clearCoatNormal");
-        material.TexIdxSheenColor           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "sheenColor");
-        material.TexIdxSheenRoughness       = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "sheenRoughness");
-        material.TexIdxTransmissionFactor   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, "transmission");
+        material.TexIdxAlbedo               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"albedo", "diffuse", "diffuse_color", "base_color"});
+        material.TexIdxNormal               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"normal", "geometry_normal"});
+        material.TexIdxRoughness            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"roughness", "specular_roughness"});
+        material.TexIdxMetallic             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"metallic", "metalness"});
+        material.TexIdxEmissive             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"emission_color", "emission"});
+        material.TexIdxAnisotropy           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"anisotropy"});
+        material.TexIdxClearcoat            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"clearcoat"});
+        material.TexIdxClearcoatRoughness   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"clearcoatRoughness"});
+        material.TexIdxClearcoatNormal      = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"clearCoatNormal"});
+        material.TexIdxSheenColor           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"sheenColor"});
+        material.TexIdxSheenRoughness       = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"sheenRoughness"});
+        material.TexIdxTransmissionFactor   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"transmission"});
+        material.TexIdxORM                  = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"orm"});
+        material.TexIdxOGM                  = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"ogm", "specular_factor", "specular_color", "specular"});
 
         auto readFloat = [&](const char* name, float& dest)
         {
@@ -208,7 +220,7 @@ namespace SceneLoaderUSD
 
         readFloatAssignedTexture    ("specular_roughness",      material.TexIdxRoughness,           material.Roughness);
         readFloatAssignedTexture    ("metalness",               material.TexIdxMetallic,            material.Metallic);
-        readFloatAssignedTexture    ("emissive_strength",       material.TexIdxEmissive,    material.EmissiveStrength);
+        readFloatAssignedTexture    ("emissive_strength",       material.TexIdxEmissive,            material.EmissiveStrength);
         readFloatAssignedTexture    ("transmission",            material.TexIdxTransmissionFactor,  material.TransmissionFactor);
 
         readFloat                   ("specular_factor",      material.SpecularFactor);

@@ -35,7 +35,9 @@ struct Material
     int TexIdxSheenRoughness;
 
     int TexIdxTransmissionFactor;
-    hlsl::float3 p;
+    int TexIdxORM;
+    int TexIdxOGM;
+    float p;
 
 #ifdef __cplusplus
     Material()
@@ -63,7 +65,9 @@ struct Material
         TexIdxClearcoatNormal       = -1;
         TexIdxSheenColor            = -1;
         TexIdxSheenRoughness        = -1;
-        TexIdxTransmissionFactor          = -1;
+        TexIdxTransmissionFactor    = -1;
+        TexIdxORM                   = -1;
+        TexIdxOGM                   = -1;
 
         p = {};
     }

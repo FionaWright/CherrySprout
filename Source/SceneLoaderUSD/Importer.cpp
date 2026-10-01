@@ -145,8 +145,8 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
             std::vector<ImporterObject> objects = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
             for (int i = 0; i < objects.size(); ++i)
             {
-                context.Objects.emplace_back(std::move(objects[i]));
                 std::cout << "Extracted Mesh: " << objects[i].Name << std::endl;
+                context.Objects.emplace_back(std::move(objects[i]));
             }
             continue;
         }

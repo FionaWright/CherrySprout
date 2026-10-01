@@ -87,7 +87,7 @@ namespace SceneLoaderUSD
     #define DEFAULT_FALLBACK_MATERIAL_IDX 0
 
     static bool TryExtractBoundMaterialIdx(const pxr::UsdPrim& prim,
-                                           const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx)
+                                           const std::unordered_map<std::string, size_t>& matPathToIdxMap, int& matIdx, std::string& materialDebugName)
     {
         pxr::UsdShadeMaterial boundMat;
 
@@ -119,6 +119,7 @@ namespace SceneLoaderUSD
             const auto it = matPathToIdxMap.find(path);
             if (it != matPathToIdxMap.end())
             {
+                materialDebugName = path.substr(path.find_last_of("/\\") + 1);
                 matIdx = static_cast<int>(it->second);
                 return true;
             }
@@ -135,7 +136,7 @@ namespace SceneLoaderUSD
         std::vector<int> MaterialIndices;
     };
 
-    inline ExtractedBuffers ExtractGeometry(const pxr::UsdPrim& prim, const std::unordered_map<std::string, size_t>& matPathToIdxMap, const bool flip)
+    inline ExtractedBuffers ExtractGeometry(const pxr::UsdPrim& prim, const std::unordered_map<std::string, size_t>& matPathToIdxMap, const bool flip, std::string& materialDebugName)
     {
         ExtractedBuffers buffers;
 
@@ -346,7 +347,7 @@ namespace SceneLoaderUSD
                 ExtractSubMeshIndices(subset, faceInfos, buffers.Indices2D.back());
 
                 int matIdx;
-                TryExtractBoundMaterialIdx(subset.GetPrim(), matPathToIdxMap, matIdx);
+                TryExtractBoundMaterialIdx(subset.GetPrim(), matPathToIdxMap, matIdx, materialDebugName);
                 buffers.MaterialIndices.emplace_back(matIdx);
             }
         }
@@ -355,7 +356,7 @@ namespace SceneLoaderUSD
             buffers.Indices2D.emplace_back(indices);
 
             int matIdx;
-            TryExtractBoundMaterialIdx(prim, matPathToIdxMap, matIdx);
+            TryExtractBoundMaterialIdx(prim, matPathToIdxMap, matIdx, materialDebugName);
             buffers.MaterialIndices.emplace_back(matIdx);
         }
 

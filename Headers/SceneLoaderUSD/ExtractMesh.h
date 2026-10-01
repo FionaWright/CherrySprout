@@ -55,13 +55,14 @@ namespace SceneLoaderUSD
 
         const bool flip = doFlip(prim, xform, globalXForm);
 
-        const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip);
+        std::string materialDebugName;
+        const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip, materialDebugName);
         std::vector<ImporterObject> objects;
 
         for (int i = 0; i < buffers.Indices2D.size(); i++)
         {
             ImporterObject obj;
-            obj.Name = prim.GetName().GetString();
+            obj.Name = prim.GetName().GetString() + "_" + materialDebugName;
             obj.Vertices = buffers.Vertices;
             obj.Indices = buffers.Indices2D[i];
             obj.MaterialIndex = buffers.MaterialIndices[i];
@@ -97,12 +98,13 @@ namespace SceneLoaderUSD
             if (!childPrim.IsA<pxr::UsdGeomMesh>())
                 continue;
 
-            const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip);
+            std::string materialDebugName;
+            const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip, materialDebugName);
 
             for (int i = 0; i < buffers.Indices2D.size(); i++)
             {
                 ImporterObject obj;
-                obj.Name = prim.GetName().GetString();
+                obj.Name = prim.GetName().GetString() + "_" + materialDebugName;
                 obj.Vertices = buffers.Vertices;
                 obj.Indices = buffers.Indices2D[i];
                 obj.MaterialIndex = buffers.MaterialIndices[i];
