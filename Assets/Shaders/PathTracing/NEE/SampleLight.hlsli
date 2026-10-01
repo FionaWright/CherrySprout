@@ -34,7 +34,7 @@ LightSample SampleLight(
         float pdf_env;
         SampleEnvMapCdf(xi1, xi2, uv_env, lightSample.Direction, pdf_env);
 
-        lightSample.Radiance = gTexEnvMap.Sample(gSampler, uv_env).rgb;
+        lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearWrap, uv_env).rgb;
         DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
 
         lightSample.Distance = INF;
@@ -92,7 +92,7 @@ LightSample EvaluateLight(
 
         float2 uv_env = EaSphereToSquare(wi);
 
-        lightSample.Radiance = gTexEnvMap.Sample(gSampler, uv_env).rgb;
+        lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearWrap, uv_env).rgb;
         DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
 
         float pdf_env = GetEnvMapPdf(uv_env);

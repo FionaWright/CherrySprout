@@ -12,6 +12,7 @@ static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags
         eFeature_Accumulation |
         eFeature_NormalMaps |
         eFeature_EnvironmentMap |
+        eFeature_AlphaTesting |
         //eFeature_Transmission |
         eFeature_NEE |
         eFeature_FireflyThreshold |

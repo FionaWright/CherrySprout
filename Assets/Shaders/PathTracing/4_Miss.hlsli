@@ -17,7 +17,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
     if (FEATURE_ENABLED(EnvironmentMap))
     {
         float2 uv = EaSphereToSquare(pathState.Desc.Direction);
-        float3 Le = gTexEnvMap.Sample(gSampler, uv).rgb;
+        float3 Le = gTexEnvMap.Sample(gSamplerLinearWrap, uv).rgb;
 
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
 

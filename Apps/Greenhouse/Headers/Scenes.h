@@ -79,8 +79,8 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     {
         .Name = "Bistro",
         .Filepath = "Scenes/USD/GitIgnored/Bistro/Bistro.usdc",
-        .CameraPosition = {-0.114393, 0.159540, -0.291603},
-        .CameraPitchYaw = {0.251301, 0.375632},
+        .CameraPosition = {-19.381216, 3.343480, 1.085874},
+        .CameraPitchYaw = {0.231301, 1.125632},
     },
 };
 

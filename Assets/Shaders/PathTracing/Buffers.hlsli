@@ -75,6 +75,7 @@ RWByteAddressBuffer                                 gPathDumpDebugOutput    : re
 
 // =================== S Registers ===============================================================================
 
-SamplerState                                        gSampler                : register(s0);
+SamplerState                                        gSamplerLinearClamp     : register(s0);
+SamplerState                                        gSamplerLinearWrap      : register(s1);
 
 #endif

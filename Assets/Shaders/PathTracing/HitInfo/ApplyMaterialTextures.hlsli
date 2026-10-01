@@ -14,7 +14,7 @@ float sampleTexture1(HitInfo hitInfo, int idx, float fallback)
     if (idx == NO_TEXTURE)
         return fallback;
 
-    return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).r;
+    return gSceneTextures[idx].Sample(gSamplerLinearWrap, hitInfo.UV).r;
 }
 
 float3 sampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
@@ -22,7 +22,7 @@ float3 sampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
     if (idx == NO_TEXTURE)
         return fallback;
 
-    return gSceneTextures[idx].Sample(gSampler, hitInfo.UV).rgb;
+    return gSceneTextures[idx].Sample(gSamplerLinearWrap, hitInfo.UV).rgb;
 }
 
 float4 sampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
@@ -30,7 +30,7 @@ float4 sampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
     if (idx == NO_TEXTURE)
         return fallback;
 
-    return gSceneTextures[idx].Sample(gSampler, hitInfo.UV);
+    return gSceneTextures[idx].Sample(gSamplerLinearWrap, hitInfo.UV);
 }
 
 void ApplyMaterialTextures(inout HitInfo hitInfo)
@@ -61,7 +61,7 @@ void ApplyNormalMap(inout HitInfo hitInfo, inout float3 Ns)
     if (hitInfo.Mat.TexIdxNormal == NO_TEXTURE)
         return;
 
-    float3 bumpSample = sampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, float3(0, 1, 0));
+    float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSamplerLinearClamp, hitInfo.UV).rgb;
     bumpSample = RemapUtoS(bumpSample);
     bumpSample.y = -bumpSample.y; // DX-convention
 

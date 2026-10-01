@@ -11,7 +11,7 @@ inline size_t Align(const size_t value, const size_t alignment)
     return (value + alignment - 1) & ~(alignment - 1);
 }
 
-inline void InitializeSamplerPointClamp(D3D12_STATIC_SAMPLER_DESC* desc)
+inline void InitializeSamplerPointClamp(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
 {
     *desc = {};
 
@@ -21,10 +21,10 @@ inline void InitializeSamplerPointClamp(D3D12_STATIC_SAMPLER_DESC* desc)
 
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    desc->ShaderRegister = 0;
+    desc->ShaderRegister = regIdx;
 }
 
-inline void InitializeSamplerLinearClamp(D3D12_STATIC_SAMPLER_DESC* desc)
+inline void InitializeSamplerLinearClamp(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
 {
     *desc = {};
 
@@ -34,23 +34,10 @@ inline void InitializeSamplerLinearClamp(D3D12_STATIC_SAMPLER_DESC* desc)
 
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    desc->ShaderRegister = 0;
+    desc->ShaderRegister = regIdx;
 }
 
-inline void InitializeSamplerPointWrap(D3D12_STATIC_SAMPLER_DESC* desc)
-{
-    *desc = {};
-
-    desc->AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    desc->AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    desc->AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-
-    desc->Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-    desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    desc->ShaderRegister = 0;
-}
-
-inline void InitializeSamplerLinearWrap(D3D12_STATIC_SAMPLER_DESC* desc)
+inline void InitializeSamplerLinearWrap(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
 {
     *desc = {};
 
@@ -60,12 +47,23 @@ inline void InitializeSamplerLinearWrap(D3D12_STATIC_SAMPLER_DESC* desc)
 
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    desc->ShaderRegister = 0;
+    desc->ShaderRegister = regIdx;
 }
 
-inline void InitializeSamplerAnisotropicWrap(
-    D3D12_STATIC_SAMPLER_DESC* desc,
-    UINT maxAnisotropy = 16)
+inline void InitializeSamplerPointWrap(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
+{
+    *desc = {};
+
+    desc->AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    desc->AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    desc->AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+
+    desc->Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+    desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    desc->ShaderRegister = regIdx;
+}
+
+inline void InitializeSamplerAnisotropicWrap(D3D12_STATIC_SAMPLER_DESC* desc, UINT maxAnisotropy = 16, uint32_t regIdx = 0)
 {
     *desc = {};
 
@@ -77,12 +75,10 @@ inline void InitializeSamplerAnisotropicWrap(
     desc->MaxAnisotropy = maxAnisotropy;
 
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    desc->ShaderRegister = 0;
+    desc->ShaderRegister = regIdx;
 }
 
-inline void InitializeSamplerAnisotropicClamp(
-    D3D12_STATIC_SAMPLER_DESC* desc,
-    UINT maxAnisotropy = 16)
+inline void InitializeSamplerAnisotropicClamp(D3D12_STATIC_SAMPLER_DESC* desc, UINT maxAnisotropy = 16, uint32_t regIdx = 0)
 {
     *desc = {};
 
@@ -94,7 +90,7 @@ inline void InitializeSamplerAnisotropicClamp(
     desc->MaxAnisotropy = maxAnisotropy;
 
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    desc->ShaderRegister = 0;
+    desc->ShaderRegister = regIdx;
 }
 
 inline size_t FormatBitsPerPixel(_In_ const DXGI_FORMAT fmt, bool& isBC)

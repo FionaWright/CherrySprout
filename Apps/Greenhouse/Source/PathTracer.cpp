@@ -376,9 +376,10 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     constexpr uint32_t numSRV = 15;
     constexpr uint32_t numUAV = 10;
 
-    D3D12_STATIC_SAMPLER_DESC sampler = {};
-    InitializeSamplerLinearClamp(&sampler);
-    m_rootSig.SmartInit(device, numCBV, numSRV, numUAV, true, &sampler, 1);
+    D3D12_STATIC_SAMPLER_DESC samplers[2] = {};
+    InitializeSamplerLinearClamp(&samplers[0], 0);
+    InitializeSamplerLinearWrap(&samplers[1], 1);
+    m_rootSig.SmartInit(device, numCBV, numSRV, numUAV, true, samplers, _countof(samplers));
 
     std::vector<std::string> compileArgs = {};
     compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));

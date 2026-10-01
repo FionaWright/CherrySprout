@@ -31,7 +31,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
 
         float2 uv = ExtractUV(q, instance);
 
-        float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSampler, uv);
+        float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSamplerLinearWrap, uv);
         float alpha = albedoSample.w;
 
         shadowFactor *= 1.0f - alpha;
