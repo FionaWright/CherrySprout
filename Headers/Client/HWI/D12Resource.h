@@ -58,7 +58,7 @@ public:
     D3D12_RESOURCE_STATES GetCurrentState() const { return m_currentState; }
     D3D12_RESOURCE_DESC GetDesc() const { return m_desc; }
 
-#ifdef _DEBUG
+#if !NDEBUG
     [[nodiscard]] const char* GetName() const { return m_name.c_str(); }
     void SetName(const char* name) { m_name = name; }
 #else
@@ -72,7 +72,7 @@ private:
     D3D12_RESOURCE_STATES m_currentState = {};
     size_t m_uploadBufferAssignedOffset = 0;
 
-#ifdef _DEBUG
+#if !NDEBUG
     std::string m_name = "";
     bool m_initialized = false;
 #endif

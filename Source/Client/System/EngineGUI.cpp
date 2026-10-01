@@ -10,7 +10,7 @@
 #include "System/Input.h"
 #include "Utils/ConstantsCpp.h"
 
-#ifdef _DEBUG
+#if !NDEBUG
 #   include "Debug/HotReloader.h"
 #   include "Debug/Snapshotter.h"
 #endif
@@ -34,7 +34,7 @@ void Engine::RenderGUI()
 
         ImGui::Text("Frame Time (ms): %f", m_frameTime * 1000.0);
 
-#ifdef _DEBUG
+#if !NDEBUG
         static bool pauseFPSQueue = false;
 
         const bool canUpdateQueue = m_fpsGuiQueue.size() == 0 || m_fps10ms != m_fpsGuiQueue.at(m_fpsGuiQueue.size() - 1);
@@ -86,7 +86,7 @@ void Engine::RenderGUI()
     ImGui::SeparatorText("Tools##xx");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-#ifdef _DEBUG
+#if !NDEBUG
         if (ImGui::Button("Reload All Pipelines"))
         {
             m_hotReloaderPendingAll = true;

@@ -9,7 +9,7 @@
 #include "System/Config.h"
 #include "System/Win32App.h"
 
-#ifdef _DEBUG
+#if !NDEBUG
 #   include "Debug/DebugOutputRedirector.h"
 #endif
 
@@ -150,7 +150,7 @@ void D3D::Init(const size_t width, const size_t height)
         m_tearingSupport = SUCCEEDED(hr) && allowTearing;
     }
 
-#ifdef _DEBUG
+#if !NDEBUG
     if (SUCCEEDED(m_device.As(&m_infoQueue)))
     {
         m_logFile.open("d3d12log.txt");

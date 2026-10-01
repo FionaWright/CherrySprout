@@ -18,7 +18,7 @@ int CherrySprout::Run(App& app, const HINSTANCE hInstance, const LPSTR args, con
 {
     V(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 
-#ifdef _DEBUG
+#if !NDEBUG
     InitializeDebugOutput();
 #endif
 

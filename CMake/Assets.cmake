@@ -10,6 +10,7 @@ file(GLOB_RECURSE TEXTURE_FILES
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.jpg"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.tga"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.png"
+        "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.dds"
 )
 
 set(TEXTURE_OUTPUTS "")
@@ -48,7 +49,7 @@ foreach(SRC ${TEXTURE_FILES})
 
     list(APPEND TEXTURE_OUTPUTS "${DST}")
 
-    if(NOT EXT STREQUAL ".hdr" AND NOT EXT STREQUAL ".exr") # Don't convert HDR to DDS
+    if(NOT EXT STREQUAL ".hdr" AND NOT EXT STREQUAL ".exr" AND NOT EXT STREQUAL ".dds") # Don't convert HDR to DDS
 
         get_filename_component(NAME_WE "${REL_PATH}" NAME_WE)
         get_filename_component(REL_DIR "${REL_PATH}" DIRECTORY)

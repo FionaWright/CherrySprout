@@ -8,13 +8,13 @@
 
 #include "Utils/Helper.h"
 
-#if NDEBUG
+#if !NDEBUG
 #   include <WinPixEventRuntime/pix3.h>
 #endif
 
 GPUEventScoped::GPUEventScoped(ID3D12GraphicsCommandList* cmdList, const LPCWSTR label)
 {
-#ifdef _DEBUG
+#if !NDEBUG
     m_heldCmdList = cmdList;
     PIXBeginEvent(cmdList, 0, label);
 #endif
@@ -22,7 +22,7 @@ GPUEventScoped::GPUEventScoped(ID3D12GraphicsCommandList* cmdList, const LPCWSTR
 
 GPUEventScoped::GPUEventScoped(ID3D12GraphicsCommandList* cmdList, const LPCSTR label)
 {
-#ifdef _DEBUG
+#if !NDEBUG
     m_heldCmdList = cmdList;
     PIXBeginEvent(cmdList, 0, label);
 #endif
@@ -30,7 +30,7 @@ GPUEventScoped::GPUEventScoped(ID3D12GraphicsCommandList* cmdList, const LPCSTR 
 
 GPUEventScoped::~GPUEventScoped()
 {
-#ifdef _DEBUG
+#if !NDEBUG
     PIXEndEvent(m_heldCmdList);
 #endif
 }

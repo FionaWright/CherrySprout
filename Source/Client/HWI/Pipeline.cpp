@@ -12,14 +12,14 @@
 #include "HWI/CompileShaderDXC.h"
 #include "Utils/D3DUtils.h"
 
-#ifdef _DEBUG
+#if !NDEBUG
 #   include "Debug/HotReloader.h"
 #endif
 
 void Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps,
                             D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs)
 {
-#if defined(_DEBUG)
+#if !NDEBUG
     constexpr auto compileFlags = static_cast<ShaderCompileFlags>(SCF_Debug | SCF_DisableOptimize);
 #else
     constexpr auto compileFlags = static_cast<ShaderCompileFlags>(0);
@@ -38,7 +38,7 @@ void Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps
 
     V(device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_pso)));
 
-#ifdef _DEBUG
+#if !NDEBUG
     HotReloader::TrackGraphicsPipeline(vs, ps, this, desc, compileArgs);
 #endif
 }
@@ -66,7 +66,7 @@ void Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_P
     desc.CS = {blobC->GetBufferPointer(), blobC->GetBufferSize()};
     V(device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_pso)));
 
-#ifdef _DEBUG
+#if !NDEBUG
     HotReloader::TrackComputePipeline(cs, this, desc, compileArgs);
 #endif
 }

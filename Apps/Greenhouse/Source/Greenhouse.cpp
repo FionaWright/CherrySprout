@@ -12,7 +12,7 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-#ifdef _DEBUG
+#if !NDEBUG
 #   include "Debug/Snapshotter.h"
 #endif
 
@@ -97,7 +97,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     if (m_renderBackendDirty)
     {
         m_uploadHeapCBV.FreeAssignedData();
-        m_sceneManager.UnreserveData();
         m_currRenderBackend->UnreserveData();
 
         m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
@@ -116,8 +115,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     if (m_sceneDirty)
     {
         d3d->Flush();
-
-        m_sceneManager.UnreserveData();
 
         const SceneConfig& sceneConfig = s_sceneConfigs.at(m_currentSceneIdx);
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str(), sceneConfig.SceneScale);
@@ -277,7 +274,7 @@ void Greenhouse::PostUpdate(D3D* d3d)
 {
     m_currRenderBackend->PostUpdate(d3d, m_renderInfo);
 
-#ifdef _DEBUG
+#if !NDEBUG
     if (m_scheduledTransientRenderFrameIdx != -1)
     {
         const bool completedFrame = m_scheduledTransientRenderSampleIdx > m_config.PathTracerConfig.TransientRenderNumSamples;

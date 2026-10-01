@@ -35,11 +35,11 @@ private:
 
     // GUI State:
 
-#ifdef _DEBUG
+#if !NDEBUG
     bool m_hotReloaderPendingAll = false, m_hotReloaderPendingGraphics = false, m_hotReloaderPendingCompute = false;
 #endif
 
-#if _DEBUG
+#if !NDEBUG
     std::string m_scheduledSnapshotRTV = "";
     bool m_snapshotterIsPng = true;
 #endif

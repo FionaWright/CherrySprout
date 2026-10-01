@@ -34,7 +34,7 @@ void FreeScene(SceneCPU* scene)
 
     for (int i = 0; i < scene->ObjectCount; i++)
     {
-#if _DEBUG
+#if !NDEBUG
         free(scene->Objects[i].DebugName);
         scene->Objects[i].DebugName = nullptr;
 #endif

@@ -111,29 +111,27 @@ void SceneManager::UploadScene(D3D* d3d)
         m_scene.GPU.SceneTextures.emplace_back(std::move(tex));
     }
 
-    m_uploadHeap = {};
-    m_uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
+    UploadHeap uploadHeap;
+    uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
     const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
     const auto cmdList = cmdListPtr.Get();
     {
         GPU_SCOPE(cmdList, "Upload Scene Data");
 
-        m_scene.GPU.MegaBufferIndex.            UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
-        m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
-        m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
-        m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &m_uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
+        m_scene.GPU.MegaBufferIndex.            UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
+        m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
+        m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
+        m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
 
         for (int i = 0; i < textureCount; i++)
         {
-            TextureLoader::UploadTexture(cmdList, &m_uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
+            TextureLoader::UploadTexture(cmdList, &uploadHeap, scratchImages[i], &m_scene.GPU.SceneTextures[i]);
         }
     }
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
-
-    m_uploadHeap = {};
 
     m_gpuDataDirty = false;
 

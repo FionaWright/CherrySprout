@@ -41,7 +41,7 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
         const ImporterObject& impObj = importerContext.Objects[i];
         Object obj{};
 
-#ifdef _DEBUG
+#if !NDEBUG
         obj.DebugName = _strdup(impObj.Name.c_str());
 #endif
 

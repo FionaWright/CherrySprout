@@ -111,6 +111,9 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     BlasEntry entry;
 
+    CherryAssert(prebuildInfo.ScratchDataSizeInBytes > 0);
+    CherryAssert(prebuildInfo.ResultDataMaxSizeInBytes > 0);
+
     entry.Scratch.Init_Buffer("BLAS Scratch", device, prebuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     entry.Result.Init_Buffer("BLAS Result", device, prebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, false, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
 

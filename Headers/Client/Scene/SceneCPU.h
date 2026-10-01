@@ -11,7 +11,7 @@
 
 struct Object
 {
-#if _DEBUG
+#if !NDEBUG
     char* DebugName = nullptr;
 #endif
 

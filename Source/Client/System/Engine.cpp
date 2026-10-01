@@ -14,7 +14,7 @@
 #include "System/Gui.h"
 #include "System/Input.h"
 
-#ifdef _DEBUG
+#if !NDEBUG
 #   include "Debug/HotReloader.h"
 #   include "Debug/Snapshotter.h"
 #endif
@@ -56,7 +56,7 @@ void Engine::Frame()
 
     Input::ProgressFrame();
 
-#ifdef _DEBUG
+#if !NDEBUG
     if (m_hotReloaderPendingGraphics)
         HotReloader::ReloadPipelines(m_d3d.get(), false, ReloadMode::eGraphics);
     else if (m_hotReloaderPendingCompute)
@@ -115,7 +115,7 @@ void Engine::Render()
         m_app->PostUpdate(m_d3d.get());
     }
 
-#ifdef _DEBUG
+#if !NDEBUG
     if (!m_scheduledSnapshotRTV.empty())
     {
         uint8_t* data = nullptr;

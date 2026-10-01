@@ -44,7 +44,7 @@ void PrintSceneDebug(const SceneCPU* scene)
 
         std::cout << "[" << i << "] ";
 
-#ifdef _DEBUG
+#if !NDEBUG
         std::cout << "\"" << obj.DebugName << "\" ";
 #endif
 

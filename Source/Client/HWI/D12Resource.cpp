@@ -15,7 +15,7 @@ D12Resource::D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RES
 
     m_desc = desc;
 
-#ifdef _DEBUG
+#if !NDEBUG
     m_initialized = true;
 #endif
 }
@@ -23,7 +23,7 @@ D12Resource::D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RES
 void D12Resource::Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
                        const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue, const CD3DX12_HEAP_PROPERTIES& heapProp)
 {
-#ifdef _DEBUG
+#if !NDEBUG
     m_name = name;
     CherryAssert(!m_initialized);
     m_initialized = true;
@@ -221,7 +221,7 @@ void D12Resource::Release()
     m_desc = {};
     m_uploadBufferAssignedOffset = 0;
 
-#ifdef _DEBUG
+#if !NDEBUG
     m_name = "";
     m_initialized = false;
 #endif
@@ -234,7 +234,7 @@ void D12Resource::Reset()
     m_desc = {};
     m_uploadBufferAssignedOffset = 0;
 
-#ifdef _DEBUG
+#if !NDEBUG
     m_initialized = false;
 #endif
 }

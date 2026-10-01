@@ -8,7 +8,10 @@
 
 std::string AssetPathToDDS(const char* path)
 {
-    std::filesystem::path p(path);
+    const std::filesystem::path p(path);
+
+    if (p.extension() == ".dds")
+        return path;
 
     const std::string generic = p.generic_string();
 
@@ -32,7 +35,7 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* pa
 
     constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;
 
-    TexMetadata texMetadata;
+    TexMetadata texMetadata{};
     V(LoadFromDDSFile(fullPathW.c_str(), ddsFlags, &texMetadata, scratchImage));
 
     D12Resource texture;
@@ -46,7 +49,7 @@ D12Resource TextureLoader::LoadTexture2DHDR(ID3D12Device* device, const char* pa
 
     const std::wstring fullPathW = stringToWString(path);
 
-    TexMetadata texMetadata;
+    TexMetadata texMetadata{};
     V(LoadFromHDRFile(fullPathW.c_str(), &texMetadata, scratchImage));
 
     D12Resource texture;

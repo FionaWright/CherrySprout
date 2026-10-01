@@ -18,7 +18,7 @@
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 
-#ifdef _DEBUG
+#if !NDEBUG
 #include "Debug/Profiler.h"
 #endif
 
@@ -403,7 +403,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     if (debugInfo.CbvFlagsModeEnabled)
         compileArgs.emplace_back("-DDEBUG_CBV_FLAGS_MODE_ENABLED=1");
 
-#ifdef _DEBUG
+#if !NDEBUG
     Profiler::AddToStack("Path-Tracer Update Pipeline");
 #endif
 
@@ -412,7 +412,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
     m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs);
 
-#ifdef _DEBUG
+#if !NDEBUG
     Profiler::PopAndPrint();
 #endif
 

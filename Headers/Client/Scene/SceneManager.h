@@ -19,7 +19,6 @@ public:
     void AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const;
 
     bool IsGpuDataDirty() const { return m_gpuDataDirty; }
-    void UnreserveData() { m_uploadHeap.FreeAssignedData(); }
 
     Scene& GetScene() { return m_scene; }
     SceneCPU& GetCPU() { return m_scene.CPU; }
@@ -28,8 +27,6 @@ public:
 private:
     Scene m_scene;
     bool m_gpuDataDirty = false;
-
-    UploadHeap m_uploadHeap;
 };
 
 
