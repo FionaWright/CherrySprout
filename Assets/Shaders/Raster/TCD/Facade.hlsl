@@ -99,6 +99,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     float shadowFactor = 0.0f;
     if (NdL > 0.0f)
     {
+
         float3 rayOrigin = worldPos + Ng * EPSILON;
         TraceRayShadow(rayOrigin, wi, INF, shadowFactor);
     }
