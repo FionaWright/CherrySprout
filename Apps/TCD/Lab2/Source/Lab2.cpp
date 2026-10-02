@@ -11,6 +11,7 @@
 #include "Scene/Material.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneCPU.h"
+#include "System/FileHelper.h"
 #include "System/Gui.h"
 #include "System/HighResolutionClock.h"
 #include "Utils/Helper.h"
@@ -39,40 +40,6 @@ void Lab2::Init(D3D* d3d)
     m_P = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio,
                                    Config::GetRender().NearPlane, Config::GetRender().FarPlane);
     m_InvP = XMMatrixInverse(nullptr, m_P);
-
-    D3D12_STATIC_SAMPLER_DESC sampler = {};
-    InitializeSamplerLinearClamp(&sampler);
-
-    m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
-
-    m_rootSig.SmartInit(d3d->GetDevice(), 2, 1, 0, true, &sampler, 1, &m_rootConstants);
-
-    m_descriptorSet.Init(&m_heap, true, true);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), &m_uploadHeapCBV);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), &m_uploadHeapCBV);
-
-    D3D12_INPUT_ELEMENT_DESC ildDesc[] =
-    {
-        {
-            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-    };
-
-    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), {ildDesc, _countof(ildDesc)}, true);
-    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-
-    m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/Forward.hlsl", "Raster/Forward.hlsl", desc);
-
-    m_cameraController.Init(XMFLOAT3(0,0,-5), 0, 0);
 
     Scene scene;
 
@@ -120,55 +87,56 @@ void Lab2::Init(D3D* d3d)
 
     // Front
     scene.CPU.MegaBufferIndex[0] = 0;
-    scene.CPU.MegaBufferIndex[1] = 1;
-    scene.CPU.MegaBufferIndex[2] = 2;
+    scene.CPU.MegaBufferIndex[1] = 2;
+    scene.CPU.MegaBufferIndex[2] = 1;
     scene.CPU.MegaBufferIndex[3] = 0;
-    scene.CPU.MegaBufferIndex[4] = 2;
-    scene.CPU.MegaBufferIndex[5] = 3;
+    scene.CPU.MegaBufferIndex[4] = 3;
+    scene.CPU.MegaBufferIndex[5] = 2;
 
     // Back
     scene.CPU.MegaBufferIndex[6] = 4;
-    scene.CPU.MegaBufferIndex[7] = 5;
-    scene.CPU.MegaBufferIndex[8] = 6;
+    scene.CPU.MegaBufferIndex[7] = 6;
+    scene.CPU.MegaBufferIndex[8] = 5;
     scene.CPU.MegaBufferIndex[9] = 4;
-    scene.CPU.MegaBufferIndex[10] = 6;
-    scene.CPU.MegaBufferIndex[11] = 7;
+    scene.CPU.MegaBufferIndex[10] = 7;
+    scene.CPU.MegaBufferIndex[11] = 6;
 
     // Left
     scene.CPU.MegaBufferIndex[12] = 8;
-    scene.CPU.MegaBufferIndex[13] = 9;
-    scene.CPU.MegaBufferIndex[14] = 10;
+    scene.CPU.MegaBufferIndex[13] = 10;
+    scene.CPU.MegaBufferIndex[14] = 9;
     scene.CPU.MegaBufferIndex[15] = 8;
-    scene.CPU.MegaBufferIndex[16] = 10;
-    scene.CPU.MegaBufferIndex[17] = 11;
+    scene.CPU.MegaBufferIndex[16] = 11;
+    scene.CPU.MegaBufferIndex[17] = 10;
 
     // Right
     scene.CPU.MegaBufferIndex[18] = 12;
-    scene.CPU.MegaBufferIndex[19] = 13;
-    scene.CPU.MegaBufferIndex[20] = 14;
+    scene.CPU.MegaBufferIndex[19] = 14;
+    scene.CPU.MegaBufferIndex[20] = 13;
     scene.CPU.MegaBufferIndex[21] = 12;
-    scene.CPU.MegaBufferIndex[22] = 14;
-    scene.CPU.MegaBufferIndex[23] = 15;
+    scene.CPU.MegaBufferIndex[22] = 15;
+    scene.CPU.MegaBufferIndex[23] = 14;
 
     // Top
     scene.CPU.MegaBufferIndex[24] = 16;
-    scene.CPU.MegaBufferIndex[25] = 17;
-    scene.CPU.MegaBufferIndex[26] = 18;
+    scene.CPU.MegaBufferIndex[25] = 18;
+    scene.CPU.MegaBufferIndex[26] = 17;
     scene.CPU.MegaBufferIndex[27] = 16;
-    scene.CPU.MegaBufferIndex[28] = 18;
-    scene.CPU.MegaBufferIndex[29] = 19;
+    scene.CPU.MegaBufferIndex[28] = 19;
+    scene.CPU.MegaBufferIndex[29] = 18;
 
     // Bottom
     scene.CPU.MegaBufferIndex[30] = 20;
-    scene.CPU.MegaBufferIndex[31] = 21;
-    scene.CPU.MegaBufferIndex[32] = 22;
+    scene.CPU.MegaBufferIndex[31] = 22;
+    scene.CPU.MegaBufferIndex[32] = 21;
     scene.CPU.MegaBufferIndex[33] = 20;
-    scene.CPU.MegaBufferIndex[34] = 22;
-    scene.CPU.MegaBufferIndex[35] = 23;
+    scene.CPU.MegaBufferIndex[34] = 23;
+    scene.CPU.MegaBufferIndex[35] = 22;
 
     scene.CPU.MegaBufferMaterialsCount = 1;
     scene.CPU.MegaBufferMaterials = new Material();
     scene.CPU.MegaBufferMaterials->Albedo = XMFLOAT4(1, 0, 0, 1);
+    scene.CPU.MegaBufferMaterials->TexIdxAlbedo = 0;
 
     XMMATRIX TRS = XMMatrixIdentity();
     XMFLOAT4X4 TRS4x4{};
@@ -186,9 +154,55 @@ void Lab2::Init(D3D* d3d)
     scene.CPU.MegaBufferPunctualLightsCount = 1;
     scene.CPU.MegaBufferPunctualLights = new PunctualLight(); // Dummy
 
+    scene.CPU.TextureFilepathCount = 6;
+    scene.CPU.TextureFilepaths = new char*[scene.CPU.TextureFilepathCount];
+    scene.CPU.TextureFilepaths[0] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade0.jpg").c_str());
+    scene.CPU.TextureFilepaths[1] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade1.jpg").c_str());
+    scene.CPU.TextureFilepaths[2] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade2.jpg").c_str());
+    scene.CPU.TextureFilepaths[3] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade3.jpg").c_str());
+    scene.CPU.TextureFilepaths[4] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade4.jpg").c_str());
+    scene.CPU.TextureFilepaths[5] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade5.jpg").c_str());
+
     m_sceneManager.AssignScene(scene);
     m_sceneManager.UploadScene(d3d);
     m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
+
+    {
+        D3D12_STATIC_SAMPLER_DESC sampler = {};
+        InitializeSamplerLinearClamp(&sampler);
+
+        m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
+
+        m_rootSig.SmartInit(d3d->GetDevice(), 2, 1, 0, true, &sampler, 1, &m_rootConstants);
+
+        m_descriptorSet.Init(&m_heap, true, true);
+        m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), &m_uploadHeapCBV);
+        m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), &m_uploadHeapCBV);
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &m_sceneManager.GetGPU().MegaBufferMaterials, m_sceneManager.GetCPU().MegaBufferMaterialsCount, sizeof(Material));
+
+        D3D12_INPUT_ELEMENT_DESC ildDesc[] =
+        {
+            {
+                "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+            },
+            {
+                "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+            },
+            {
+                "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+            },
+        };
+
+        auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), {ildDesc, _countof(ildDesc)}, true);
+        desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+
+        m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/TCD/Facade.hlsl", "Raster/TCD/Facade.hlsl", desc);
+
+        m_cameraController.Init(XMFLOAT3(0,0,-5), 0, 0);
+    }
 }
 
 void Lab2::Update(D3D* d3d, TimeArgs timeArgs)
@@ -219,6 +233,8 @@ void Lab2::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     Scene* scene = &m_sceneManager.GetScene();
 
     {
+        SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, Config::GetSystem().WindowAppGuiWidth);
+
         d3d->GetRtv()->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = d3d->GetRtvHandle();
@@ -298,13 +314,14 @@ void Lab2::PostUpdate(D3D* d3d)
 
 void Lab2::RenderGUI()
 {
-}
-
-void Lab2::OnResize(uint32_t width, uint32_t height)
-{
     Gui::BeginWindow("Lab2", ImVec2(0, 0), ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
     ImGui::TextUnformatted("Lab2");
 
     Gui::EndWindow();
+}
+
+void Lab2::OnResize(uint32_t width, uint32_t height)
+{
+
 }
