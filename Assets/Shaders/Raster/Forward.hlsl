@@ -14,8 +14,8 @@ struct VsIn
 struct VsOut
 {
     float4 position : SV_POSITION;
-    float2 uv : TEXCOORD0;
-    float3 normal : TEXCOORD1;
+    float3 normal : TEXCOORD0;
+    float2 uv : TEXCOORD1;
 };
 
 ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0); // Push Constants
