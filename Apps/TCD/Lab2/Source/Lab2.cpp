@@ -16,6 +16,116 @@
 #include "System/HighResolutionClock.h"
 #include "Utils/Helper.h"
 
+void CreateCube(XMFLOAT3 position, XMFLOAT3 scale, std::vector<Vertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer, std::vector<Material>& materials, std::vector<Object>& objects)
+{
+    constexpr uint32_t vertexCount = 24;
+
+    // Front (+Z)
+    vertexBuffer.emplace_back(Vertex({-1, -1, 1},  {0, 0, 1}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({-1, 1, 1}, .Normal = {0, 0, 1}, .UV = {0, 0}};
+    vertexBuffer.emplace_back(Vertex({1, 1, 1}, .Normal = {0, 0, 1}, .UV = {1, 0}};
+    vertexBuffer.emplace_back(Vertex({1, -1, 1}, .Normal = {0, 0, 1}, .UV = {1, 1}};
+
+    // Back (-Z)
+    vertexBuffer.emplace_back(Vertex({1, -1, -1}, .Normal = {0, 0, -1}, .UV = {0, 1}};
+    vertexBuffer.emplace_back(Vertex({1, 1, -1}, .Normal = {0, 0, -1}, .UV = {0, 0}};
+    vertexBuffer.emplace_back(Vertex({-1, 1, -1}, .Normal = {0, 0, -1}, .UV = {1, 0}};
+    vertexBuffer.emplace_back(Vertex({-1, -1, -1}, .Normal = {0, 0, -1}, .UV = {1, 1}};
+
+    // Left (-X)
+    scene.CPU.MegaBufferVertex[8] = {.Position = {-1, -1, -1}, .Normal = {-1, 0, 0}, .UV = {0, 1}};
+    scene.CPU.MegaBufferVertex[9] = {.Position = {-1, 1, -1}, .Normal = {-1, 0, 0}, .UV = {0, 0}};
+    scene.CPU.MegaBufferVertex[10] = {.Position = {-1, 1, 1}, .Normal = {-1, 0, 0}, .UV = {1, 0}};
+    scene.CPU.MegaBufferVertex[11] = {.Position = {-1, -1, 1}, .Normal = {-1, 0, 0}, .UV = {1, 1}};
+
+    // Right (+X)
+    scene.CPU.MegaBufferVertex[12] = {.Position = {1, -1, 1}, .Normal = {1, 0, 0}, .UV = {0, 1}};
+    scene.CPU.MegaBufferVertex[13] = {.Position = {1, 1, 1}, .Normal = {1, 0, 0}, .UV = {0, 0}};
+    scene.CPU.MegaBufferVertex[14] = {.Position = {1, 1, -1}, .Normal = {1, 0, 0}, .UV = {1, 0}};
+    scene.CPU.MegaBufferVertex[15] = {.Position = {1, -1, -1}, .Normal = {1, 0, 0}, .UV = {1, 1}};
+
+    // Top (+Y)
+    scene.CPU.MegaBufferVertex[16] = {.Position = {-1, 1, 1}, .Normal = {0, 1, 0}, .UV = {0, 1}};
+    scene.CPU.MegaBufferVertex[17] = {.Position = {-1, 1, -1}, .Normal = {0, 1, 0}, .UV = {0, 0}};
+    scene.CPU.MegaBufferVertex[18] = {.Position = {1, 1, -1}, .Normal = {0, 1, 0}, .UV = {1, 0}};
+    scene.CPU.MegaBufferVertex[19] = {.Position = {1, 1, 1}, .Normal = {0, 1, 0}, .UV = {1, 1}};
+
+    // Bottom (-Y)
+    scene.CPU.MegaBufferVertex[20] = {.Position = {-1, -1, -1}, .Normal = {0, -1, 0}, .UV = {0, 1}};
+    scene.CPU.MegaBufferVertex[21] = {.Position = {-1, -1, 1}, .Normal = {0, -1, 0}, .UV = {0, 0}};
+    scene.CPU.MegaBufferVertex[22] = {.Position = {1, -1, 1}, .Normal = {0, -1, 0}, .UV = {1, 0}};
+    scene.CPU.MegaBufferVertex[23] = {.Position = {1, -1, -1}, .Normal = {0, -1, 0}, .UV = {1, 1}};
+
+    scene.CPU.MegaBufferIndexCount = 36;
+    scene.CPU.MegaBufferIndex = new uint32_t[scene.CPU.MegaBufferIndexCount];
+
+    // Front
+    scene.CPU.MegaBufferIndex[0] = 0;
+    scene.CPU.MegaBufferIndex[1] = 2;
+    scene.CPU.MegaBufferIndex[2] = 1;
+    scene.CPU.MegaBufferIndex[3] = 0;
+    scene.CPU.MegaBufferIndex[4] = 3;
+    scene.CPU.MegaBufferIndex[5] = 2;
+
+    // Back
+    scene.CPU.MegaBufferIndex[6] = 4;
+    scene.CPU.MegaBufferIndex[7] = 6;
+    scene.CPU.MegaBufferIndex[8] = 5;
+    scene.CPU.MegaBufferIndex[9] = 4;
+    scene.CPU.MegaBufferIndex[10] = 7;
+    scene.CPU.MegaBufferIndex[11] = 6;
+
+    // Left
+    scene.CPU.MegaBufferIndex[12] = 8;
+    scene.CPU.MegaBufferIndex[13] = 10;
+    scene.CPU.MegaBufferIndex[14] = 9;
+    scene.CPU.MegaBufferIndex[15] = 8;
+    scene.CPU.MegaBufferIndex[16] = 11;
+    scene.CPU.MegaBufferIndex[17] = 10;
+
+    // Right
+    scene.CPU.MegaBufferIndex[18] = 12;
+    scene.CPU.MegaBufferIndex[19] = 14;
+    scene.CPU.MegaBufferIndex[20] = 13;
+    scene.CPU.MegaBufferIndex[21] = 12;
+    scene.CPU.MegaBufferIndex[22] = 15;
+    scene.CPU.MegaBufferIndex[23] = 14;
+
+    // Top
+    scene.CPU.MegaBufferIndex[24] = 16;
+    scene.CPU.MegaBufferIndex[25] = 18;
+    scene.CPU.MegaBufferIndex[26] = 17;
+    scene.CPU.MegaBufferIndex[27] = 16;
+    scene.CPU.MegaBufferIndex[28] = 19;
+    scene.CPU.MegaBufferIndex[29] = 18;
+
+    // Bottom
+    scene.CPU.MegaBufferIndex[30] = 20;
+    scene.CPU.MegaBufferIndex[31] = 22;
+    scene.CPU.MegaBufferIndex[32] = 21;
+    scene.CPU.MegaBufferIndex[33] = 20;
+    scene.CPU.MegaBufferIndex[34] = 23;
+    scene.CPU.MegaBufferIndex[35] = 22;
+
+    scene.CPU.MegaBufferMaterialsCount = 1;
+    scene.CPU.MegaBufferMaterials = new Material();
+    scene.CPU.MegaBufferMaterials->Albedo = XMFLOAT4(1, 0, 0, 1);
+    scene.CPU.MegaBufferMaterials->TexIdxAlbedo = 0;
+
+    XMMATRIX TRS = XMMatrixIdentity();
+    XMFLOAT4X4 TRS4x4{};
+    XMStoreFloat4x4(&TRS4x4, TRS);
+
+    scene.CPU.ObjectCount = 1;
+    scene.CPU.Objects = new Object();
+    scene.CPU.Objects->MaterialIndex = 0;
+    memcpy(scene.CPU.Objects->M, &TRS4x4, sizeof(XMFLOAT4X4));
+    scene.CPU.Objects->MegaBufferVertexCount = scene.CPU.MegaBufferVertexCount;
+    scene.CPU.Objects->MegaBufferVertexOffset = 0;
+    scene.CPU.Objects->MegaBufferIndexCount = scene.CPU.MegaBufferIndexCount;
+    scene.CPU.Objects->MegaBufferIndexOffset = 0;
+}
+
 void Lab2::Init(D3D* d3d)
 {
     App::Init(d3d);
