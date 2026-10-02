@@ -54,8 +54,13 @@ private:
     D12Resource m_envMapPdf;
     D12Resource m_envMapCdfConditional;
     D12Resource m_envMapCdfMarginal;
+
     D12Resource m_punctualPdfRW;
     D12Resource m_punctualPdfReadback;
+
+    D12Resource m_emissiveInstanceMap;
+    D12Resource m_emissivePdf;
+
     D12Resource m_lsdRW;
     D12Resource m_lsdReadback;
 

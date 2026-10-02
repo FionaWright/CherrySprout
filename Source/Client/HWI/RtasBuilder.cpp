@@ -82,6 +82,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         XMStoreFloat4x4(&instanceData.MTI, MTI);
         instanceData.MegaBufferOffsetVertex = obj.MegaBufferVertexOffset;
         instanceData.MegaBufferOffsetIndex = obj.MegaBufferIndexOffset;
+        instanceData.MegaBufferCountIndex = obj.MegaBufferIndexCount;
         instanceData.MaterialIndex = obj.MaterialIndex;
         m_megaBufferInstanceData.emplace_back(instanceData);
     }

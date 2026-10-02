@@ -5,7 +5,8 @@
 #include "Utils/Constants.h"
 
 RWStructuredBuffer<float> gPunctualPDF : register(u0);
-RWStructuredBuffer<ProbabilityDistributionSample> gCDF  : register(u1);
+RWStructuredBuffer<float> gEmmissivePDF  : register(u1);
+RWStructuredBuffer<ProbabilityDistributionSample> gCDF  : register(u2);
 
 ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
 

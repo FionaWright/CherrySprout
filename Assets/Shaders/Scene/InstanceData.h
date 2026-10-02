@@ -9,8 +9,8 @@ struct InstanceData
 
     hlsl::uint MegaBufferOffsetVertex;
     hlsl::uint MegaBufferOffsetIndex;
+    hlsl::uint MegaBufferCountIndex;
     hlsl::uint MaterialIndex;
-    hlsl::uint p;
 };
 
 #endif
