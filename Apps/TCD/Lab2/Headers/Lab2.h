@@ -8,6 +8,7 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
+#include "HWI/RtasBuilder.h"
 #include "Render/CameraController.h"
 #include "Render/EnvironmentMap.h"
 #include "Render/Skybox.h"
@@ -34,6 +35,8 @@ private:
     RootSig m_rootSig;
     DescriptorSet m_descriptorSet;
     RootConstants m_rootConstants;
+
+    RtasBuilder m_rtasBuilder;
 
     SceneManager m_sceneManager;
 

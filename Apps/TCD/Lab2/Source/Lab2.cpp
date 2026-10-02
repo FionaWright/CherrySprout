@@ -166,16 +166,24 @@ void Lab2::Init(D3D* d3d)
     constexpr float SPACING = 2;
     constexpr float SPACING_VARIANCE = 0.1f;
     constexpr float BASE_HEIGHT = 5;
-    constexpr float HEIGHT_VARIANCE = 4.0f;
+    constexpr float HEIGHT_VARIANCE = 10.0f;
+    constexpr bool NORMAL_SHAPE = true;
 
     for (int x = -NUM_ROWS; x < NUM_ROWS; x++)
         for (int z = -NUM_COLS; z < NUM_COLS; z++)
         {
-            float height = BASE_HEIGHT + (Rand01() * HEIGHT_VARIANCE);
+            float normalMult = 1.0f;
+            if (NORMAL_SHAPE)
+            {
+                float r2 = x * x + z * z;
+                normalMult = 1.0f / pow(r2, 0.2f);
+            }
+
+            float height = BASE_HEIGHT + (Rand01() * HEIGHT_VARIANCE * normalMult);
             m_scales.emplace_back(height);
 
-            float xPos = x * SPACING + (Rand01() * SPACING_VARIANCE);
-            float zPos = z * SPACING + (Rand01() * SPACING_VARIANCE);
+            float xPos = x * SPACING + ((Rand01() - 0.5f) * 2.0f * SPACING_VARIANCE);
+            float zPos = z * SPACING + ((Rand01() - 0.5f) * 2.0f * SPACING_VARIANCE);
 
             CreateCube(XMFLOAT3(xPos, (height - 1)/2.0f, zPos), XMFLOAT3(1,height,1), vertices, indices, materials, objects);
         }
@@ -213,18 +221,21 @@ void Lab2::Init(D3D* d3d)
     m_sceneManager.GenerateMipMaps(d3d, &m_heap);
     m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
 
+    m_rtasBuilder.FlushAndBuild(d3d, &m_sceneManager.GetScene());
+
     {
         D3D12_STATIC_SAMPLER_DESC sampler = {};
         InitializeSamplerLinearWrap(&sampler);
 
         m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
-        m_rootSig.SmartInit(d3d->GetDevice(), 2, 1, 0, true, &sampler, 1, &m_rootConstants);
+        m_rootSig.SmartInit(d3d->GetDevice(), 2, 2, 0, true, &sampler, 1, &m_rootConstants);
 
         m_descriptorSet.Init(&m_heap, true, true);
         m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), &m_uploadHeapCBV);
         m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), &m_uploadHeapCBV);
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &m_sceneManager.GetGPU().MegaBufferMaterials, m_sceneManager.GetCPU().MegaBufferMaterialsCount, sizeof(Material));
+        m_descriptorSet.SetSRV_RTAS(d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &m_sceneManager.GetGPU().MegaBufferMaterials, m_sceneManager.GetCPU().MegaBufferMaterialsCount, sizeof(Material));
 
         D3D12_INPUT_ELEMENT_DESC ildDesc[] =
         {
@@ -327,6 +338,7 @@ void Lab2::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     cbvForward.DirLightDir = m_dirLightDir;
     cbvForward.MaxCubemapMipMaps = 1;
     cbvForward.OutputMode = 0;
+    cbvForward.CameraPosition = m_cameraController.GetCamera().GetPosition();
     m_descriptorSet.UpdateCBV(1, &cbvForward);
 
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
