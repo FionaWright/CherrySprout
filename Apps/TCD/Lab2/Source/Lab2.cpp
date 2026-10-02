@@ -228,19 +228,34 @@ void Lab2::Init(D3D* d3d)
 
     m_rtasBuilder.FlushAndBuild(d3d, &m_sceneManager.GetScene());
 
+    m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
+
+    m_envMap.InitCubemap(d3d, &m_heap);
+    m_skybox.Init(d3d, m_envMap.GetCubemap());
+    m_skybox.UpdateDescriptorSet(d3d->GetDevice(), m_envMap.GetCubemap(), &m_heap, &m_uploadHeapCBV);
+    m_skybox.GenerateIrradianceMap(d3d, &m_heap);
+
     {
         D3D12_STATIC_SAMPLER_DESC sampler = {};
         InitializeSamplerLinearWrap(&sampler);
 
         m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
-        m_rootSig.SmartInit(d3d->GetDevice(), 2, 2, 0, true, &sampler, 1, &m_rootConstants);
+        m_rootSig.SmartInit(d3d->GetDevice(), 2, 3, 0, true, &sampler, 1, &m_rootConstants);
 
         m_descriptorSet.Init(&m_heap, true, true);
         m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), &m_uploadHeapCBV);
         m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), &m_uploadHeapCBV);
         m_descriptorSet.SetSRV_RTAS(d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
         m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &m_sceneManager.GetGPU().MegaBufferMaterials, m_sceneManager.GetCPU().MegaBufferMaterialsCount, sizeof(Material));
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        srvDesc.Format = m_skybox.GetIrradianceMap()->GetDesc().Format;
+        srvDesc.TextureCube.MipLevels = 1;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        m_descriptorSet.SetSRV(d3d->GetDevice(), 2, m_skybox.GetIrradianceMap(), srvDesc);
 
         D3D12_INPUT_ELEMENT_DESC ildDesc[] =
         {
@@ -276,6 +291,9 @@ void Lab2::Update(D3D* d3d, TimeArgs timeArgs)
         m_envMap.InitCubemap(d3d, &m_heap);
         m_skybox.Init(d3d, m_envMap.GetCubemap());
         m_skybox.UpdateDescriptorSet(d3d->GetDevice(), m_envMap.GetCubemap(), &m_heap, &m_uploadHeapCBV);
+        m_skybox.GenerateIrradianceMap(d3d, &m_heap);
+
+        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 2, m_skybox.GetIrradianceMap(), m_skybox.GetIrradianceMap()->GetDesc().Format);
 
         m_envMapDirty = false;
     }

@@ -31,10 +31,10 @@ ConstantBuffer<CbvForward> gSettings : register(b2, space0);
 
 RaytracingAccelerationStructure gTLAS : register(t0, space0);
 StructuredBuffer<Material> gMaterials : register(t1, space0);
+TextureCube gIrradiance : register(t2, space0);
 
 //Texture2D<float2> gBrdfInt : register(t0, space0);
 //TextureCube gEnvMap : register(t0, space0);
-//TextureCube gIrradiance : register(t2, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
@@ -90,6 +90,8 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 wo = normalize(gSettings.CameraPosition - worldPos);
     float3 wi = normalize(-gSettings.DirLightDir);
 
+    //float3 irradianceIblSample = gIrradiance.SampleLevel(gSampler, Ng, 0).rgb;
+
     float3 Li = 5.0f;
 
     float3 E_direct_sum = 0.0f;
@@ -98,6 +100,8 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 f_bxdf;
     float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+
+    //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
     float NdLCenter = dot(Ng, wi);
 
@@ -146,11 +150,15 @@ float4 PSMain(VsOut input) : SV_TARGET
             float3 rayOrigin = worldPos + Ng * EPSILON;
             TraceRayShadow(rayOrigin, wiMod, INF, shadowFactor);
 
-            E_direct_sum += max(0.0f, NdL) * shadowFactor * Li * f_bxdf;
+            E_direct_sum += max(0.0f, NdL) * shadowFactor * Li;
         }
     }
 
     float3 E_direct = E_direct_sum / float(NUM_SHADOW_SAMPLES);
+
+    E_direct *= f_bxdf;
+
+    // TODO: E_indirect
 
     float3 E_ambient = mat.Albedo.rgb * 0.2f;
 

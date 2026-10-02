@@ -41,7 +41,7 @@ private:
     SceneManager m_sceneManager;
 
     bool m_cameraDirty = true;
-    bool m_envMapDirty = true;
+    bool m_envMapDirty = false;
 
     EnvironmentMap m_envMap;
     Skybox m_skybox;
