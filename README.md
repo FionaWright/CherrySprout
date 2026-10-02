@@ -22,6 +22,8 @@ Plan is to combine Gradient-Domain Path-Tracing with ReSTIR PT and Path-Guiding
 - Shader Hot Reloading
 - Scene Config System
 - Window Resizing
+- MSAA
+- Mip Map Support
 
 ### Path-Tracer
 
