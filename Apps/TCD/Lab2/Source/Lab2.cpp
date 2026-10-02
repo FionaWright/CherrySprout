@@ -5,6 +5,8 @@
 #include "System/pch.h"
 #include "Apps/TCD/Lab2/Headers/Lab2.h"
 
+#include <numeric>
+
 #include "imgui.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
@@ -183,9 +185,12 @@ void Lab2::Init(D3D* d3d)
             m_scales.emplace_back(height);
 
             float xPos = x * SPACING + ((Rand01() - 0.5f) * 2.0f * SPACING_VARIANCE);
+            float yPos = (height - 1)/2.0f;
             float zPos = z * SPACING + ((Rand01() - 0.5f) * 2.0f * SPACING_VARIANCE);
 
-            CreateCube(XMFLOAT3(xPos, (height - 1)/2.0f, zPos), XMFLOAT3(1,height,1), vertices, indices, materials, objects);
+            m_positions.emplace_back(XMFLOAT3(xPos, yPos, zPos));
+
+            CreateCube(XMFLOAT3(xPos, yPos, zPos), XMFLOAT3(1,height,1), vertices, indices, materials, objects);
         }
 
     scene.CPU.MegaBufferVertexCount = vertices.size();
@@ -334,22 +339,52 @@ void Lab2::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     XMStoreFloat4x4(&matricesVP.P, m_P);
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
-    static uint32_t frameIdx = 0; // Just for RNG
+    const XMFLOAT3 cameraPos = m_cameraController.GetCamera().GetPosition();
 
+    static uint32_t frameIdx = 0; // Just for RNG
     CbvForward cbvForward = {};
     cbvForward.DirLightDir = m_dirLightDir;
     cbvForward.MaxCubemapMipMaps = 1;
     cbvForward.FrameIdx = frameIdx;
-    cbvForward.CameraPosition = m_cameraController.GetCamera().GetPosition();
+    cbvForward.CameraPosition = cameraPos;
     m_descriptorSet.UpdateCBV(1, &cbvForward);
-
     frameIdx++;
 
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
 
     CbvForward_PerInstance pushConstants = {};
 
-    for (int i = 0; i < scene->CPU.ObjectCount; ++i)
+    if (m_renderOrder.size() == 0)
+    {
+        m_renderOrder.resize(scene->CPU.ObjectCount);
+        std::iota(m_renderOrder.begin(), m_renderOrder.end(), 0);
+    }
+
+    std::ranges::sort(m_renderOrder,
+                      [&](const int a, const int b)
+                      {
+                          const XMFLOAT3& pa = m_positions[a];
+                          const XMFLOAT3& pb = m_positions[b];
+
+                          const XMFLOAT3 da = {
+                              pa.x - cameraPos.x,
+                              pa.y - cameraPos.y,
+                              pa.z - cameraPos.z
+                          };
+
+                          const XMFLOAT3 db = {
+                              pb.x - cameraPos.x,
+                              pb.y - cameraPos.y,
+                              pb.z - cameraPos.z
+                          };
+
+                          const float distA = da.x * da.x + da.y * da.y + da.z * da.z;
+                          const float distB = db.x * db.x + db.y * db.y + db.z * db.z;
+
+                          return distA < distB;
+                      });
+
+    for (int i : m_renderOrder)
     {
         const Object& obj = scene->CPU.Objects[i];
 

@@ -50,7 +50,9 @@ private:
     Heap m_heap;
     UploadHeap m_uploadHeapCBV;
 
+    std::vector<XMFLOAT3> m_positions;
     std::vector<float> m_scales;
+    std::vector<int> m_renderOrder;
     XMFLOAT3 m_dirLightDir = XMFLOAT3(-1,-1,-0.5);
 
     DirectX::XMMATRIX m_P = {};

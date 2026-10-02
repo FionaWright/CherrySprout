@@ -99,7 +99,10 @@ float4 PSMain(VsOut input) : SV_TARGET
     float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
+    float NdLCenter = dot(Ng, wi);
+
     float shadowFactor = 0.0f;
+    if (NdLCenter > 0.0f)
     {
         float3 up = abs(wi.y) < 0.999f
             ? float3(0, 1, 0)
@@ -108,8 +111,7 @@ float4 PSMain(VsOut input) : SV_TARGET
         float3 wiT = normalize(cross(up, wi));
         float3 wiB = cross(wi, wiT);
 
-//#define NUM_SHADOW_SAMPLES 32
-#define NUM_SHADOW_SAMPLES 32
+#define NUM_SHADOW_SAMPLES 100
 
         RngInfo rngInfo = InitializeRngInfo(input.position.xy, 0, gSettings.FrameIdx, 1205);
 
@@ -120,7 +122,7 @@ float4 PSMain(VsOut input) : SV_TARGET
             float u2 = Rand01(rngInfo);
 
             //float angularRadius = 0.01f;
-            float angularRadius = 0.01f;
+            float angularRadius = 0.03f;
 
             float cosThetaMax = cos(angularRadius);
 
