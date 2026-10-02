@@ -209,7 +209,8 @@ void Lab2::Init(D3D* d3d)
     scene.CPU.TextureFilepaths[5] = _strdup(FileHelper::GetAssetTextureFullPath("TCD/facade5.jpg").c_str());
 
     m_sceneManager.AssignScene(scene);
-    m_sceneManager.UploadScene(d3d);
+    m_sceneManager.UploadScene(d3d, false);
+    m_sceneManager.GenerateMipMaps(d3d, &m_heap);
     m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
 
     {
