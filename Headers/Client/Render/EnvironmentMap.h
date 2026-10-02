@@ -25,7 +25,7 @@ public:
     void Init(D3D* d3d, Heap* heap, const std::string& filePath, float rotation);
     void InitCubemap(D3D* d3d, Heap* heap);
 
-    XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
+    DirectX::XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
     static size_t GetCbvRequiredSize() { return Align(sizeof(CbvPanoToEA), 256) + Align(sizeof(CbvPanoToCM), 256); }
 
     D12Resource* GetPano() { return &m_pano; }

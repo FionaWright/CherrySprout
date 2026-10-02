@@ -50,7 +50,7 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* pa
         format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     D12Resource texture;
-    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COMMON);
+    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COMMON, nullptr, true);
     return texture;
 }
 

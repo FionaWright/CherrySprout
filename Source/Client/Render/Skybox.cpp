@@ -26,9 +26,8 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
         }
     };
 
-    // TODO: Fix this
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
-    m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxManualPS.hlsl", desc);
+    m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc);
 
     constexpr XMFLOAT3 vertexBuffer[8] = {
         {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
@@ -107,16 +106,10 @@ void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* v
 void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    //srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
     srvDesc.Format = cubemap->GetDesc().Format;
     srvDesc.TextureCube.MipLevels = 1;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-    // TODO: Fix this
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-    srvDesc.Texture2DArray.ArraySize = 6;
-    srvDesc.Texture2DArray.MipLevels = 1;
-    srvDesc.Texture2DArray.FirstArraySlice = 0;
 
     {
         m_setForwardRender.Init(heap);

@@ -46,15 +46,14 @@ void D12Resource::Init_Buffer(const char* name, ID3D12Device* device, const size
     Init(name, device, m_desc, initialState, nullptr, heapProp);
 }
 
-void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, const DXGI_FORMAT format,
-                             const D3D12_RESOURCE_FLAGS flags, const D3D12_RESOURCE_STATES initialState, const XMFLOAT4* clearValue)
+void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth, const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags, const D3D12_RESOURCE_STATES initialState, const XMFLOAT4* clearValue, const bool hasMipMaps)
 {
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
     desc.Width = width;
     desc.Height = height;
     desc.Format = format;
-    desc.MipLevels = FormatIsBlockCompressed(format) ? 1 : std::log2(std::max(width, height));
+    desc.MipLevels = FormatIsBlockCompressed(format) || !hasMipMaps ? 1 : std::log2(std::max(width, height));
     desc.DepthOrArraySize = depth;
     desc.Flags = flags;
     desc.SampleDesc.Count = 1;
