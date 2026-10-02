@@ -56,7 +56,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     Material mat = gMaterials[gCbvObject.MaterialIdx];
 
     //float3 albedoSample = gSceneTextures[mat.TexIdxAlbedo].SampleLevel(gSampler, uv, 7).rgb;
-    float3 albedoSample = gSceneTextures[mat.TexIdxAlbedo].SampleLevel(gSampler, uv, 7).rgb;
+    float3 albedoSample = gSceneTextures[mat.TexIdxAlbedo].Sample(gSampler, uv).rgb;
 
     if (Ng.y >= 0.9f)
         albedoSample.rgb = float3(0.3, 0.3, 0.3);

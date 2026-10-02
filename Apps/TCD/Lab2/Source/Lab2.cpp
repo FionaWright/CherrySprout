@@ -16,97 +16,13 @@
 #include "System/HighResolutionClock.h"
 #include "Utils/Helper.h"
 
-void CreateCube(XMFLOAT3 position, XMFLOAT3 scale, std::vector<Vertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer, std::vector<Material>& materials, std::vector<Object>& objects)
+void CreateCube(XMFLOAT3 position, XMFLOAT3 scale, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Material>& materials, std::vector<Object>& objects)
 {
     Object obj;
-    obj.MegaBufferVertexOffset = vertexBuffer.size();
-    obj.MegaBufferIndexOffset = indexBuffer.size();
+    obj.MegaBufferVertexOffset = 0;
+    obj.MegaBufferIndexOffset = 0;
     obj.MegaBufferVertexCount = 24;
     obj.MegaBufferIndexCount = 36;
-
-    // Front (+Z)
-    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {0, 0, 1}, {0, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 1}));
-
-    // Back (-Z)
-    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 0}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {0, 0, -1}, {1, 0}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {1, 1}));
-
-    // Left (-X)
-    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {-1, 0, 0}, {0, 0}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {1, 0}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {-1, 0, 0}, {1, 1}));
-
-    // Right (+X)
-    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {1, 0, 0}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {1, 0, 0}, {0, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {1, 0, 0}, {1, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1}));
-
-    // Top (+Y)
-    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {0, 1, 0}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {0, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 1}));
-
-    // Bottom (-Y)
-    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {1, 0}));
-    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {0, -1, 0}, {1, 1}));
-
-    // Front
-    indexBuffer.emplace_back(0);
-    indexBuffer.emplace_back(2);
-    indexBuffer.emplace_back(1);
-    indexBuffer.emplace_back(0);
-    indexBuffer.emplace_back(3);
-    indexBuffer.emplace_back(2);
-
-    // Back
-    indexBuffer.emplace_back(4);
-    indexBuffer.emplace_back(6);
-    indexBuffer.emplace_back(5);
-    indexBuffer.emplace_back(4);
-    indexBuffer.emplace_back(7);
-    indexBuffer.emplace_back(6);
-
-    // Left
-    indexBuffer.emplace_back(8);
-    indexBuffer.emplace_back(10);
-    indexBuffer.emplace_back(9);
-    indexBuffer.emplace_back(8);
-    indexBuffer.emplace_back(11);
-    indexBuffer.emplace_back(10);
-
-    // Right
-    indexBuffer.emplace_back(12);
-    indexBuffer.emplace_back(14);
-    indexBuffer.emplace_back(13);
-    indexBuffer.emplace_back(12);
-    indexBuffer.emplace_back(15);
-    indexBuffer.emplace_back(14);
-
-    // Top
-    indexBuffer.emplace_back(16);
-    indexBuffer.emplace_back(18);
-    indexBuffer.emplace_back(17);
-    indexBuffer.emplace_back(16);
-    indexBuffer.emplace_back(19);
-    indexBuffer.emplace_back(18);
-
-    // Bottom
-    indexBuffer.emplace_back(20);
-    indexBuffer.emplace_back(22);
-    indexBuffer.emplace_back(21);
-    indexBuffer.emplace_back(20);
-    indexBuffer.emplace_back(23);
-    indexBuffer.emplace_back(22);
 
     Material mat;
     mat.Albedo = XMFLOAT4(1, 0, 0, 1);
@@ -160,6 +76,90 @@ void Lab2::Init(D3D* d3d)
     std::vector<uint32_t> indices;
     std::vector<Material> materials;
     std::vector<Object> objects;
+
+    // Front (+Z)
+    vertices.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {0, 1}));
+    vertices.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {0, 0, 1}, {0, 0}));
+    vertices.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0}));
+    vertices.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 1}));
+
+    // Back (-Z)
+    vertices.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1}));
+    vertices.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 0}));
+    vertices.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {0, 0, -1}, {1, 0}));
+    vertices.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {1, 1}));
+
+    // Left (-X)
+    vertices.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 1}));
+    vertices.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {-1, 0, 0}, {0, 0}));
+    vertices.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {1, 0}));
+    vertices.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {-1, 0, 0}, {1, 1}));
+
+    // Right (+X)
+    vertices.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {1, 0, 0}, {0, 1}));
+    vertices.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {1, 0, 0}, {0, 0}));
+    vertices.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {1, 0, 0}, {1, 0}));
+    vertices.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1}));
+
+    // Top (+Y)
+    vertices.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {0, 1, 0}, {0, 1}));
+    vertices.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {0, 0}));
+    vertices.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0}));
+    vertices.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 1}));
+
+    // Bottom (-Y)
+    vertices.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1}));
+    vertices.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 0}));
+    vertices.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {1, 0}));
+    vertices.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {0, -1, 0}, {1, 1}));
+
+    // Front
+    indices.emplace_back(0);
+    indices.emplace_back(2);
+    indices.emplace_back(1);
+    indices.emplace_back(0);
+    indices.emplace_back(3);
+    indices.emplace_back(2);
+
+    // Back
+    indices.emplace_back(4);
+    indices.emplace_back(6);
+    indices.emplace_back(5);
+    indices.emplace_back(4);
+    indices.emplace_back(7);
+    indices.emplace_back(6);
+
+    // Left
+    indices.emplace_back(8);
+    indices.emplace_back(10);
+    indices.emplace_back(9);
+    indices.emplace_back(8);
+    indices.emplace_back(11);
+    indices.emplace_back(10);
+
+    // Right
+    indices.emplace_back(12);
+    indices.emplace_back(14);
+    indices.emplace_back(13);
+    indices.emplace_back(12);
+    indices.emplace_back(15);
+    indices.emplace_back(14);
+
+    // Top
+    indices.emplace_back(16);
+    indices.emplace_back(18);
+    indices.emplace_back(17);
+    indices.emplace_back(16);
+    indices.emplace_back(19);
+    indices.emplace_back(18);
+
+    // Bottom
+    indices.emplace_back(20);
+    indices.emplace_back(22);
+    indices.emplace_back(21);
+    indices.emplace_back(20);
+    indices.emplace_back(23);
+    indices.emplace_back(22);
 
     constexpr int NUM_ROWS = 20;
     constexpr int NUM_COLS = 20;
