@@ -22,6 +22,10 @@ inline void InitializeSamplerPointClamp(D3D12_STATIC_SAMPLER_DESC* desc, uint32_
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc->ShaderRegister = regIdx;
+
+    desc->MinLOD = 0;
+    desc->MaxLOD = 99;
+    desc->MipLODBias = 0.0f;
 }
 
 inline void InitializeSamplerLinearClamp(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
@@ -35,6 +39,10 @@ inline void InitializeSamplerLinearClamp(D3D12_STATIC_SAMPLER_DESC* desc, uint32
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc->ShaderRegister = regIdx;
+
+    desc->MinLOD = 0;
+    desc->MaxLOD = 99;
+    desc->MipLODBias = 0.0f;
 }
 
 inline void InitializeSamplerLinearWrap(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
@@ -48,6 +56,10 @@ inline void InitializeSamplerLinearWrap(D3D12_STATIC_SAMPLER_DESC* desc, uint32_
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc->ShaderRegister = regIdx;
+
+    desc->MinLOD = 0;
+    desc->MaxLOD = 99;
+    desc->MipLODBias = 0.0f;
 }
 
 inline void InitializeSamplerPointWrap(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t regIdx = 0)
@@ -61,6 +73,10 @@ inline void InitializeSamplerPointWrap(D3D12_STATIC_SAMPLER_DESC* desc, uint32_t
     desc->Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc->ShaderRegister = regIdx;
+
+    desc->MinLOD = 0;
+    desc->MaxLOD = 99;
+    desc->MipLODBias = 0.0f;
 }
 
 inline void InitializeSamplerAnisotropicWrap(D3D12_STATIC_SAMPLER_DESC* desc, UINT maxAnisotropy = 16, uint32_t regIdx = 0)
@@ -76,6 +92,10 @@ inline void InitializeSamplerAnisotropicWrap(D3D12_STATIC_SAMPLER_DESC* desc, UI
 
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc->ShaderRegister = regIdx;
+
+    desc->MinLOD = 0;
+    desc->MaxLOD = 99;
+    desc->MipLODBias = 0.0f;
 }
 
 inline void InitializeSamplerAnisotropicClamp(D3D12_STATIC_SAMPLER_DESC* desc, UINT maxAnisotropy = 16, uint32_t regIdx = 0)
@@ -91,6 +111,10 @@ inline void InitializeSamplerAnisotropicClamp(D3D12_STATIC_SAMPLER_DESC* desc, U
 
     desc->ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc->ShaderRegister = regIdx;
+
+    desc->MinLOD = 0;
+    desc->MaxLOD = 99;
+    desc->MipLODBias = 0.0f;
 }
 
 inline size_t FormatBitsPerPixel(_In_ const DXGI_FORMAT fmt, bool& isBC)
@@ -149,6 +173,28 @@ inline size_t FormatBitsPerPixel(_In_ const DXGI_FORMAT fmt, bool& isBC)
     }
 }
 
+inline bool FormatIsBlockCompressed(_In_ const DXGI_FORMAT fmt)
+{
+    switch (fmt)
+    {
+    case DXGI_FORMAT_BC1_UNORM:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+    case DXGI_FORMAT_BC5_UNORM:
+    case DXGI_FORMAT_BC6H_UF16:
+    case DXGI_FORMAT_BC6H_SF16:
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        return true;
+
+    default:
+        return false;
+    }
+}
+
 inline void VertexIndexBuffersToViews(const D12Resource* vertexBuffer, const D12Resource* indexBuffer, const size_t vertexCount, const size_t vertexStride, const size_t indexCount, D3D12_VERTEX_BUFFER_VIEW& viewV, D3D12_INDEX_BUFFER_VIEW& viewI)
 {
     viewV.BufferLocation = vertexBuffer->GetResource()->GetGPUVirtualAddress();
@@ -176,7 +222,8 @@ inline D3D12_GRAPHICS_PIPELINE_STATE_DESC CreateGraphicsPipelineDesc(ID3D12RootS
 
     desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     desc.SampleMask = UINT_MAX;
-    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Count = Config::GetRender().MsaaSampleCount;
+    desc.SampleDesc.Quality = 0;
 
     desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;

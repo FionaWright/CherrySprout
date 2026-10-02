@@ -36,12 +36,34 @@ public:
     ID3D12Device* GetDevice() const { return m_device.Get(); }
     UINT GetFrameIndex() const { return m_frameIndex; }
 
-    D12Resource* GetRtv() { return &m_rtvs[m_frameIndex]; }
+    D12Resource* GetRtv()
+    {
+        if (Config::GetRender().MsaaSampleCount > 1)
+            return &m_msaaRTV;
+
+        return GetSwapchainBackbuffer();
+    }
+
+    D12Resource* GetSwapchainBackbuffer()
+    {
+        return &m_rtvs[m_frameIndex];
+    }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetRtvHandle() const
     {
+        if (Config::GetRender().MsaaSampleCount > 1)
+        {
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
+                                             static_cast<int>(0), m_rtvDescriptorSize);
+        }
+        return GetBackbufferHandle();
+    }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetBackbufferHandle() const
+    {
+        const uint32_t descriptorIdx = m_frameIndex + (Config::GetRender().MsaaSampleCount > 1 ? 1 : 0);
         return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-                                             static_cast<int>(m_frameIndex), m_rtvDescriptorSize);
+                                             static_cast<int>(descriptorIdx), m_rtvDescriptorSize);
     }
 
     void InitFrameResources(uint32_t width, uint32_t height);
@@ -72,6 +94,7 @@ private:
 
     D12Resource m_rtvs[NUM_FRAMES_IN_FLIGHT];
     ComPtr<ID3D12Resource> m_depthStencilBuffer;
+    D12Resource m_msaaRTV;
 
     ComPtr<ID3D12DescriptorHeap> m_rtvHeap, m_dsvHeap;
     UINT m_rtvDescriptorSize = 0, m_dsvDescriptorSize = 0;

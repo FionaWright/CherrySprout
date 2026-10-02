@@ -56,6 +56,7 @@ void Config::ParseCommandLineArgs(const char* args)
 
     SetUIntFromArg(&ms_settingsSystem.RtvWidth, "--window_width");
     SetUIntFromArg(&ms_settingsSystem.RtvHeight, "--window_height");
+    SetUIntFromArg(&ms_settingsRender.MsaaSampleCount, "--msaa");
     SetBoolFromArg(&ms_settingsSystem.VSyncEnabled, "--vsync");
     SetBoolFromArg(&ms_settingsSystem.DebugHeapEnabled, "--debugHeap");
 }

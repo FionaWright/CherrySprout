@@ -6,6 +6,7 @@
 #include "HWI/D12Resource.h"
 
 #include "HWI/UploadHeap.h"
+#include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
 D12Resource::D12Resource(const ComPtr<ID3D12Resource>& resource, const D3D12_RESOURCE_STATES& initialState, const D3D12_RESOURCE_DESC& desc)
@@ -53,7 +54,7 @@ void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint3
     desc.Width = width;
     desc.Height = height;
     desc.Format = format;
-    desc.MipLevels = 1;
+    desc.MipLevels = FormatIsBlockCompressed(format) ? 1 : std::log2(std::max(width, height));
     desc.DepthOrArraySize = depth;
     desc.Flags = flags;
     desc.SampleDesc.Count = 1;

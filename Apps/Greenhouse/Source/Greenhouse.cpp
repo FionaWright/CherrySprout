@@ -26,7 +26,7 @@ void Greenhouse::Init(D3D* d3d)
     m_heapRTV.Init("Greenhouse Heap RTV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_heapIdxFrameBuffer = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_frameBuffer);
 
-    for (int i = s_sceneConfigs.size() - 1; i >= 0; i--)
+    for (int i = static_cast<int>(s_sceneConfigs.size()) - 1; i >= 0; i--)
     {
         const std::string fullpath = FileHelper::GetAssetFullPath(s_sceneConfigs[i].Filepath.c_str());
         if (!std::filesystem::exists(fullpath))

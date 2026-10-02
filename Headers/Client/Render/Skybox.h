@@ -20,11 +20,11 @@ public:
     void RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* vMatrix, const XMMATRIX* pMatrix) const;
 
     void UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeapCBV);
-    void GenerateIrradianceMap(ID3D12GraphicsCommandList* cmdList, const Heap* heap);
+    void GenerateIrradianceMap(D3D* d3d, const Heap* heap);
 
     D12Resource* GetIrradianceMap() { return &m_texIrradianceIBL; }
 
-    static size_t TotalCbvRequiredSize()
+    static size_t GetCbvRequiredSize()
     {
         return  Align(sizeof(CbvMatrices_MVP), 256);
     }
@@ -34,12 +34,12 @@ private:
     D12Resource m_cubeIndexBuffer;
 
     RootSig m_rootSig;
-    Pipeline m_shaderForward;
-    DescriptorSet m_dsForwardRender;
+    Pipeline m_pipelineForward;
+    DescriptorSet m_setForwardRender;
 
     RootSig m_rootSigGenIrr;
-    Pipeline m_shaderGenIrr;
-    DescriptorSet m_dsGenIrr;
+    Pipeline m_pipelineGenIrr;
+    DescriptorSet m_setGenIrr;
     D12Resource m_texIrradianceIBL;
 };
 

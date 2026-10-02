@@ -95,8 +95,17 @@ struct CbvForward
     hlsl::float3 DirLightDir;
     hlsl::uint MaxCubemapMipMaps;
 
-    hlsl::uint OutputMode;
-    hlsl::float3 _;
+    hlsl::uint FrameIdx;
+    hlsl::float3 CameraPosition;
+};
+
+struct CbvForward_PerInstance
+{
+    hlsl::float4x4 M, MTI;
+
+    hlsl::uint MaterialIdx;
+    float ScaleY;
+    hlsl::float2 p;
 };
 
 struct CbvGBufferPrePass_PerInstance

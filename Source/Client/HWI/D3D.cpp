@@ -191,26 +191,6 @@ void D3D::Init(const size_t width, const size_t height)
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
     V(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueueCopy.Queue)));
 
-    // Create descriptor heaps.
-    {
-        // Describe and create a render target view (RTV) descriptor heap.
-        D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-        rtvHeapDesc.NumDescriptors = NUM_FRAMES_IN_FLIGHT;
-        rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        V(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
-
-        m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-        dsvHeapDesc.NumDescriptors = 1;
-        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        V(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
-
-        m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    }
-
     InitFrameResources(width, height);
 
     // Create synchronization objects and wait until assets have been uploaded to the GPU.
@@ -244,6 +224,76 @@ ComPtr<ID3D12GraphicsCommandList> D3D::CreateCmdList(ID3D12CommandAllocator* all
 
 void D3D::InitFrameResources(uint32_t width, uint32_t height)
 {
+    uint32_t msaaSamples = Config::GetRender().MsaaSampleCount;
+
+    if (msaaSamples > 1)
+    {
+        D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msaaInfo{};
+        msaaInfo.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        msaaInfo.SampleCount = msaaSamples;
+        msaaInfo.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+
+        V(m_device->CheckFeatureSupport(
+            D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+            &msaaInfo,
+            sizeof(msaaInfo)));
+
+        const bool msaa4Unsupported = msaaInfo.NumQualityLevels == 0;
+        if (msaa4Unsupported)
+        {
+            Config::GetRender().MsaaSampleCount = 1;
+            msaaSamples = 1;
+        }
+    }
+
+    // Create descriptor heaps.
+    {
+        // Describe and create a render target view (RTV) descriptor heap.
+        D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+        rtvHeapDesc.NumDescriptors = NUM_FRAMES_IN_FLIGHT + (msaaSamples > 1 ? 1 : 0);
+        rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+        rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        V(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+
+        m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+        dsvHeapDesc.NumDescriptors = 1;
+        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        V(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+
+        m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    }
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    if (msaaSamples > 1)
+    {
+        D3D12_CLEAR_VALUE clearValue = {};
+        clearValue.Format = Config::GetRender().RtvFormat;
+        clearValue.Color[0] = 0.0f;
+        clearValue.Color[1] = 0.0f;
+        clearValue.Color[2] = 0.0f;
+        clearValue.Color[3] = 0.0f;
+
+        D3D12_RESOURCE_DESC desc = {};
+        desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        desc.MipLevels = 1;
+        desc.DepthOrArraySize = 1;
+        desc.Width = width;
+        desc.Height = height;
+        desc.Format = Config::GetRender().RtvFormat;
+        desc.SampleDesc.Count = msaaSamples;
+        desc.SampleDesc.Quality = 0;
+        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+        m_msaaRTV.Init("MSAA RTV", m_device.Get(), desc, D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue);
+
+        m_device->CreateRenderTargetView(m_msaaRTV.GetResource(), nullptr, rtvHandle);
+        rtvHandle.Offset(1, m_rtvDescriptorSize);
+    }
+
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.BufferCount = NUM_FRAMES_IN_FLIGHT;
     swapChainDesc.Width = width;
@@ -252,6 +302,7 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.SampleDesc.Quality = 0;
     swapChainDesc.Flags = m_tearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
     if (!m_swapChain)
@@ -289,14 +340,6 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
 
     // Create frame resources.
     {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-
-        D3D12_CLEAR_VALUE clearValue = {};
-        clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        clearValue.DepthStencil = {1, 0};
-        auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, width, height, 1, 0, 1, 0,
-                                                            D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
         // Create an RTV for each frame.
@@ -322,13 +365,19 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
             V(rtvResource->SetName(name.c_str()));
         }
 
+        D3D12_CLEAR_VALUE clearValue = {};
+        clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+        clearValue.DepthStencil = {1, 0};
+        auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, width, height, 1, 1, msaaSamples, 0,
+                                                            D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
         // Create a single DSV, raster backends will be force flushed each frame as they are for debugging
         V(m_device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &dsvResourceDesc,
                                                 D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue,
                                                 IID_PPV_ARGS(&m_depthStencilBuffer)));
         D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
         dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        dsvDesc.ViewDimension = msaaSamples > 1 ? D3D12_DSV_DIMENSION_TEXTURE2DMS : D3D12_DSV_DIMENSION_TEXTURE2D;
         m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc, dsvHandle);
         dsvHandle.Offset(1, m_dsvDescriptorSize);
     }

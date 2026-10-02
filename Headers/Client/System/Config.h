@@ -28,6 +28,8 @@ struct SettingsRender
     DXGI_FORMAT RtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     float RtvClearColor[4] = {0.3f, 0.3f, 0.5f, 1.0f};
 
+    uint32_t MsaaSampleCount = 1;
+
     float FoV = 60.0f;
     float NearPlane = 0.1f;
     float FarPlane = 100.0f;

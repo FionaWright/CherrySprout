@@ -9,6 +9,20 @@ struct Vertex
     hlsl::float3 Normal;
     hlsl::float2 UV;
 
+    Vertex()
+    {
+        Position = hlsl::float3(0, 0, 0);
+        Normal = hlsl::float3(0, 0, 0);
+        UV = hlsl::float2(0, 0);
+    }
+
+    Vertex(const hlsl::float3 position, const hlsl::float3 normal, const hlsl::float2 uv)
+    {
+        Position = position;
+        Normal = normal;
+        UV = uv;
+    }
+
 #ifdef __cplusplus
     bool operator==(const Vertex& rhs) const
     {

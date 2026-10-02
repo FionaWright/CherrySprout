@@ -25,21 +25,32 @@ std::string AssetPathToDDS(const char* path)
     return FileHelper::GetAssetFullPath(relative.generic_string().c_str());
 }
 
-D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags)
+D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags, const bool tryOverloadDDS)
 {
-    const std::string ddsPath = AssetPathToDDS(path);
-
-    CherryAssert(std::filesystem::exists(ddsPath) && std::filesystem::path(ddsPath).extension().string() == ".dds");
-
-    const std::wstring fullPathW = stringToWString(ddsPath);
-
-    constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;
-
     TexMetadata texMetadata{};
-    V(LoadFromDDSFile(fullPathW.c_str(), ddsFlags, &texMetadata, scratchImage));
+
+    if (tryOverloadDDS)
+    {
+        const std::string ddsPath = AssetPathToDDS(path);
+        CherryAssert(std::filesystem::exists(ddsPath) && std::filesystem::path(ddsPath).extension().string() == ".dds");
+        const std::wstring fullPathW = stringToWString(ddsPath);
+
+        constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;
+
+        V(LoadFromDDSFile(fullPathW.c_str(), ddsFlags, &texMetadata, scratchImage));
+    }
+    else
+    {
+        const std::wstring fullPathW = stringToWString(path);
+        V(LoadFromWICFile(fullPathW.c_str(), WIC_FLAGS_NONE, &texMetadata, scratchImage));
+    }
+
+    DXGI_FORMAT format = texMetadata.format;
+    if (format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
+        format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     D12Resource texture;
-    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, texMetadata.format, flags, D3D12_RESOURCE_STATE_COMMON);
+    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COMMON);
     return texture;
 }
 

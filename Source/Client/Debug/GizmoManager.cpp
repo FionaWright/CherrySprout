@@ -105,7 +105,7 @@ void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList*
 
 void GizmoManager::initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
-    constexpr Vertex quadVertices[] =
+    const Vertex quadVertices[] =
     {
         // Triangle 1
         { { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
