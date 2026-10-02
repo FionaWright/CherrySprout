@@ -51,10 +51,19 @@ float4 PSMain(VsOut input) : SV_TARGET
 {
     float3 Ng = normalize(input.normal);
     float2 uv = input.uv;
+    uv.y *= gCbvObject.ScaleY;
 
     Material mat = gMaterials[gCbvObject.MaterialIdx];
 
     float3 albedoSample = gSceneTextures[mat.TexIdxAlbedo].SampleLevel(gSampler, uv, 0).rgb;
 
-    return float4(albedoSample, 1);
+    if (Ng.y >= 0.9f)
+        albedoSample.rgb = float3(0.3, 0.3, 0.3);
+
+    float NdL = dot(Ng, normalize(-gSettings.DirLightDir));
+
+    float ambient = 0.2f;
+    float light = max(0.0f, NdL) + ambient;
+
+    return light * float4(albedoSample, 1);
 }

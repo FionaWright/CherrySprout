@@ -18,112 +18,116 @@
 
 void CreateCube(XMFLOAT3 position, XMFLOAT3 scale, std::vector<Vertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer, std::vector<Material>& materials, std::vector<Object>& objects)
 {
-    constexpr uint32_t vertexCount = 24;
+    Object obj;
+    obj.MegaBufferVertexOffset = vertexBuffer.size();
+    obj.MegaBufferIndexOffset = indexBuffer.size();
+    obj.MegaBufferVertexCount = 24;
+    obj.MegaBufferIndexCount = 36;
 
     // Front (+Z)
-    vertexBuffer.emplace_back(Vertex({-1, -1, 1},  {0, 0, 1}, {0, 1}));
-    vertexBuffer.emplace_back(Vertex({-1, 1, 1}, .Normal = {0, 0, 1}, .UV = {0, 0}};
-    vertexBuffer.emplace_back(Vertex({1, 1, 1}, .Normal = {0, 0, 1}, .UV = {1, 0}};
-    vertexBuffer.emplace_back(Vertex({1, -1, 1}, .Normal = {0, 0, 1}, .UV = {1, 1}};
+    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {0, 0, 1}, {0, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 1}));
 
     // Back (-Z)
-    vertexBuffer.emplace_back(Vertex({1, -1, -1}, .Normal = {0, 0, -1}, .UV = {0, 1}};
-    vertexBuffer.emplace_back(Vertex({1, 1, -1}, .Normal = {0, 0, -1}, .UV = {0, 0}};
-    vertexBuffer.emplace_back(Vertex({-1, 1, -1}, .Normal = {0, 0, -1}, .UV = {1, 0}};
-    vertexBuffer.emplace_back(Vertex({-1, -1, -1}, .Normal = {0, 0, -1}, .UV = {1, 1}};
+    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 0}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {0, 0, -1}, {1, 0}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {1, 1}));
 
     // Left (-X)
-    scene.CPU.MegaBufferVertex[8] = {.Position = {-1, -1, -1}, .Normal = {-1, 0, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[9] = {.Position = {-1, 1, -1}, .Normal = {-1, 0, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[10] = {.Position = {-1, 1, 1}, .Normal = {-1, 0, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[11] = {.Position = {-1, -1, 1}, .Normal = {-1, 0, 0}, .UV = {1, 1}};
+    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {-1, 0, 0}, {0, 0}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {1, 0}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {-1, 0, 0}, {1, 1}));
 
     // Right (+X)
-    scene.CPU.MegaBufferVertex[12] = {.Position = {1, -1, 1}, .Normal = {1, 0, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[13] = {.Position = {1, 1, 1}, .Normal = {1, 0, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[14] = {.Position = {1, 1, -1}, .Normal = {1, 0, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[15] = {.Position = {1, -1, -1}, .Normal = {1, 0, 0}, .UV = {1, 1}};
+    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {1, 0, 0}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {1, 0, 0}, {0, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {1, 0, 0}, {1, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1}));
 
     // Top (+Y)
-    scene.CPU.MegaBufferVertex[16] = {.Position = {-1, 1, 1}, .Normal = {0, 1, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[17] = {.Position = {-1, 1, -1}, .Normal = {0, 1, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[18] = {.Position = {1, 1, -1}, .Normal = {0, 1, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[19] = {.Position = {1, 1, 1}, .Normal = {0, 1, 0}, .UV = {1, 1}};
+    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, 0.5f}, {0, 1, 0}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {0, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 1}));
 
     // Bottom (-Y)
-    scene.CPU.MegaBufferVertex[20] = {.Position = {-1, -1, -1}, .Normal = {0, -1, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[21] = {.Position = {-1, -1, 1}, .Normal = {0, -1, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[22] = {.Position = {1, -1, 1}, .Normal = {0, -1, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[23] = {.Position = {1, -1, -1}, .Normal = {0, -1, 0}, .UV = {1, 1}};
-
-    scene.CPU.MegaBufferIndexCount = 36;
-    scene.CPU.MegaBufferIndex = new uint32_t[scene.CPU.MegaBufferIndexCount];
+    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1}));
+    vertexBuffer.emplace_back(Vertex({-0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {1, 0}));
+    vertexBuffer.emplace_back(Vertex({0.5f, -0.5f, -0.5f}, {0, -1, 0}, {1, 1}));
 
     // Front
-    scene.CPU.MegaBufferIndex[0] = 0;
-    scene.CPU.MegaBufferIndex[1] = 2;
-    scene.CPU.MegaBufferIndex[2] = 1;
-    scene.CPU.MegaBufferIndex[3] = 0;
-    scene.CPU.MegaBufferIndex[4] = 3;
-    scene.CPU.MegaBufferIndex[5] = 2;
+    indexBuffer.emplace_back(0);
+    indexBuffer.emplace_back(2);
+    indexBuffer.emplace_back(1);
+    indexBuffer.emplace_back(0);
+    indexBuffer.emplace_back(3);
+    indexBuffer.emplace_back(2);
 
     // Back
-    scene.CPU.MegaBufferIndex[6] = 4;
-    scene.CPU.MegaBufferIndex[7] = 6;
-    scene.CPU.MegaBufferIndex[8] = 5;
-    scene.CPU.MegaBufferIndex[9] = 4;
-    scene.CPU.MegaBufferIndex[10] = 7;
-    scene.CPU.MegaBufferIndex[11] = 6;
+    indexBuffer.emplace_back(4);
+    indexBuffer.emplace_back(6);
+    indexBuffer.emplace_back(5);
+    indexBuffer.emplace_back(4);
+    indexBuffer.emplace_back(7);
+    indexBuffer.emplace_back(6);
 
     // Left
-    scene.CPU.MegaBufferIndex[12] = 8;
-    scene.CPU.MegaBufferIndex[13] = 10;
-    scene.CPU.MegaBufferIndex[14] = 9;
-    scene.CPU.MegaBufferIndex[15] = 8;
-    scene.CPU.MegaBufferIndex[16] = 11;
-    scene.CPU.MegaBufferIndex[17] = 10;
+    indexBuffer.emplace_back(8);
+    indexBuffer.emplace_back(10);
+    indexBuffer.emplace_back(9);
+    indexBuffer.emplace_back(8);
+    indexBuffer.emplace_back(11);
+    indexBuffer.emplace_back(10);
 
     // Right
-    scene.CPU.MegaBufferIndex[18] = 12;
-    scene.CPU.MegaBufferIndex[19] = 14;
-    scene.CPU.MegaBufferIndex[20] = 13;
-    scene.CPU.MegaBufferIndex[21] = 12;
-    scene.CPU.MegaBufferIndex[22] = 15;
-    scene.CPU.MegaBufferIndex[23] = 14;
+    indexBuffer.emplace_back(12);
+    indexBuffer.emplace_back(14);
+    indexBuffer.emplace_back(13);
+    indexBuffer.emplace_back(12);
+    indexBuffer.emplace_back(15);
+    indexBuffer.emplace_back(14);
 
     // Top
-    scene.CPU.MegaBufferIndex[24] = 16;
-    scene.CPU.MegaBufferIndex[25] = 18;
-    scene.CPU.MegaBufferIndex[26] = 17;
-    scene.CPU.MegaBufferIndex[27] = 16;
-    scene.CPU.MegaBufferIndex[28] = 19;
-    scene.CPU.MegaBufferIndex[29] = 18;
+    indexBuffer.emplace_back(16);
+    indexBuffer.emplace_back(18);
+    indexBuffer.emplace_back(17);
+    indexBuffer.emplace_back(16);
+    indexBuffer.emplace_back(19);
+    indexBuffer.emplace_back(18);
 
     // Bottom
-    scene.CPU.MegaBufferIndex[30] = 20;
-    scene.CPU.MegaBufferIndex[31] = 22;
-    scene.CPU.MegaBufferIndex[32] = 21;
-    scene.CPU.MegaBufferIndex[33] = 20;
-    scene.CPU.MegaBufferIndex[34] = 23;
-    scene.CPU.MegaBufferIndex[35] = 22;
+    indexBuffer.emplace_back(20);
+    indexBuffer.emplace_back(22);
+    indexBuffer.emplace_back(21);
+    indexBuffer.emplace_back(20);
+    indexBuffer.emplace_back(23);
+    indexBuffer.emplace_back(22);
 
-    scene.CPU.MegaBufferMaterialsCount = 1;
-    scene.CPU.MegaBufferMaterials = new Material();
-    scene.CPU.MegaBufferMaterials->Albedo = XMFLOAT4(1, 0, 0, 1);
-    scene.CPU.MegaBufferMaterials->TexIdxAlbedo = 0;
+    Material mat;
+    mat.Albedo = XMFLOAT4(1, 0, 0, 1);
+    mat.TexIdxAlbedo = std::rand() % 6;
+    materials.emplace_back(mat);
 
-    XMMATRIX TRS = XMMatrixIdentity();
+    obj.MaterialIndex = materials.size();
+
+    const XMMATRIX T = XMMatrixTranslation(position.x, position.y, position.z);
+    const XMMATRIX S = XMMatrixScaling(scale.x, scale.y, scale.z);
+    const XMMATRIX TRS = S * T;
     XMFLOAT4X4 TRS4x4{};
     XMStoreFloat4x4(&TRS4x4, TRS);
 
-    scene.CPU.ObjectCount = 1;
-    scene.CPU.Objects = new Object();
-    scene.CPU.Objects->MaterialIndex = 0;
-    memcpy(scene.CPU.Objects->M, &TRS4x4, sizeof(XMFLOAT4X4));
-    scene.CPU.Objects->MegaBufferVertexCount = scene.CPU.MegaBufferVertexCount;
-    scene.CPU.Objects->MegaBufferVertexOffset = 0;
-    scene.CPU.Objects->MegaBufferIndexCount = scene.CPU.MegaBufferIndexCount;
-    scene.CPU.Objects->MegaBufferIndexOffset = 0;
+    memcpy(obj.M, &TRS4x4, sizeof(XMFLOAT4X4));
+    objects.push_back(obj);
+}
+
+float Rand01()
+{
+    return (static_cast<float>(std::rand()) / (RAND_MAX)) + 1;
 }
 
 void Lab2::Init(D3D* d3d)
@@ -139,127 +143,58 @@ void Lab2::Init(D3D* d3d)
         maxCbvRequiredSize += Skybox::GetCbvRequiredSize();
     }
 
-    constexpr size_t numDescriptors = 10000; // TODO: Handle this properly
+    constexpr size_t numDescriptors = 10000;
     constexpr size_t numSceneTextureDescriptors = 5000;
     m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, numSceneTextureDescriptors,
                 D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize); // TODO: Test without extra
+    m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize);
 
-    m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().
-        RtvHeight);
+    m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
     m_P = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio,
                                    Config::GetRender().NearPlane, Config::GetRender().FarPlane);
     m_InvP = XMMatrixInverse(nullptr, m_P);
 
     Scene scene;
 
-    scene.CPU.MegaBufferVertexCount = 24;
-    scene.CPU.MegaBufferVertex = new Vertex[scene.CPU.MegaBufferVertexCount];
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    std::vector<Material> materials;
+    std::vector<Object> objects;
 
-    // Front (+Z)
-    scene.CPU.MegaBufferVertex[0] = {.Position = {-1, -1, 1}, .Normal = {0, 0, 1}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[1] = {.Position = {-1, 1, 1}, .Normal = {0, 0, 1}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[2] = {.Position = {1, 1, 1}, .Normal = {0, 0, 1}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[3] = {.Position = {1, -1, 1}, .Normal = {0, 0, 1}, .UV = {1, 1}};
+    constexpr int NUM_ROWS = 20;
+    constexpr int NUM_COLS = 20;
+    constexpr float SPACING = 2;
+    constexpr float SPACING_VARIANCE = 0.1f;
+    constexpr float BASE_HEIGHT = 5;
+    constexpr float HEIGHT_VARIANCE = 4.0f;
 
-    // Back (-Z)
-    scene.CPU.MegaBufferVertex[4] = {.Position = {1, -1, -1}, .Normal = {0, 0, -1}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[5] = {.Position = {1, 1, -1}, .Normal = {0, 0, -1}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[6] = {.Position = {-1, 1, -1}, .Normal = {0, 0, -1}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[7] = {.Position = {-1, -1, -1}, .Normal = {0, 0, -1}, .UV = {1, 1}};
+    for (int x = -NUM_ROWS; x < NUM_ROWS; x++)
+        for (int z = -NUM_COLS; z < NUM_COLS; z++)
+        {
+            float height = BASE_HEIGHT + (Rand01() * HEIGHT_VARIANCE);
+            m_scales.emplace_back(height);
 
-    // Left (-X)
-    scene.CPU.MegaBufferVertex[8] = {.Position = {-1, -1, -1}, .Normal = {-1, 0, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[9] = {.Position = {-1, 1, -1}, .Normal = {-1, 0, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[10] = {.Position = {-1, 1, 1}, .Normal = {-1, 0, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[11] = {.Position = {-1, -1, 1}, .Normal = {-1, 0, 0}, .UV = {1, 1}};
+            float xPos = x * SPACING + (Rand01() * SPACING_VARIANCE);
+            float zPos = z * SPACING + (Rand01() * SPACING_VARIANCE);
 
-    // Right (+X)
-    scene.CPU.MegaBufferVertex[12] = {.Position = {1, -1, 1}, .Normal = {1, 0, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[13] = {.Position = {1, 1, 1}, .Normal = {1, 0, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[14] = {.Position = {1, 1, -1}, .Normal = {1, 0, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[15] = {.Position = {1, -1, -1}, .Normal = {1, 0, 0}, .UV = {1, 1}};
+            CreateCube(XMFLOAT3(xPos, (height - 1)/2.0f, zPos), XMFLOAT3(1,height,1), vertices, indices, materials, objects);
+        }
 
-    // Top (+Y)
-    scene.CPU.MegaBufferVertex[16] = {.Position = {-1, 1, 1}, .Normal = {0, 1, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[17] = {.Position = {-1, 1, -1}, .Normal = {0, 1, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[18] = {.Position = {1, 1, -1}, .Normal = {0, 1, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[19] = {.Position = {1, 1, 1}, .Normal = {0, 1, 0}, .UV = {1, 1}};
+    scene.CPU.MegaBufferVertexCount = vertices.size();
+    scene.CPU.MegaBufferVertex = new Vertex[vertices.size()];
+    memcpy(scene.CPU.MegaBufferVertex, vertices.data(), vertices.size() * sizeof(Vertex));
 
-    // Bottom (-Y)
-    scene.CPU.MegaBufferVertex[20] = {.Position = {-1, -1, -1}, .Normal = {0, -1, 0}, .UV = {0, 1}};
-    scene.CPU.MegaBufferVertex[21] = {.Position = {-1, -1, 1}, .Normal = {0, -1, 0}, .UV = {0, 0}};
-    scene.CPU.MegaBufferVertex[22] = {.Position = {1, -1, 1}, .Normal = {0, -1, 0}, .UV = {1, 0}};
-    scene.CPU.MegaBufferVertex[23] = {.Position = {1, -1, -1}, .Normal = {0, -1, 0}, .UV = {1, 1}};
+    scene.CPU.MegaBufferIndexCount = indices.size();
+    scene.CPU.MegaBufferIndex = new uint32_t[indices.size()];
+    memcpy(scene.CPU.MegaBufferIndex, indices.data(), indices.size() * sizeof(uint32_t));
 
-    scene.CPU.MegaBufferIndexCount = 36;
-    scene.CPU.MegaBufferIndex = new uint32_t[scene.CPU.MegaBufferIndexCount];
+    scene.CPU.MegaBufferMaterialsCount = materials.size();
+    scene.CPU.MegaBufferMaterials = new Material[materials.size()];
+    memcpy(scene.CPU.MegaBufferMaterials, materials.data(), materials.size() * sizeof(Material));
 
-    // Front
-    scene.CPU.MegaBufferIndex[0] = 0;
-    scene.CPU.MegaBufferIndex[1] = 2;
-    scene.CPU.MegaBufferIndex[2] = 1;
-    scene.CPU.MegaBufferIndex[3] = 0;
-    scene.CPU.MegaBufferIndex[4] = 3;
-    scene.CPU.MegaBufferIndex[5] = 2;
-
-    // Back
-    scene.CPU.MegaBufferIndex[6] = 4;
-    scene.CPU.MegaBufferIndex[7] = 6;
-    scene.CPU.MegaBufferIndex[8] = 5;
-    scene.CPU.MegaBufferIndex[9] = 4;
-    scene.CPU.MegaBufferIndex[10] = 7;
-    scene.CPU.MegaBufferIndex[11] = 6;
-
-    // Left
-    scene.CPU.MegaBufferIndex[12] = 8;
-    scene.CPU.MegaBufferIndex[13] = 10;
-    scene.CPU.MegaBufferIndex[14] = 9;
-    scene.CPU.MegaBufferIndex[15] = 8;
-    scene.CPU.MegaBufferIndex[16] = 11;
-    scene.CPU.MegaBufferIndex[17] = 10;
-
-    // Right
-    scene.CPU.MegaBufferIndex[18] = 12;
-    scene.CPU.MegaBufferIndex[19] = 14;
-    scene.CPU.MegaBufferIndex[20] = 13;
-    scene.CPU.MegaBufferIndex[21] = 12;
-    scene.CPU.MegaBufferIndex[22] = 15;
-    scene.CPU.MegaBufferIndex[23] = 14;
-
-    // Top
-    scene.CPU.MegaBufferIndex[24] = 16;
-    scene.CPU.MegaBufferIndex[25] = 18;
-    scene.CPU.MegaBufferIndex[26] = 17;
-    scene.CPU.MegaBufferIndex[27] = 16;
-    scene.CPU.MegaBufferIndex[28] = 19;
-    scene.CPU.MegaBufferIndex[29] = 18;
-
-    // Bottom
-    scene.CPU.MegaBufferIndex[30] = 20;
-    scene.CPU.MegaBufferIndex[31] = 22;
-    scene.CPU.MegaBufferIndex[32] = 21;
-    scene.CPU.MegaBufferIndex[33] = 20;
-    scene.CPU.MegaBufferIndex[34] = 23;
-    scene.CPU.MegaBufferIndex[35] = 22;
-
-    scene.CPU.MegaBufferMaterialsCount = 1;
-    scene.CPU.MegaBufferMaterials = new Material();
-    scene.CPU.MegaBufferMaterials->Albedo = XMFLOAT4(1, 0, 0, 1);
-    scene.CPU.MegaBufferMaterials->TexIdxAlbedo = 0;
-
-    XMMATRIX TRS = XMMatrixIdentity();
-    XMFLOAT4X4 TRS4x4{};
-    XMStoreFloat4x4(&TRS4x4, TRS);
-
-    scene.CPU.ObjectCount = 1;
-    scene.CPU.Objects = new Object();
-    scene.CPU.Objects->MaterialIndex = 0;
-    memcpy(scene.CPU.Objects->M, &TRS4x4, sizeof(XMFLOAT4X4));
-    scene.CPU.Objects->MegaBufferVertexCount = scene.CPU.MegaBufferVertexCount;
-    scene.CPU.Objects->MegaBufferVertexOffset = 0;
-    scene.CPU.Objects->MegaBufferIndexCount = scene.CPU.MegaBufferIndexCount;
-    scene.CPU.Objects->MegaBufferIndexOffset = 0;
+    scene.CPU.ObjectCount = objects.size();
+    scene.CPU.Objects = new Object[objects.size()];
+    memcpy(scene.CPU.Objects, objects.data(), objects.size() * sizeof(Object));
 
     scene.CPU.MegaBufferPunctualLightsCount = 1;
     scene.CPU.MegaBufferPunctualLights = new PunctualLight(); // Dummy
@@ -279,7 +214,7 @@ void Lab2::Init(D3D* d3d)
 
     {
         D3D12_STATIC_SAMPLER_DESC sampler = {};
-        InitializeSamplerLinearClamp(&sampler);
+        InitializeSamplerLinearWrap(&sampler);
 
         m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
@@ -388,7 +323,7 @@ void Lab2::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
     CbvForward cbvForward = {};
-    cbvForward.DirLightDir = XMFLOAT3(0,-1,0);
+    cbvForward.DirLightDir = m_dirLightDir;
     cbvForward.MaxCubemapMipMaps = 1;
     cbvForward.OutputMode = 0;
     m_descriptorSet.UpdateCBV(1, &cbvForward);
@@ -411,6 +346,7 @@ void Lab2::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         XMStoreFloat4x4(&pushConstants.M, M);
         XMStoreFloat4x4(&pushConstants.MTI, XMMatrixTranspose(XMMatrixInverse(nullptr, M)));
         pushConstants.MaterialIdx = obj.MaterialIndex;
+        pushConstants.ScaleY = m_scales[i];
         m_rootConstants.Bind_Graphics(cmdList, &pushConstants);
 
         cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset,
@@ -426,7 +362,7 @@ void Lab2::RenderGUI()
 {
     Gui::BeginWindow("Lab2", ImVec2(0, 0), ImVec2(Config::GetSystem().WindowAppGuiWidth, Config::GetSystem().RtvHeight));
 
-    ImGui::TextUnformatted("Lab2");
+    ImGui::InputFloat3("Dir Light Dir", reinterpret_cast<float*>(&m_dirLightDir));
 
     Gui::EndWindow();
 }
