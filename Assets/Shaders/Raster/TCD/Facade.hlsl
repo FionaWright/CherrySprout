@@ -5,6 +5,7 @@
 #include "Scene/Material.h"
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Structs.h"
+#include "Utils/Random.h"
 
 #define BXDF_MODE BXDF_PBR
 #include "BxDFs/GetBxDF.hlsli"
@@ -89,24 +90,65 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 wo = normalize(gSettings.CameraPosition - worldPos);
     float3 wi = normalize(-gSettings.DirLightDir);
 
+    float3 Li = 5.0f;
+
+    float3 E_direct_sum = 0.0f;
+
     BxDF bxdf;
     float3 f_bxdf;
     float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
-    float NdL = dot(Ng, wi);
-
     float shadowFactor = 0.0f;
-    if (NdL > 0.0f)
     {
+        float3 up = abs(wi.y) < 0.999f
+            ? float3(0, 1, 0)
+            : float3(1, 0, 0);
 
-        float3 rayOrigin = worldPos + Ng * EPSILON;
-        TraceRayShadow(rayOrigin, wi, INF, shadowFactor);
+        float3 wiT = normalize(cross(up, wi));
+        float3 wiB = cross(wi, wiT);
+
+//#define NUM_SHADOW_SAMPLES 32
+#define NUM_SHADOW_SAMPLES 32
+
+        RngInfo rngInfo = InitializeRngInfo(input.position.xy, 0, gSettings.FrameIdx, 1205);
+
+        [unroll]
+        for (int i = 0; i < NUM_SHADOW_SAMPLES; i++)
+        {
+            float u1 = Rand01(rngInfo);
+            float u2 = Rand01(rngInfo);
+
+            //float angularRadius = 0.01f;
+            float angularRadius = 0.01f;
+
+            float cosThetaMax = cos(angularRadius);
+
+            float cosTheta = lerp(1.0f, cosThetaMax, u1);
+            float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+            float phi = 2.0f * PI * u2;
+
+            float3 wiMod =
+                wiT   * (cos(phi) * sinTheta) +
+                wiB * (sin(phi) * sinTheta) +
+                wi  * cosTheta;
+
+            wiMod = normalize(wiMod);
+
+            float NdL = dot(Ng, wiMod);
+
+            if (NdL <= 0.0f)
+                continue;
+
+            float3 rayOrigin = worldPos + Ng * EPSILON;
+            TraceRayShadow(rayOrigin, wiMod, INF, shadowFactor);
+
+            E_direct_sum += max(0.0f, NdL) * shadowFactor * Li * f_bxdf;
+        }
     }
 
-    float3 Li = 5.0f;
-
-    float3 E_direct = max(0.0f, NdL) * shadowFactor * Li * f_bxdf;
+    float3 E_direct = E_direct_sum / float(NUM_SHADOW_SAMPLES);
 
     float3 E_ambient = mat.Albedo.rgb * 0.2f;
 

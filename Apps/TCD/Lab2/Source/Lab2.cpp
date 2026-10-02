@@ -334,12 +334,16 @@ void Lab2::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     XMStoreFloat4x4(&matricesVP.P, m_P);
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
+    static uint32_t frameIdx = 0; // Just for RNG
+
     CbvForward cbvForward = {};
     cbvForward.DirLightDir = m_dirLightDir;
     cbvForward.MaxCubemapMipMaps = 1;
-    cbvForward.OutputMode = 0;
+    cbvForward.FrameIdx = frameIdx;
     cbvForward.CameraPosition = m_cameraController.GetCamera().GetPosition();
     m_descriptorSet.UpdateCBV(1, &cbvForward);
+
+    frameIdx++;
 
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
 
