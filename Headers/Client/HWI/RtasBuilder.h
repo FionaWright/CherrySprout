@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "D12Resource.h"
+#include "D3D.h"
 #include "UploadHeap.h"
 #include "Scene/Scene.h"
 #include "Scene/InstanceData.h"
@@ -22,6 +23,7 @@ struct BlasEntry
 class RtasBuilder
 {
 public:
+    void FlushAndBuild(D3D* d3d, Scene* scene);
     void Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene);
 
     D12Resource* GetRtasResource() { return &m_tlasResult; }

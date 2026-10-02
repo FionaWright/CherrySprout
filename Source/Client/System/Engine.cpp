@@ -73,6 +73,7 @@ void Engine::Render()
     const ComPtr<ID3D12GraphicsCommandList> cmdList = m_d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     D12Resource* rtv = m_d3d->GetRtv();
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_d3d->GetRtvHandle();
 
     {
         GPU_SCOPE(cmdList.Get(), L"Setup");
@@ -86,6 +87,20 @@ void Engine::Render()
         m_app->Render(m_d3d.get(), cmdList.Get());
     }
 
+    // Resolve MSAA
+    if (Config::GetRender().MsaaSampleCount > 1)
+    {
+        D12Resource* backbuffer = m_d3d->GetSwapchainBackbuffer();
+
+        rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
+        backbuffer->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST);
+
+        cmdList->ResolveSubresource(backbuffer->GetResource(), 0, rtv->GetResource(), 0, Config::GetRender().RtvFormat);
+
+        rtv = backbuffer;
+        rtvHandle = m_d3d->GetBackbufferHandle();
+    }
+
     {
         GPU_SCOPE(cmdList.Get(), L"GUI");
 
@@ -95,14 +110,14 @@ void Engine::Render()
 
         m_app->RenderGUI();
 
-        const D3D12_CPU_DESCRIPTOR_HANDLE handle = m_d3d->GetRtvHandle();
-        cmdList->OMSetRenderTargets(1, &handle, FALSE, nullptr);
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
         rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
         Gui::RenderAllWindows(cmdList.Get());
     }
 
     // Present
     {
+
         rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_PRESENT);
 
         V(cmdList->Close());
@@ -120,10 +135,10 @@ void Engine::Render()
     {
         uint8_t* data = nullptr;
         size_t dataSize = 0;
-        Snapshotter::ResourceToSnapshot(m_d3d.get(), m_d3d->GetRtv(), data, dataSize);
+        Snapshotter::ResourceToSnapshot(m_d3d.get(), m_d3d->GetSwapchainBackbuffer(), data, dataSize);
 
         ScratchImage scratch;
-        const Image* packed = Snapshotter::PackData(m_d3d.get(), data, m_d3d->GetRtv(), scratch);
+        const Image* packed = Snapshotter::PackData(m_d3d.get(), data, m_d3d->GetSwapchainBackbuffer(), scratch);
 
         Snapshotter::SnapshotToFile(packed, m_scheduledSnapshotRTV.c_str(), m_snapshotterIsPng);
         Snapshotter::Rgba8SnapshotToClipboard(packed);

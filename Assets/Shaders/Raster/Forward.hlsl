@@ -1,8 +1,15 @@
+#include "Utils/CBVs.h"
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
 #include "Utils/SharedUtils.h"
 #include "Utils/Math/ShadingFrame.h"
-#include "Utils/CBVs.h"
 #include "Scene/Material.h"
+
+struct VsIn
+{
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD0;
+};
 
 struct VsOut
 {
@@ -11,26 +18,43 @@ struct VsOut
     float3 normal : TEXCOORD1;
 };
 
-//Texture2D<float2> gBrdfInt : register(t0);
-//TextureCube gEnvMap : register(t1);
-//TextureCube gIrradiance : register(t2);
-//Texture2D<float4> gSceneTextures[] : register(t3);
+ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0); // Push Constants
+ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1);
+ConstantBuffer<CbvForward> gSettings : register(b2);
 
-ConstantBuffer<CbvForward> gForward : register(b2);
-ConstantBuffer<Material> gMaterial : register(b3);
+//Texture2D<float2> gBrdfInt : register(t0);
+TextureCube gEnvMap : register(t0);
+//TextureCube gIrradiance : register(t2);
+
+Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
 SamplerState gSampler : register(s0);
+
+VsOut VSMain(VsIn input)
+{
+    VsOut output;
+
+    output.normal = normalize(mul((float3x3)gCbvObject.MTI, (float3)input.normal));
+    output.uv = input.uv;
+
+    float4 pos = float4(input.position, 1.0f);
+    float4 worldPos = mul(gCbvObject.M, pos);
+    pos = mul(gMatricesVP.V, worldPos);
+    output.position = mul(gMatricesVP.P, pos);
+
+    return output;
+}
 
 float4 PSMain(VsOut input) : SV_TARGET
 {
     //float3 bumpSample = gTextures[gMaterial.TexIdxNormal].SampleLevel(gSampler, input.uv, 0).rgb * 2.0f - 1.0f;
     //bumpSample.y = -bumpSample.y; // DX convention
 
-    float3 N = normalize(input.normal);
-    //ShadingFrame bumpFrame = CreateShadingFrame(N);
+    float3 Ns = normalize(input.normal);
+    //ShadingFrame bumpFrame = CreateShadingFrame(Ns);
     //float3 N_w = bumpFrame.ToWorld(bumpSample);
 
-    return float4(N, 1);
+    return float4(Ns, 1);
 /*
 
     float4 albedo = gTextures[gMaterial.TexIdxAlbedo].Sample(gSampler, input.uv).rgba;
@@ -42,7 +66,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 irradianceIblSample = gIrradiance.SampleLevel(gSampler, N_w, 0).rgb;
 
     float3 V = normalize(input.viewDir);
-    float3 L = normalize(-gForward.DirLightDir); // Surface to Light Vector
+    float3 L = normalize(-gSettings.DirLightDir); // Surface to Light Vector
     float3 H = normalize(L + V);
 
     float NdL = saturate(dot(N_w, L));
@@ -76,7 +100,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 Lo = pow(combinedBrdf, 1.0f / 2.2f);
 
     float3 R = reflect(-V, N_w);
-    float lod = roughness * (gForward.MaxCubemapMipMaps - 1);
+    float lod = roughness * (gSettings.MaxCubemapMipMaps - 1);
     float3 envSample = gEnvMap.SampleLevel(gSampler, R, lod).rgb;
     //envSample = pow(envSample, 2.2f);
 
@@ -86,7 +110,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 combinedBrdfWithIndirect = combinedBrdf + indirectSpecular;
     float3 LoWithIndirect = pow(combinedBrdfWithIndirect, 1.0f / 2.2f);
 
-    switch (gForward.Mode)
+    switch (gSettings.Mode)
     {
     case ePosition:
         return float4(input.position.xyz / input.position.w, 1);

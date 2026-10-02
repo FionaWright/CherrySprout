@@ -5,8 +5,28 @@
 #include "System/pch.h"
 #include "HWI/RtasBuilder.h"
 
+#include "HWI/D3D.h"
 #include "Scene/InstanceData.h"
 #include "Utils/Helper.h"
+
+void RtasBuilder::FlushAndBuild(D3D* d3d, Scene* scene)
+{
+    // Note: Direct queue is required as you can't transition from D3D12_RESOURCE_STATE_INDEX_BUFFER in a compute queue. Buffer may be left in that state from previous rasterization passes
+    d3d->Flush();
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    const auto cmdList = cmdListPtr.Get();
+    {
+        ComPtr<ID3D12Device5> device5;
+        V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+        ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+        V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
+
+        Build(device5.Get(), cmdList4.Get(), scene);
+    }
+    V(cmdList->Close());
+    d3d->ExecuteCommandList(cmdList);
+    d3d->Flush();
+}
 
 void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene)
 {

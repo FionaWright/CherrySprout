@@ -1,9 +1,11 @@
 #ifndef H_PBR_H
 #define H_PBR_H
 
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
+
 #include "Utils/Math/Fresnel.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
-#include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "MicrofacetModels/GetMM.hlsli"
 #include "PathTracing/Structs.h"
 

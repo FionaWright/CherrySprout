@@ -57,12 +57,12 @@ void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* upload
     m_cbvs.emplace_back(cbv);
 }
 
-void DescriptorSet::UpdateCBV(const uint32_t idx, const void* data) const
+void DescriptorSet::UpdateCBV(const uint32_t cbvIdx, const void* data) const
 {
-    if (idx >= m_cbvs.size())
+    if (cbvIdx >= m_cbvs.size())
         throw std::exception("You made a mistake :(");
 
-    const CBV& cbv = m_cbvs[idx];
+    const CBV& cbv = m_cbvs[cbvIdx];
     std::memcpy(cbv.MappedGpuPtr, data, cbv.Size);
 }
 

@@ -119,6 +119,14 @@ constexpr auto abs(T x)
     return std::abs(std::forward<T>(x));
 }
 
+constexpr auto abs(XMFLOAT3 x)
+{
+    return XMFLOAT3(
+        std::abs(std::forward<float>(x.x)),
+        std::abs(std::forward<float>(x.y)),
+        std::abs(std::forward<float>(x.z)));
+}
+
 template <typename T>
 constexpr auto sqrt(T x)
 {

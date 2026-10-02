@@ -106,25 +106,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler, gbuffer);
 
     {
-        CherryPrint("PT: Building RTAS");
-
-        // Note: Direct queue is required as you can't transition from D3D12_RESOURCE_STATE_INDEX_BUFFER in a compute queue. Buffer may be left in that state from previous rasterization passes
-        d3d->Flush();
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        const auto cmdList = cmdListPtr.Get();
-        {
-            ComPtr<ID3D12Device5> device5;
-            V(d3d->GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
-            ComPtr<ID3D12GraphicsCommandList4> cmdList4;
-            V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
-
-            m_rtasBuilder.Build(device5.Get(), cmdList4.Get(), scene);
-        }
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
-
-        CherryPrint("PT: RTAS Built");
+        m_rtasBuilder.FlushAndBuild(d3d, scene);
     }
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);

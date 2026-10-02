@@ -109,6 +109,71 @@ inline hlsl::float3 CubemapCubeToSphere(hlsl::uint face, hlsl::float2 uv)
     return normalize(d);
 }
 
+inline void CubemapSphereToCube(hlsl::float3 d, GLUE_OUT(hlsl::uint) face, GLUE_OUT(hlsl::float2) uv)
+{
+    d = normalize(d);
+
+    const hlsl::float3 a = abs(d);
+
+    if (a.x >= a.y && a.x >= a.z)
+    {
+        if (d.x > 0.0)
+        {
+            // +X
+            face = 0;
+            uv = hlsl::float2(-d.z, -d.y);
+            uv.x /= a.x;
+            uv.y /= a.x;
+        }
+        else
+        {
+            // -X
+            face = 1;
+            uv = hlsl::float2(d.z, -d.y);
+            uv.x /= a.x;
+            uv.y /= a.x;
+        }
+    }
+    else if (a.y >= a.x && a.y >= a.z)
+    {
+        if (d.y > 0.0)
+        {
+            // +Y
+            face = 2;
+            uv = hlsl::float2(d.x, d.z);
+            uv.x /= a.y;
+            uv.y /= a.y;
+        }
+        else
+        {
+            // -Y
+            face = 3;
+            uv = hlsl::float2(d.x, -d.z);
+            uv.x /= a.y;
+            uv.y /= a.y;
+        }
+    }
+    else
+    {
+        if (d.z > 0.0)
+        {
+            // +Z
+            face = 4;
+            uv = hlsl::float2(d.x, -d.y);
+            uv.x /= a.z;
+            uv.y /= a.z;
+        }
+        else
+        {
+            // -Z
+            face = 5;
+            uv = hlsl::float2(-d.x, -d.y);
+            uv.x /= a.z;
+            uv.y /= a.z;
+        }
+    }
+}
+
 inline float Luminance(const hlsl::float3 color)
 {
     return dot(color, hlsl::float3(0.2126,0.7152,0.0722));

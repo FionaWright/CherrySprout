@@ -15,6 +15,13 @@
 
 typedef void (*LoadUSDFunc)(const char* usdPath, float sceneScale, SceneCPU* scene);
 
+void SceneManager::AssignScene(const Scene& scene)
+{
+    m_scene = scene;
+
+    m_gpuDataDirty = true;
+}
+
 void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 {
     {
@@ -76,7 +83,7 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
     m_gpuDataDirty = true;
 }
 
-void SceneManager::UploadScene(D3D* d3d)
+void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
 {
     CherryPrint("Uploading Scene...");
 
@@ -104,7 +111,8 @@ void SceneManager::UploadScene(D3D* d3d)
     for (int i = 0; i < textureCount; i++)
     {
         const char* path = m_scene.CPU.TextureFilepaths[i];
-        D12Resource tex = TextureLoader::LoadTexture2DLDR(d3d->GetDevice(), path, scratchImages[i]);
+        const D3D12_RESOURCE_FLAGS flags = tryOverloadDDS ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        D12Resource tex = TextureLoader::LoadTexture2DLDR(d3d->GetDevice(), path, scratchImages[i], flags, tryOverloadDDS);
 
         uploadHeapRequiredSize += Align(tex.GetIntermediateSize(), 512);
 
@@ -143,43 +151,139 @@ void SceneManager::UploadScene(D3D* d3d)
             normalMapTexIndices.emplace_back(texIdx);
     }
 
-    Heap heap;
-    heap.Init("Scene Manager Heap", d3d->GetDevice(), normalMapTexIndices.size() * 3, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    m_converter.Init(d3d);
-
-    // Impossible to know if normal maps are stored as 2-channel or 3-channel, so convert all
-    // Textures can be BC format so need to blit to new texture
-    std::vector<std::pair<uint32_t, D12Resource>> textureUpdates;
+    if (normalMapTexIndices.size() > 0)
     {
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        const auto cmdList = cmdListPtr.Get();
+        Heap heap;
+        heap.Init("Scene Manager Heap", d3d->GetDevice(), normalMapTexIndices.size() * 3, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+        m_converter.Init(d3d);
+
+        // Impossible to know if normal maps are stored as 2-channel or 3-channel, so convert all
+        // Textures can be BC format so need to blit to new texture
+        std::vector<std::pair<uint32_t, D12Resource>> textureUpdates;
         {
-            GPU_SCOPE(cmdList, "Convert Textures");
-
-            for (int texIdx : normalMapTexIndices)
+            const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+            const auto cmdList = cmdListPtr.Get();
             {
-                D12Resource* normalMap2Channel = &m_scene.GPU.SceneTextures[texIdx];
+                GPU_SCOPE(cmdList, "Convert Textures");
 
-                D12Resource normalMap3Channel;
-                m_converter.Convert(d3d, &heap, cmdList, normalMap2Channel, eNormalChannels2To3, &normalMap3Channel);
+                for (int texIdx : normalMapTexIndices)
+                {
+                    D12Resource* normalMap2Channel = &m_scene.GPU.SceneTextures[texIdx];
 
-                textureUpdates.emplace_back(texIdx, std::move(normalMap3Channel));
+                    D12Resource normalMap3Channel;
+                    m_converter.Convert(d3d, &heap, cmdList, normalMap2Channel, eNormalChannels2To3, &normalMap3Channel);
+
+                    textureUpdates.emplace_back(texIdx, std::move(normalMap3Channel));
+                }
             }
+            V(cmdList->Close());
+            d3d->ExecuteCommandList(cmdList);
+            d3d->Flush();
         }
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
-    }
 
-    for (auto& pair : textureUpdates)
-    {
-        m_scene.GPU.SceneTextures[pair.first] = std::move(pair.second);
+        for (auto& pair : textureUpdates)
+        {
+            m_scene.GPU.SceneTextures[pair.first] = std::move(pair.second);
+        }
     }
 
     m_gpuDataDirty = false;
 
     CherryPrint("Scene Uploaded");
+}
+
+void SceneManager::GenerateMipMaps(D3D* d3d, Heap* heap)
+{
+    if (!m_pipelineMipMaps.GetPSO())
+    {
+        D3D12_STATIC_SAMPLER_DESC sampler = {};
+        InitializeSamplerLinearClamp(&sampler);
+
+        m_rootSigMipMaps.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
+
+        m_pipelineMipMaps.InitCompute(d3d->GetDevice(), "Compute/MipMapsCS.hlsl", m_rootSigMipMaps.Get());
+    }
+
+    m_setMipMaps.Init(heap);
+
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    const auto cmdList = cmdListPtr.Get();
+
+    for (size_t i = 0; i < m_scene.GPU.SceneTextures.size(); i++)
+    {
+        D12Resource* resource = &m_scene.GPU.SceneTextures[i];
+        const auto desc = resource->GetDesc();
+
+        if (desc.MipLevels <= 1 || desc.DepthOrArraySize != 1)
+            continue;
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC srcSRVDesc = {};
+        srcSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srcSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srcSRVDesc.Format = desc.Format;
+
+        D3D12_UNORDERED_ACCESS_VIEW_DESC dstUAVDesc = {};
+        dstUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        dstUAVDesc.Format = desc.Format;
+
+        heap->Bind(cmdList);
+
+        cmdList->SetComputeRootSignature(m_rootSigMipMaps.Get());
+        cmdList->SetPipelineState(m_pipelineMipMaps.GetPSO());
+
+        int width = static_cast<int>(desc.Width);
+        int height = static_cast<int>(desc.Height);
+
+        resource->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+        for (int mip = 0; mip < desc.MipLevels - 1; mip++)
+        {
+            int dstWidth = std::max<int>(width >> (mip + 1), 1);
+            int dstHeight = std::max<int>(height >> (mip + 1), 1);
+
+            srcSRVDesc.Texture2D.MipLevels = 1;
+            srcSRVDesc.Texture2D.MostDetailedMip = mip;
+
+            dstUAVDesc.Texture2D.MipSlice = mip + 1;
+
+            DescriptorSet set;
+            set.Init(heap);
+
+            set.SetSRV(d3d->GetDevice(), 0, resource, srcSRVDesc);
+            set.SetUAV(d3d->GetDevice(), 0, resource, dstUAVDesc);
+
+            if (mip > 0)
+            {
+                const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                    resource->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, mip);
+                cmdList->ResourceBarrier(1, &barrier);
+            }
+
+            {
+                const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                    resource->GetResource(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, mip+1);
+                cmdList->ResourceBarrier(1, &barrier);
+            }
+
+            set.SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverTexture(cmdList, 16, dstWidth, dstHeight);
+
+            resource->UavBarrier(cmdList);
+        }
+
+        if (desc.MipLevels > 1)
+        {
+            const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                resource->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, desc.MipLevels-1);
+            cmdList->ResourceBarrier(1, &barrier);
+        }
+    }
+
+    V(cmdList->Close());
+    d3d->ExecuteCommandList(cmdList);
+    d3d->Flush();
 }
 
 void SceneManager::AddSceneTexturesToHeap(const D3D* d3d, Heap* heap) const

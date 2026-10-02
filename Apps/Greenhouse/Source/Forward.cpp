@@ -19,14 +19,13 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
 
-    m_rootConstants.Init(0, 0, sizeof(CbvMatrices_M));
+    m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 3, 0, 0, false, &sampler, 1, &m_rootConstants);
+    m_rootSig.SmartInit(d3d->GetDevice(), 2, 0, 0, false, &sampler, 1, &m_rootConstants);
 
     m_descriptorSet.Init(heap, false, true);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), uploadHeapCBV);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), uploadHeapCBV);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(Material), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -46,7 +45,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true);
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-    m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/ForwardVS.hlsl", "Raster/ForwardPS.hlsl", desc);
+    m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/Forward.hlsl", "Raster/Forward.hlsl", desc);
 }
 
 void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
@@ -78,8 +77,6 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     Heap* heap = renderInfo.Heap;
 
     {
-        CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 0);
-
         RTV->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
@@ -120,9 +117,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
-    //cmdList->SetGraphicsRootDescriptorTable(2, bindlessHandle);
 
-    CbvMatrices_M matricesM = {};
+    CbvForward_PerInstance matricesM = {};
 
     for (int i = 0; i < scene->CPU.ObjectCount; ++i)
     {
@@ -139,6 +135,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
         XMStoreFloat4x4(&matricesM.M, M);
         XMStoreFloat4x4(&matricesM.MTI, XMMatrixTranspose(XMMatrixInverse(nullptr, M)));
+        matricesM.MaterialIdx = obj.MaterialIndex;
         m_rootConstants.Bind_Graphics(cmdList, &matricesM);
 
         cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);

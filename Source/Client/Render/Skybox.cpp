@@ -26,8 +26,9 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
         }
     };
 
+    // TODO: Fix this
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
-    m_shaderForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc);
+    m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxManualPS.hlsl", desc);
 
     constexpr XMFLOAT3 vertexBuffer[8] = {
         {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
@@ -69,12 +70,10 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
         d3d->Flush();
     }
 
-
     // Init Generate Irradiance
-    if (false) // TODO
     {
         m_rootSigGenIrr.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
-        m_shaderGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get());
+        m_pipelineGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get());
 
         if (!m_texIrradianceIBL.IsInitialized())
             m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", d3d->GetDevice(), cubemap->GetDesc().Width, cubemap->GetDesc().Height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -88,12 +87,12 @@ void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* v
     XMStoreFloat4x4(&matrices.P, *pMatrix);
 
     cmdList->SetGraphicsRootSignature(m_rootSig.Get());
-    cmdList->SetPipelineState(m_shaderForward.GetPSO());
+    cmdList->SetPipelineState(m_pipelineForward.GetPSO());
 
-    m_dsForwardRender.UpdateCBV(0, &matrices);
+    m_setForwardRender.UpdateCBV(0, &matrices);
 
-    m_dsForwardRender.TransitionAllSRVToShaderResource(cmdList);
-    m_dsForwardRender.SetDescriptorTables_Graphics(cmdList);
+    m_setForwardRender.TransitionAllSRVToShaderResource(cmdList);
+    m_setForwardRender.SetDescriptorTables_Graphics(cmdList);
 
     D3D12_VERTEX_BUFFER_VIEW viewV;
     D3D12_INDEX_BUFFER_VIEW viewI;
@@ -108,19 +107,23 @@ void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* v
 void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    //srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
     srvDesc.Format = cubemap->GetDesc().Format;
     srvDesc.TextureCube.MipLevels = 1;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    // Forward Render Material
+    // TODO: Fix this
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+    srvDesc.Texture2DArray.ArraySize = 6;
+    srvDesc.Texture2DArray.MipLevels = 1;
+    srvDesc.Texture2DArray.FirstArraySlice = 0;
+
     {
-        m_dsForwardRender.Init(heap);
-        m_dsForwardRender.AddCBV(device, sizeof(CbvMatrices_MVP), uploadHeapCBV, "CBV Matrices (Skybox)");
-        m_dsForwardRender.SetSRV(device, 0, cubemap, srvDesc);
+        m_setForwardRender.Init(heap);
+        m_setForwardRender.AddCBV(device, sizeof(CbvMatrices_MVP), uploadHeapCBV, "CBV Matrices (Skybox)");
+        m_setForwardRender.SetSRV(device, 0, cubemap, srvDesc);
     }
 
-    // Generate Irradiance Material
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -129,23 +132,30 @@ void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Hea
         uavDesc.Texture2DArray.MipSlice = 0;
         uavDesc.Texture2DArray.FirstArraySlice = 0;
 
-        m_dsGenIrr.Init(heap);
-        m_dsGenIrr.AddUAV(device, &m_texIrradianceIBL, uavDesc);
-        m_dsGenIrr.SetSRV_Tex2D(device, 0, cubemap, cubemap->GetDesc().Format);
+        m_setGenIrr.Init(heap);
+        m_setGenIrr.AddUAV(device, &m_texIrradianceIBL, uavDesc);
+        m_setGenIrr.SetSRV(device, 0, cubemap, srvDesc);
     }
 }
 
-void Skybox::GenerateIrradianceMap(ID3D12GraphicsCommandList* cmdList, const Heap* heap)
+void Skybox::GenerateIrradianceMap(D3D* d3d, const Heap* heap)
 {
-    GPU_SCOPE(cmdList, "Generate Irradiance Map");
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    const auto cmdList = cmdListPtr.Get();
+    {
+        GPU_SCOPE(cmdList, "Generate Irradiance Map");
 
-    m_texIrradianceIBL.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    m_dsGenIrr.TransitionAllSRVToShaderResource(cmdList);
+        m_texIrradianceIBL.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_setGenIrr.TransitionAllSRVToShaderResource(cmdList);
 
-    heap->Bind(cmdList);
-    cmdList->SetComputeRootSignature(m_rootSigGenIrr.Get());
-    cmdList->SetPipelineState(m_shaderGenIrr.GetPSO());
-    m_dsGenIrr.SetDescriptorTables_Compute(cmdList);
+        heap->Bind(cmdList);
+        cmdList->SetComputeRootSignature(m_rootSigGenIrr.Get());
+        cmdList->SetPipelineState(m_pipelineGenIrr.GetPSO());
+        m_setGenIrr.SetDescriptorTables_Compute(cmdList);
 
-    DispatchOverTexture(cmdList, 8, m_texIrradianceIBL.GetDesc().Width, m_texIrradianceIBL.GetDesc().Height);
+        DispatchOverTexture(cmdList, 8, m_texIrradianceIBL.GetDesc().Width, m_texIrradianceIBL.GetDesc().Height, 1);
+    }
+    V(cmdList->Close());
+    d3d->ExecuteCommandList(cmdList);
+    d3d->Flush();
 }
