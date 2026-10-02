@@ -125,7 +125,6 @@ float4 PSMain(VsOut input) : SV_TARGET
             float u1 = Rand01(rngInfo);
             float u2 = Rand01(rngInfo);
 
-            //float angularRadius = 0.01f;
             float angularRadius = 0.03f;
 
             float cosThetaMax = cos(angularRadius);
