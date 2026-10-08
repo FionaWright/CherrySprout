@@ -22,7 +22,7 @@ float3 SampleEmissiveBary(inout RngInfo rngInfo)
     return float3(1.0 - u - v, u, v);
 }
 
-float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, float3 wo, float distance)
+float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, float3 wo, float distance)
 {
     float pdf_prim = 1.0f / (float)primitiveCount;
 
@@ -30,7 +30,7 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, fl
 
     float pdf_area = pdf_prim * pdf_bary;
 
-    float NdL = dot(Ns, wo);
+    float NdL = abs(dot(Ng, wo));
     return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
 
@@ -58,9 +58,7 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
     float2 uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
 
-    float3 Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
-    Ns = normalize(mul((float3x3)instance.MTI, Ns));
-    ApplyNormalMap(uv, material.TexIdxNormal, Ns);
+    float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
 
     float3 destPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
 
@@ -73,13 +71,25 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
 
     float triangleArea = GetTriangleArea(p0, p1, p2);
 
-    float pdf_angle = EvaluateEmissivePdf(primitiveCount, triangleArea, Ns, -wi, dist);
+    float pdf_angle = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
 
     LightSample lightSample;
     lightSample.Direction = wi;
     lightSample.Distance = dist;
     lightSample.Radiance = emission; // TODO: Units conversion?
     lightSample.PDF = pdf_angle;
+    return lightSample;
+}
+
+LightSample EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, float3 wi)
+{
+    // TODO: Trace ray
+
+    LightSample lightSample;
+    lightSample.Direction = wi;
+    lightSample.Distance = NAN;
+    lightSample.Radiance = NAN;
+    lightSample.PDF = NAN;
     return lightSample;
 }
 

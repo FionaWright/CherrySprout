@@ -64,8 +64,8 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     {
         .Name = "MC",
         .Filepath = "Scenes/USD/MC/McUsd.usda",
-        .CameraPosition = {-0.114393, 0.159540, -0.291603},
-        .CameraPitchYaw = {0.251301, 0.375632},
+        .CameraPosition = {42.258442, 40.445187, 4.229376},
+        .CameraPitchYaw = {0.661301, 4.455630},
         .SceneScale = 0.1f
     },
 

@@ -68,6 +68,7 @@ LightSample SampleLight(
     }
     else
     {
+        DBG_ASSERT_EXPR(FEATURE_ENABLED(Emission), DISABLED_LIGHT_INDEX);
         DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
 
@@ -106,7 +107,7 @@ LightSample EvaluateLight(
 
     LightSample lightSample;
 
-    if (lightIdx == 0)
+    if (lightIdx < gSettings.LsdBasePunctuals)
     {
         DBG_ASSERT_EXPR(FEATURE_ENABLED(EnvironmentMap), DISABLED_LIGHT_INDEX);
 
@@ -116,26 +117,41 @@ LightSample EvaluateLight(
         DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
 
         float pdf_env = EvaluateEnvMapPdf(uv_env);
-        lightSample.PDF = pdf_env * pdf_lsd;
+        lightSample.PDF = pdf_env;
 
         lightSample.Direction = wi;
         lightSample.Distance = INF;
         lightSample.IsDelta = false;
     }
-    else
+    else if (lightIdx < gSettings.LsdBaseEmissives)
     {
-        uint punctualLightIdx = lightIdx - 1;
-        PunctualLight light = gMegaBufferPunctuals[punctualLightIdx];
+        DBG_ASSERT_EXPR(FEATURE_ENABLED(Punctuals), DISABLED_LIGHT_INDEX);
+
+        uint punctualIdx = lightIdx - gSettings.LsdBasePunctuals;
+        PunctualLight light = gMegaBufferPunctuals[punctualIdx];
 
         lightSample = EvaluatePunctualLight(light, hitInfo.HitPos);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
 
-        lightSample.PDF = pdf_lsd;
-
+        lightSample.PDF = 1.0f;
         lightSample.IsDelta = true;
+    }
+    else
+    {
+        DBG_ASSERT_EXPR(FEATURE_ENABLED(Emission), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
+        DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
+
+        uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
+
+        lightSample = EvaluateEmissive(emissiveIdx, hitInfo, wi);
+        DBG_SCALE_INTENSITY_EMISSION(lightSample.Radiance);
+
+        lightSample.IsDelta = false;
     }
 
     lightSample.Index = lightIdx;
+    lightSample.PDF *= pdf_lsd;
 
     return lightSample;
 }

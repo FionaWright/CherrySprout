@@ -29,7 +29,7 @@ void Hit(inout PathState pathState,
     float3 L_emission = hitInfo.Emission;
     if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
     {
-        float pdf_emissive = EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ns_ff, wo, hitInfo.RayT);
+        float pdf_emissive = EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
         float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
         L_emission *= m;
     }

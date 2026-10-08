@@ -25,8 +25,11 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         initializeResources(d3d, envMap);
     }
 
-    if (!m_sceneDataLoaded)
+    const size_t lsdStride = config.UseAliasTables ? sizeof(AliasEntry) : sizeof(ProbabilityDistributionSample);
+    if (!m_sceneDataLoaded || lsdStride != m_lsdStride)
     {
+        m_lsdStride = lsdStride;
+
         loadSceneData(d3d, heap, scene, envMap, config.UseAliasTables);
     }
 
@@ -59,12 +62,11 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
             cbv.EmissiveTotalLuminance = m_emissiveWeight;
             m_setLSD.UpdateCBV(0, &cbv);
 
-            const size_t lsdStride = config.UseAliasTables ? sizeof(AliasEntry) : sizeof(ProbabilityDistributionSample);
             const Pipeline& pipeline = config.UseAliasTables ? m_pipelineLsdAlias : m_pipelineLsdCdf;
 
             m_setLSD.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPdfRW, m_maxPunctuals, sizeof(float));
             m_setLSD.SetUAV_Buffer(d3d->GetDevice(), 1, &m_emissivePdfRW, m_maxEmissives, sizeof(float));
-            m_setLSD.SetUAV_Buffer(d3d->GetDevice(), 2, &m_lsdRW, m_maxLsdCount, lsdStride);
+            m_setLSD.SetUAV_Buffer(d3d->GetDevice(), 2, &m_lsdRW, m_maxLsdCount, m_lsdStride);
 
             m_punctualPdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             m_lsdRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -178,17 +180,6 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
 {
     const size_t emissiveMapBytes = m_maxEmissives * sizeof(uint32_t);
     const size_t emissivePdfBytes = m_maxEmissives * sizeof(float);
-
-    if (!m_emissiveInstanceMap.IsInitialized() || emissiveMapBytes != m_emissiveInstanceMap.GetDesc().Width)
-    {
-        m_emissiveInstanceMap.Reset();
-        m_emissivePdfRW.Reset();
-        m_emissivePdfReadback.Reset();
-
-        m_emissiveInstanceMap.Init_Buffer("Emissive Instance Map", d3d->GetDevice(), emissiveMapBytes);
-        m_emissivePdfRW.Init_Buffer("Emissive PDF (RW)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_emissivePdfReadback.Init_Buffer("Emissive PDF (Readback)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_NONE, true);
-    }
 
     std::vector<uint32_t> emissiveInstanceMap;
 
@@ -423,14 +414,22 @@ void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D
 
     CherryAssert(m_maxLsdCount < ALIAS_TABLE_BUILD_MAX_STACK_SIZE);
 
-    const size_t lsdStride = aliasTablesEnabled ? sizeof(AliasEntry) : sizeof(ProbabilityDistributionSample);
-    m_lsdBufferSize = m_maxLsdCount * lsdStride;
+    m_lsdBufferSize = m_maxLsdCount * m_lsdStride;
+
+    const size_t emissiveMapBytes = m_maxEmissives * sizeof(uint32_t);
+    const size_t emissivePdfBytes = m_maxEmissives * sizeof(float);
 
     m_punctualPdfRW.Release();
     m_punctualPdfReadback.Release();
     m_lsdRW.Release();
     m_lsdReadback.Release();
+    m_emissiveInstanceMap.Release();
+    m_emissivePdfRW.Release();
+    m_emissivePdfReadback.Release();
 
+    m_emissiveInstanceMap.    Init_Buffer("Emissive Instance Map", d3d->GetDevice(), emissiveMapBytes);
+    m_emissivePdfRW.          Init_Buffer("Emissive PDF (RW)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_emissivePdfReadback.    Init_Buffer("Emissive PDF (Readback)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_NONE, true);
     m_punctualPdfRW.          Init_Buffer("Punctual Light PDF (RW)", d3d->GetDevice(), m_punctualLightsPdfBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_punctualPdfReadback.    Init_Buffer("Punctual Light PDF (Readback)", d3d->GetDevice(), m_punctualLightsPdfBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
     m_lsdRW.                  Init_Buffer("LSD (RW)", d3d->GetDevice(), m_lsdBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

@@ -43,6 +43,8 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
             Li += gSettings.DirLightColor * gSettings.DirLightIntensity / (1 - gSettings.DirLightCosAngularRadius);
     }
 
+    DBG_SCALE_INTENSITY_INDIRECT(Li);
+
     return Li;
 }
 

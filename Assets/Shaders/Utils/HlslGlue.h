@@ -119,9 +119,9 @@ constexpr auto abs(T x)
     return std::abs(std::forward<T>(x));
 }
 
-constexpr auto abs(XMFLOAT3 x)
+constexpr auto abs(DirectX::XMFLOAT3 x)
 {
-    return XMFLOAT3(
+    return DirectX::XMFLOAT3(
         std::abs(std::forward<float>(x.x)),
         std::abs(std::forward<float>(x.y)),
         std::abs(std::forward<float>(x.z)));

@@ -3,6 +3,9 @@
 
 float GenPowerHeuristic(float pdf1, float pdf2, uint N1, uint N2, float P)
 {
+    if (DEBUG_ENABLED(FixedMisHalf))
+        return 0.5f;
+
     float pdf1_P = pow(pdf1, P) * N1;
     float pdf2_P = pow(pdf2, P) * N2;
     return pdf1_P / (pdf1_P + pdf2_P);
@@ -28,7 +31,7 @@ float BalanceHeuristicRatio(float pdfRatio2_1, uint N1, uint N2)
 // Directions relative to area that PDF belongs to
 float PdfAreaToSolidAngle(float pdfArea, float NdL, float distance)
 {
-    return pdfArea * distance * distance / max(EPSILON, abs(NdL));
+    return pdfArea * distance * distance / max(EPSILON, NdL);
 }
 
 #endif

@@ -44,6 +44,7 @@ public:
     [[nodiscard]] uint32_t GetLsdBasePunctuals() const;
     [[nodiscard]] uint32_t GetLsdBaseEmissives() const;
     [[nodiscard]] uint32_t GetLsdCount() const;
+    [[nodiscard]] uint32_t GetMaxLsdCount() const { return m_maxLsdCount; }
 
     [[nodiscard]] bool IsLsdAliasTable() const { return m_lsdIsAliasTable; }
     [[nodiscard]] uint32_t GetEmissiveInstanceCount() const { return m_numEmissiveInstances; }
@@ -69,6 +70,7 @@ private:
     uint32_t m_maxPunctuals = 0;
     uint32_t m_maxEmissives = 0;
     uint32_t m_maxLsdCount = 0;
+    size_t m_lsdStride = 0;
 
     bool m_isInitialized = false;
     bool m_sceneDataLoaded = false;

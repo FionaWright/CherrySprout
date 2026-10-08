@@ -1,10 +1,11 @@
 #ifndef H_PATH_DUMP_H
 #define H_PATH_DUMP_H
 
+#include "PathTracing/Debug/PathDumpOutputColor.hlsli"
+
 #if DEBUG_ENABLED_PP(PathDumper)
 
 #include "PathTracing/Debug/Globals.hlsli"
-#include "PathTracing/Debug/PathDumpOutputColor.hlsli"
 #include "PathTracing/Debug/Internal/OutputColor.h"
 
 void ClearBuffer()

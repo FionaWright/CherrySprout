@@ -57,11 +57,16 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 
 #elif DEBUG_ENABLED_PP(PathDumper)
 
-#    define DBG_OUTPUT3(value, label) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label)
-#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value, 0), label)
-#    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
+#include "PathTracing/Debug/Internal/OutputColor.h"
+#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/Debug/Globals.hlsli"
+#include "PathTracing/Debug/PathDumper.hlsli"
 
+#    define DBG_OUTPUT3(value, label) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label)
+#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
+#    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 #    define DBG_FORCE_OUTPUT3(value)
+
 #    define DBG_OUTPUT_SET_IF_FOUND(output)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()
@@ -72,6 +77,7 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT2(value, label)
 #    define DBG_OUTPUT1(value, label)
 #    define DBG_FORCE_OUTPUT3(value)
+
 #    define DBG_OUTPUT_SET_IF_FOUND(output)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()

@@ -5,6 +5,9 @@
 
 uint BinarySearch(Texture1D<float> cdf, uint size, float u)
 {
+    if (size == 0)
+        return 0;
+
     uint left = 0;
     uint right = size - 1;
 
@@ -27,6 +30,9 @@ uint BinarySearch(Texture1D<float> cdf, uint size, float u)
 
 uint BinarySearch(StructuredBuffer<ProbabilityDistributionSample> cdf, uint size, float u)
 {
+    if (size == 0)
+        return 0;
+
     uint left = 0;
     uint right = size - 1;
 

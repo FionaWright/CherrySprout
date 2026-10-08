@@ -438,10 +438,7 @@ void Greenhouse::renderGuiCore()
                                 ImGui::TextUnformatted("Unknown");
                         }
                         else
-                        {
-                            CherryAssert(i < m_lightImportanceSampler.GetLsdCount());
                             ImGui::TextUnformatted("Emissive");
-                        }
 
                         if (aliasTablesEnabled)
                         {

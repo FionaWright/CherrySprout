@@ -39,10 +39,8 @@
 
 namespace SceneLoaderUSD
 {
-    inline PunctualLight ExtractLight(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const pxr::GfMatrix4d& globalXForm)
+    inline bool TryExtractLight(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache, const pxr::GfMatrix4d& globalXForm, PunctualLight& light)
     {
-        PunctualLight light{};
-
         // World-space transform
         const pxr::GfMatrix4d world = xformCache.GetLocalToWorldTransform(prim) * globalXForm;
         pxr::GfVec3d translation = world.ExtractTranslation();
@@ -66,8 +64,6 @@ namespace SceneLoaderUSD
         light.SpotInnerAngle = 0.0f;
         light.SpotOuterAngle = 0.0f;
 
-        // TODO: Disk, Cylinder, Dome
-
         // Determine light type
         if (prim.IsA<pxr::UsdLuxSphereLight>())
         {
@@ -86,10 +82,7 @@ namespace SceneLoaderUSD
             light.Type = PunctualLightType::eDistant;
         }
         else
-        {
-            // Fallback
-            light.Type = PunctualLightType::ePoint;
-        }
+            return false;
 
         const pxr::UsdLuxShapingAPI shapingAPI(prim);
         const bool isSpot = shapingAPI && !prim.IsA<pxr::UsdLuxDistantLight>() && !prim.IsA<pxr::UsdLuxDomeLight>();
@@ -116,7 +109,7 @@ namespace SceneLoaderUSD
             }
         }
 
-        return light;
+        return true;
     }
 }
 

@@ -20,7 +20,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
     for (uint i = 0; i < gSettings.MaxShadowRayDepth; i++)
     {
         float3 toLight = lightPos - ray.Origin;
-        ray.TMax = length(toLight) - 5 * EPSILON;
+        ray.TMax = length(toLight); // TODO: Don't like this, messing up env map NEE in cornell
 
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
         q.Proceed();
@@ -44,7 +44,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
             return;
 
         float rayT = q.CommittedRayT();
-        ray.Origin += ray.Direction * (rayT + EPSILON);
+        ray.Origin += ray.Direction * (rayT);
 
         float remainingDistance = dot(toLight, ray.Direction);
         if (remainingDistance <= 0.0f)

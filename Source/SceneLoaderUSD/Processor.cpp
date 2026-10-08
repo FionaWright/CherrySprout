@@ -72,6 +72,7 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
         scene->MegaBufferPunctualLightsCount = 1;
         scene->MegaBufferPunctualLights = new PunctualLight[1];
         scene->MegaBufferPunctualLights[0] = PunctualLight();
+        scene->MegaBufferPunctualLights[0].Intensity = 0.0f;
         std::cout << "No punctual lights in scene, added dummy" << std::endl;
     }
     else

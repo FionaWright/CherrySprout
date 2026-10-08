@@ -8,7 +8,7 @@
 
 void sampleLSD(float xi, out uint lightIdx, out float pdf)
 {
-    xi *= gSettings.LsdCount;
+    xi *= (float)gSettings.LsdCount;
     uint xiIdx = floor(xi);
     float xi01 = frac(xi);
 
@@ -40,7 +40,7 @@ void EvaluateLSD(uint lightIdx, out float pdf)
 
 void SampleLSD(inout RngInfo rngInfo, out uint lightIdx, out float pdf)
 {
-    if (DEBUG_ENABLED(ForceLightIndex) && gDebugSettings.ForcedLightIndex != -1)
+    if (DEBUG_ENABLED(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
     {
         lightIdx = gDebugSettings.ForcedLightIndex;
         pdf = 1.0f;
