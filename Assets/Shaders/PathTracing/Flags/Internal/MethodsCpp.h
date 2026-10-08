@@ -15,7 +15,7 @@ static constexpr auto s_defaultFeatureFlags = static_cast<PathTracerFeatureFlags
         eFeature_AlphaTesting |
         //eFeature_Transmission |
         eFeature_NEE |
-        eFeature_FireflyThreshold |
+        //eFeature_FireflyThreshold |
         eFeature_Emission |
         //eFeature_GradientDomain |
         //eFeature_ScreenSpaceGradients |
