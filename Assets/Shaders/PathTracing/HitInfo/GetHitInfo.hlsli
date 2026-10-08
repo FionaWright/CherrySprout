@@ -37,17 +37,24 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     float3 Ng, Ns;
     float2 uv;
-    ExtractInterpolatedAttributes(q, instance, Ns, Ng, uv);
+    float triangleArea = NAN;
+    ExtractInterpolatedAttributes(q, instance, Ns, Ng, uv, triangleArea);
 
     hitInfo.UV = uv;
 
-    ApplyNormalMap(hitInfo, Ns);
+    ApplyNormalMap(hitInfo.UV, hitInfo.Mat.TexIdxNormal, Ns);
 
     hitInfo.Ng_ff = hitInfo.IsEntering ? Ng : -Ng;
     hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
     ApplyMaterialTextures(hitInfo);
+
+    if (FEATURE_ENABLED(NEE))
+    {
+        hitInfo.PrimitiveCount = instance.MegaBufferCountIndex / 3;
+        hitInfo.TriangleArea = triangleArea;
+    }
 
     // Debug
     {

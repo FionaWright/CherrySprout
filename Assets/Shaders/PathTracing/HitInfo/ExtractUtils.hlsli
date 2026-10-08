@@ -35,7 +35,24 @@ float2 ExtractUV(RayQuery<RAY_FLAGS> q, InstanceData instance)
     return uv;
 }
 
-void ExtractInterpolatedAttributes(RayQuery<RAY_FLAGS> q, InstanceData instance, out float3 Ns, out float3 Ng, out float2 uv)
+float GetTriangleArea(float3 p0, float3 p1, float3 p2)
+{
+    float3 e1 = p1 - p0;
+    float3 e2 = p2 - p0;
+
+    return 0.5f * length(cross(e1, e2));
+}
+
+float GetTriangleArea(InstanceData instance, Vertex v0, Vertex v1, Vertex v2)
+{
+    float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
+    float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
+    float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
+
+    return GetTriangleArea(p0, p1, p2);
+}
+
+void ExtractInterpolatedAttributes(RayQuery<RAY_FLAGS> q, InstanceData instance, out float3 Ns, out float3 Ng, out float2 uv, out float triangleArea)
 {
     Vertex v0, v1, v2;
     ExtractVertices(q, instance, v0, v1, v2);
@@ -52,23 +69,11 @@ void ExtractInterpolatedAttributes(RayQuery<RAY_FLAGS> q, InstanceData instance,
 
     uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
-}
 
-float GetTriangleArea(float3 p0, float3 p1, float3 p2)
-{
-    float3 e1 = p1 - p0;
-    float3 e2 = p2 - p0;
-
-    return 0.5f * length(cross(e1, e2));
-}
-
-float GetTriangleArea(InstanceData instance, Vertex v0, Vertex v1, Vertex v2)
-{
-    float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
-    float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
-    float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
-
-    return GetTriangleArea(p0, p1, p2);
+    if (FEATURE_ENABLED(NEE))
+        triangleArea = GetTriangleArea(p0, p1, p2);
+    else
+        triangleArea = 0.0f;
 }
 
 #endif

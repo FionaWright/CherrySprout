@@ -1,28 +1,47 @@
 #ifndef H_EVALUATE_EMISSIVE_H
 #define H_EVALUATE_EMISSIVE_H
 
+#if FEATURE_ENABLED_PP(NEE)
+
 #include "PathTracing/HitInfo/ExtractUtils.hlsli"
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
 
-uint SampleEmissivePrimitive(inout RngInfo rngInfo, InstanceData instance) // TODO: PDF?
+// TODO: Build PDF over emissive triangles instead of emissive instances
+
+float3 SampleEmissiveBary(inout RngInfo rngInfo)
 {
-    uint primitiveCount = instance.MegaBufferCountIndex / 3;
-    return RandRangeUInt(rngInfo, 0, primitiveCount-1);
+    float u = Rand01(rngInfo);
+    float v = Rand01(rngInfo);
+
+    if (u + v > 1.0)
+    {
+        u = 1.0 - u;
+        v = 1.0 - v;
+    }
+
+    return float3(1.0 - u - v, u, v);
 }
 
-float3 SampleEmissiveBary(inout RngInfo rngInfo) // TODO: PDF?
+float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, float3 wo, float distance)
 {
-    float baryX = Rand01(rngInfo);
-    float baryY = Rand01(rngInfo);
-    return float3(1 - baryX - baryY, baryX, baryY);
+    float pdf_prim = 1.0f / (float)primitiveCount;
+
+    float pdf_bary = 1.0f / triangleArea;
+
+    float pdf_area = pdf_prim * pdf_bary;
+
+    float NdL = dot(Ns, wo);
+    return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
 
-LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 sourcePos)
+LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo)
 {
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveIdx];
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
+    Material material = gMegaBufferMaterials[instance.MaterialIndex];
 
-    uint primitiveIdx = SampleEmissivePrimitive(rngInfo, instance);
+    uint primitiveCount = instance.MegaBufferCountIndex / 3;
+    uint primitiveIdx = RandRangeUInt(rngInfo, 0, primitiveCount-1);
     float3 bary = SampleEmissiveBary(rngInfo);
 
     uint primitiveOffset = instance.MegaBufferOffsetIndex / 3;
@@ -39,22 +58,37 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 sourc
     float2 uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
 
+    float3 Ns = v0.Normal * bary.x + v1.Normal * bary.y + v2.Normal * bary.z;
+    Ns = normalize(mul((float3x3)instance.MTI, Ns));
+    ApplyNormalMap(uv, material.TexIdxNormal, Ns);
+
     float3 destPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
 
-    //float triangleArea = GetTriangleArea(instance, v0, v1, v2);
-
-    Material material = gMegaBufferMaterials[instance.MaterialIndex];
-
-    float3 emissionMat = material.EmissiveColor * material.EmissiveStrength; // TODO: Assert emissionMat > 0
+    float3 emissionMat = material.EmissiveColor * material.EmissiveStrength;
     float3 emissionSample = SampleSceneTexture3(uv, material.TexIdxEmissive, 1);
     float3 emission = SRGB_to_LRGB(emissionSample) * emissionMat;
 
+    float3 wi = normalize(destPos - hitInfo.HitPos);
+    float dist = length(destPos - hitInfo.HitPos);
+
+    float triangleArea = GetTriangleArea(p0, p1, p2);
+
+    float pdf_angle = EvaluateEmissivePdf(primitiveCount, triangleArea, Ns, -wi, dist);
+
     LightSample lightSample;
-    lightSample.Direction = normalize(destPos - sourcePos);
-    lightSample.Distance = length(destPos - sourcePos);
+    lightSample.Direction = wi;
+    lightSample.Distance = dist;
     lightSample.Radiance = emission; // TODO: Units conversion?
-    lightSample.PDF = 1.0f;
+    lightSample.PDF = pdf_angle;
     return lightSample;
 }
+
+#else
+
+float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, float3 wo, float distance) { return NAN; }
+
+LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo) { return (LightSample)0; }
+
+#endif
 
 #endif

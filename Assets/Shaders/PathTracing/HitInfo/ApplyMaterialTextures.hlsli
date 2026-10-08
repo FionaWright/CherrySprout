@@ -53,15 +53,15 @@ void ApplyMaterialTextures(inout HitInfo hitInfo)
         hitInfo.Emission = 0.0f;
 }
 
-void ApplyNormalMap(inout HitInfo hitInfo, inout float3 Ns)
+void ApplyNormalMap(float2 uv, uint texIdxNormal, inout float3 Ns)
 {
     if (!FEATURE_ENABLED(NormalMaps))
         return;
 
-    if (hitInfo.Mat.TexIdxNormal == NO_TEXTURE)
+    if (texIdxNormal == NO_TEXTURE)
         return;
 
-    float3 bumpSample = gSceneTextures[hitInfo.Mat.TexIdxNormal].Sample(gSamplerLinearWrap, hitInfo.UV).rgb;
+    float3 bumpSample = gSceneTextures[texIdxNormal].Sample(gSamplerLinearWrap, uv).rgb;
     bumpSample = RemapUtoS(bumpSample);
     bumpSample.y = -bumpSample.y; // DX-convention
 

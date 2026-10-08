@@ -25,6 +25,10 @@ struct HitInfo
     float RayT;
 
     hlsl::float3 HitPos;
+    hlsl::uint PrimitiveCount;
+
+    float TriangleArea;
+    hlsl::float3 p;
 };
 
 #ifdef __cplusplus

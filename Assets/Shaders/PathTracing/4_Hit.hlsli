@@ -11,6 +11,8 @@
 
 #include "PathTracing/5_SampleDirect.hlsli"
 #include "PathTracing/5_SampleIndirect.hlsli"
+#include "PathTracing/NEE/SampleEmissive.hlsli"
+#include "PathTracing/MIS.hlsli"
 
 void Hit(inout PathState pathState,
         inout RngInfo rngInfo,
@@ -22,10 +24,16 @@ void Hit(inout PathState pathState,
         inout PathVertexInfo currentVertexInfo)
 {
     float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
-
-    L_sample = pathState.Beta * hitInfo.Emission;
-
     float3 wo = -pathState.Desc.Direction;
+
+    float3 L_emission = hitInfo.Emission;
+    if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
+    {
+        float pdf_emissive = EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ns_ff, wo, hitInfo.RayT);
+        float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
+        L_emission *= m;
+    }
+    L_sample = pathState.Beta * L_emission;
 
     BxDF bxdf;
 

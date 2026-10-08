@@ -73,7 +73,7 @@ LightSample SampleLight(
 
         uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
 
-        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitInfo.HitPos);
+        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitInfo);
         DBG_SCALE_INTENSITY_EMISSION(lightSample.Radiance);
 
         lightSample.IsDelta = false;
@@ -115,7 +115,7 @@ LightSample EvaluateLight(
         lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearWrap, uv_env).rgb;
         DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
 
-        float pdf_env = GetEnvMapPdf(uv_env);
+        float pdf_env = EvaluateEnvMapPdf(uv_env);
         lightSample.PDF = pdf_env * pdf_lsd;
 
         lightSample.Direction = wi;

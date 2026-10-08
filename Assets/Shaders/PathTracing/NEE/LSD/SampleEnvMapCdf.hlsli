@@ -26,7 +26,7 @@ void SampleEnvMapCdf(float xi1, float xi2, out float2 uv, out float3 wi, out flo
     pdf = gEnvMapPmfConditional[uint2(x,y)] / pixelArea;
 }
 
-float GetEnvMapPdf(float2 uv)
+float EvaluateEnvMapPdf(float2 uv)
 {
     uint2 dim;
     gTexEnvMap.GetDimensions(dim.x, dim.y);
@@ -47,7 +47,7 @@ void SampleEnvMapCdf(float xi1, float xi2, out float2 uv, out float3 wi, out flo
     pdf = NAN;
 }
 
-float GetEnvMapPdf(float2 uv) { return NAN; }
+float EvaluateEnvMapPdf(float2 uv) { return NAN; }
 
 #endif
 

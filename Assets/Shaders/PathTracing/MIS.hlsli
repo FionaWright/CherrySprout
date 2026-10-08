@@ -24,4 +24,11 @@ float BalanceHeuristicRatio(float pdfRatio2_1, uint N1, uint N2)
     return 1.0f / (1.0f + pdfRatio2_1 * NRatio);
 }
 
+// https://computergraphics.stackexchange.com/questions/13320/confusion-about-pdf-defined-in-solid-angle-area-measure
+// Directions relative to area that PDF belongs to
+float PdfAreaToSolidAngle(float pdfArea, float NdL, float distance)
+{
+    return pdfArea * distance * distance / max(EPSILON, abs(NdL));
+}
+
 #endif
