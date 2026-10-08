@@ -40,6 +40,11 @@ struct CbvPathTracingSettings
     hlsl::uint RestirConfidenceCap;
     hlsl::uint RestirNumCandidates;
     hlsl::uint Seed;
+
+    hlsl::uint LsdBasePunctuals;
+    hlsl::uint LsdBaseEmissives;
+    hlsl::uint LsdCount;
+    float p;
 };
 
 struct CbvPanoToEA
@@ -118,6 +123,7 @@ struct CbvTotalLuminances
 {
     float EnvMapTotalLuminance;
     float PunctualTotalLuminance;
+    float EmissiveTotalLuminance;
 };
 
 struct CbvPathTracingDebugSettings

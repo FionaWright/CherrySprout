@@ -160,13 +160,41 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
         m_lightImportanceSampler.MarkSceneDataDirty();
         m_lsdDirty = true;
+        m_gbufferDirty = true;
+    }
+
+    if (m_gbufferDirty && GBufferRequired())
+    {
+        m_gbufferPrePass.LoadSceneData(d3d, &m_sceneManager.GetScene());
+        m_gbufferDirty = false;
     }
 
     if (!m_lightImportanceSampler.IsInitialized() || (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE) && m_lsdDirty))
     {
         const bool envMapEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
-        const bool aliasEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
-        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), envMapEnabled, aliasEnabled);
+        const bool emissionEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_Emission);
+        const bool punctualsEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_Punctuals);
+
+        float envMapScale = 1.0f;
+        float emissionScale = 1.0f;
+        float punctualsScale = 1.0f;
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        envMapScale = m_config.PathTracerConfig.DebugInfo.ScaleIntensityEnvMap;
+        emissionScale = m_config.PathTracerConfig.DebugInfo.ScaleIntensityEmission;
+        punctualsScale = m_config.PathTracerConfig.DebugInfo.ScaleIntensityEnvMap;
+#endif
+
+        LsdConfig lsdConfig;
+        lsdConfig.UseAliasTables = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
+        lsdConfig.EnvMapScale = envMapEnabled ? envMapScale : 0.0f;
+        lsdConfig.EmissiveScale = emissionEnabled ? emissionScale : 0.0f;
+        lsdConfig.PunctualScale = punctualsEnabled ? punctualsScale : 0.0f;
+        m_lightImportanceSampler.Build(d3d, &m_heap, m_envMap.GetEA(), &m_sceneManager.GetScene(), lsdConfig);
+
+        m_renderInfo.LsdBasePunctuals = m_lightImportanceSampler.GetLsdBasePunctuals();
+        m_renderInfo.LsdBaseEmissives = m_lightImportanceSampler.GetLsdBaseEmissives();
+        m_renderInfo.LsdCount = m_lightImportanceSampler.GetLsdCount();
+
         m_renderBackendSceneDataDirty = true;
         m_lsdDirty = false;
     }
@@ -231,7 +259,6 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     {
         if (GBufferRequired())
         {
-            m_gbufferPrePass.LoadSceneData(d3d, &m_sceneManager.GetScene());
             m_gbufferPrePass.Render(d3d, cmdList, &m_sceneManager.GetScene(), &m_heap, m_renderInfo.V, m_renderInfo.P);
         }
 

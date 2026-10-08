@@ -68,6 +68,4 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     float pdf = GetTotalAreaLuminance(instance);
 
     gPDF[emissiveInstanceIdx] = pdf;
-
-    // Normalize the PDFs after (Done in LSD only?)
 }

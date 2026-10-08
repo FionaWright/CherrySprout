@@ -253,6 +253,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RestirConfidenceCap = renderInfo.PathTracerConfig->RestirConfidenceCap;
         settings.RestirNumCandidates = renderInfo.PathTracerConfig->RestirNumCandidates;
 
+        settings.LsdBasePunctuals = renderInfo.LsdBasePunctuals;
+        settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;
+        settings.LsdCount = renderInfo.LsdCount;
+
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
         m_descriptorSet.UpdateCBV(0, &settings);

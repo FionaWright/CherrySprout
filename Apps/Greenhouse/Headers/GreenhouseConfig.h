@@ -23,15 +23,20 @@ struct PathTracingDebugInfo
     int ForcedLightIndex = -1;
 
     float ScaleIntensityGlobal = 1.0f;
+
     float ScaleIntensityPunctual = 0.01f;
+    float ScaleIntensityEnvMap = 1.0f;
+    float ScaleIntensityEmission = 1.0f;
+
     float ScaleIntensityPoint = 0.1f;
     float ScaleIntensityDistant = 1.0f;
     float ScaleIntensitySpot = 1.0f;
-    float ScaleIntensityEnvMap = 1.0f;
     float ScalePointLightRadius = 0.0f;
+
     float ScaleF = 1.0f;
     float ScaleD = 1.0f;
     float ScaleG = 1.0f;
+
     float ScaleDiffuse = 1.0f;
     float ScaleSpecular = 1.0f;
     float ScaleReflect = 1.0f;

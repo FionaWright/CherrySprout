@@ -17,13 +17,22 @@ LightSample SampleLight(
 
     float3 wo)
 {
+    LightSample lightSample;
+
+    if (gSettings.LsdCount == 0)
+    {
+        lightSample.Index = 0;
+        lightSample.Radiance = 0;
+        lightSample.Distance = INF;
+        lightSample.PDF = 1.0f;
+        return lightSample;
+    }
+
     uint lightIdx;
     float pdf_lsd;
     SampleLSD(rngInfo, lightIdx, pdf_lsd);
 
-    LightSample lightSample;
-
-    if (lightIdx == 0)
+    if (lightIdx < gSettings.LsdBasePunctuals)
     {
         DBG_ASSERT_EXPR(FEATURE_ENABLED(EnvironmentMap), DISABLED_LIGHT_INDEX);
 
@@ -41,8 +50,10 @@ LightSample SampleLight(
         lightSample.PDF = pdf_env * pdf_lsd;
         lightSample.IsDelta = false;
     }
-    else
+    else if (lightIdx < gSettings.LsdBaseEmissives)
     {
+        DBG_ASSERT_EXPR(FEATURE_ENABLED(Punctuals), DISABLED_LIGHT_INDEX);
+
         if (DEBUG_ENABLED(Asserts))
         {
             uint puncLightCount, _;
@@ -58,6 +69,15 @@ LightSample SampleLight(
 
         lightSample.PDF = pdf_lsd;
         lightSample.IsDelta = true;
+    }
+    else
+    {
+        DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
+        // TODO: Sample Emissives
+        lightSample.Index = 0;
+        lightSample.Radiance = 0;
+        lightSample.Distance = INF;
+        lightSample.PDF = 1.0f;
     }
 
     lightSample.Index = lightIdx;

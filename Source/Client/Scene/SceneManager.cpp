@@ -8,6 +8,7 @@
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
+#include "Scene/InstanceData.h"
 #include "System/FileHelper.h"
 #include "System/TextureLoader.h"
 #include "Utils/D3DUtils.h"
@@ -29,6 +30,7 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
         m_scene.GPU.MegaBufferIndex.Reset();
         m_scene.GPU.MegaBufferMaterials.Reset();
         m_scene.GPU.MegaBufferPunctualLights.Reset();
+        m_scene.GPU.MegaBufferInstanceData.Reset();
     }
 
     m_scene = {};
@@ -93,11 +95,13 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
     const size_t megaBufferIndexBytes = m_scene.CPU.MegaBufferIndexCount * sizeof(uint32_t);
     const size_t megaBufferMaterialsBytes = m_scene.CPU.MegaBufferMaterialsCount * sizeof(Material);
     const size_t megaBufferPunctualBytes = m_scene.CPU.MegaBufferPunctualLightsCount * sizeof(PunctualLight);
+    const size_t megaBufferInstanceDataBytes = m_scene.CPU.ObjectCount * sizeof(InstanceData);
 
     m_scene.GPU.MegaBufferVertex.Init_Buffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
     m_scene.GPU.MegaBufferIndex.Init_Buffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
     m_scene.GPU.MegaBufferMaterials.Init_Buffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
     m_scene.GPU.MegaBufferPunctualLights.Init_Buffer("Mega Buffer Punctual Lights", d3d->GetDevice(), megaBufferPunctualBytes);
+    m_scene.GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", d3d->GetDevice(), megaBufferInstanceDataBytes);
 
     size_t uploadHeapRequiredSize = 0;
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferVertex.GetIntermediateSize(), 512);

@@ -6,9 +6,12 @@
 #include "Utils/Constants.h"
 
 RWStructuredBuffer<float> gPunctualPDF : register(u0);
-RWStructuredBuffer<AliasEntry> gAliasTable  : register(u1);
+RWStructuredBuffer<float> gEmissivePDF  : register(u1);
+RWStructuredBuffer<AliasEntry> gAliasTable  : register(u2);
 
 ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
+
+#include "Compute/NEE/Utils.hlsli"
 
 #ifndef MAX_STACK_SIZE
 #error Maximum stack size must be passed in through define
@@ -21,39 +24,50 @@ ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
 [numthreads(1,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    uint punctualLightCount;
-    uint punctualLightStride;
-    gPunctualPDF.GetDimensions(punctualLightCount, punctualLightStride);
+    float punctualWeight = gTotalLums.PunctualTotalLuminance;
+    float emissiveWeight = gTotalLums.EmissiveTotalLuminance;
+    float envMapWeight = GetEnvMapWeight(punctualWeight, emissiveWeight);
+    float totalWeight = punctualWeight + emissiveWeight + envMapWeight;
+
+    uint envMapCount = GetEnvMapCount();
+    uint punctualsCount = GetPunctualsCount();
+    uint emissivesCount = GetEmissivesCount();
+    uint lsdCount = envMapCount + punctualsCount + emissivesCount;
+
+    if (lsdCount == 0 || totalWeight <= 0.0f)
+        return;
 
     float rollingSum = 0.0f;
     uint idx = 0;
 
-    if (gTotalLums.PunctualTotalLuminance == 0.0f)
-        punctualLightCount = 0;
-
-    float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000;
-    float maxEnvMapLuminance = 0.5f * (gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance);
-    float envMapWeight = max(maxEnvMapLuminance, averageEnvMapLuminance);
-    float totalLuminance = gTotalLums.PunctualTotalLuminance + envMapWeight;
-
-    // Env Map assigned to Idx 0
-    float envMapPDF = envMapWeight / totalLuminance;
-    gAliasTable[idx].PDF = envMapPDF;
-    gAliasTable[idx].Alias = -1;
-    rollingSum += envMapPDF;
-    idx++;
-
-    // Punctual Lights
-    for (int x = 0; x < punctualLightCount; x++)
+    // Env Map
+    if (envMapCount > 0)
     {
-        float pdf = gPunctualPDF[x] / totalLuminance;
+        float pdf = envMapWeight / totalWeight;
         gAliasTable[idx].PDF = pdf;
         gAliasTable[idx].Alias = -1;
         rollingSum += pdf;
         idx++;
     }
 
-    uint lightCount = punctualLightCount + 1;
+    // Punctual Lights
+    for (int i = 0; i < punctualsCount; i++)
+    {
+        float pdf = gPunctualPDF[i] / totalWeight;
+        gAliasTable[idx].PDF = pdf;
+        gAliasTable[idx].Alias = -1;
+        rollingSum += pdf;
+        idx++;
+    }
+
+    for (int i = 0; i < emissivesCount; i++)
+    {
+        float pdf = gEmissivePDF[i] / totalWeight;
+        gAliasTable[idx].PDF = pdf;
+        gAliasTable[idx].Alias = -1;
+        rollingSum += pdf;
+        idx++;
+    }
 
     uint stackSmall[MAX_STACK_SIZE];
     uint stackSmallPtr = 0;
@@ -62,19 +76,19 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint stackLargePtr = 0;
 
     // Normalize, multiply by N and fill stacks
-    for (int x = 0; x < lightCount; x++)
+    for (int i = 0; i < lsdCount; i++)
     {
-        gAliasTable[x].PDF /= rollingSum;
-        gAliasTable[x].Threshold = gAliasTable[x].PDF * lightCount;
+        gAliasTable[i].PDF /= rollingSum;
+        gAliasTable[i].Threshold = gAliasTable[i].PDF * lsdCount;
 
-        if (gAliasTable[x].Threshold < 1.0f)
+        if (gAliasTable[i].Threshold < 1.0f)
         {
-            stackSmall[stackSmallPtr] = x;
+            stackSmall[stackSmallPtr] = i;
             stackSmallPtr++;
         }
         else
         {
-            stackLarge[stackLargePtr] = x;
+            stackLarge[stackLargePtr] = i;
             stackLargePtr++;
         }
     }

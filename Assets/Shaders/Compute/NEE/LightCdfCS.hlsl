@@ -5,10 +5,12 @@
 #include "Utils/Constants.h"
 
 RWStructuredBuffer<float> gPunctualPDF : register(u0);
-RWStructuredBuffer<float> gEmmissivePDF  : register(u1);
+RWStructuredBuffer<float> gEmissivePDF  : register(u1);
 RWStructuredBuffer<ProbabilityDistributionSample> gCDF  : register(u2);
 
 ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
+
+#include "Compute/NEE/Utils.hlsli"
 
 void AddCdfPdf(float pdf, inout float rollingSum, inout uint idx)
 {
@@ -24,38 +26,46 @@ void AddCdfPdf(float pdf, inout float rollingSum, inout uint idx)
 [numthreads(1,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    uint punctualLightCount;
-    uint punctualLightStride;
-    gPunctualPDF.GetDimensions(punctualLightCount, punctualLightStride);
+    float punctualWeight = gTotalLums.PunctualTotalLuminance;
+    float emissiveWeight = gTotalLums.EmissiveTotalLuminance;
+    float envMapWeight = GetEnvMapWeight(punctualWeight, emissiveWeight);
+    float totalWeight = punctualWeight + emissiveWeight + envMapWeight;
+
+    uint envMapCount = GetEnvMapCount();
+    uint punctualsCount = GetPunctualsCount();
+    uint emissivesCount = GetEmissivesCount();
+    uint lsdCount = envMapCount + punctualsCount + emissivesCount;
+
+    if (lsdCount == 0 || totalWeight <= 0.0f)
+        return;
 
     float rollingSum = 0.0f;
     uint idx = 0;
 
-    if (gTotalLums.PunctualTotalLuminance == 0.0f)
-        punctualLightCount = 0;
-
-    float delta = 1.0f / (punctualLightCount + 1);
-
-    float averageEnvMapLuminance = gTotalLums.EnvMapTotalLuminance / 10000;
-    float maxEnvMapLuminance = 0.5f * (gTotalLums.PunctualTotalLuminance + averageEnvMapLuminance);
-    float envMapWeight = max(maxEnvMapLuminance, averageEnvMapLuminance);
-    float totalLuminance = gTotalLums.PunctualTotalLuminance + envMapWeight;
-
-    // Env Map assigned to Idx 0
-    float envMapPDF = averageEnvMapLuminance * delta / totalLuminance;
-    AddCdfPdf(envMapPDF, rollingSum, idx);
+    if (envMapCount > 0)
+    {
+        float envMapPDF = envMapWeight / totalWeight;
+        AddCdfPdf(envMapPDF, rollingSum, idx);
+    }
 
     // Punctual Lights
-    for (int x = 0; x < punctualLightCount; x++)
+    for (int i = 0; i < punctualsCount; i++)
     {
-        float pdf = gPunctualPDF[x] * delta / totalLuminance;
+        float pdf = gPunctualPDF[i] / totalWeight;
+        AddCdfPdf(pdf, rollingSum, idx);
+    }
+
+    // Emissive Lights
+    for (int i = 0; i < emissivesCount; i++)
+    {
+        float pdf = gEmissivePDF[i] / totalWeight;
         AddCdfPdf(pdf, rollingSum, idx);
     }
 
     // Normalize
-    for (int x = 0; x < punctualLightCount + 1; x++)
+    for (int i = 0; i < lsdCount; i++)
     {
-        gCDF[x].PDF /= rollingSum;
-        gCDF[x].CDF /= rollingSum;
+        gCDF[i].PDF /= rollingSum;
+        gCDF[i].CDF /= rollingSum;
     }
 }

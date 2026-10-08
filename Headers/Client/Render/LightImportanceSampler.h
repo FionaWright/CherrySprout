@@ -15,10 +15,18 @@ class D3D;
 #define ALIAS_TABLE_BUILD_MAX_STACK_SIZE 200
 #define ALIAS_TABLE_BUILD_MAX_STACK_SIZE_DEFINE (std::string("-DMAX_STACK_SIZE=") + std::to_string(ALIAS_TABLE_BUILD_MAX_STACK_SIZE))
 
+struct LsdConfig
+{
+    float EnvMapScale = 1.0f;
+    float EmissiveScale = 1.0f;
+    float PunctualScale = 1.0f;
+    bool UseAliasTables = false;
+};
+
 class LightImportanceSampler
 {
 public:
-    void Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, bool envMapEnabled, bool aliasTablesEnabled);
+    void Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, const LsdConfig& config);
     [[nodiscard]] bool IsInitialized() const { return m_isInitialized; }
 
     void MarkSceneDataDirty() { m_sceneDataLoaded = false;}
@@ -28,8 +36,12 @@ public:
     [[nodiscard]] D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
     [[nodiscard]] D12Resource* GetLightsCdf() { return &m_lsdRW; }
 
-    [[nodiscard]] float GetTotalEnvMapLuminance() const { return m_envMapTotalLuminance; }
+    [[nodiscard]] float GetTotalEnvMapLuminance() const { return m_envMapWeight; }
     [[nodiscard]] float GetPunctualWeight() const { return m_punctualWeight; }
+
+    [[nodiscard]] uint32_t GetLsdBasePunctuals() const;
+    [[nodiscard]] uint32_t GetLsdBaseEmissives() const;
+    [[nodiscard]] uint32_t GetLsdCount() const;
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     [[nodiscard]] const std::vector<ProbabilityDistributionSample>& GetCpuLightsCdf() const { return m_cpuLsdCdf; }
@@ -37,12 +49,21 @@ public:
 #endif
 
 private:
+    void buildPunctualDistributions(D3D* d3d, const Heap* heap, Scene* scene);
+    void buildEmissiveDistributions(D3D* d3d, const Heap* heap, Scene* scene);
     void buildEnvMapDistributions(D3D* d3d, const Heap* heap, const D12Resource* envMap);
     void loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D12Resource* envMap, bool aliasTablesEnabled);
-    void initializeResources(const D3D* d3d,D12Resource* envMap);
+    void initializeResources(const D3D* d3d, const D12Resource* envMap);
 
-    float m_envMapTotalLuminance = 0;
+    float m_envMapWeight = 0;
     float m_punctualWeight = 0;
+    float m_emissiveWeight = 0;
+
+    uint32_t m_numPunctuals = 0;
+    uint32_t m_numEmissiveInstances = 0;
+    uint32_t m_maxPunctuals = 0;
+    uint32_t m_maxEmissives = 0;
+    uint32_t m_maxLsdCount = 0;
 
     bool m_isInitialized = false;
     bool m_sceneDataLoaded = false;
@@ -59,15 +80,17 @@ private:
     D12Resource m_punctualPdfReadback;
 
     D12Resource m_emissiveInstanceMap;
-    D12Resource m_emissivePdf;
+    D12Resource m_emissivePdfRW;
+    D12Resource m_emissivePdfReadback;
 
     D12Resource m_lsdRW;
     D12Resource m_lsdReadback;
 
     RootSig m_rootSigSrvUav;
+    RootSig m_rootSigSrv5Uav;
     RootSig m_rootSigCbvSrvUav;
     RootSig m_rootSigUav;
-    RootSig m_rootSigCbvUav2;
+    RootSig m_rootSigCbvUav3;
 
     DescriptorSet m_setEnvMapSumLum;
     DescriptorSet m_setEnvMapPdf;
@@ -76,6 +99,7 @@ private:
     DescriptorSet m_setEnvMapCdfConditionalNormalize;
     DescriptorSet m_setCdfNormalize1D;
     DescriptorSet m_setPunctualPdf;
+    DescriptorSet m_setEmissivePdf;
     DescriptorSet m_setLSD;
 
     Pipeline m_pipelineEnvMapSumLum;
@@ -87,6 +111,7 @@ private:
     Pipeline m_pipelinePunctualPdf;
     Pipeline m_pipelineLsdCdf;
     Pipeline m_pipelineLsdAlias;
+    Pipeline m_pipelineEmissivePdf;
 
     size_t m_sumLumGroupsX = 0, m_sumLumGroupsY = 0;
     size_t m_sumLumBufferNumElements = 0, m_sumLumBufferSize = 0;

@@ -33,6 +33,10 @@ struct GreenHouseRenderInfo
 
     RenderBackendConfig* BackendConfig;
     PathTracerConfig* PathTracerConfig;
+
+    uint32_t LsdBasePunctuals = 0;
+    uint32_t LsdBaseEmissives = 0;
+    uint32_t LsdCount = 0;
 };
 
 class Greenhouse final : public App
@@ -63,6 +67,7 @@ private:
     bool m_ptFrameDirty = false;
     bool m_ptPipelineDirty = false;
     bool m_lsdDirty = false;
+    bool m_gbufferDirty = false;
     bool m_renderBackendSceneDataDirty = false;
 
     CameraController m_cameraController;

@@ -9,6 +9,7 @@
 #define DBG_SCALE_INTENSITY_DISTANT(x)    x *= gDebugSettings.ScaleIntensityDistant;
 #define DBG_SCALE_INTENSITY_SPOT(x)       x *= gDebugSettings.ScaleIntensitySpot;
 #define DBG_SCALE_INTENSITY_ENV_MAP(x)    x *= gDebugSettings.ScaleIntensityEnvMap;
+#define DBG_SCALE_INTENSITY_EMISSION(x)   x *= gDebugSettings.ScaleIntensityEmission;
 #define DBG_SCALE_POINT_LIGHT_RADIUS(x)   x *= gDebugSettings.ScalePointLightRadius;
 #define DBG_SCALE_F(x)                    x *= gDebugSettings.ScaleF;
 #define DBG_SCALE_D(x)                    x *= gDebugSettings.ScaleD;

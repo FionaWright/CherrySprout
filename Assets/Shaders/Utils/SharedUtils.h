@@ -3,6 +3,7 @@
 
 #include "Constants.h"
 #include "HlslGlue.h"
+#include "Scene/Material.h"
 
 // Only for functions that are required by both C++ and HLSL
 
@@ -193,6 +194,12 @@ inline void BuildBasisFrisvad(hlsl::float3 N, GLUE_OUT(hlsl::float3) T, GLUE_OUT
     float b = -N.x * N.y * a;
     T = hlsl::float3(1.0 - N.x * N.x * a, b, -N.x);
     B = hlsl::float3(b, 1.0 - N.y * N.y * a, -N.y);
+}
+
+inline bool IsMaterialEmissive(const Material material)
+{
+    const hlsl::float3 emission = material.EmissiveColor * material.EmissiveStrength;
+    return emission.x > 0 || emission.y > 0 || emission.z > 0;
 }
 
 #endif

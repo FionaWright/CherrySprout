@@ -87,8 +87,6 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         m_megaBufferInstanceData.emplace_back(instanceData);
     }
 
-    scene->GPU.MegaBufferInstanceData.Release();
-    scene->GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", device, instanceSizeUser);
     scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, &m_uploadHeap, m_megaBufferInstanceData.data(), instanceSizeUser);
 
     buildTlas(device, cmdList, blasInstances);

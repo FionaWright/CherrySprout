@@ -422,9 +422,9 @@ void Greenhouse::renderGuiCore()
                         ImGui::Text("%i", i);
 
                         ImGui::TableSetColumnIndex(1);
-                        if (i == 0)
+                        if (i < m_lightImportanceSampler.GetLsdBasePunctuals())
                             ImGui::TextUnformatted("EnvMap");
-                        else
+                        else if (i < m_lightImportanceSampler.GetLsdBaseEmissives())
                         {
                             if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::ePoint)
                                 ImGui::TextUnformatted("Point");
@@ -434,6 +434,11 @@ void Greenhouse::renderGuiCore()
                                 ImGui::TextUnformatted("Spot");
                             else
                                 ImGui::TextUnformatted("Unknown");
+                        }
+                        else
+                        {
+                            CherryAssert(i < m_lightImportanceSampler.GetLsdCount());
+                            ImGui::TextUnformatted("Emissive");
                         }
 
                         if (aliasTablesEnabled)
