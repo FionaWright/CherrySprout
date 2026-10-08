@@ -82,6 +82,28 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
     CherryAssert(m_scene.CPU.MegaBufferPunctualLightsCount > 0);
     CherryAssert(m_scene.CPU.MegaBufferMaterialsCount > 0);
 
+    for (int i = 0; i < m_scene.CPU.ObjectCount; i++)
+    {
+        const Object& obj = m_scene.CPU.Objects[i];
+
+        const XMMATRIX M = XMMatrixSet(
+            obj.M[0], obj.M[1], obj.M[2], obj.M[3],
+            obj.M[4], obj.M[5], obj.M[6], obj.M[7],
+            obj.M[8], obj.M[9], obj.M[10], obj.M[11],
+            obj.M[12], obj.M[13], obj.M[14], obj.M[15]
+        );
+        const XMMATRIX MTI = XMMatrixTranspose(XMMatrixInverse(nullptr, M));
+
+        InstanceData instanceData{};
+        XMStoreFloat4x4(&instanceData.M, M);
+        XMStoreFloat4x4(&instanceData.MTI, MTI);
+        instanceData.MegaBufferOffsetVertex = obj.MegaBufferVertexOffset;
+        instanceData.MegaBufferOffsetIndex = obj.MegaBufferIndexOffset;
+        instanceData.MegaBufferCountIndex = obj.MegaBufferIndexCount;
+        instanceData.MaterialIndex = obj.MaterialIndex;
+        m_megaBufferInstanceData.emplace_back(instanceData);
+    }
+
     m_gpuDataDirty = true;
 }
 
@@ -108,6 +130,7 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferIndex.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferMaterials.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferPunctualLights.GetIntermediateSize(), 512);
+    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferInstanceData.GetIntermediateSize(), 512);
 
     const size_t textureCount = m_scene.CPU.TextureFilepathCount;
     std::vector<ScratchImage> scratchImages(textureCount);
@@ -136,6 +159,7 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
             m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
             m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
             m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
+            m_scene.GPU.MegaBufferInstanceData.     UploadBuffer(cmdList, &uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataBytes);
 
             for (int i = 0; i < textureCount; i++)
             {

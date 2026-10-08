@@ -49,6 +49,34 @@ struct PathTracingDebugInfo
 #endif
 };
 
+inline bool FlagFeatureEnabled(
+    const bool cbvModeEnabled,
+    const PathTracerFeatureFlags& featureFlags,
+    const PathTracerFeatureFlags& cbvFeatureFlags,
+    const PathTracerFeatureFlags& flag)
+{
+    bool result = GetPathTracerFeatureFlag(featureFlags, flag);
+
+    if (cbvModeEnabled)
+        result &= GetPathTracerFeatureFlag(cbvFeatureFlags, flag);
+
+    return result;
+}
+
+inline bool FlagDebugEnabled(
+    const bool cbvModeEnabled,
+    const PathTracerDebugFlags& debugFlags,
+    const PathTracerDebugFlags& cbvDebugFlags,
+    const PathTracerDebugFlags& flag)
+{
+    bool result = GetPathTracerDebugFlag(debugFlags, flag);
+
+    if (cbvModeEnabled)
+        result &= GetPathTracerDebugFlag(cbvDebugFlags, flag);
+
+    return result;
+}
+
 struct PathTracerConfig
 {
     uint32_t Seed = 1205;
@@ -91,28 +119,36 @@ struct PathTracerConfig
 
     PathTracingDebugInfo       DebugInfo        = {};
 
+    bool FeatureEnabled(const PathTracerFeatureFlags flags, const PathTracerFeatureFlags flag) const
+    {
+        bool cbvModeEnabled = false;
+        PathTracerFeatureFlags cbvFlags = static_cast<PathTracerFeatureFlags>(0);
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        cbvModeEnabled = DebugInfo.CbvFlagsModeEnabled;
+        cbvFlags = DebugInfo.CbvFeatureFlags;
+#endif
+        return FlagFeatureEnabled(cbvModeEnabled, flags, cbvFlags, flag);
+    }
+
     bool FeatureEnabled(const PathTracerFeatureFlags flag) const
     {
-        bool result = GetPathTracerFeatureFlag(FeatureFlags, flag);
+        return FeatureEnabled(FeatureFlags, flag);
+    }
 
+    bool DebugEnabled(const PathTracerDebugFlags flags, const PathTracerDebugFlags flag) const
+    {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (DebugInfo.CbvFlagsModeEnabled)
-            result &= GetPathTracerFeatureFlag(DebugInfo.CbvFeatureFlags, flag);
+        return FlagDebugEnabled(DebugInfo.CbvFlagsModeEnabled, flags, DebugInfo.CbvDebugFlags, flag);
 #endif
-
-        return result;
+        return false;
     }
 
     bool DebugEnabled(const PathTracerDebugFlags flag) const
     {
-        bool result = GetPathTracerDebugFlag(DebugInfo.Flags, flag);
-
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (DebugInfo.CbvFlagsModeEnabled)
-            result &= GetPathTracerDebugFlag(DebugInfo.CbvDebugFlags, flag);
+        return DebugEnabled(DebugInfo.Flags, flag);
 #endif
-
-        return result;
+        return false;
     }
 };
 

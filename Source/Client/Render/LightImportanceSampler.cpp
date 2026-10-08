@@ -37,6 +37,7 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
     if (config.EnvMapScale > 0.0f && ENV_ENABLED)
         buildEnvMapDistributions(d3d, heap, envMap);
     m_envMapWeight *= max(0.0f, config.EnvMapScale);
+    m_envMapWeight /= 10000.0f;
 
     if (config.EmissiveScale > 0.0f && EMISSIVE_ENABLED)
         buildEmissiveDistributions(d3d, heap, scene);
@@ -161,6 +162,7 @@ void LightImportanceSampler::buildPunctualDistributions(D3D* d3d, const Heap* he
     std::vector<float> buff(m_maxPunctuals);
     m_punctualPdfReadback.Readback(buff.data());
 
+    m_punctualWeight = 0.0f;
     for (int i = 0; i < m_numPunctuals; i++)
     {
         const float lum = buff[i];
@@ -232,7 +234,7 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
         cmdList->SetPipelineState(m_pipelineEmissivePdf.GetPSO());
         m_setEmissivePdf.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 64, m_numEmissiveInstances);
+        DispatchOverTexture(cmdList, 32, m_numEmissiveInstances);
 
         m_emissivePdfReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
         m_emissivePdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -246,6 +248,7 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
     std::vector<float> buff(m_maxEmissives);
     m_emissivePdfReadback.Readback(buff.data());
 
+    m_emissiveWeight = 0.0f;
     for (int i = 0; i < m_numEmissiveInstances; i++)
     {
         const float lum = buff[i];

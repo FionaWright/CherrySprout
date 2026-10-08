@@ -36,8 +36,9 @@ public:
     [[nodiscard]] D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
     [[nodiscard]] D12Resource* GetLightsCdf() { return &m_lsdRW; }
 
-    [[nodiscard]] float GetTotalEnvMapLuminance() const { return m_envMapWeight; }
+    [[nodiscard]] float GetEnvMapWeight() const { return m_envMapWeight; }
     [[nodiscard]] float GetPunctualWeight() const { return m_punctualWeight; }
+    [[nodiscard]] float GetEmissiveWeight() const { return m_emissiveWeight; }
 
     [[nodiscard]] uint32_t GetLsdBasePunctuals() const;
     [[nodiscard]] uint32_t GetLsdBaseEmissives() const;

@@ -33,16 +33,13 @@ uint GetEmissivesCount()
 
 float GetEnvMapWeight(float punctualWeight, float emissiveWeight)
 {
-    float realLum = gTotalLums.EnvMapTotalLuminance / 10000;
+    float envWeight = gTotalLums.EnvMapTotalLuminance;
 
-    bool anyNonEnvWeight = punctualWeight > 0.0f || emissiveWeight > 0.0f;
-    if (!anyNonEnvWeight)
-        return realLum;
+    float nonEnvWeight = punctualWeight + emissiveWeight;
+    if (nonEnvWeight <= 0.0f)
+        return envWeight;
 
-    float totalWeight = punctualWeight + emissiveWeight + realLum;
-    float cappedLum = 0.5f * totalWeight;
-
-    return clamp(realLum, 0.0f, cappedLum);
+    return min(nonEnvWeight, envWeight);
 }
 
 #endif

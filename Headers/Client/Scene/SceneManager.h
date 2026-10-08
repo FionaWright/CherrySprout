@@ -10,6 +10,7 @@
 #include "HWI/UploadHeap.h"
 #include "Utils/D3DUtils.h"
 
+struct InstanceData;
 class Heap;
 class D3D;
 
@@ -38,6 +39,8 @@ private:
     DescriptorSet m_setMipMaps;
 
     bool m_gpuDataDirty = false;
+
+    std::vector<InstanceData> m_megaBufferInstanceData;
 };
 
 

@@ -39,7 +39,6 @@ private:
     D12Resource m_tlasInstanceBuffer;
 
     std::vector<BlasEntry> m_blasList;
-    std::vector<InstanceData> m_megaBufferInstanceData;
 };
 
 

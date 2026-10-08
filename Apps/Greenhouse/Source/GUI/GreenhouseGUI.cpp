@@ -222,8 +222,7 @@ void Greenhouse::renderGuiCore()
             }
         }
 
-        const bool prevEnvMapEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
-        const bool prevAliasTablesEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
+        const PathTracerFeatureFlags prevFlags = m_config.PathTracerConfig.FeatureFlags;
 
         const uint32_t numFlagColumns = cbvFlagsEnabled ? 4 : 2;
 
@@ -270,8 +269,10 @@ void Greenhouse::renderGuiCore()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-        m_lsdDirty |= prevEnvMapEnabled != m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
-        m_lsdDirty |= prevAliasTablesEnabled != m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
+        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_EnvironmentMap) != m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
+        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_Emission) != m_config.PathTracerConfig.FeatureEnabled(eFeature_Emission);
+        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_Punctuals) != m_config.PathTracerConfig.FeatureEnabled(eFeature_Punctuals);
+        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_AliasTables) != m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
 
         if (m_config.PathTracerConfig.FeatureEnabled(eFeature_DirectionalLight))
         {
@@ -382,8 +383,9 @@ void Greenhouse::renderGuiCore()
             if (ImGui::CollapsingHeader("LSD"))
             {
                 ImGui::Indent(IM_GUI_INDENTATION);
-                ImGui::Text("Env Map Luminance: %f", m_lightImportanceSampler.GetTotalEnvMapLuminance());
+                ImGui::Text("Env Map Weight: %f", m_lightImportanceSampler.GetEnvMapWeight());
                 ImGui::Text("Punctual Weight  : %f", m_lightImportanceSampler.GetPunctualWeight());
+                ImGui::Text("EmissiveWeight  : %f", m_lightImportanceSampler.GetEmissiveWeight());
 
                 ImGui::PopStyleVar();
                 m_lsdDirty |= ImGui::Button("Reload Light LSDs");

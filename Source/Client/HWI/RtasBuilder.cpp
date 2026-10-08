@@ -7,6 +7,7 @@
 
 #include "HWI/D3D.h"
 #include "Scene/InstanceData.h"
+#include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
 void RtasBuilder::FlushAndBuild(D3D* d3d, Scene* scene)
@@ -36,12 +37,10 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
     scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     m_blasList.clear();
-    m_megaBufferInstanceData.clear();
 
     m_uploadHeap = {};
-    const size_t instanceSizeUser = sizeof(InstanceData) * scene->CPU.ObjectCount;
     const size_t instanceSizeInternal = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * scene->CPU.ObjectCount;
-    m_uploadHeap.Init(device, 64 + instanceSizeUser + instanceSizeInternal);
+    m_uploadHeap.Init(device, Align(instanceSizeInternal, 512));
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
@@ -61,8 +60,6 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
             obj.M[12], obj.M[13], obj.M[14], obj.M[15]
         );
 
-        const XMMATRIX MTI = XMMatrixTranspose(XMMatrixInverse(nullptr, M));
-
         XMFLOAT3X4 M3x4{};
         XMStoreFloat3x4(&M3x4, M);
 
@@ -76,18 +73,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         blasInstance.AccelerationStructure = blasResult.GetResource()->GetGPUVirtualAddress();
         blasInstance.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
         blasInstances.emplace_back(blasInstance);
-
-        InstanceData instanceData{};
-        XMStoreFloat4x4(&instanceData.M, M);
-        XMStoreFloat4x4(&instanceData.MTI, MTI);
-        instanceData.MegaBufferOffsetVertex = obj.MegaBufferVertexOffset;
-        instanceData.MegaBufferOffsetIndex = obj.MegaBufferIndexOffset;
-        instanceData.MegaBufferCountIndex = obj.MegaBufferIndexCount;
-        instanceData.MaterialIndex = obj.MaterialIndex;
-        m_megaBufferInstanceData.emplace_back(instanceData);
     }
-
-    scene->GPU.MegaBufferInstanceData.UploadBuffer(cmdList, &m_uploadHeap, m_megaBufferInstanceData.data(), instanceSizeUser);
 
     buildTlas(device, cmdList, blasInstances);
 
