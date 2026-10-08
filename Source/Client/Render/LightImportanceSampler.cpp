@@ -14,6 +14,10 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
+#define PUNCTUALS_ENABLED 1
+#define ENV_ENABLED 1
+#define EMISSIVE_ENABLED 1
+
 void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Scene* scene, const LsdConfig& config)
 {
     if (!m_isInitialized)
@@ -26,15 +30,15 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         loadSceneData(d3d, heap, scene, envMap, config.UseAliasTables);
     }
 
-    if (config.PunctualScale > 0.0f)
+    if (config.PunctualScale > 0.0f && PUNCTUALS_ENABLED)
         buildPunctualDistributions(d3d, heap, scene);
     m_punctualWeight *= max(0.0f, config.PunctualScale);
 
-    if (config.EnvMapScale > 0.0f)
+    if (config.EnvMapScale > 0.0f && ENV_ENABLED)
         buildEnvMapDistributions(d3d, heap, envMap);
     m_envMapWeight *= max(0.0f, config.EnvMapScale);
 
-    if (config.EmissiveScale > 0.0f)
+    if (config.EmissiveScale > 0.0f && EMISSIVE_ENABLED)
         buildEmissiveDistributions(d3d, heap, scene);
     m_emissiveWeight *= max(0.0f, config.EmissiveScale);
 
@@ -83,7 +87,12 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
 
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (config.UseAliasTables)
+    if (m_maxLsdCount == 0)
+    {
+        m_cpuLsdAlias.clear();
+        m_cpuLsdCdf.clear();
+    }
+    else if (config.UseAliasTables)
     {
         m_cpuLsdAlias.clear();
         m_cpuLsdAlias.resize(m_maxLsdCount);
@@ -96,10 +105,6 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         m_lsdReadback.Readback(m_cpuLsdCdf.data());
     }
 #endif
-
-    {
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    }
 }
 
 uint32_t LightImportanceSampler::GetLsdBasePunctuals() const
@@ -153,11 +158,12 @@ void LightImportanceSampler::buildPunctualDistributions(D3D* d3d, const Heap* he
         d3d->Flush();
     }
 
-    std::vector<float> buff(m_numPunctuals);
+    std::vector<float> buff(m_maxPunctuals);
     m_punctualPdfReadback.Readback(buff.data());
 
-    for (const float lum : buff)
+    for (int i = 0; i < m_numPunctuals; i++)
     {
+        const float lum = buff[i];
         CherryAssert(!std::isnan(lum));
         m_punctualWeight += lum;
     }
@@ -237,11 +243,12 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
 
-    std::vector<float> buff(m_numEmissiveInstances);
+    std::vector<float> buff(m_maxEmissives);
     m_emissivePdfReadback.Readback(buff.data());
 
-    for (const float lum : buff)
+    for (int i = 0; i < m_numEmissiveInstances; i++)
     {
+        const float lum = buff[i];
         CherryAssert(!std::isnan(lum));
         m_emissiveWeight += lum;
     }

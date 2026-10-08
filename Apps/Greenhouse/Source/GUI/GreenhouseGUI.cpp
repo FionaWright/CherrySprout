@@ -413,8 +413,7 @@ void Greenhouse::renderGuiCore()
 
                     const auto& cpuLightCdf = m_lightImportanceSampler.GetCpuLightsCdf();
                     const auto& cpuLightAlias = m_lightImportanceSampler.GetCpuLightsAlias();
-                    const size_t lightCount = aliasTablesEnabled ? cpuLightAlias.size() : cpuLightCdf.size();
-                    for (int i = 0; i < lightCount; ++i)
+                    for (int i = 0; i < m_lightImportanceSampler.GetLsdCount(); ++i)
                     {
                         ImGui::TableNextRow();
 
