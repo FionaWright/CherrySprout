@@ -29,9 +29,12 @@ ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0, space0); // Pus
 ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1, space0);
 ConstantBuffer<CbvForward> gSettings : register(b2, space0);
 
-RaytracingAccelerationStructure gTLAS : register(t0, space0);
-StructuredBuffer<Material> gMaterials : register(t1, space0);
-TextureCube gIrradiance : register(t2, space0);
+StructuredBuffer<Material> gMaterials : register(t0, space0);
+TextureCube gIrradiance : register(t1, space0);
+
+#if RAY_TRACING_ENABLED
+RaytracingAccelerationStructure gTLAS : register(t2, space0);
+#endif
 
 //Texture2D<float2> gBrdfInt : register(t0, space0);
 //TextureCube gEnvMap : register(t0, space0);
@@ -40,7 +43,9 @@ Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
 SamplerState gSampler : register(s0, space0);
 
+#if RAY_TRACING_ENABLED
 #include "Raster/RayTracedShadows.hlsli"
+#endif
 
 VsOut VSMain(VsIn input)
 {
@@ -105,7 +110,6 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     float NdLCenter = dot(Ng, wi);
 
-    float shadowFactor = 0.0f;
     if (NdLCenter > 0.0f)
     {
         float3 up = abs(wi.y) < 0.999f
@@ -146,10 +150,17 @@ float4 PSMain(VsOut input) : SV_TARGET
             if (NdL <= 0.0f)
                 continue;
 
-            float3 rayOrigin = worldPos + Ng * EPSILON;
-            TraceRayShadow(rayOrigin, wiMod, INF, shadowFactor);
+			float3 E_direct = max(0.0f, NdL) * Li;
 
-            E_direct_sum += max(0.0f, NdL) * shadowFactor * Li;
+#if RAY_TRACING_ENABLED
+            float3 rayOrigin = worldPos + Ng * EPSILON;
+
+			float shadowFactor = 0.0f;
+            TraceRayShadow(rayOrigin, wiMod, INF, shadowFactor);
+			E_direct *= shadowFactor;
+#endif
+
+            E_direct_sum += E_direct;
         }
     }
 
