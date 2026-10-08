@@ -134,17 +134,19 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 
     if (lightImportanceSampler->IsInitialized())
     {
-        const size_t lightCount = 1 + scene->CPU.MegaBufferPunctualLightsCount;
+        const size_t lsdStride = lightImportanceSampler->IsLsdAliasTable() ? sizeof(AliasEntry) : sizeof(ProbabilityDistributionSample);
+
         m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 7, lightImportanceSampler->GetEnvMapPdf(), lightImportanceSampler->GetEnvMapPdf()->GetDesc().Format);
         m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 8, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
         m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), 9, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 10, lightImportanceSampler->GetLightsCdf(), lightCount, sizeof(ProbabilityDistributionSample));
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 10, lightImportanceSampler->GetEmissiveInstanceMap(), scene->CPU.ObjectCount, sizeof(uint32_t));
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 11, lightImportanceSampler->GetLightsCdf(), lightImportanceSampler->GetLsdCount(), lsdStride);
     }
 
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 11, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 15, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
 
     m_gradientManager.LoadSceneData(d3d, heap, &m_primal);
 }
@@ -187,11 +189,14 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ChosenRayDepth = renderInfo.PathTracerConfig->DebugInfo.ChosenRayDepth;
             debugSettings.ChosenPixelCoords = chosenPixelCoords;
             debugSettings.ScaleIntensityGlobal = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityGlobal;
+            debugSettings.ScaleIntensityDirect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDirect;
+            debugSettings.ScaleIntensityIndirect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityIndirect;
             debugSettings.ScaleIntensityPunctual = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPunctual;
+            debugSettings.ScaleIntensityEmission = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEmission;
+            debugSettings.ScaleIntensityEnvMap = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEnvMap;
             debugSettings.ScaleIntensityPoint = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPoint;
             debugSettings.ScaleIntensityDistant = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDistant;
             debugSettings.ScaleIntensitySpot = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensitySpot;
-            debugSettings.ScaleIntensityEnvMap = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEnvMap;
             debugSettings.ScalePointLightRadius = renderInfo.PathTracerConfig->DebugInfo.ScalePointLightRadius;
             debugSettings.ScaleF = renderInfo.PathTracerConfig->DebugInfo.ScaleF;
             debugSettings.ScaleD = renderInfo.PathTracerConfig->DebugInfo.ScaleD;
@@ -359,7 +364,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     const MicrofacetModelType& microfacetModelType)
 {
     constexpr uint32_t numCBV = 2;
-    constexpr uint32_t numSRV = 15;
+    constexpr uint32_t numSRV = 16;
     constexpr uint32_t numUAV = 10;
 
     D3D12_STATIC_SAMPLER_DESC samplers[2] = {};
@@ -367,46 +372,54 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     InitializeSamplerLinearWrap(&samplers[1], 1);
     m_rootSig.SmartInit(device, numCBV, numSRV, numUAV, true, samplers, _countof(samplers));
 
-    std::vector<std::string> compileArgs = {};
-    compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
-    compileArgs.emplace_back("-DMICROFACET_MODEL_TYPE=" + std::to_string(static_cast<uint32_t>(microfacetModelType)));
+    std::vector<std::string> compileArgsCommon = {};
 
-    compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
     for (int i = 0; i < FEATURE_COUNT; i++)
     {
         const hlsl::uint flagValue = 1u << i;
-        compileArgs.emplace_back("-DFEATURE_FLAG_VALUE_" + std::string(s_featureFlagNames[i]) + "=" + std::to_string(flagValue));
+        compileArgsCommon.emplace_back("-DFEATURE_FLAG_VALUE_" + std::string(s_featureFlagNames[i]) + "=" + std::to_string(flagValue));
     }
     for (int i = 0; i < DEBUG_COUNT; i++)
     {
         const hlsl::uint flagValue = 1u << i;
-        compileArgs.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
+        compileArgsCommon.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
     }
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
-#endif
-
     if (debugInfo.CbvFlagsModeEnabled)
-        compileArgs.emplace_back("-DDEBUG_CBV_FLAGS_MODE_ENABLED=1");
+        compileArgsCommon.emplace_back("-DDEBUG_CBV_FLAGS_MODE_ENABLED=1");
 
-#if !NDEBUG
-    Profiler::AddToStack("Path-Tracer Update Pipeline");
+    {
+        std::vector<std::string> compileArgs = compileArgsCommon;
+        compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
+        compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
+        compileArgs.emplace_back("-DMICROFACET_MODEL_TYPE=" + std::to_string(static_cast<uint32_t>(microfacetModelType)));
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
 #endif
 
-    auto desc = CreateComputePipelineDesc(m_rootSig.Get());
-    m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", desc, compileArgs);
+#if !NDEBUG
+        Profiler::AddToStack("Path-Tracer Update Pipeline");
+#endif
 
-    m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs);
+        m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", m_rootSig.Get(), compileArgs);
 
 #if !NDEBUG
-    Profiler::PopAndPrint();
+        Profiler::PopAndPrint();
 #endif
+
+        if (GetPathTracerFeatureFlag(featureFlags, eFeature_RestirDI))
+            m_restirManager.Init(device, &m_rootSig, compileArgs);
+    }
+
+    {
+        std::vector<std::string> compileArgs = compileArgsCommon;
+        compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags & eFeature_GammaCorrectionFast));
+
+        m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs);
+    }
 
     Reset();
-
-    if (GetPathTracerFeatureFlag(featureFlags, eFeature_RestirDI))
-        m_restirManager.Init(device, &m_rootSig, compileArgs);
 }
 
 void PathTracer::Reset()

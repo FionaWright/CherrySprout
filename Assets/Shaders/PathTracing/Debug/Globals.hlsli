@@ -3,6 +3,8 @@
 
 #if DEBUG_ENABLED_PP(OutputColor) || DEBUG_ENABLED_PP(PathDumper) || DEBUG_ENABLED_PP(Asserts)
 
+#include "Utils/Constants.h"
+
 static bool gDebugValueFound = false;
 static float3 gDebugValue = NAN;
 static int gDebugCurrentRayDepth = 0;

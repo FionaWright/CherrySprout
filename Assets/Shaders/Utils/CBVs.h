@@ -134,12 +134,17 @@ struct CbvPathTracingDebugSettings
 
     int ChosenRayDepth;
     float ScaleIntensityGlobal;
-    float ScaleIntensityPunctual;
-    float ScaleIntensityPoint;
 
+    float ScaleIntensityDirect;
+    float ScaleIntensityIndirect;
+
+    float ScaleIntensityPunctual;
+    float ScaleIntensityEnvMap;
+    float ScaleIntensityEmission;
+
+    float ScaleIntensityPoint;
     float ScaleIntensityDistant;
     float ScaleIntensitySpot;
-    float ScaleIntensityEnvMap;
     float ScalePointLightRadius;
 
     float ScaleF;

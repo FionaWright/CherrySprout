@@ -36,12 +36,16 @@ void Hit(inout PathState pathState,
             E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, nextOrigin, currentVertexInfo);
         }
 
+        DBG_SCALE_INTENSITY_DIRECT(E_direct);
+
         L_sample += E_direct * pathState.Beta / float(gSettings.DirectNumSamples);
     }
 
     float3 wi;
     float pdf_bxdf;
     float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, pathState, wo, wi, pdf_bxdf);
+    DBG_SCALE_INTENSITY_INDIRECT(E_indirect);
+
     pathState.Beta *= E_indirect;
 
     if (FEATURE_ENABLED(NEE))

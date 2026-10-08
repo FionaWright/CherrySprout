@@ -571,8 +571,11 @@ void Greenhouse::renderGuiCore()
                         m_ptFrameDirty |= GuiUtils::FwInputFloat(label, v);
                 };
                 scaleFunc("Global##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityGlobal);
+                scaleFunc("Direct##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityDirect);
+                scaleFunc("Indirect##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityIndirect);
                 scaleFunc("Env Map##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityEnvMap);
                 scaleFunc("Punctuals##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPunctual);
+                scaleFunc("Emission##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityEmission);
                 scaleFunc("Point##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPoint);
                 scaleFunc("Distant##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityDistant);
                 scaleFunc("Spot##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensitySpot);

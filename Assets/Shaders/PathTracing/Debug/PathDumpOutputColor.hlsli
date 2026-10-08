@@ -3,6 +3,8 @@
 
 #include "PathTracing/Debug/Internal/OutputColor.h"
 
+#if DEBUG_ENABLED_PP(PathDumper) && DEBUG_ENABLED_PP(OutputColor)
+
 uint GetByteOffset(uint rayIdx, uint dbgIdx)
 {
     return rayIdx * sizeof(DebugOutputStruct) + dbgIdx * sizeof(DebugOutputPair);
@@ -45,5 +47,14 @@ void AssignDebugOutput(float value_x, float value_y, float value_z, uint dbgIdx)
 
     StoreOutputColor(gDebugCurrentRayDepth, dbgIdx, value, true);
 }
+
+#else
+
+uint GetByteOffset(uint rayIdx, uint dbgIdx) { return UINT_MAX; }
+void LoadOutputColor(uint rayIdx, uint dbgIdx, out float3 value, out uint isAssignedValue) { value = NAN; isAssignedValue = 0; }
+void StoreOutputColor(uint rayIdx, uint dbgIdx, float3 value, uint isAssignedValue) {}
+void AssignDebugOutput(float value_x, float value_y, float value_z, uint dbgIdx) {}
+
+#endif
 
 #endif

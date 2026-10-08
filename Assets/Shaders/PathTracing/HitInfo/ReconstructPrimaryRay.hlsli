@@ -72,11 +72,11 @@ void ReconstructPrimaryRayHit(
         DBG_OUTPUT1(hitInfo.IsEntering,           Hit_IsEntering);
         DBG_OUTPUT1(hitInfo.RayT,                 Hit_RayT);
 
-        DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxAlbedo, NAN),                     Tex_Albedo);
-        DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxNormal, NAN),                     Tex_Normal);
-        DBG_OUTPUT3(sampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, NAN),                   Tex_Emissive);
-        DBG_OUTPUT1(sampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, NAN),                  Tex_Roughness);
-        DBG_OUTPUT1(sampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, NAN),                   Tex_Metallic);
+        DBG_OUTPUT3(SampleSceneTexture3(hitInfo.UV, hitInfo.Mat.TexIdxAlbedo, NAN),                     Tex_Albedo);
+        DBG_OUTPUT3(SampleSceneTexture3(hitInfo.UV, hitInfo.Mat.TexIdxNormal, NAN),                     Tex_Normal);
+        DBG_OUTPUT3(SampleSceneTexture3(hitInfo.UV, hitInfo.Mat.TexIdxEmissive, NAN),                   Tex_Emissive);
+        DBG_OUTPUT1(SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxRoughness, NAN),                  Tex_Roughness);
+        DBG_OUTPUT1(SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxMetallic, NAN),                   Tex_Metallic);
 
         DBG_OUTPUT3(hitInfo.Mat.Albedo.rgb,                                                   Mat_Albedo);
         DBG_OUTPUT1(hitInfo.Mat.Albedo.a,                                                     Mat_Opacity);

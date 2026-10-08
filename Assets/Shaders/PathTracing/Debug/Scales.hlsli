@@ -4,6 +4,8 @@
 #if DEBUG_ENABLED_PP(Scales)
 
 #define DBG_SCALE_INTENSITY_GLOBAL(x)     x *= gDebugSettings.ScaleIntensityGlobal;
+#define DBG_SCALE_INTENSITY_DIRECT(x)     x *= gDebugSettings.ScaleIntensityDirect;
+#define DBG_SCALE_INTENSITY_INDIRECT(x)   x *= gDebugSettings.ScaleIntensityIndirect;
 #define DBG_SCALE_INTENSITY_PUNCTUAL(x)   x *= gDebugSettings.ScaleIntensityPunctual;
 #define DBG_SCALE_INTENSITY_POINT(x)      x *= gDebugSettings.ScaleIntensityPoint;
 #define DBG_SCALE_INTENSITY_DISTANT(x)    x *= gDebugSettings.ScaleIntensityDistant;

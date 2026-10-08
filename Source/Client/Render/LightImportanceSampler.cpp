@@ -43,8 +43,11 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         buildEmissiveDistributions(d3d, heap, scene);
     m_emissiveWeight *= max(0.0f, config.EmissiveScale);
 
+    m_lsdIsAliasTable = config.UseAliasTables;
+
     // Combined Lights CDF Pass
     {
+        d3d->Flush();
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
         {
@@ -173,6 +176,20 @@ void LightImportanceSampler::buildPunctualDistributions(D3D* d3d, const Heap* he
 
 void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* heap, Scene* scene)
 {
+    const size_t emissiveMapBytes = m_maxEmissives * sizeof(uint32_t);
+    const size_t emissivePdfBytes = m_maxEmissives * sizeof(float);
+
+    if (!m_emissiveInstanceMap.IsInitialized() || emissiveMapBytes != m_emissiveInstanceMap.GetDesc().Width)
+    {
+        m_emissiveInstanceMap.Reset();
+        m_emissivePdfRW.Reset();
+        m_emissivePdfReadback.Reset();
+
+        m_emissiveInstanceMap.Init_Buffer("Emissive Instance Map", d3d->GetDevice(), emissiveMapBytes);
+        m_emissivePdfRW.Init_Buffer("Emissive PDF (RW)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_emissivePdfReadback.Init_Buffer("Emissive PDF (Readback)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_NONE, true);
+    }
+
     std::vector<uint32_t> emissiveInstanceMap;
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
@@ -193,20 +210,6 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
     }
 
     m_numEmissiveInstances = emissiveInstanceMap.size();
-
-    const size_t emissiveMapBytes = m_maxEmissives * sizeof(uint32_t);
-    const size_t emissivePdfBytes = m_maxEmissives * sizeof(float);
-
-    if (!m_emissiveInstanceMap.IsInitialized() || emissiveMapBytes != m_emissiveInstanceMap.GetDesc().Width)
-    {
-        m_emissiveInstanceMap.Reset();
-        m_emissivePdfRW.Reset();
-        m_emissivePdfReadback.Reset();
-
-        m_emissiveInstanceMap.Init_Buffer("Emissive Instance Map", d3d->GetDevice(), emissiveMapBytes);
-        m_emissivePdfRW.Init_Buffer("Emissive PDF (RW)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_emissivePdfReadback.Init_Buffer("Emissive PDF (Readback)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_NONE, true);
-    }
 
     UploadHeap uploadHeap;
     uploadHeap.Init(d3d->GetDevice(), Align(emissiveMapBytes, 512));

@@ -56,6 +56,8 @@ static constexpr auto s_defaultOutputColorRemap = DebugOutputColorRemap::eNone;
 
 #   if DEBUG_ENABLED_PP(OutputColor)
 
+#include "Utils/HlslUtils.hlsli"
+
 float3 ApplyRemap(float3 color, uint outputColorRemap)
 {
     if (outputColorRemap & (uint)DebugOutputColorRemap::eUnormToSnorm)

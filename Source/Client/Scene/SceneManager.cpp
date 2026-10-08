@@ -82,6 +82,7 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
     CherryAssert(m_scene.CPU.MegaBufferPunctualLightsCount > 0);
     CherryAssert(m_scene.CPU.MegaBufferMaterialsCount > 0);
 
+    m_megaBufferInstanceData.clear();
     for (int i = 0; i < m_scene.CPU.ObjectCount; i++)
     {
         const Object& obj = m_scene.CPU.Objects[i];

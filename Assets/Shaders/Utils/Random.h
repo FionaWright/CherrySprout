@@ -43,23 +43,66 @@ inline RngInfo InitializeRngInfo(hlsl::uint2 pixel, hlsl::uint sample_i, hlsl::u
 }
 
 // https://www.pcg-random.org/
-inline float PcgRand01(GLUE_INOUT(hlsl::uint) state)
+
+// [0, UINT_MAX]
+inline hlsl::uint PcgRand01Uint(GLUE_INOUT(hlsl::uint) state)
 {
     state += 0x6D2B79F5u;
     hlsl::uint z = (state ^ (state >> 15)) * (1u | state);
     z ^= z + (z ^ (z >> 7)) * (61u | z);
-    return float((z ^ (z >> 14))) / (float)UINT_MAX;
+    return z ^ (z >> 14);
 }
 
+// [0, 1]
+inline float PcgRand01(GLUE_INOUT(hlsl::uint) state)
+{
+    return (float)PcgRand01Uint(state) / (float)UINT_MAX;
+}
+
+// [0, 1)
+inline float PcgRand01Ex(GLUE_INOUT(hlsl::uint) state)
+{
+    return (float)PcgRand01Uint(state) / (4294967296.0f); // UINT_MAX + 1 in fp
+}
+
+// [0, 1]
 inline float Rand01(GLUE_INOUT(RngInfo) rngInfo)
 {
     return PcgRand01(rngInfo.IndependentRngState);
 }
 
+// [0, 1)
+inline float Rand01Ex(GLUE_INOUT(RngInfo) rngInfo)
+{
+    return PcgRand01Ex(rngInfo.IndependentRngState);
+}
+
+// [0, 1]
 inline float Rand01_Const(const RngInfo rngInfo)
 {
     hlsl::uint discardState = rngInfo.IndependentRngState;
     return PcgRand01(discardState);
+}
+
+// [min, max]
+inline float RandRange(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint min, const hlsl::uint max)
+{
+    const float r01 = PcgRand01(rngInfo.IndependentRngState);
+    return min + r01 * (max - min);
+}
+
+// [min, max)
+inline float RandRangeEx(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint min, const hlsl::uint max)
+{
+    const float r01 = PcgRand01Ex(rngInfo.IndependentRngState);
+    return min + r01 * (max - min);
+}
+
+// [min, max]
+inline hlsl::uint RandRangeUInt(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint min, const hlsl::uint max)
+{
+    const hlsl::uint range = max - min;
+    return min + (PcgRand01Uint(rngInfo.IndependentRngState) % range);
 }
 
 #endif

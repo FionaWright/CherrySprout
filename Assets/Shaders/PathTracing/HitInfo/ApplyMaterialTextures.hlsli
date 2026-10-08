@@ -9,36 +9,36 @@
 
 #define NO_TEXTURE -1
 
-float sampleTexture1(HitInfo hitInfo, int idx, float fallback)
+float SampleSceneTexture1(float2 uv, int idx, float fallback)
 {
     if (idx == NO_TEXTURE)
         return fallback;
 
-    return gSceneTextures[idx].Sample(gSamplerLinearWrap, hitInfo.UV).r;
+    return gSceneTextures[idx].Sample(gSamplerLinearWrap, uv).r;
 }
 
-float3 sampleTexture3(HitInfo hitInfo, int idx, float3 fallback)
+float3 SampleSceneTexture3(float2 uv, int idx, float3 fallback)
 {
     if (idx == NO_TEXTURE)
         return fallback;
 
-    return gSceneTextures[idx].Sample(gSamplerLinearWrap, hitInfo.UV).rgb;
+    return gSceneTextures[idx].Sample(gSamplerLinearWrap, uv).rgb;
 }
 
-float4 sampleTexture4(HitInfo hitInfo, int idx, float4 fallback)
+float4 SampleSceneTexture4(float2 uv, int idx, float4 fallback)
 {
     if (idx == NO_TEXTURE)
         return fallback;
 
-    return gSceneTextures[idx].Sample(gSamplerLinearWrap, hitInfo.UV);
+    return gSceneTextures[idx].Sample(gSamplerLinearWrap, uv);
 }
 
 void ApplyMaterialTextures(inout HitInfo hitInfo)
 {
-    float4 albedoSample = sampleTexture4(hitInfo, hitInfo.Mat.TexIdxAlbedo, 1);
-    float roughnessSample = sampleTexture1(hitInfo, hitInfo.Mat.TexIdxRoughness, 1);
-    float metallicSample = sampleTexture1(hitInfo, hitInfo.Mat.TexIdxMetallic, 0);
-    float3 emissionSample = sampleTexture3(hitInfo, hitInfo.Mat.TexIdxEmissive, 1);
+    float4 albedoSample =   SampleSceneTexture4(hitInfo.UV, hitInfo.Mat.TexIdxAlbedo, 1);
+    float roughnessSample = SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxRoughness, 1);
+    float metallicSample =  SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxMetallic, 0);
+    float3 emissionSample = SampleSceneTexture3(hitInfo.UV, hitInfo.Mat.TexIdxEmissive, 1);
 
     albedoSample.xyz = SRGB_to_LRGB(albedoSample.xyz);
     emissionSample.xyz = SRGB_to_LRGB(emissionSample.xyz);

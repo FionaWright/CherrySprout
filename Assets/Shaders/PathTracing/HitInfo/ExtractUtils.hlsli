@@ -2,6 +2,7 @@
 #define H_EXTRACT_UTILS_H
 
 #include "PathTracing/Structs.h"
+#include "PathTracing/Utils.hlsli"
 
 void ExtractVertices(RayQuery<RAY_FLAGS> q, InstanceData instance, out Vertex v0, out Vertex v1, out Vertex v2)
 {
@@ -51,6 +52,23 @@ void ExtractInterpolatedAttributes(RayQuery<RAY_FLAGS> q, InstanceData instance,
 
     uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
+}
+
+float GetTriangleArea(float3 p0, float3 p1, float3 p2)
+{
+    float3 e1 = p1 - p0;
+    float3 e2 = p2 - p0;
+
+    return 0.5f * length(cross(e1, e2));
+}
+
+float GetTriangleArea(InstanceData instance, Vertex v0, Vertex v1, Vertex v2)
+{
+    float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
+    float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
+    float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
+
+    return GetTriangleArea(p0, p1, p2);
 }
 
 #endif

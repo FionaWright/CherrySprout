@@ -39,32 +39,31 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
     if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_Asserts))
     {
         d3d->Flush();
-
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
-
-        m_gpuErrorInfoRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        m_gpuErrorInfoReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
-        cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
-
-        UploadHeap uploadHeapClear;
-        if (m_scheduleClearErrors)
         {
-            uploadHeapClear.Init(d3d->GetDevice(), Align(m_gpuErrorInfoRW.GetIntermediateSize(), 512));
+            m_gpuErrorInfoRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            m_gpuErrorInfoReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-            DebugErrorInfo debugErrorInfoClear{};
-            debugErrorInfoClear.ExprCounter = 0;
-            debugErrorInfoClear.NaNCounter = 0;
-            debugErrorInfoClear.InfCounter = 0;
+            constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
+            cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
 
-            const std::vector<DebugErrorInfo> cpuClearBuffer(_countof(s_debugIdList), debugErrorInfoClear);
-            m_gpuErrorInfoRW.UploadBuffer(cmdList, &uploadHeapClear, cpuClearBuffer.data(), bufferSize);
+            UploadHeap uploadHeapClear;
+            if (m_scheduleClearErrors)
+            {
+                uploadHeapClear.Init(d3d->GetDevice(), Align(m_gpuErrorInfoRW.GetIntermediateSize(), 512));
 
-            m_scheduleClearErrors = false;
+                DebugErrorInfo debugErrorInfoClear{};
+                debugErrorInfoClear.ExprCounter = 0;
+                debugErrorInfoClear.NaNCounter = 0;
+                debugErrorInfoClear.InfCounter = 0;
+
+                const std::vector<DebugErrorInfo> cpuClearBuffer(_countof(s_debugIdList), debugErrorInfoClear);
+                m_gpuErrorInfoRW.UploadBuffer(cmdList, &uploadHeapClear, cpuClearBuffer.data(), bufferSize);
+
+                m_scheduleClearErrors = false;
+            }
         }
-
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
         d3d->Flush();

@@ -34,6 +34,7 @@ public:
     [[nodiscard]] D12Resource* GetEnvMapPdf() { return &m_envMapPdf; }
     [[nodiscard]] D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
     [[nodiscard]] D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
+    [[nodiscard]] D12Resource* GetEmissiveInstanceMap() { return &m_emissiveInstanceMap; }
     [[nodiscard]] D12Resource* GetLightsCdf() { return &m_lsdRW; }
 
     [[nodiscard]] float GetEnvMapWeight() const { return m_envMapWeight; }
@@ -43,6 +44,9 @@ public:
     [[nodiscard]] uint32_t GetLsdBasePunctuals() const;
     [[nodiscard]] uint32_t GetLsdBaseEmissives() const;
     [[nodiscard]] uint32_t GetLsdCount() const;
+
+    [[nodiscard]] bool IsLsdAliasTable() const { return m_lsdIsAliasTable; }
+    [[nodiscard]] uint32_t GetEmissiveInstanceCount() const { return m_numEmissiveInstances; }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     [[nodiscard]] const std::vector<ProbabilityDistributionSample>& GetCpuLightsCdf() const { return m_cpuLsdCdf; }
@@ -68,6 +72,7 @@ private:
 
     bool m_isInitialized = false;
     bool m_sceneDataLoaded = false;
+    bool m_lsdIsAliasTable = false;
 
     UploadHeap m_uploadHeap;
 

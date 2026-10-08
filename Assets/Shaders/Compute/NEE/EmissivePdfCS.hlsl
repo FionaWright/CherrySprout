@@ -5,7 +5,7 @@
 #include "Scene/Material.h"
 #include "Scene/InstanceData.h"
 
-StructuredBuffer<InstanceData> gMegaBufferInstances : register(t0);
+StructuredBuffer<InstanceData> gMegaBufferInstanceData : register(t0);
 StructuredBuffer<Material> gMegaBufferMaterials : register(t1);
 StructuredBuffer<Vertex> gMegaBufferVertex : register(t2);
 StructuredBuffer<uint3> gMegaBufferIndex : register(t3);
@@ -14,17 +14,7 @@ StructuredBuffer<uint> gEmissiveInstanceToInstanceMap  : register(t4);
 
 RWStructuredBuffer<float> gPDF  : register(u0);
 
-float GetTriangleArea(InstanceData instance, Vertex v0, Vertex v1, Vertex v2)
-{
-    float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
-    float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
-    float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
-
-    float3 e1 = p1 - p0;
-    float3 e2 = p2 - p0;
-
-    return 0.5f * length(cross(e1, e2));
-}
+#include "PathTracing/HitInfo/ExtractUtils.hlsli"
 
 float GetTotalAreaLuminance(InstanceData instance)
 {
@@ -66,7 +56,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveInstanceIdx];
-    InstanceData instance = gMegaBufferInstances[instanceIdx];
+    InstanceData instance = gMegaBufferInstanceData[instanceIdx];
 
     float pdf = GetTotalAreaLuminance(instance);
 
