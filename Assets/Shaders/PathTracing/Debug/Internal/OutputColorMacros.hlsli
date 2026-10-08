@@ -3,12 +3,12 @@
 
 #if DEBUG_ENABLED_PP(OutputColor)
 
+#include "PathTracing/Debug/Internal/OutputColor.h"
+#include "PathTracing/Debug/OutputColorRemap.h"
+
 #include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
-
-#include "PathTracing/Debug/Internal/OutputColor.h"
-#include "PathTracing/Debug/OutputColorRemap.h"
 
 [noinline]
 void dbgOutput3(float value_x, float value_y, float value_z, uint index)

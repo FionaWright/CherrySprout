@@ -14,6 +14,8 @@ StructuredBuffer<uint> gEmissiveInstanceToInstanceMap  : register(t4);
 
 RWStructuredBuffer<float> gPDF  : register(u0);
 
+ConstantBuffer<CbvEmissivePdf> gCBV : register(b0);
+
 #include "PathTracing/HitInfo/ExtractUtils.hlsli"
 
 float GetTotalAreaLuminance(InstanceData instance)
@@ -47,12 +49,9 @@ float GetTotalAreaLuminance(InstanceData instance)
 [numthreads(32,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    uint count, _;
-    gEmissiveInstanceToInstanceMap.GetDimensions(count, _);
-
     uint emissiveInstanceIdx = DTid.x;
 
-    if (emissiveInstanceIdx >= count)
+    if (emissiveInstanceIdx >= gCBV.NumEmissiveInstances)
         return;
 
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveInstanceIdx];

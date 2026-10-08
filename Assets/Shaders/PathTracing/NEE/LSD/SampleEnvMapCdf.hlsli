@@ -16,7 +16,7 @@ void SampleEnvMapCdf(float xi1, float xi2, out float2 uv, out float3 wi, out flo
 
     DBG_ASSERT_RANGE(0.999f, gEnvMapCdfMarginal[dim.x - 1], 1.001f,        CDF_END_IN_ONE);
 
-    uint y = BinarySearch (gEnvMapCdfMarginal,       xi1);
+    uint y = BinarySearch (gEnvMapCdfMarginal, dim.y, xi1);
     uint x = BinarySearchX(gEnvMapCdfConditional, y, xi2);
 
     uv = uint2(x, y) / float2(dim);

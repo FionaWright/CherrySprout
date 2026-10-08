@@ -10,7 +10,7 @@ uint SampleEmissivePrimitive(inout RngInfo rngInfo, InstanceData instance) // TO
     return RandRangeUInt(rngInfo, 0, primitiveCount-1);
 }
 
-uint3 SampleEmissiveBary(inout RngInfo rngInfo) // TODO: PDF?
+float3 SampleEmissiveBary(inout RngInfo rngInfo) // TODO: PDF?
 {
     float baryX = Rand01(rngInfo);
     float baryY = Rand01(rngInfo);
@@ -39,7 +39,7 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 sourc
     float2 uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
 
-    float3 destPos = v0.Position * bary.x + v1.Position * bary.y + v2.Position * bary.z;
+    float3 destPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
 
     //float triangleArea = GetTriangleArea(instance, v0, v1, v2);
 

@@ -2,6 +2,8 @@
 #define H_CORE_H
 
 #include "PathTracing/Buffers.hlsli"
+#include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
+
 #include "PathTracing/2_SamplePath.hlsli"
 #include "PathTracing/2_Accumulate.hlsli"
 #include "PathTracing/GradientDomain/SampleGradients.hlsli"

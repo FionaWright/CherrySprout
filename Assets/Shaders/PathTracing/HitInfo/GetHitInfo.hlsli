@@ -4,6 +4,7 @@
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/HlslUtils.hlsli"
 #include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "PathTracing/Utils.hlsli"
 
 #include "Utils/Debug/Palette.h"

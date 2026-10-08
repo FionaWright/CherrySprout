@@ -37,6 +37,7 @@ LightSample SampleLight(
     if (lightIdx < gSettings.LsdBasePunctuals)
     {
         DBG_ASSERT_EXPR(FEATURE_ENABLED(EnvironmentMap), DISABLED_LIGHT_INDEX);
+        DBG_OUTPUT3(float3(1,0,0),  NEE_LightSampleType);
 
         lightSample = SampleEnvMap(rngInfo);
         DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
@@ -46,6 +47,7 @@ LightSample SampleLight(
     else if (lightIdx < gSettings.LsdBaseEmissives)
     {
         DBG_ASSERT_EXPR(FEATURE_ENABLED(Punctuals), DISABLED_LIGHT_INDEX);
+        DBG_OUTPUT3(float3(0,1,0),  NEE_LightSampleType);
 
         uint punctualIdx = lightIdx - gSettings.LsdBasePunctuals;
 
@@ -67,6 +69,7 @@ LightSample SampleLight(
     else
     {
         DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
+        DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
 
         uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
 

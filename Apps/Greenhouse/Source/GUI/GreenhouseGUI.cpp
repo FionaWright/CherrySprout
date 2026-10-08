@@ -427,11 +427,12 @@ void Greenhouse::renderGuiCore()
                             ImGui::TextUnformatted("EnvMap");
                         else if (i < m_lightImportanceSampler.GetLsdBaseEmissives())
                         {
-                            if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::ePoint)
+                            uint32_t puncIdx = i - m_lightImportanceSampler.GetLsdBasePunctuals();
+                            if (m_sceneManager.GetCPU().MegaBufferPunctualLights[puncIdx].Type == PunctualLightType::ePoint)
                                 ImGui::TextUnformatted("Point");
-                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::eDistant)
+                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[puncIdx].Type == PunctualLightType::eDistant)
                                 ImGui::TextUnformatted("Distant");
-                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[i-1].Type == PunctualLightType::eSpot)
+                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[puncIdx].Type == PunctualLightType::eSpot)
                                 ImGui::TextUnformatted("Spot");
                             else
                                 ImGui::TextUnformatted("Unknown");

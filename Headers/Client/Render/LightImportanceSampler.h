@@ -93,7 +93,7 @@ private:
     D12Resource m_lsdReadback;
 
     RootSig m_rootSigSrvUav;
-    RootSig m_rootSigSrv5Uav;
+    RootSig m_rootSigCbvSrv5Uav;
     RootSig m_rootSigCbvSrvUav;
     RootSig m_rootSigUav;
     RootSig m_rootSigCbvUav3;

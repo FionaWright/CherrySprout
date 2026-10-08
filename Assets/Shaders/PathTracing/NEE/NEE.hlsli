@@ -22,6 +22,7 @@ float3 SampleNEE(
     float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
     if (length(lightSample.Radiance) == 0.0f || NdL < 0.0f)
     {
+        DBG_OUTPUT1(0,     NEE_ShadowFactor);
         return 0;
     }
 

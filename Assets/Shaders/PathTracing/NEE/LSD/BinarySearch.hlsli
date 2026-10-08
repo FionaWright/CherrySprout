@@ -3,11 +3,8 @@
 
 #include "PathTracing/Debug/Assert.hlsli"
 
-uint BinarySearch(Texture1D<float> cdf, float u)
+uint BinarySearch(Texture1D<float> cdf, uint size, float u)
 {
-    uint size;
-    cdf.GetDimensions(size);
-
     uint left = 0;
     uint right = size - 1;
 
@@ -28,11 +25,8 @@ uint BinarySearch(Texture1D<float> cdf, float u)
     return left;
 }
 
-uint BinarySearch(StructuredBuffer<ProbabilityDistributionSample> cdf, float u)
+uint BinarySearch(StructuredBuffer<ProbabilityDistributionSample> cdf, uint size, float u)
 {
-    uint size, _;
-    cdf.GetDimensions(size, _);
-
     uint left = 0;
     uint right = size - 1;
 

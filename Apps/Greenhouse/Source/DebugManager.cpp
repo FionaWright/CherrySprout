@@ -38,6 +38,8 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
 {
     if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_Asserts))
     {
+        UploadHeap uploadHeapClear;
+
         d3d->Flush();
         const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
@@ -48,7 +50,6 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
             constexpr size_t bufferSize = _countof(s_debugIdList) * sizeof(DebugErrorInfo);
             cmdList->CopyBufferRegion(m_gpuErrorInfoReadback.GetResource(), 0, m_gpuErrorInfoRW.GetResource(), 0, bufferSize);
 
-            UploadHeap uploadHeapClear;
             if (m_scheduleClearErrors)
             {
                 uploadHeapClear.Init(d3d->GetDevice(), Align(m_gpuErrorInfoRW.GetIntermediateSize(), 512));

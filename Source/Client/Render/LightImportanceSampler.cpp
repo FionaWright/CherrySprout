@@ -192,14 +192,16 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
 
     std::vector<uint32_t> emissiveInstanceMap;
 
-    for (int i = 0; i < scene->CPU.ObjectCount; i++)
+    for (int instanceIdx = 0; instanceIdx < scene->CPU.ObjectCount; instanceIdx++)
     {
-        const Material& mat = scene->CPU.MegaBufferMaterials[scene->CPU.Objects[i].MaterialIndex];
+        const Object& obj = scene->CPU.Objects[instanceIdx];
+        const uint32_t materialIdx = obj.MaterialIndex;
+        const Material& mat = scene->CPU.MegaBufferMaterials[materialIdx];
 
         if (!IsMaterialEmissive(mat))
             continue;
 
-        emissiveInstanceMap.emplace_back(i);
+        emissiveInstanceMap.emplace_back(instanceIdx);
     }
 
     if (emissiveInstanceMap.empty())
@@ -232,8 +234,12 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 4, &m_emissiveInstanceMap, m_numEmissiveInstances, sizeof(uint32_t));
         m_setEmissivePdf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_emissivePdfRW, m_numEmissiveInstances, sizeof(float));
 
+        CbvEmissivePdf cbv;
+        cbv.NumEmissiveInstances = m_numEmissiveInstances;
+        m_setEmissivePdf.UpdateCBV(0, &cbv);
+
         heap->Bind(cmdList);
-        cmdList->SetComputeRootSignature(m_rootSigSrv5Uav.Get());
+        cmdList->SetComputeRootSignature(m_rootSigCbvSrv5Uav.Get());
         cmdList->SetPipelineState(m_pipelineEmissivePdf.GetPSO());
         m_setEmissivePdf.SetDescriptorTables_Compute(cmdList);
 
@@ -258,6 +264,9 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
         CherryAssert(!std::isnan(lum));
         m_emissiveWeight += lum;
     }
+
+    if (m_emissiveWeight <= 0.0f)
+        m_numEmissiveInstances = 0;
 }
 
 void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, const Heap* heap, const D12Resource* envMap)
@@ -441,6 +450,7 @@ void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D
     m_setPunctualPdf.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
     m_setPunctualPdf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPdfRW, scene->CPU.MegaBufferPunctualLightsCount, sizeof(float));
 
+    m_setEmissivePdf.AddCBV(d3d->GetDevice(), sizeof(CbvEmissivePdf), &m_uploadHeap);
     m_setLSD.AddCBV(d3d->GetDevice(), sizeof(CbvTotalLuminances), &m_uploadHeap);
 
     m_setEnvMapSumLum.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
@@ -468,7 +478,7 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, const D12Resour
     // Root Sigs
     m_rootSigUav.                               SmartInit(d3d->GetDevice(), 0, 0, 1);
     m_rootSigSrvUav.                            SmartInit(d3d->GetDevice(), 0, 1, 1);
-    m_rootSigSrv5Uav.                           SmartInit(d3d->GetDevice(), 0, 5, 1);
+    m_rootSigCbvSrv5Uav.                        SmartInit(d3d->GetDevice(), 1, 5, 1);
     m_rootSigCbvSrvUav.                         SmartInit(d3d->GetDevice(), 1, 1, 1);
     m_rootSigCbvUav3.                           SmartInit(d3d->GetDevice(), 1, 0, 3);
 
@@ -482,7 +492,7 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, const D12Resour
     m_pipelineCdfNormalize1D.                   InitCompute(d3d->GetDevice(), "Compute/NEE/CdfNormalize1DCS.hlsl", m_rootSigUav.Get());
     m_pipelinePunctualPdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/PunctualPdfCS.hlsl", m_rootSigSrvUav.Get());
 
-    m_pipelineEmissivePdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/EmissivePdfCS.hlsl", m_rootSigSrv5Uav.Get());
+    m_pipelineEmissivePdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/EmissivePdfCS.hlsl", m_rootSigCbvSrv5Uav.Get());
 
     m_pipelineLsdCdf.                           InitCompute(d3d->GetDevice(), "Compute/NEE/LightCdfCS.hlsl", m_rootSigCbvUav3.Get());
     m_pipelineLsdAlias.                         InitCompute(d3d->GetDevice(), "Compute/NEE/LightAliasCS.hlsl", m_rootSigCbvUav3.Get(), {ALIAS_TABLE_BUILD_MAX_STACK_SIZE_DEFINE});
@@ -507,6 +517,7 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, const D12Resour
 
     size_t uploadHeapSize = 0;
     uploadHeapSize += Align(sizeof(CbvTotalLuminances), 256);
+    uploadHeapSize += Align(sizeof(CbvEmissivePdf), 256);
     uploadHeapSize += Align(sizeof(float), 256);
     m_uploadHeap.Init(d3d->GetDevice(), uploadHeapSize);
 

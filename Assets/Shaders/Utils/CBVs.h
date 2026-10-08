@@ -182,4 +182,10 @@ struct CbvTextureConvert
     hlsl::float3 p;
 };
 
+struct CbvEmissivePdf
+{
+    hlsl::uint NumEmissiveInstances;
+    float p[3];
+};
+
 #endif

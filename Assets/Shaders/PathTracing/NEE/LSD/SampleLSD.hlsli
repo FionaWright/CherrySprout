@@ -8,10 +8,7 @@
 
 void sampleLSD(float xi, out uint lightIdx, out float pdf)
 {
-    uint lightCount, _;
-    gLightAliasTable.GetDimensions(lightCount, _);
-
-    xi *= lightCount;
+    xi *= gSettings.LsdCount;
     uint xiIdx = floor(xi);
     float xi01 = frac(xi);
 
@@ -30,7 +27,7 @@ void EvaluateLSD(uint lightIdx, out float pdf)
 
 void sampleLSD(float xi, out uint lightIdx, out float pdf)
 {
-    lightIdx = BinarySearch(gLightCDF, xi);
+    lightIdx = BinarySearch(gLightCDF, gSettings.LsdCount, xi);
     pdf = gLightCDF[lightIdx].PDF;
 }
 
@@ -50,7 +47,7 @@ void SampleLSD(inout RngInfo rngInfo, out uint lightIdx, out float pdf)
         return;
     }
 
-    float xi = Rand01(rngInfo);
+    float xi = Rand01Ex(rngInfo);
     sampleLSD(xi, lightIdx, pdf);
 
     DBG_OUTPUT1(xi, NEE_xi);
