@@ -233,7 +233,8 @@ void Lab2::Init(D3D* d3d)
         numSRV++;
     }
 
-    m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
+    //m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0);
+    m_envMap.Init(d3d, &m_heap, "ladybrand_heritage_house_4k.exr", 0);
 
     m_envMap.InitCubemap(d3d, &m_heap);
     m_skybox.Init(d3d, m_envMap.GetCubemap());

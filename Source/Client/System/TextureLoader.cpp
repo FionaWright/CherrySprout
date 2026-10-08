@@ -6,6 +6,8 @@
 #include "System/FileHelper.h"
 #include "Utils/Helper.h"
 
+#include "DirectXTexEXR.h"
+
 std::string AssetPathToDDS(const char* path)
 {
     const std::filesystem::path p(path);
@@ -56,7 +58,8 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* pa
 
 D12Resource TextureLoader::LoadTexture2DHDR(ID3D12Device* device, const char* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags)
 {
-    CherryAssert(std::filesystem::exists(path) && std::filesystem::path(path).extension().string() == ".hdr");
+    CherryAssert(std::filesystem::exists(path));
+    CherryAssert(std::filesystem::path(path).extension().string() == ".hdr" || std::filesystem::path(path).extension().string() == ".exr");
 
     const std::wstring fullPathW = stringToWString(path);
 

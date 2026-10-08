@@ -49,6 +49,22 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
 
+# IMath
+CPMAddPackage(
+        NAME Imath
+        GITHUB_REPOSITORY AcademySoftwareFoundation/Imath
+        GIT_TAG v3.2.3
+)
+
+# OpenEXR
+CPMAddPackage(
+        NAME OpenEXR
+        GITHUB_REPOSITORY AcademySoftwareFoundation/openexr
+        GIT_TAG v3.5.2
+)
+
+set(ENABLE_OPENEXR_SUPPORT ON CACHE BOOL "" FORCE)
+
 # DirectXTex
 CPMAddPackage(
         NAME DirectXTex
