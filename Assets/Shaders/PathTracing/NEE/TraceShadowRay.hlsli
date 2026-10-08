@@ -11,7 +11,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
     RayDesc ray;
     ray.Origin = pos;
     ray.Direction = dir;
-    ray.TMin = 0.001;
+    ray.TMin = 0.001f;
 
     float3 lightPos = pos + dir * lightDistance;
 
@@ -20,7 +20,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
     for (uint i = 0; i < gSettings.MaxShadowRayDepth; i++)
     {
         float3 toLight = lightPos - ray.Origin;
-        ray.TMax = length(toLight) - EPSILON;
+        ray.TMax = length(toLight) - 5 * EPSILON;
 
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
         q.Proceed();
