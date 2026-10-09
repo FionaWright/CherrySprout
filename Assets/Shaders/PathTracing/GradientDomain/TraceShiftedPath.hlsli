@@ -32,7 +32,7 @@ void TraceShiftedPath(
         DBG_OUTPUT3(Palette((uint)v1.Type), GD_V1Type);
 
         pathState.RaySegmentIdx = i;
-        pathState.LastRayWasDiracDelta = false;
+        //pathState.LastRayWasDiracDelta = false;
 
         // TODO: Skip tracing once connected
         bool isMiss;

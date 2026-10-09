@@ -21,7 +21,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
 
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
 
-        if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
+        if (FEATURE_ENABLED(NEE) && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
         {
             float pdf_env = EvaluateEnvMapPdf(uv);
             float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);

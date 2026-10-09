@@ -23,7 +23,6 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     for (i = 0; i < gSettings.MaxRayDepth; i++)
     {
         pathState.RaySegmentIdx = i;
-        pathState.LastRayWasDiracDelta = false;
 
         bool isMiss;
         HitInfo hitInfo;
@@ -111,6 +110,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             }
             pathState.Beta /= p;
         }
+
+        pathState.IsPrimaryRay = false;
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
     }

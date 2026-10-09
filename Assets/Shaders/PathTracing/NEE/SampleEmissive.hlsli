@@ -22,6 +22,7 @@ float3 SampleEmissiveBary(inout RngInfo rngInfo)
     return float3(1.0 - u - v, u, v);
 }
 
+// Note: Ng, wo from perspective of the light
 float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, float3 wo, float distance)
 {
     float pdf_prim = 1.0f / (float)primitiveCount;

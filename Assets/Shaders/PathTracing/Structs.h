@@ -54,7 +54,8 @@ struct PathState
 
     hlsl::uint LastRayWasDiracDelta;
     hlsl::uint RaySegmentIdx;
-    hlsl::float2 p;
+    hlsl::uint IsPrimaryRay;
+    float p;
 };
 
 // Note: Unaligned, do not use in C++

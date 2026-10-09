@@ -10,17 +10,17 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
 
     RayDesc ray;
     ray.Origin = pos;
-    ray.Direction = dir;
+    ray.Direction = normalize(dir);
     ray.TMin = 0.001f;
 
-    float3 lightPos = pos + dir * lightDistance;
+    float3 lightPos = pos + ray.Direction * lightDistance;
 
     shadowFactor = 1.0f;
 
     for (uint i = 0; i < gSettings.MaxShadowRayDepth; i++)
     {
         float3 toLight = lightPos - ray.Origin;
-        ray.TMax = length(toLight); // TODO: Don't like this, messing up env map NEE in cornell
+        ray.TMax = length(toLight) - 3 * EPSILON;
 
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
         q.Proceed();
@@ -35,20 +35,22 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
 
         float2 uv = ExtractUV(q, instance);
 
-        float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSamplerLinearWrap, uv);
+        float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSamplerLinearClamp, uv);
         float alpha = albedoSample.w;
 
-        shadowFactor *= 1.0f - alpha;
-
-        if (shadowFactor <= 0.0f)
+        if (alpha > EPSILON)
+        {
+            shadowFactor = 0.0f;
             return;
+        }
 
         float rayT = q.CommittedRayT();
-        ray.Origin += ray.Direction * (rayT);
+        ray.Origin += ray.Direction * (rayT + EPSILON);
 
-        float remainingDistance = dot(toLight, ray.Direction);
-        if (remainingDistance <= 0.0f)
-            return;;
+        toLight = lightPos - ray.Origin;
+        float remainingDistance = length(toLight);
+        if (remainingDistance <= EPSILON)
+            return;
     }
 }
 

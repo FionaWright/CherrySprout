@@ -27,12 +27,13 @@ void Hit(inout PathState pathState,
     float3 wo = -pathState.Desc.Direction;
 
     float3 L_emission = hitInfo.Emission;
-    if (FEATURE_ENABLED(NEE) && pathState.RaySegmentIdx != 0 && !pathState.LastRayWasDiracDelta)
+    if (FEATURE_ENABLED(NEE) && any(L_emission > 0) && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
     {
         float pdf_emissive = EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
         float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
         L_emission *= m;
     }
+    DBG_SCALE_INTENSITY_EMISSION(L_emission);
     L_sample = pathState.Beta * L_emission;
 
     BxDF bxdf;
