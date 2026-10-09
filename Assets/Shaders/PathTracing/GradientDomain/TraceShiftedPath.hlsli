@@ -4,6 +4,9 @@
 #include "PathTracing/GradientDomain/HitShiftedUnconnected.hlsli"
 #include "Utils/Debug/Palette.h"
 
+// TODO: IsPrimaryRay field
+// TODO: NEE updated
+
 void TraceShiftedPath(
     PathVertexList mainVertices,
     float3 origin,
@@ -56,6 +59,7 @@ void TraceShiftedPath(
             break;
         }
 
+        // TODO: EvaluateEmission
         float3 L_sample = pathState.Beta * hitInfo.Emission; // TODO: Emission can be cached for connected rays
 
         float3 wo = -pathState.Desc.Direction;

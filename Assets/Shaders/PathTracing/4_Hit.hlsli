@@ -22,16 +22,26 @@ void Hit(inout PathState pathState,
         out float3 L_sample,
         inout PathVertexInfo currentVertexInfo)
 {
+    L_sample = 0.0f;
+
     float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
     float3 wo = -pathState.Desc.Direction;
 
     float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
-    L_sample = pathState.Beta * L_emission;
+
+    bool isEmissive = any(L_emission > 0.0f);
+    if (isEmissive)
+    {
+        L_sample = pathState.Beta * L_emission;
+        pathState.Beta = 0.0f; // Terminate Ray
+        // TODO: current vertex info
+        return;
+    }
 
     BxDF bxdf;
 
     float3 E_direct = 0;
-    if (FEATURE_ENABLED(NEE) && all(L_emission <= 0.0f)) // TODO: Correct to prevent NEE on emissives here?
+    if (FEATURE_ENABLED(NEE))
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {

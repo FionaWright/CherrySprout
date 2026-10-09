@@ -102,6 +102,9 @@ inline float RandRangeEx(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint min, cons
 inline hlsl::uint RandRangeUInt(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint min, const hlsl::uint max)
 {
     const hlsl::uint range = max - min;
+    if (range == 0)
+        return min;
+    
     return min + (PcgRand01Uint(rngInfo.IndependentRngState) % range);
 }
 

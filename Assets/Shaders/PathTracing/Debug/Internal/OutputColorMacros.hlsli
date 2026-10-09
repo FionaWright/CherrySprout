@@ -49,7 +49,7 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT3(value, label) dbgOutput3(value.x, value.y, value.z, (uint)DebugOutputIndex::eDebugOutput_##label);
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
-#    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; }
+#    define DBG_FORCE_OUTPUT3(value) { gDebugValueFound = true; gDebugValue = value; DBG_PATH_DUMP_FORCED_OUTPUT(value); }
 
 #    define DBG_OUTPUT_SET_IF_FOUND(output) DBG_OUTPUT_SET_INTERNAL(output, false);
 #    define DBG_OUTPUT_SET(output) DBG_OUTPUT_SET_INTERNAL(output, true);
@@ -65,7 +65,7 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT3(value, label) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label)
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
-#    define DBG_FORCE_OUTPUT3(value)
+#    define DBG_FORCE_OUTPUT3(value) DBG_PATH_DUMP_FORCED_OUTPUT(value)
 
 #    define DBG_OUTPUT_SET_IF_FOUND(output)
 #    define DBG_OUTPUT_SET(output)

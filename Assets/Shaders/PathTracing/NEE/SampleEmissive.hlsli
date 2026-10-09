@@ -8,6 +8,8 @@
 
 // TODO: Build PDF over emissive triangles instead of emissive instances
 
+// TODO: Option to disable NEE when ray segment idx == max depth
+
 float3 SampleEmissiveBary(inout RngInfo rngInfo)
 {
     float u = Rand01(rngInfo);
@@ -31,6 +33,10 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, fl
 
     float pdf_area = pdf_prim * pdf_bary;
 
+    DBG_OUTPUT1(pdf_prim, NEE_PrimPdf);
+    DBG_OUTPUT1(pdf_bary, NEE_BaryPdf);
+    DBG_OUTPUT1(triangleArea, NEE_TriangleArea);
+
     float NdL = abs(dot(Ng, wo));
     return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
@@ -43,6 +49,7 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
 
     uint primitiveCount = instance.MegaBufferCountIndex / 3;
     uint primitiveIdx = RandRangeUInt(rngInfo, 0, primitiveCount-1);
+
     float3 bary = SampleEmissiveBary(rngInfo);
 
     uint primitiveOffset = instance.MegaBufferOffsetIndex / 3;

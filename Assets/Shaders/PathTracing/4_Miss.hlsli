@@ -26,7 +26,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
         if (FEATURE_ENABLED(NEE) && envMapInLSD && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
         {
             float pdf_lsd;
-            EvaluateLSD(0, pdf_lsd); // TODO: ?
+            EvaluateLSD(0, pdf_lsd);
 
             float pdf_env = pdf_lsd * EvaluateEnvMapPdf(uv);
             float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);

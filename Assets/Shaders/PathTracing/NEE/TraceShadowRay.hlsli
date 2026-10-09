@@ -29,13 +29,14 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, uint lightIdx, 
 
         uint instanceIdx = q.CommittedInstanceIndex();
 
-        if (lightIdx >= gSettings.LsdBaseEmissives)
-        {
-            int emissiveIdx = gInstanceToEmissiveInstanceMap[instanceIdx];
-            uint hitLightIdx = gSettings.LsdBaseEmissives + emissiveIdx;
-            if (lightIdx == hitLightIdx)
-                return;
-        }
+        //bool lightIsEmissive = lightIdx >= gSettings.LsdBaseEmissives;
+        //if (lightIsEmissive)
+        //{
+        //    int emissiveIdx = gInstanceToEmissiveInstanceMap[instanceIdx];
+        //    uint hitLightIdx = gSettings.LsdBaseEmissives + emissiveIdx;
+        //    if (lightIdx == hitLightIdx)
+        //        return;
+        //}
 
         InstanceData instance = gMegaBufferInstanceData[instanceIdx];
         Material mat = gMegaBufferMaterials[instance.MaterialIndex];
@@ -45,7 +46,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, uint lightIdx, 
         float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSamplerLinearClamp, uv);
         float alpha = albedoSample.w;
 
-        if (alpha > EPSILON)
+        if (alpha > EPSILON) // TODO: Change back to mult
         {
             shadowFactor = 0.0f;
             return;

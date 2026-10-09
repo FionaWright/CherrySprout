@@ -404,6 +404,8 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                             return ImGui::TreeNodeEx(fullLabel.c_str(), ImGuiTreeNodeFlags_SpanAllColumns);
                         };
 
+                        RowFloat3("ForcedOutput", m_cpuPathDump[i].ForcedOutput, true);
+
                         if (RowSection("Path State"))
                         {
                             RowInt("RaySegmentIdx", static_cast<int>(m_cpuPathDump[i].PathState.RaySegmentIdx));

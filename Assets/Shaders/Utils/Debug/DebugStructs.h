@@ -29,6 +29,7 @@ struct RayDump
     hlsl::uint Explored;
     PathState PathState;
     PathVertexInfo PathVertex;
+    hlsl::float3 ForcedOutput;
 };
 
 struct SumSquaredErrorStruct
