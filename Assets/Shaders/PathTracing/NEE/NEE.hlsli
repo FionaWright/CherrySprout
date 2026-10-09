@@ -27,7 +27,8 @@ float3 SampleNEE(
     }
 
     float shadowFactor;
-    TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, lightSample.Index, shadowFactor);
+    //TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, lightSample.Index, shadowFactor);
+    TraceRayShadow(hitInfo.HitPos, lightSample.Direction, lightSample.Distance, lightSample.Index, shadowFactor);
     DBG_OUTPUT1(shadowFactor,     NEE_ShadowFactor);
 
     if (shadowFactor <= 0.0f)

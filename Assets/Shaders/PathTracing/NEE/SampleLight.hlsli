@@ -16,7 +16,6 @@ LightSample SampleLight(
     HitInfo hitInfo,
     PathState pathState,
     BxDF bxdf,
-
     float3 wo)
 {
     LightSample lightSample;
