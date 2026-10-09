@@ -52,6 +52,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     if (FEATURE_ENABLED(NEE))
     {
+        hitInfo.InstanceIdx = instanceIdx;
         hitInfo.PrimitiveCount = instance.MegaBufferCountIndex / 3;
         hitInfo.TriangleArea = triangleArea;
     }

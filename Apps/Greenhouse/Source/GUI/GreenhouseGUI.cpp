@@ -442,25 +442,31 @@ void Greenhouse::renderGuiCore()
 
                         if (aliasTablesEnabled)
                         {
-                            ImGui::TableSetColumnIndex(2);
-                            ImGui::Text("%.9f", cpuLightAlias[i].PDF);
+                            if (cpuLightAlias.size() > 0)
+                            {
+                                ImGui::TableSetColumnIndex(2);
+                                ImGui::Text("%.9f", cpuLightAlias[i].PDF);
 
-                            ImGui::TableSetColumnIndex(3);
-                            ImGui::Text("%.9f", cpuLightAlias[i].Threshold);
+                                ImGui::TableSetColumnIndex(3);
+                                ImGui::Text("%.9f", cpuLightAlias[i].Threshold);
 
-                            ImGui::TableSetColumnIndex(4);
-                            if (cpuLightAlias[i].Alias == i)
-                                ImGui::TextUnformatted("-");
-                            else
-                                ImGui::Text("%i", cpuLightAlias[i].Alias);
+                                ImGui::TableSetColumnIndex(4);
+                                if (cpuLightAlias[i].Alias == i)
+                                    ImGui::TextUnformatted("-");
+                                else
+                                    ImGui::Text("%i", cpuLightAlias[i].Alias);
+                            }
                         }
                         else
                         {
-                            ImGui::TableSetColumnIndex(2);
-                            ImGui::Text("%.9f", cpuLightCdf[i].PDF);
+                            if (cpuLightCdf.size() > 0)
+                            {
+                                ImGui::TableSetColumnIndex(2);
+                                ImGui::Text("%.9f", cpuLightCdf[i].PDF);
 
-                            ImGui::TableSetColumnIndex(3);
-                            ImGui::Text("%.9f", cpuLightCdf[i].CDF);
+                                ImGui::TableSetColumnIndex(3);
+                                ImGui::Text("%.9f", cpuLightCdf[i].CDF);
+                            }
                         }
                     }
                 }

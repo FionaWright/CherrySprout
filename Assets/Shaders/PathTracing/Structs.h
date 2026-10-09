@@ -28,7 +28,8 @@ struct HitInfo
     hlsl::uint PrimitiveCount;
 
     float TriangleArea;
-    hlsl::float3 p;
+    hlsl::uint InstanceIdx;
+    hlsl::float2 p;
 };
 
 #ifdef __cplusplus

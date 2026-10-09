@@ -12,6 +12,7 @@
 #include "PathTracing/5_SampleDirect.hlsli"
 #include "PathTracing/5_SampleIndirect.hlsli"
 #include "PathTracing/NEE/SampleEmissive.hlsli"
+#include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/MIS.hlsli"
 
 void Hit(inout PathState pathState,
@@ -27,9 +28,31 @@ void Hit(inout PathState pathState,
     float3 wo = -pathState.Desc.Direction;
 
     float3 L_emission = hitInfo.Emission;
-    if (FEATURE_ENABLED(NEE) && any(L_emission > 0) && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
+    bool emissivesInLSD = gSettings.LsdCount != gSettings.LsdBaseEmissives;
+    if (FEATURE_ENABLED(NEE) && FEATURE_ENABLED(Emission) && emissivesInLSD && any(L_emission > 0) && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
     {
-        float pdf_emissive = EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
+        // TODO
+        int emissiveIdx = -1;
+        uint numEmissives = gSettings.LsdCount - gSettings.LsdBaseEmissives;
+        for (int i = 0; i < numEmissives; i++)
+        {
+            if (gEmissiveInstanceToInstanceMap[i] == hitInfo.InstanceIdx)
+            {
+                emissiveIdx = i;
+                break;
+            }
+        }
+        if (emissiveIdx == -1)
+        {
+            L_sample = NAN;
+            return;
+        }
+        uint lightIdx = emissiveIdx + gSettings.LsdBaseEmissives;
+
+        float pdf_lsd;
+        EvaluateLSD(lightIdx, pdf_lsd);
+
+        float pdf_emissive = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
         float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
         L_emission *= m;
     }

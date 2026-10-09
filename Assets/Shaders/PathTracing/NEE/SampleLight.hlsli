@@ -83,6 +83,7 @@ LightSample SampleLight(
     lightSample.Index = lightIdx;
     lightSample.PDF *= pdf_lsd;
 
+    DBG_OUTPUT1(pdf_lsd,               NEE_LsdPdf);
     DBG_OUTPUT3(lightSample.Radiance,  NEE_LightSampleRadiance);
     DBG_OUTPUT1(lightSample.Index,     NEE_LightSampleIdx);
     DBG_OUTPUT1(lightSample.Distance,  NEE_LightSampleDistance);

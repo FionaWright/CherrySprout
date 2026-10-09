@@ -3,6 +3,7 @@
 
 #include "PathTracing/MIS.hlsli"
 #include "PathTracing/NEE/LSD/SampleEnvMapCdf.hlsli"
+#include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
 float3 Miss(inout PathState pathState, uint bounceIdx)
@@ -21,9 +22,13 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
 
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
 
-        if (FEATURE_ENABLED(NEE) && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
+        bool envMapInLSD = gSettings.LsdBasePunctuals >= 1;
+        if (FEATURE_ENABLED(NEE) && envMapInLSD && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
         {
-            float pdf_env = EvaluateEnvMapPdf(uv);
+            float pdf_lsd;
+            EvaluateLSD(0, pdf_lsd); // TODO: ?
+
+            float pdf_env = pdf_lsd * EvaluateEnvMapPdf(uv);
             float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
             Le *= m;
         }

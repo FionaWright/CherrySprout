@@ -7,6 +7,7 @@
 #include "PathTracing/4_Miss.hlsli"
 #include "PathTracing/4_ComputeRayHit.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
+#include "PathTracing/Debug/Globals.hlsli"
 
 #include "Utils/Random.h"
 
