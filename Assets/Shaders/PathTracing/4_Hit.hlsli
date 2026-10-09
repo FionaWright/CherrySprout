@@ -11,9 +11,7 @@
 
 #include "PathTracing/5_SampleDirect.hlsli"
 #include "PathTracing/5_SampleIndirect.hlsli"
-#include "PathTracing/NEE/SampleEmissive.hlsli"
-#include "PathTracing/NEE/LSD/SampleLSD.hlsli"
-#include "PathTracing/MIS.hlsli"
+#include "PathTracing/EvaluateHitEmission.hlsli"
 
 void Hit(inout PathState pathState,
         inout RngInfo rngInfo,
@@ -27,42 +25,13 @@ void Hit(inout PathState pathState,
     float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
     float3 wo = -pathState.Desc.Direction;
 
-    float3 L_emission = hitInfo.Emission;
-    bool emissivesInLSD = gSettings.LsdCount != gSettings.LsdBaseEmissives;
-    if (FEATURE_ENABLED(NEE) && FEATURE_ENABLED(Emission) && emissivesInLSD && any(L_emission > 0) && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
-    {
-        // TODO
-        int emissiveIdx = -1;
-        uint numEmissives = gSettings.LsdCount - gSettings.LsdBaseEmissives;
-        for (int i = 0; i < numEmissives; i++)
-        {
-            if (gEmissiveInstanceToInstanceMap[i] == hitInfo.InstanceIdx)
-            {
-                emissiveIdx = i;
-                break;
-            }
-        }
-        if (emissiveIdx == -1)
-        {
-            L_sample = NAN;
-            return;
-        }
-        uint lightIdx = emissiveIdx + gSettings.LsdBaseEmissives;
-
-        float pdf_lsd;
-        EvaluateLSD(lightIdx, pdf_lsd);
-
-        float pdf_emissive = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
-        float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
-        L_emission *= m;
-    }
-    DBG_SCALE_INTENSITY_EMISSION(L_emission);
+    float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
     L_sample = pathState.Beta * L_emission;
 
     BxDF bxdf;
 
     float3 E_direct = 0;
-    if (FEATURE_ENABLED(NEE))
+    if (FEATURE_ENABLED(NEE) && all(L_emission <= 0.0f)) // TODO: Correct to prevent NEE on emissives here?
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {

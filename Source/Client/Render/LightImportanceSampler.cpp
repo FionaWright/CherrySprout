@@ -181,7 +181,8 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
     const size_t emissiveMapBytes = m_maxEmissives * sizeof(uint32_t);
     const size_t emissivePdfBytes = m_maxEmissives * sizeof(float);
 
-    std::vector<uint32_t> emissiveInstanceMap;
+    std::vector<uint32_t> emissiveToInstanceMap;
+    std::vector<int32_t> instanceToEmissiveMap;
 
     for (int instanceIdx = 0; instanceIdx < scene->CPU.ObjectCount; instanceIdx++)
     {
@@ -190,19 +191,24 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
         const Material& mat = scene->CPU.MegaBufferMaterials[materialIdx];
 
         if (!IsMaterialEmissive(mat))
+        {
+            instanceToEmissiveMap.emplace_back(-1);
             continue;
+        }
 
-        emissiveInstanceMap.emplace_back(instanceIdx);
+        int32_t emissiveIdx = emissiveToInstanceMap.size();
+        instanceToEmissiveMap.emplace_back(emissiveIdx);
+        emissiveToInstanceMap.emplace_back(instanceIdx);
     }
 
-    if (emissiveInstanceMap.empty())
+    if (emissiveToInstanceMap.empty())
     {
         m_numEmissiveInstances = 0;
         m_emissiveWeight = 0.0f;
         return;
     }
 
-    m_numEmissiveInstances = emissiveInstanceMap.size();
+    m_numEmissiveInstances = emissiveToInstanceMap.size();
 
     UploadHeap uploadHeap;
     uploadHeap.Init(d3d->GetDevice(), Align(emissiveMapBytes, 512));
@@ -213,16 +219,17 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
     {
         GPU_SCOPE(cmdList, "PDF: Emissive");
 
-        m_emissiveInstanceMap.UploadBuffer(cmdList, &uploadHeap, emissiveInstanceMap.data(), emissiveMapBytes);
+        m_emissiveToInstanceMap.UploadBuffer(cmdList, &uploadHeap, emissiveToInstanceMap.data(), emissiveMapBytes);
+        m_instanceToEmissiveMap.UploadBuffer(cmdList, &uploadHeap, instanceToEmissiveMap.data(), emissiveMapBytes);
 
-        m_emissiveInstanceMap.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_emissiveToInstanceMap.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         m_emissivePdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 2, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 3, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
-        m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 4, &m_emissiveInstanceMap, m_numEmissiveInstances, sizeof(uint32_t));
+        m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 4, &m_emissiveToInstanceMap, m_numEmissiveInstances, sizeof(uint32_t));
         m_setEmissivePdf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_emissivePdfRW, m_numEmissiveInstances, sizeof(float));
 
         CbvEmissivePdf cbv;
@@ -423,11 +430,13 @@ void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D
     m_punctualPdfReadback.Release();
     m_lsdRW.Release();
     m_lsdReadback.Release();
-    m_emissiveInstanceMap.Release();
+    m_emissiveToInstanceMap.Release();
+    m_instanceToEmissiveMap.Release();
     m_emissivePdfRW.Release();
     m_emissivePdfReadback.Release();
 
-    m_emissiveInstanceMap.    Init_Buffer("Emissive Instance Map", d3d->GetDevice(), emissiveMapBytes);
+    m_emissiveToInstanceMap.  Init_Buffer("Emissive -> Instance Map", d3d->GetDevice(), emissiveMapBytes);
+    m_instanceToEmissiveMap.  Init_Buffer("Instance -> Emissive Map", d3d->GetDevice(), emissiveMapBytes);
     m_emissivePdfRW.          Init_Buffer("Emissive PDF (RW)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_emissivePdfReadback.    Init_Buffer("Emissive PDF (Readback)", d3d->GetDevice(), emissivePdfBytes, D3D12_RESOURCE_FLAG_NONE, true);
     m_punctualPdfRW.          Init_Buffer("Punctual Light PDF (RW)", d3d->GetDevice(), m_punctualLightsPdfBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

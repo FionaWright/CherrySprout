@@ -39,17 +39,18 @@ Texture2D<float>                                    gEnvMapPmfConditional   : re
 Texture2D<float>                                    gEnvMapCdfConditional   : register(t8, REGISTER_SPACE_DEFAULT);
 Texture1D<float>                                    gEnvMapCdfMarginal      : register(t9, REGISTER_SPACE_DEFAULT);
 StructuredBuffer<uint>                              gEmissiveInstanceToInstanceMap : register(t10, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<int>                               gInstanceToEmissiveInstanceMap : register(t11, REGISTER_SPACE_DEFAULT);
 
 #if FEATURE_ENABLED_PP(AliasTables)
-StructuredBuffer<AliasEntry>                        gLightAliasTable        : register(t11, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<AliasEntry>                        gLightAliasTable        : register(t12, REGISTER_SPACE_DEFAULT);
 #else
-StructuredBuffer<ProbabilityDistributionSample>     gLightCDF               : register(t11, REGISTER_SPACE_DEFAULT);
+StructuredBuffer<ProbabilityDistributionSample>     gLightCDF               : register(t12, REGISTER_SPACE_DEFAULT);
 #endif
 
-Texture2D<uint>                                     gGBufferMaterialIdx     : register(t12, REGISTER_SPACE_DEFAULT);
-Texture2D<float4>                                   gGBufferNormals         : register(t13, REGISTER_SPACE_DEFAULT);
-Texture2D<float>                                    gGBufferDepth           : register(t14, REGISTER_SPACE_DEFAULT);
-Texture2D<float4>                                   gGBufferUvMv            : register(t15, REGISTER_SPACE_DEFAULT);
+Texture2D<uint>                                     gGBufferMaterialIdx     : register(t13, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                                   gGBufferNormals         : register(t14, REGISTER_SPACE_DEFAULT);
+Texture2D<float>                                    gGBufferDepth           : register(t15, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                                   gGBufferUvMv            : register(t16, REGISTER_SPACE_DEFAULT);
 
 // =================== T Registers (Scene Textures) ==============================================================
 

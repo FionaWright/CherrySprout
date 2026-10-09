@@ -139,14 +139,15 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 7, lightImportanceSampler->GetEnvMapPdf(), lightImportanceSampler->GetEnvMapPdf()->GetDesc().Format);
         m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 8, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
         m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), 9, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 10, lightImportanceSampler->GetEmissiveInstanceMap(), scene->CPU.ObjectCount, sizeof(uint32_t));
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 11, lightImportanceSampler->GetLightsCdf(), lightImportanceSampler->GetMaxLsdCount(), lsdStride);
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 10, lightImportanceSampler->GetEmissiveToInstanceMap(), scene->CPU.ObjectCount, sizeof(uint32_t));
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 11, lightImportanceSampler->GetInstanceToEmissiveMap(), scene->CPU.ObjectCount, sizeof(int32_t));
+        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 12, lightImportanceSampler->GetLightsCdf(), lightImportanceSampler->GetMaxLsdCount(), lsdStride);
     }
 
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 12, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 15, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 15, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 16, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
 
     m_gradientManager.LoadSceneData(d3d, heap, &m_primal);
 }
@@ -364,7 +365,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     const MicrofacetModelType& microfacetModelType)
 {
     constexpr uint32_t numCBV = 2;
-    constexpr uint32_t numSRV = 16;
+    constexpr uint32_t numSRV = 17;
     constexpr uint32_t numUAV = 10;
 
     D3D12_STATIC_SAMPLER_DESC samplers[2] = {};

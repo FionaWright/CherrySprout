@@ -4,14 +4,15 @@
 #include "PathTracing/Utils.hlsli"
 #include "PathTracing/HitInfo/ExtractUtils.hlsli"
 
-void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shadowFactor)
+void TraceRayShadow(float3 pos, float3 dir, float lightDistance, uint lightIdx, out float shadowFactor)
 {
     RayQuery<RAY_FLAGS> q;
 
     RayDesc ray;
     ray.Origin = pos;
     ray.Direction = normalize(dir);
-    ray.TMin = 0.001f;
+    ray.TMin = 0.001;
+    ray.TMax = lightDistance - EPSILON;
 
     float3 lightPos = pos + ray.Direction * lightDistance;
 
@@ -19,9 +20,6 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
 
     for (uint i = 0; i < gSettings.MaxShadowRayDepth; i++)
     {
-        float3 toLight = lightPos - ray.Origin;
-        ray.TMax = length(toLight) - 3 * EPSILON;
-
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
         q.Proceed();
 
@@ -30,6 +28,15 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
             return;
 
         uint instanceIdx = q.CommittedInstanceIndex();
+
+        if (lightIdx >= gSettings.LsdBaseEmissives)
+        {
+            int emissiveIdx = gInstanceToEmissiveInstanceMap[instanceIdx];
+            uint hitLightIdx = gSettings.LsdBaseEmissives + emissiveIdx;
+            if (lightIdx == hitLightIdx)
+                return;
+        }
+
         InstanceData instance = gMegaBufferInstanceData[instanceIdx];
         Material mat = gMegaBufferMaterials[instance.MaterialIndex];
 
@@ -47,10 +54,11 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
         float rayT = q.CommittedRayT();
         ray.Origin += ray.Direction * (rayT + EPSILON);
 
-        toLight = lightPos - ray.Origin;
+        float3 toLight = lightPos - ray.Origin;
         float remainingDistance = length(toLight);
         if (remainingDistance <= EPSILON)
             return;
+        ray.TMax = remainingDistance - EPSILON;
     }
 }
 

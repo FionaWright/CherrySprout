@@ -34,7 +34,8 @@ public:
     [[nodiscard]] D12Resource* GetEnvMapPdf() { return &m_envMapPdf; }
     [[nodiscard]] D12Resource* GetEnvMapCdfConditional() { return &m_envMapCdfConditional; }
     [[nodiscard]] D12Resource* GetEnvMapCdfMarginal() { return &m_envMapCdfMarginal; }
-    [[nodiscard]] D12Resource* GetEmissiveInstanceMap() { return &m_emissiveInstanceMap; }
+    [[nodiscard]] D12Resource* GetEmissiveToInstanceMap() { return &m_emissiveToInstanceMap; }
+    [[nodiscard]] D12Resource* GetInstanceToEmissiveMap() { return &m_instanceToEmissiveMap; }
     [[nodiscard]] D12Resource* GetLightsCdf() { return &m_lsdRW; }
 
     [[nodiscard]] float GetEnvMapWeight() const { return m_envMapWeight; }
@@ -87,7 +88,8 @@ private:
     D12Resource m_punctualPdfRW;
     D12Resource m_punctualPdfReadback;
 
-    D12Resource m_emissiveInstanceMap;
+    D12Resource m_emissiveToInstanceMap;
+    D12Resource m_instanceToEmissiveMap;
     D12Resource m_emissivePdfRW;
     D12Resource m_emissivePdfReadback;
 
