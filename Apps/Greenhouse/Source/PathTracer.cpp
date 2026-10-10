@@ -82,10 +82,19 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_outputRgba8Unorm, m_outputRgba8Unorm.GetDesc().Format);
     }
 
+    auto featureFlags = s_defaultFeatFlagsCore;
+
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
+#if CHERRY_DEBUG_FEATURES_ENABLED
     Config::SetBoolFromArg(&debugInfo.FeatFlagQuickSwitchEnabled, "--cbvFlagMode");
-    const auto featureFlags = debugInfo.FeatFlagQuickSwitchEnabled ? s_defaultFeatFlagsCoreQS : s_defaultFeatFlagsCore;
-    debugInfo.FlagsDebug = debugInfo.FeatFlagQuickSwitchEnabled ? s_defaultFeatFlagsDbgQS : s_defaultFeatFlagsDbg;
+    debugInfo.FlagsDebug = s_defaultFeatFlagsDbg;
+    if (debugInfo.FeatFlagQuickSwitchEnabled)
+    {
+        featureFlags = s_defaultFeatFlagsCoreQS;
+        debugInfo.FlagsDebug = s_defaultFeatFlagsDbgQS;
+    }
+#endif
+
     UpdatePipeline(d3d->GetDevice(),
         featureFlags,
         debugInfo,
@@ -386,8 +395,10 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_DBG_" + std::string(s_featFlagNamesDbg[i]) + "=" + std::to_string(flagValue));
     }
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (debugInfo.FeatFlagQuickSwitchEnabled)
         compileArgsCommon.emplace_back("-DFF_QUICK_SWITCH_ENABLED=1");
+#endif
 
     {
         std::vector<std::string> compileArgs = compileArgsCommon;

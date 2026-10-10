@@ -71,6 +71,7 @@ D12Resource* GradientManager::Render(const D3D* d3d, ID3D12GraphicsCommandList* 
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
         if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_OutputColor))
         {
             if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientXF)
@@ -82,6 +83,7 @@ D12Resource* GradientManager::Render(const D3D* d3d, ID3D12GraphicsCommandList* 
             if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientYB)
                 return &m_gradientYB;
         }
+#endif
     }
 
     if (renderInfo.PathTracerConfig->DisplayGradientX || renderInfo.PathTracerConfig->DisplayGradientY)

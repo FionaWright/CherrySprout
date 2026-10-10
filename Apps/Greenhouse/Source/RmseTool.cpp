@@ -8,14 +8,18 @@
 #include <iostream>
 
 #include "Greenhouse.h"
-#include "Debug/GPUEventScoped.h"
-#include "Debug/PythonExecutor.h"
-#include "Debug/Snapshotter.h"
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
 #include "System/FileHelper.h"
 #include "Utils/Helper.h"
 #include "Utils/Debug/DebugStructs.h"
+
+#include "Debug/GPUEventScoped.h"
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+#include "Debug/PythonExecutor.h"
+#include "Debug/Snapshotter.h"
+#endif
 
 void RmseTool::Init(const D3D* d3d, Heap* heap)
 {
@@ -72,6 +76,7 @@ D12Resource* RmseTool::LoadTextureFromSlot(const uint32_t slotIdx) const
 
 void RmseTool::SaveSlotToFile(D3D* d3d, const char* path, const uint32_t slotIdx)
 {
+#if CHERRY_DEBUG_FEATURES_ENABLED
     D12Resource* slot = &m_slots[slotIdx];
     CherryAssert(slot->GetResource());
 
@@ -90,16 +95,19 @@ void RmseTool::SaveSlotToFile(D3D* d3d, const char* path, const uint32_t slotIdx
     }
 
     Snapshotter::SnapshotToFile(packed, path);
+#endif
 }
 
 void RmseTool::LoadSlotFromFile(D3D* d3d, Heap* heap, const char* path, const uint32_t slotIdx)
 {
+#if CHERRY_DEBUG_FEATURES_ENABLED
     const std::string filename = std::filesystem::path(path).filename().string();
 
     const ScratchImage scratch = Snapshotter::FileToSnapshot(path);
     D12Resource resource = Snapshotter::SnapshotToResource(d3d, scratch, filename.c_str());
 
     StoreTextureToSlot(d3d, heap, &resource, slotIdx);
+#endif
 }
 
 std::string RmseTool::GetSlotName(const uint32_t slotIdx) const
@@ -321,6 +329,7 @@ void RmseTool::SaveTest(const char* testName) const
 
 void RmseTool::PlotConvergence(const char* testName) const
 {
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (strcmp(testName, "") == 0)
     {
         CherryPrint("Invalid Test Name!");
@@ -339,10 +348,12 @@ void RmseTool::PlotConvergence(const char* testName) const
     const std::vector<std::string> args = { testName, "--show", "--save" };
 
     PythonExecutor::ExecutePythonWithData("Plot1D.py", testName, csvData.c_str(), csvData.size(), args);
+#endif
 }
 
 void RmseTool::PlotMultiConvergence(const std::vector<std::string>& testNames, const bool logPlot)
 {
+#if CHERRY_DEBUG_FEATURES_ENABLED
     // Plot graph
     {
         std::vector<std::string> args = { "--show", "--save" };
@@ -357,4 +368,5 @@ void RmseTool::PlotMultiConvergence(const std::vector<std::string>& testNames, c
 
         PythonExecutor::ExecutePython("PlotMultiConvergence.py", args);
     }
+#endif
 }

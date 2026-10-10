@@ -153,85 +153,6 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
 
         ImGui::Spacing();
         ImGui::Separator();
-
-        /*
-
-        static uint32_t goldenMaxFrames = 50;
-        ImGuiUtils::FwInputUInt("Golden Frames##xxx", &goldenMaxFrames);
-        static char path[256];
-        ImGui::InputText("Golden File Path", path, 256);
-
-        if (ImGui::Button("Compute Golden"))
-        {
-            m_rmseTool.BeginComputeGolden(goldenMaxFrames, path);
-            m_pathTracer.Reset();
-            ResetCameraToSceneStart();
-        }
-
-        if (m_rmseTool.IsRunningGolden())
-        {
-            ImGui::SameLine(); ImGui::Text("Progress: %.2f/100%%", 100.0f * m_pathTracer.GetContext().GetFrameNum() / static_cast<float>(goldenMaxFrames));
-        }
-
-        if (ImGui::Button("Load Golden Image"))
-        {
-            m_rmseTool.PrepareLoadGolden(path);
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-
-        static uint32_t convergenceMaxFrames = 50;
-        ImGuiUtils::FwInputUInt("Max Frames##xxx", &convergenceMaxFrames);
-        static uint32_t frameInc = 1;
-        ImGuiUtils::FwInputUInt("Frame Inc##xxx", &frameInc);
-        static char testName[256];
-        ImGui::InputText("Test Name", testName, 256);
-        static bool plotAndShow = false;
-        ImGui::Checkbox("Plot and Show", &plotAndShow);
-
-        if (ImGui::Button("Convergence Test"))
-        {
-            m_rmseTool.BeginConvergenceTest(convergenceMaxFrames, testName, frameInc, plotAndShow);
-            m_pathTracer.Reset();
-            ResetCameraToSceneStart();
-        }
-
-        if (m_rmseTool.IsRunningConvergence())
-        {
-            ImGui::SameLine(); ImGui::Text("Progress: %.2f%%", m_rmseTool.GetConvergenceTestPercent() * 100.0f);
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-
-        static std::vector<std::string> testNames = { "", "" };
-        for (int i = 0; i < testNames.size(); i++)
-        {
-            char buff[256] = {};
-            memcpy(buff, testNames[i].data(), testNames[i].size());
-            std::string label = std::string("Test Name ") + std::to_string(i);
-            ImGui::InputText(label.c_str(), buff, 256);
-            testNames[i] = buff;
-        }
-
-        const int lastIdx = testNames.size() - 1;
-        if (lastIdx > 1 && testNames[lastIdx].empty() && testNames[lastIdx - 1].empty())
-            testNames.erase(testNames.end() - 1);
-        else if (!testNames[lastIdx].empty())
-            testNames.emplace_back("");
-
-        static bool logPlot = false;
-        ImGui::Checkbox("Logarithmic Y-Axis", &logPlot);
-
-        if (ImGui::Button("Compare Tests"))
-        {
-            testNames.erase(testNames.end() - 1);
-            m_rmseTool.CompareTests(testNames, logPlot);
-        }
-
-        */
-
         ImGui::Unindent(IM_GUI_INDENTATION);
     }
 
@@ -271,7 +192,9 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                 {
                     m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
                     SetFeatFlagCore(config.FlagsCore, eCore_Accumulation, false);
+#if CHERRY_DEBUG_FEATURES_ENABLED
                     SetFeatFlagCore(config.DebugInfo.FeatFlagsCoreQS, eCore_Accumulation, false);
+#endif
                 }
                 else
                     m_scheduledRunState = ScheduledRunState::eRunFrame;
@@ -568,9 +491,11 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                     {
                         m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
                         SetFeatFlagCore(config.FlagsCore, eCore_Accumulation, false);
+#if CHERRY_DEBUG_FEATURES_ENABLED
                         SetFeatFlagCore(config.DebugInfo.FeatFlagsCoreQS, eCore_Accumulation, false);
                         SetFeatFlagDebug(config.DebugInfo.FlagsDebug, eDebug_PathDumper, true);
                         SetFeatFlagDebug(config.DebugInfo.FeatFlagsDebugQS, eDebug_PathDumper, true);
+#endif
                     }
                     else
                         m_scheduledRunState = ScheduledRunState::eRunFrame;
@@ -586,6 +511,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         ImGui::Spacing();
     }
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (config.FeatFlagEnabledDebug(eDebug_OutputColor) && ImGui::CollapsingHeader("Debug Output Colors"))
     {
         ImGui::Indent(IM_GUI_INDENTATION);
@@ -639,4 +565,5 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         ImGui::EndTable();
         ImGui::Spacing();
     }
+#endif
 }

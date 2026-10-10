@@ -167,6 +167,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
         const bool prevQuickSwitchEnabled = m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled;
         m_ptPipelineDirty |= ImGui::Checkbox("Quick Switch Mode", &m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled);
         ImGui::Spacing();
@@ -221,6 +222,9 @@ void Greenhouse::renderGuiCore()
                 }
             }
         }
+#else
+        constexpr bool quickSwitchEnabled = false;
+#endif
 
         constexpr FeatFlagsCore lsdDirtyFlags = static_cast<FeatFlagsCore>(eCore_EnvironmentMap | eCore_Emission | eCore_Punctuals | eCore_AliasTables);
 
@@ -245,6 +249,7 @@ void Greenhouse::renderGuiCore()
 
                 const auto flag = static_cast<FeatFlagsCore>(1 << i);
 
+#if CHERRY_DEBUG_FEATURES_ENABLED
                 if (quickSwitchEnabled)
                 {
                     if (s_featFlagsIsQsCore[i])
@@ -262,6 +267,7 @@ void Greenhouse::renderGuiCore()
                     }
                     ImGui::TableNextColumn();
                 }
+#endif
 
                 bool isEnabled = GetFeatFlagCore(m_config.PathTracerConfig.FlagsCore, flag);
                 const bool changed = ImGui::Checkbox(s_featFlagNamesCore[i], &isEnabled);

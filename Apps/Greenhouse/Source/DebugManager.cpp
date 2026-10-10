@@ -36,6 +36,7 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
 
 void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)
 {
+#if CHERRY_DEBUG_FEATURES_ENABLED
     if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_Asserts))
     {
         UploadHeap uploadHeapClear;
@@ -118,6 +119,7 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
     }
 
     m_rmseTool.PostUpdate(d3d, renderInfo, frameIdx, ptOutput);
+#endif
 }
 
 void DebugManager::SetScheduledRunParameters(CbvPathTracingSettings* settings) const
