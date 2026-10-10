@@ -56,10 +56,12 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         {
             GPU_SCOPE(cmdList, "Combined Lights CDF");
 
-            CbvTotalLuminances cbv{};
+            CbvLSD cbv{};
             cbv.EnvMapTotalLuminance = m_envMapWeight;
             cbv.PunctualTotalLuminance = m_punctualWeight;
             cbv.EmissiveTotalLuminance = m_emissiveWeight;
+            cbv.PunctualCount = m_numPunctuals;
+            cbv.EmissiveCount = m_numEmissiveInstances;
             m_setLSD.UpdateCBV(0, &cbv);
 
             const Pipeline& pipeline = config.UseAliasTables ? m_pipelineLsdAlias : m_pipelineLsdCdf;
@@ -459,7 +461,7 @@ void LightImportanceSampler::loadSceneData(D3D* d3d, Heap* heap, Scene* scene, D
     m_setPunctualPdf.SetUAV_Buffer(d3d->GetDevice(), 0, &m_punctualPdfRW, scene->CPU.MegaBufferPunctualLightsCount, sizeof(float));
 
     m_setEmissivePdf.AddCBV(d3d->GetDevice(), sizeof(CbvEmissivePdf), &m_uploadHeap);
-    m_setLSD.AddCBV(d3d->GetDevice(), sizeof(CbvTotalLuminances), &m_uploadHeap);
+    m_setLSD.AddCBV(d3d->GetDevice(), sizeof(CbvLSD), &m_uploadHeap);
 
     m_setEnvMapSumLum.SetSRV_Tex2D(d3d->GetDevice(), 0, envMap, envMap->GetDesc().Format);
     m_setEnvMapSumLum.SetUAV_Buffer(d3d->GetDevice(), 0, &m_envMapSumLumBufferRW, m_sumLumBufferNumElements, sizeof(float));
@@ -524,7 +526,7 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, const D12Resour
     m_envMapCdfMarginal.                        Init_Tex1D("Env Map CDF Marginal", d3d->GetDevice(), w, 1, 1, distributionFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     size_t uploadHeapSize = 0;
-    uploadHeapSize += Align(sizeof(CbvTotalLuminances), 256);
+    uploadHeapSize += Align(sizeof(CbvLSD), 256);
     uploadHeapSize += Align(sizeof(CbvEmissivePdf), 256);
     uploadHeapSize += Align(sizeof(float), 256);
     m_uploadHeap.Init(d3d->GetDevice(), uploadHeapSize);

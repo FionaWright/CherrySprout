@@ -119,11 +119,15 @@ struct CbvGBufferPrePass_PerInstance
     hlsl::float3 p;
 };
 
-struct CbvTotalLuminances
+struct CbvLSD
 {
     float EnvMapTotalLuminance;
     float PunctualTotalLuminance;
     float EmissiveTotalLuminance;
+    hlsl::uint PunctualCount;
+
+    hlsl::uint EmissiveCount;
+    hlsl::float3 p;
 };
 
 struct CbvPathTracingDebugSettings

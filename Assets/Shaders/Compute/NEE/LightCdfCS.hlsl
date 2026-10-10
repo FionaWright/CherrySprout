@@ -8,7 +8,7 @@ RWStructuredBuffer<float> gPunctualPDF : register(u0);
 RWStructuredBuffer<float> gEmissivePDF  : register(u1);
 RWStructuredBuffer<ProbabilityDistributionSample> gCDF  : register(u2);
 
-ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
+ConstantBuffer<CbvLSD> gCBV : register(b0);
 
 #include "Compute/NEE/Utils.hlsli"
 
@@ -26,8 +26,8 @@ void AddCdfPdf(float pdf, inout float rollingSum, inout uint idx)
 [numthreads(1,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    float punctualWeight = gTotalLums.PunctualTotalLuminance;
-    float emissiveWeight = gTotalLums.EmissiveTotalLuminance;
+    float punctualWeight = gCBV.PunctualTotalLuminance;
+    float emissiveWeight = gCBV.EmissiveTotalLuminance;
     float envMapWeight = GetEnvMapWeight(punctualWeight, emissiveWeight);
     float totalWeight = punctualWeight + emissiveWeight + envMapWeight;
 

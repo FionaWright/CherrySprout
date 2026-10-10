@@ -3,7 +3,7 @@
 
 uint GetEnvMapCount()
 {
-    if (gTotalLums.EnvMapTotalLuminance <= 0.0f)
+    if (gCBV.EnvMapTotalLuminance <= 0.0f)
         return 0;
 
     return 1;
@@ -11,29 +11,23 @@ uint GetEnvMapCount()
 
 uint GetPunctualsCount()
 {
-    if (gTotalLums.PunctualTotalLuminance <= 0.0f)
+    if (gCBV.PunctualTotalLuminance <= 0.0f)
         return 0;
 
-    uint count, _;
-    gPunctualPDF.GetDimensions(count, _);
-
-    return count;
+    return gCBV.PunctualCount;
 }
 
 uint GetEmissivesCount()
 {
-    if (gTotalLums.EmissiveTotalLuminance <= 0.0f)
+    if (gCBV.EmissiveTotalLuminance <= 0.0f)
         return 0;
 
-    uint count, _;
-    gEmissivePDF.GetDimensions(count, _);
-
-    return count;
+    return gCBV.EmissiveCount;
 }
 
 float GetEnvMapWeight(float punctualWeight, float emissiveWeight)
 {
-    float envWeight = gTotalLums.EnvMapTotalLuminance;
+    float envWeight = gCBV.EnvMapTotalLuminance;
 
     float nonEnvWeight = punctualWeight + emissiveWeight;
     if (nonEnvWeight <= 0.0f)

@@ -9,13 +9,49 @@ RWStructuredBuffer<float> gPunctualPDF : register(u0);
 RWStructuredBuffer<float> gEmissivePDF  : register(u1);
 RWStructuredBuffer<AliasEntry> gAliasTable  : register(u2);
 
-ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
+ConstantBuffer<CbvLSD> gCBV : register(b0);
 
 #include "Compute/NEE/Utils.hlsli"
 
 #ifndef MAX_STACK_SIZE
 #error Maximum stack size must be passed in through define
 #endif
+
+struct Stack
+{
+    uint Ptr;
+    uint InternalStack[MAX_STACK_SIZE];
+
+    void Push(uint i)
+    {
+        if (Ptr == MAX_STACK_SIZE)
+            return;
+
+        InternalStack[Ptr] = i;
+        Ptr++;
+    }
+
+    uint Pop()
+    {
+        if (Ptr == 0)
+            return UINT_MAX;
+
+        Ptr--;
+        return InternalStack[Ptr];
+    }
+
+    bool IsEmpty()
+    {
+        return Ptr == 0;
+    }
+};
+
+Stack CreateStack()
+{
+    Stack s;
+    s.Ptr = 0;
+    return s;
+}
 
 // https://www.keithschwarz.com/darts-dice-coins/
 // https://arxiv.org/pdf/2106.12270
@@ -24,8 +60,8 @@ ConstantBuffer<CbvTotalLuminances> gTotalLums : register(b0);
 [numthreads(1,1,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
-    float punctualWeight = gTotalLums.PunctualTotalLuminance;
-    float emissiveWeight = gTotalLums.EmissiveTotalLuminance;
+    float punctualWeight = gCBV.PunctualTotalLuminance;
+    float emissiveWeight = gCBV.EmissiveTotalLuminance;
     float envMapWeight = GetEnvMapWeight(punctualWeight, emissiveWeight);
     float totalWeight = punctualWeight + emissiveWeight + envMapWeight;
 
@@ -69,11 +105,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         idx++;
     }
 
-    uint stackSmall[MAX_STACK_SIZE];
-    uint stackSmallPtr = 0;
-
-    uint stackLarge[MAX_STACK_SIZE];
-    uint stackLargePtr = 0;
+    Stack stackSmall = CreateStack();
+    Stack stackLarge = CreateStack();
 
     // Normalize, multiply by N and fill stacks
     for (int i = 0; i < lsdCount; i++)
@@ -82,57 +115,41 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gAliasTable[i].Threshold = gAliasTable[i].PDF * lsdCount;
 
         if (gAliasTable[i].Threshold < 1.0f)
-        {
-            stackSmall[stackSmallPtr] = i;
-            stackSmallPtr++;
-        }
+            stackSmall.Push(i);
         else
-        {
-            stackLarge[stackLargePtr] = i;
-            stackLargePtr++;
-        }
+            stackLarge.Push(i);
     }
 
     // Vose's Method
     // TODO: Sorting beforehand can lead to better runtime performance
 
-    while (stackSmallPtr > 0 && stackLargePtr > 0)
+    while (!stackSmall.IsEmpty() && !stackLarge.IsEmpty())
     {
-        stackSmallPtr--;
-        uint idxS = stackSmall[stackSmallPtr];
-        float diffS = 1.0f - gAliasTable[idxS].Threshold;
+        uint idxS = stackSmall.Pop();
+        uint idxL = stackLarge.Pop();
 
-        stackLargePtr--;
-        uint idxL = stackLarge[stackLargePtr];
+        float diffS = 1.0f - gAliasTable[idxS].Threshold;
 
         gAliasTable[idxS].Alias = idxL;
         gAliasTable[idxL].Threshold -= diffS;
 
         if (gAliasTable[idxL].Threshold < 1.0f) // TODO: See Vose's. Can be made more numerically stable
-        {
-            stackSmall[stackSmallPtr] = idxL;
-            stackSmallPtr++;
-        }
+            stackSmall.Push(idxL);
         else
-        {
-            stackLarge[stackLargePtr] = idxL;
-            stackLargePtr++;
-        }
+            stackLarge.Push(idxL);
     }
 
-    while (stackLargePtr > 0)
+    while (!stackLarge.IsEmpty())
     {
-        stackLargePtr--;
-        uint idxL = stackLarge[stackLargePtr];
+        uint idxL = stackLarge.Pop();
 
         gAliasTable[idxL].Threshold = 1.0f;
         gAliasTable[idxL].Alias = idxL;
     }
 
-    while (stackSmallPtr > 0)
+    while (!stackSmall.IsEmpty())
     {
-        stackSmallPtr--;
-        uint idxS = stackSmall[stackSmallPtr];
+        uint idxS = stackSmall.Pop();
 
         gAliasTable[idxS].Threshold = 1.0f;
         gAliasTable[idxS].Alias = idxS;
