@@ -60,7 +60,8 @@ inline bool FeatFlagEnabledCore(
 {
     bool result = GetFeatFlagCore(flags, flagValue);
 
-    if (quickSwitchModeEnabled)
+    const uint32_t idx = std::countr_zero(static_cast<uint32_t>(flagValue));
+    if (quickSwitchModeEnabled && s_featFlagsIsQsCore[idx])
         result &= GetFeatFlagCore(flagsQS, flagValue);
 
     return result;
@@ -74,7 +75,8 @@ inline bool FeatFlagEnabledDebug(
 {
     bool result = GetFeatFlagDebug(flags, flagValue);
 
-    if (quickSwitchModeEnabled)
+    const uint32_t idx = std::countr_zero(static_cast<uint32_t>(flagValue));
+    if (quickSwitchModeEnabled && s_featFlagsIsQsDbg[idx])
         result &= GetFeatFlagDebug(flagsQS, flagValue);
 
     return result;

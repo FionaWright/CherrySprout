@@ -38,6 +38,7 @@ DEBUG_CBV_FLAGS_MODE_ENABLED - Define for cbv flag mode checking
 FEATURE_ENABLED()/DEBUG_ENABLED() - Checks if feature enabled, comptime/runtime depending on CbvFlagsMode 
 
 FEATURE_FLAGS / DEBUG_FLAGS
+FEATURE_VALUE_* / DEBUG_VALUE_*
 
 ## Renamed
 
@@ -77,3 +78,4 @@ FF_QUICK_SWITCH_ENABLED - Define for QS flag mode checking
 FEAT_CORE()/FEAT_DBG() - Checks if feature enabled, comptime/runtime depending on FeatFlagsQuickSwitchMode 
 
 FEAT_FLAGS_COMP_CORE / FEAT_FLAGS_COMP_DBG
+FEAT_FLAG_VALUE_CORE_* / FEAT_FLAG_VALUE_DBG_*
