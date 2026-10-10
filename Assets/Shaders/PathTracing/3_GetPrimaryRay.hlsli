@@ -2,7 +2,7 @@
 #define H_GET_PRIMARY_RAY_H
 
 #include "Utils/Random.h"
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
 // TODO: Move to Globals.hlsli
@@ -27,7 +27,7 @@ void GetPrimaryRay(
     origin = cameraPos;
 
     float2 pixelUV = pixelCoord + 0.5f;
-    if (FEATURE_ENABLED(Jitter))
+    if (FEAT_CORE(Jitter))
     {
         float rJitterX = Rand01(rngInfo);
         float rJitterY = Rand01(rngInfo);
@@ -36,7 +36,7 @@ void GetPrimaryRay(
     }
     pixelUV *= texelSize;
 
-    if ((DEBUG_ENABLED(BxdfTestRevaluate) || DEBUG_ENABLED(BxdfTestHemisphere)) && pixelUV.x < 0.5f)
+    if ((FEAT_DBG(BxdfTestRevaluate) || FEAT_DBG(BxdfTestHemisphere)) && pixelUV.x < 0.5f)
     {
         pixelUV.x = 1 - pixelUV.x;
         gRunBxdfTestForPixel = true;
@@ -50,7 +50,7 @@ void GetPrimaryRay(
     float4 world = mul(invV, view);
     direction = normalize(world.xyz - origin);
 
-    if (!FEATURE_ENABLED(DepthOfField))
+    if (!FEAT_CORE(DepthOfField))
         return;
 
     float3 camRight = normalize(float3(invV[0][0], invV[1][0], invV[2][0]));

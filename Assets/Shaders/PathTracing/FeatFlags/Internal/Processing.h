@@ -1,7 +1,8 @@
+// ReSharper disable once CppMissingIncludeGuard
 #include "Utils/HlslGlue.h"
 
-#define FEATURE_FLAG_TYPE hlsl::uint
-#define DEBUG_FLAG_TYPE hlsl::uint
+#define FEAT_FLAG_TYPE_CORE hlsl::uint
+#define FEAT_FLAG_TYPE_DBG hlsl::uint
 
 // ====================== Guards ======================
 
@@ -14,7 +15,7 @@
 #       endif
 #   else
 #       ifndef FLAGS_PROCESS_AS_INDEX_COMPLETED
-#           error You must process this file for indices before processing for flags (Feature)
+#           error You must process this file for indices before processing for flags (Core)
 #       endif
 #   endif
 
@@ -25,18 +26,18 @@
 #       endif
 #   else
 #       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED
-#           error You must process this file for flags before processing for strings (Feature)
+#           error You must process this file for flags before processing for strings (Core)
 #       endif
 #   endif
 
-#elif defined(FLAGS_PROCESS_AS_CBCV)
+#elif defined(FLAGS_PROCESS_AS_IS_QS)
 #   ifdef FLAGS_PROCESSING_DEBUG
 #       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED_DEBUG
-#           error You must process this file for flags before processing for CBCV (Debug)
+#           error You must process this file for flags before processing for IsQuickSwitchable (Debug)
 #       endif
 #   else
 #       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED
-#           error You must process this file for flags before processing for CBCV (Feature)
+#           error You must process this file for flags before processing for IsQuickSwitchable (Core)
 #       endif
 #   endif
 
@@ -52,22 +53,22 @@
 #endif
 
 #if defined(FLAGS_PROCESS_AS_INDEX)
-#   define FLAG_PROCESS(flag, CanBeCbvValue) Idx_##flag,
+#   define FLAG_PROCESS(flag, isQuickSwitchable) Idx_##flag,
 
 #elif defined(FLAGS_PROCESS_AS_FLAG)
 #   ifdef FLAGS_PROCESSING_DEBUG
-#       define __DEBUG_IDX(x) (hlsl::uint)Internal_PathTracerDebugIndex::Idx_##x
-#       define FLAG_PROCESS(flag, CanBeCbvValue) eDebug_##flag = 1u << __DEBUG_IDX(flag),
+#       define __IDX_DBG(x) (hlsl::uint)Internal_FeatFlagIndicesDbg::Idx_##x
+#       define FLAG_PROCESS(flag, isQuickSwitchable) eDebug_##flag = 1u << __IDX_DBG(flag),
 #   else
-#       define __FEATURE_IDX(x) (hlsl::uint)Internal_PathTracerFeatureIndex::Idx_##x
-#       define FLAG_PROCESS(flag, CanBeCbvValue) eFeature_##flag = 1u << __FEATURE_IDX(flag),
+#       define __IDX_CORE(x) (hlsl::uint)Internal_FeatFlagIndicesCore::Idx_##x
+#       define FLAG_PROCESS(flag, isQuickSwitchable) eCore_##flag = 1u << __IDX_CORE(flag),
 #   endif
 
 #elif defined(FLAGS_PROCESS_AS_STRING)
-#   define FLAG_PROCESS(flag, CanBeCbvValue) #flag,
+#   define FLAG_PROCESS(flag, isQuickSwitchable) #flag,
 
-#elif defined(FLAGS_PROCESS_AS_CBCV)
-#   define FLAG_PROCESS(flag, CanBeCbvValue) CanBeCbvValue,
+#elif defined(FLAGS_PROCESS_AS_IS_QS)
+#   define FLAG_PROCESS(flag, isQuickSwitchable) isQuickSwitchable,
 
 #endif
 
@@ -75,36 +76,36 @@
 
 #if defined(FLAGS_PROCESS_AS_INDEX)
 #   ifdef FLAGS_PROCESSING_DEBUG
-enum class Internal_PathTracerDebugIndex : hlsl::uint
+enum class Internal_FeatFlagIndicesDbg : hlsl::uint
 {
 #   else
-enum class Internal_PathTracerFeatureIndex : hlsl::uint
+enum class Internal_FeatFlagIndicesCore : hlsl::uint
 {
 #   endif
 
 #elif defined(FLAGS_PROCESS_AS_FLAG)
 #   ifdef FLAGS_PROCESSING_DEBUG
-enum PathTracerDebugFlags : DEBUG_FLAG_TYPE
+enum FeatFlagsDbg : FEAT_FLAG_TYPE_DBG
 {
     eDebug_None = 0,
 #   else
-enum PathTracerFeatureFlags : FEATURE_FLAG_TYPE
+enum FeatFlagsCore : FEAT_FLAG_TYPE_CORE
 {
-    eFeature_None = 0,
+    eCore_None = 0,
 #   endif
 
 #elif defined(FLAGS_PROCESS_AS_STRING)
 #   ifdef FLAGS_PROCESSING_DEBUG
-static const char* s_debugFlagNames[DEBUG_COUNT] = {
+static const char* s_featFlagNamesDbg[FEAT_FLAG_COUNT_DBG] = {
 #   else
-static const char* s_featureFlagNames[FEATURE_COUNT] = {
+static const char* s_featFlagNamesCore[FEAT_FLAG_COUNT_CORE] = {
 #   endif
 
-#elif defined(FLAGS_PROCESS_AS_CBCV)
+#elif defined(FLAGS_PROCESS_AS_IS_QS)
 #   ifdef FLAGS_PROCESSING_DEBUG
-static bool s_canBeCbvValueFlagListDebug[DEBUG_COUNT] = {
+static bool s_featFlagsIsQsDbg[FEAT_FLAG_COUNT_DBG] = {
 #   else
-static bool s_canBeCbvValueFlagListFeature[FEATURE_COUNT] = {
+static bool s_featFlagsIsQsCore[FEAT_FLAG_COUNT_CORE] = {
 #   endif
 
 #endif
@@ -112,25 +113,25 @@ static bool s_canBeCbvValueFlagListFeature[FEATURE_COUNT] = {
 // ===================== The List =====================
 
 #ifdef FLAGS_PROCESSING_DEBUG
-#   include "PathTracing/Flags/ListDebug.h"
+#   include "PathTracing/FeatFlags/Internal/ListDebug.h"
 #else
-#   include "PathTracing/Flags/ListFeature.h"
+#include "PathTracing/FeatFlags/Internal/ListCore.h"
 #endif
 
 // ================= End of Structure =================
 
 #if defined(FLAGS_PROCESS_AS_INDEX)
 #   ifdef FLAGS_PROCESSING_DEBUG
-    __INTERNAL_DEBUG_COUNT
+    __INTERNAL_FEAT_FLAG_COUNT_DBG
 #   else
-    __INTERNAL_FEATURE_COUNT
+    __INTERNAL_FEAT_FLAG_COUNT_CORE
 #   endif
 
 #elif defined(FLAGS_PROCESS_AS_FLAG)
 #   ifdef FLAGS_PROCESSING_DEBUG
-    DEBUG_COUNT = (hlsl::uint)Internal_PathTracerDebugIndex::__INTERNAL_DEBUG_COUNT
+    FEAT_FLAG_COUNT_DBG = (hlsl::uint)Internal_FeatFlagIndicesDbg::__INTERNAL_FEAT_FLAG_COUNT_DBG
 #   else
-    FEATURE_COUNT = (hlsl::uint)Internal_PathTracerFeatureIndex::__INTERNAL_FEATURE_COUNT
+    FEAT_FLAG_COUNT_CORE = (hlsl::uint)Internal_FeatFlagIndicesCore::__INTERNAL_FEAT_FLAG_COUNT_CORE
 #   endif
 
 #endif
@@ -159,11 +160,11 @@ static bool s_canBeCbvValueFlagListFeature[FEATURE_COUNT] = {
 #       define FLAGS_PROCESS_AS_STRING_COMPLETED
 #   endif
 
-#elif defined(FLAGS_PROCESS_AS_CBCV)
+#elif defined(FLAGS_PROCESS_AS_IS_QS)
 #   ifdef FLAGS_PROCESSING_DEBUG
-#       define FLAGS_PROCESS_AS_CBCV_COMPLETED_DEBUG
+#       define FLAGS_PROCESS_AS_IS_QS_COMPLETED_DEBUG
 #   else
-#       define FLAGS_PROCESS_AS_CBCV_COMPLETED
+#       define FLAGS_PROCESS_AS_IS_QS_COMPLETED
 #   endif
 
 #endif

@@ -4,16 +4,17 @@
 #include "PathTracing/NEE/SampleEmissive.hlsli"
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/MIS.hlsli"
+#include "PathTracing/Debug/Scales.hlsli"
 
 float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo)
 {
-    if (!FEATURE_ENABLED(Emission))
+    if (!FEAT_CORE(Emission))
         return 0.0f;
 
     float3 L_emission = hitInfo.Emission;
     DBG_SCALE_INTENSITY_EMISSION(L_emission);
 
-    if (!FEATURE_ENABLED(NEE))
+    if (!FEAT_CORE(NEE))
         return L_emission;
 
     bool emissivesInLSD = gSettings.LsdCount != gSettings.LsdBaseEmissives;

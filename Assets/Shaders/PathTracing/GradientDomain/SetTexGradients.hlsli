@@ -3,7 +3,7 @@
 
 void SetTexGradients(uint2 pixelCoord, Gradients gradients)
 {
-    if (FEATURE_ENABLED(ScreenSpaceGradients))
+    if (FEAT_CORE(ScreenSpaceGradients))
         return;
 
     gradients.XForward /= float(gSettings.SPP);

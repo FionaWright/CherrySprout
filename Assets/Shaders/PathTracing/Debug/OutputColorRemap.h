@@ -54,7 +54,7 @@ static constexpr auto s_defaultOutputColorRemap = DebugOutputColorRemap::eNone;
 
 #else
 
-#   if DEBUG_ENABLED_PP(OutputColor)
+#   if FEAT_DBG_D(OutputColor)
 
 #include "Utils/HlslUtils.hlsli"
 

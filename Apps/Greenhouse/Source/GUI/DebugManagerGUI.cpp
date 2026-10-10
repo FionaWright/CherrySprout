@@ -2,7 +2,7 @@
 #include "DebugManager.h"
 
 #include "Greenhouse.h"
-#include "../../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
+#include "../../../../Assets/Shaders/PathTracing/FeatFlags/FeatFlags.hpp"
 #include "Utils/ConstantsCpp.h"
 #include "imgui.h"
 #include "GreenhouseConfig.h"
@@ -235,7 +235,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         ImGui::Unindent(IM_GUI_INDENTATION);
     }
 
-    if (config.DebugEnabled(eDebug_PathDumper))
+    if (config.FeatFlagEnabledDebug(eDebug_PathDumper))
     {
         if (ImGui::CollapsingHeader("Path Dump"))
         {
@@ -267,11 +267,11 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                 m_scheduledRunCameraPosition = m_dumpedPathCameraPosition;
                 m_scheduledRunViewMatrix = m_dumpedPathViewMatrix;
 
-                if (config.FeatureEnabled(eFeature_Accumulation))
+                if (config.FeatFlagEnabledCore(eCore_Accumulation))
                 {
                     m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
-                    SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);
-                    SetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, eFeature_Accumulation, false);
+                    SetFeatFlagCore(config.FlagsCore, eCore_Accumulation, false);
+                    SetFeatFlagCore(config.DebugInfo.FeatFlagsCoreQS, eCore_Accumulation, false);
                 }
                 else
                     m_scheduledRunState = ScheduledRunState::eRunFrame;
@@ -490,7 +490,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
     }
 
     std::vector<uint32_t> errors;
-    if (config.DebugEnabled(eDebug_Asserts))
+    if (config.FeatFlagEnabledDebug(eDebug_Asserts))
     {
         for (int i = 0; i < _countof(m_cpuErrorInfo); i++)
         {
@@ -564,13 +564,13 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
 
                     m_scheduledRunViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_cpuErrorInfo[dbgId].InvV));
 
-                    if (config.FeatureEnabled(eFeature_Accumulation) || !config.DebugEnabled(eDebug_PathDumper))
+                    if (config.FeatFlagEnabledCore(eCore_Accumulation) || !config.FeatFlagEnabledDebug(eDebug_PathDumper))
                     {
                         m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
-                        SetPathTracerFeatureFlag(config.FeatureFlags, eFeature_Accumulation, false);
-                        SetPathTracerFeatureFlag(config.DebugInfo.CbvFeatureFlags, eFeature_Accumulation, false);
-                        SetPathTracerDebugFlag(config.DebugInfo.Flags, eDebug_PathDumper, true);
-                        SetPathTracerDebugFlag(config.DebugInfo.CbvDebugFlags, eDebug_PathDumper, true);
+                        SetFeatFlagCore(config.FlagsCore, eCore_Accumulation, false);
+                        SetFeatFlagCore(config.DebugInfo.FeatFlagsCoreQS, eCore_Accumulation, false);
+                        SetFeatFlagDebug(config.DebugInfo.FlagsDebug, eDebug_PathDumper, true);
+                        SetFeatFlagDebug(config.DebugInfo.FeatFlagsDebugQS, eDebug_PathDumper, true);
                     }
                     else
                         m_scheduledRunState = ScheduledRunState::eRunFrame;
@@ -586,7 +586,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         ImGui::Spacing();
     }
 
-    if (config.DebugEnabled(eDebug_OutputColor) && ImGui::CollapsingHeader("Debug Output Colors"))
+    if (config.FeatFlagEnabledDebug(eDebug_OutputColor) && ImGui::CollapsingHeader("Debug Output Colors"))
     {
         ImGui::Indent(IM_GUI_INDENTATION);
 

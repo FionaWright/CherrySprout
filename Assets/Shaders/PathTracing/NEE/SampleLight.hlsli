@@ -18,7 +18,7 @@ LightSample SampleLight(
     BxDF bxdf,
     float3 wo)
 {
-    LightSample lightSample;
+    LightSample lightSample = (LightSample)0;
 
     if (gSettings.LsdCount == 0)
     {
@@ -35,7 +35,7 @@ LightSample SampleLight(
 
     if (lightIdx < gSettings.LsdBasePunctuals)
     {
-        DBG_ASSERT_EXPR(FEATURE_ENABLED(EnvironmentMap), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(1,0,0),  NEE_LightSampleType);
 
         lightSample = SampleEnvMap(rngInfo);
@@ -45,12 +45,12 @@ LightSample SampleLight(
     }
     else if (lightIdx < gSettings.LsdBaseEmissives)
     {
-        DBG_ASSERT_EXPR(FEATURE_ENABLED(Punctuals), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_EXPR(FEAT_CORE(Punctuals), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,1,0),  NEE_LightSampleType);
 
         uint punctualIdx = lightIdx - gSettings.LsdBasePunctuals;
 
-        if (DEBUG_ENABLED(Asserts))
+        if (FEAT_DBG(Asserts))
         {
             uint count, _;
             gMegaBufferPunctuals.GetDimensions(count, _);
@@ -67,7 +67,7 @@ LightSample SampleLight(
     }
     else
     {
-        DBG_ASSERT_EXPR(FEATURE_ENABLED(Emission), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
         DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
 
@@ -105,11 +105,11 @@ LightSample EvaluateLight(
     float pdf_lsd;
     EvaluateLSD(lightIdx, pdf_lsd);
 
-    LightSample lightSample;
+    LightSample lightSample = (LightSample)0;
 
     if (lightIdx < gSettings.LsdBasePunctuals)
     {
-        DBG_ASSERT_EXPR(FEATURE_ENABLED(EnvironmentMap), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
 
         float2 uv_env = EaSphereToSquare(wi);
 
@@ -125,7 +125,7 @@ LightSample EvaluateLight(
     }
     else if (lightIdx < gSettings.LsdBaseEmissives)
     {
-        DBG_ASSERT_EXPR(FEATURE_ENABLED(Punctuals), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_EXPR(FEAT_CORE(Punctuals), DISABLED_LIGHT_INDEX);
 
         uint punctualIdx = lightIdx - gSettings.LsdBasePunctuals;
         PunctualLight light = gMegaBufferPunctuals[punctualIdx];
@@ -138,7 +138,7 @@ LightSample EvaluateLight(
     }
     else
     {
-        DBG_ASSERT_EXPR(FEATURE_ENABLED(Emission), DISABLED_LIGHT_INDEX);
+        DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
         DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
 

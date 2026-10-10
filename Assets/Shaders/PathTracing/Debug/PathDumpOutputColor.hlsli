@@ -1,7 +1,7 @@
 #ifndef H_PATH_DUMP_OUTPUT_COLOR_H
 #define H_PATH_DUMP_OUTPUT_COLOR_H
 
-#if DEBUG_ENABLED_PP(PathDumper)
+#if FEAT_DBG_D(PathDumper)
 
 #include "PathTracing/Debug/Internal/OutputColor.h"
 
@@ -30,7 +30,7 @@ void StoreOutputColor(uint rayIdx, uint dbgIdx, float3 value, uint isAssignedVal
 [noinline]
 void AssignDebugOutput(float value_x, float value_y, float value_z, uint dbgIdx)
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))

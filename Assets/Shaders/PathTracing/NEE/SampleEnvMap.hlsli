@@ -11,7 +11,7 @@ LightSample SampleEnvMap(inout RngInfo rngInfo)
     float3 wi_env;
     SampleEnvMapCdf(xi1, xi2, uv_env, wi_env, pdf_env);
 
-    LightSample lightSample;
+    LightSample lightSample = (LightSample)0;
 
     lightSample.Direction = wi_env;
     lightSample.Distance = INF;

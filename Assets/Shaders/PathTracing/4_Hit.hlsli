@@ -41,7 +41,7 @@ void Hit(inout PathState pathState,
     BxDF bxdf;
 
     float3 E_direct = 0;
-    if (FEATURE_ENABLED(NEE))
+    if (FEAT_CORE(NEE))
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
@@ -60,13 +60,13 @@ void Hit(inout PathState pathState,
 
     pathState.Beta *= E_indirect;
 
-    if (FEATURE_ENABLED(NEE))
+    if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = nextOrigin;
 
-    if (FEATURE_ENABLED(GradientDomain))
+    if (FEAT_CORE(GradientDomain))
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;

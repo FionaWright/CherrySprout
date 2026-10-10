@@ -70,7 +70,7 @@ void ExtractInterpolatedAttributes(RayQuery<RAY_FLAGS> q, InstanceData instance,
     uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
 
-    if (FEATURE_ENABLED(NEE))
+    if (FEAT_CORE(NEE))
         triangleArea = GetTriangleArea(p0, p1, p2);
     else
         triangleArea = 0.0f;

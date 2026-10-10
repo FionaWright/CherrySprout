@@ -83,9 +83,9 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     }
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
-    Config::SetBoolFromArg(&debugInfo.CbvFlagsModeEnabled, "--cbvFlagMode");
-    const auto featureFlags = debugInfo.CbvFlagsModeEnabled ? s_defaultFeatureFlagsCbvMode : s_defaultFeatureFlags;
-    debugInfo.Flags = debugInfo.CbvFlagsModeEnabled ? s_defaultDebugFlagsCbvMode : s_defaultDebugFlags;
+    Config::SetBoolFromArg(&debugInfo.FeatFlagQuickSwitchEnabled, "--cbvFlagMode");
+    const auto featureFlags = debugInfo.FeatFlagQuickSwitchEnabled ? s_defaultFeatFlagsCoreQS : s_defaultFeatFlagsCore;
+    debugInfo.FlagsDebug = debugInfo.FeatFlagQuickSwitchEnabled ? s_defaultFeatFlagsDbgQS : s_defaultFeatFlagsDbg;
     UpdatePipeline(d3d->GetDevice(),
         featureFlags,
         debugInfo,
@@ -180,7 +180,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (renderInfo.PathTracerConfig->DebugInfo.Flags != 0)
+        if (renderInfo.PathTracerConfig->DebugInfo.FlagsDebug != 0)
         {
             const hlsl::uint2 chosenPixelCoords = m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame) ? m_debugManager.GetScheduledRunPixelCoords() : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
 
@@ -207,8 +207,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
             debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
             debugSettings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
-            debugSettings.CbvFeatureFlags = renderInfo.PathTracerConfig->DebugInfo.CbvFeatureFlags;
-            debugSettings.CbvDebugFlags = renderInfo.PathTracerConfig->DebugInfo.CbvDebugFlags;
+            debugSettings.FeatFlagsCoreQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsCoreQS;
+            debugSettings.FeatFlagsDbgQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsDebugQS;
             m_descriptorSet.UpdateCBV(1, &debugSettings);
         }
 
@@ -216,7 +216,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         {
             d3d->Flush();
             UpdatePipeline(d3d->GetDevice(),
-                renderInfo.PathTracerConfig->FeatureFlags,
+                renderInfo.PathTracerConfig->FlagsCore,
                 renderInfo.PathTracerConfig->DebugInfo,
                 renderInfo.PathTracerConfig->BxdfMode,
                 renderInfo.PathTracerConfig->MicrofacetModelType);
@@ -280,7 +280,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_RestirDI))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI))
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         heap->Bind(cmdList);
@@ -308,7 +308,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     m_finalHdrOutput = &m_primal;
 
-    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_GradientDomain))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_GradientDomain))
         m_finalHdrOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
 
     // Copy to RTV
@@ -359,7 +359,7 @@ void PathTracer::UnreserveData()
 }
 
 void PathTracer::UpdatePipeline(ID3D12Device* device,
-    const PathTracerFeatureFlags& featureFlags,
+    const FeatFlagsCore& featureFlags,
     const PathTracingDebugInfo& debugInfo,
     const BxdfMode& bxdfMode,
     const MicrofacetModelType& microfacetModelType)
@@ -375,28 +375,28 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
     std::vector<std::string> compileArgsCommon = {};
 
-    for (int i = 0; i < FEATURE_COUNT; i++)
+    for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
     {
         const hlsl::uint flagValue = 1u << i;
-        compileArgsCommon.emplace_back("-DFEATURE_FLAG_VALUE_" + std::string(s_featureFlagNames[i]) + "=" + std::to_string(flagValue));
+        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_CORE_" + std::string(s_featFlagNamesCore[i]) + "=" + std::to_string(flagValue));
     }
-    for (int i = 0; i < DEBUG_COUNT; i++)
+    for (int i = 0; i < FEAT_FLAG_COUNT_DBG; i++)
     {
         const hlsl::uint flagValue = 1u << i;
-        compileArgsCommon.emplace_back("-DDEBUG_FLAG_VALUE_" + std::string(s_debugFlagNames[i]) + "=" + std::to_string(flagValue));
+        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_DBG_" + std::string(s_featFlagNamesDbg[i]) + "=" + std::to_string(flagValue));
     }
 
-    if (debugInfo.CbvFlagsModeEnabled)
-        compileArgsCommon.emplace_back("-DDEBUG_CBV_FLAGS_MODE_ENABLED=1");
+    if (debugInfo.FeatFlagQuickSwitchEnabled)
+        compileArgsCommon.emplace_back("-DFF_QUICK_SWITCH_ENABLED=1");
 
     {
         std::vector<std::string> compileArgs = compileArgsCommon;
-        compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags));
+        compileArgs.emplace_back("-DFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags));
         compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
         compileArgs.emplace_back("-DMICROFACET_MODEL_TYPE=" + std::to_string(static_cast<uint32_t>(microfacetModelType)));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        compileArgs.emplace_back("-DDEBUG_FLAGS=" + std::to_string(debugInfo.Flags));
+        compileArgs.emplace_back("-DFEAT_FLAGS_COMP_DBG=" + std::to_string(debugInfo.FlagsDebug));
 #endif
 
 #if !NDEBUG
@@ -409,13 +409,13 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         Profiler::PopAndPrint();
 #endif
 
-        if (GetPathTracerFeatureFlag(featureFlags, eFeature_RestirDI))
+        if (GetFeatFlagCore(featureFlags, eCore_RestirDI))
             m_restirManager.Init(device, &m_rootSig, compileArgs);
     }
 
     {
         std::vector<std::string> compileArgs = compileArgsCommon;
-        compileArgs.emplace_back("-DFEATURE_FLAGS=" + std::to_string(featureFlags & eFeature_GammaCorrectionFast));
+        compileArgs.emplace_back("-DDFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags & eCore_GammaCorrectionFast));
 
         m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs);
     }

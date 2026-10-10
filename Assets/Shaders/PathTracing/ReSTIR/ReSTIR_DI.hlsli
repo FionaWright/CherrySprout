@@ -1,7 +1,7 @@
 #ifndef H_TARGET_H
 #define H_TARGET_H
 
-#if FEATURE_ENABLED_PP(RestirDI)
+#if FEAT_CORE_D(RestirDI)
 
 #include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/NEE/SampleLight.hlsli"
@@ -29,7 +29,7 @@ float Target(LightSample X_i, LightSampleSelectionInfo info)
     if (X_i.PDF < EPSILON || NdL <= 0)
         return 0.0f;
 
-    if (FEATURE_ENABLED(RestirTargetVisibility))
+    if (FEAT_CORE(RestirTargetVisibility))
     {
         bool occluded;
         TraceRayShadow(info.HitPosOffset, X_i.Direction, occluded, X_i.Distance);

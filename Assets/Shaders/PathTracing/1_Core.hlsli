@@ -43,7 +43,7 @@ void Core(uint2 pixelCoord)
 
         DBG_OUTPUT3(pathSample.Lo, PathSampleLo);
 
-		if (FEATURE_ENABLED(GradientDomain))
+		if (FEAT_CORE(GradientDomain))
 		{
             Gradients gradients = SampleGradients(rngInfo, pixelCoord, pathSample);
 
@@ -56,7 +56,7 @@ void Core(uint2 pixelCoord)
 
     primalSum /= float(gSettings.SPP);
 
-    if (!FEATURE_ENABLED(ScreenSpaceGradients)) // TODO: Ugly. Remove when SS gradients not needed? Unsure
+    if (!FEAT_CORE(ScreenSpaceGradients)) // TODO: Ugly. Remove when SS gradients not needed? Unsure
         DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
@@ -64,7 +64,7 @@ void Core(uint2 pixelCoord)
 
     gTexPrimal[pixelCoord].rgb = average;
 
-    if (FEATURE_ENABLED(GradientDomain))
+    if (FEAT_CORE(GradientDomain))
         SetTexGradients(pixelCoord, gradientsSum);
 
     DBG_OUTPUT_SET_IF_FOUND(gTexPrimal[pixelCoord].rgb);

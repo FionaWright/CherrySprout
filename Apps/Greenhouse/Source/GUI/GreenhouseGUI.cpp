@@ -167,101 +167,113 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        const bool prevCbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
-        m_ptPipelineDirty |= ImGui::Checkbox("CBV Flags Debug Mode", &m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled);
+        const bool prevQuickSwitchEnabled = m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled;
+        m_ptPipelineDirty |= ImGui::Checkbox("Quick Switch Mode", &m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled);
         ImGui::Spacing();
-        const bool cbvFlagsEnabled = m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled;
+        const bool quickSwitchEnabled = m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled;
 
         // Runtime = Comptime; Comptime = TRUE
-        if (!prevCbvFlagsEnabled && cbvFlagsEnabled)
+        if (!prevQuickSwitchEnabled && quickSwitchEnabled)
         {
-            for (int i = 0; i < FEATURE_COUNT; i++)
+            for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
             {
-                const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
-                if (s_canBeCbvValueFlagListFeature[i])
+                const auto flag = static_cast<FeatFlagsCore>(1 << i);
+                if (s_featFlagsIsQsCore[i])
                 {
-                    const auto comptimeFlagEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
-                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag, comptimeFlagEnabled);
-                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, true);
+                    const auto comptimeFlagEnabled = GetFeatFlagCore(m_config.PathTracerConfig.FlagsCore, flag);
+                    SetFeatFlagCore(m_config.PathTracerConfig.DebugInfo.FeatFlagsCoreQS, flag, comptimeFlagEnabled);
+                    SetFeatFlagCore(m_config.PathTracerConfig.FlagsCore, flag, true);
                 }
             }
 
-            for (int i = 0; i < DEBUG_COUNT; i++)
+            for (int i = 0; i < FEAT_FLAG_COUNT_DBG; i++)
             {
-                const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
-                if (s_canBeCbvValueFlagListDebug[i])
+                const auto flag = static_cast<FeatFlagsDbg>(1 << i);
+                if (s_featFlagsIsQsDbg[i])
                 {
-                    const auto comptimeFlagEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
-                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag, comptimeFlagEnabled);
-                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, true);
+                    const auto comptimeFlagEnabled = GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, flag);
+                    SetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FeatFlagsDebugQS, flag, comptimeFlagEnabled);
+                    SetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, flag, true);
                 }
             }
         }
 
         // Comptime = Runtime
-        if (prevCbvFlagsEnabled && !cbvFlagsEnabled)
+        if (prevQuickSwitchEnabled && !quickSwitchEnabled)
         {
-            for (int i = 0; i < FEATURE_COUNT; i++)
+            for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
             {
-                const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
-                if (s_canBeCbvValueFlagListFeature[i])
+                const auto flag = static_cast<FeatFlagsCore>(1 << i);
+                if (s_featFlagsIsQsCore[i])
                 {
-                    const auto runtimeFlagEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
-                    SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, runtimeFlagEnabled);
+                    const auto runtimeFlagEnabled = GetFeatFlagCore(m_config.PathTracerConfig.DebugInfo.FeatFlagsCoreQS, flag);
+                    SetFeatFlagCore(m_config.PathTracerConfig.FlagsCore, flag, runtimeFlagEnabled);
                 }
             }
 
-            for (int i = 0; i < DEBUG_COUNT; i++)
+            for (int i = 0; i < FEAT_FLAG_COUNT_DBG; i++)
             {
-                const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
-                if (s_canBeCbvValueFlagListDebug[i])
+                const auto flag = static_cast<FeatFlagsDbg>(1 << i);
+                if (s_featFlagsIsQsDbg[i])
                 {
-                    const auto runtimeFlagEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag);
-                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, runtimeFlagEnabled);
+                    const auto runtimeFlagEnabled = GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FeatFlagsDebugQS, flag);
+                    SetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, flag, runtimeFlagEnabled);
                 }
             }
         }
 
-        const PathTracerFeatureFlags prevFlags = m_config.PathTracerConfig.FeatureFlags;
+        constexpr FeatFlagsCore lsdDirtyFlags = static_cast<FeatFlagsCore>(eCore_EnvironmentMap | eCore_Emission | eCore_Punctuals | eCore_AliasTables);
 
-        const uint32_t numFlagColumns = cbvFlagsEnabled ? 4 : 2;
+        const uint32_t numFlagColumns = quickSwitchEnabled ? 4 : 2;
 
-        ImGui::Text("Feature Flags:");
+        ImGui::Text("Feature Flags Core:");
         ImGui::Indent(IM_GUI_INDENTATION);
-        if (ImGui::BeginTable("Feature Flags", numFlagColumns))
+        if (ImGui::BeginTable("Feature Flags Core", numFlagColumns))
         {
-            if (cbvFlagsEnabled)
+            if (quickSwitchEnabled)
             {
-                ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                ImGui::TableSetupColumn("QS", ImGuiTableColumnFlags_WidthFixed, 12.0f);
                 ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
-                ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                ImGui::TableSetupColumn("QS", ImGuiTableColumnFlags_WidthFixed, 12.0f);
                 ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
                 ImGui::TableHeadersRow();
             }
 
-            for (int i = 0; i < FEATURE_COUNT; i++)
+            for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
             {
                 ImGui::TableNextColumn();
 
-                const auto flag = static_cast<PathTracerFeatureFlags>(1 << i);
+                const auto flag = static_cast<FeatFlagsCore>(1 << i);
 
-                if (cbvFlagsEnabled)
+                if (quickSwitchEnabled)
                 {
-                    if (s_canBeCbvValueFlagListFeature[i])
+                    if (s_featFlagsIsQsCore[i])
                     {
-                        bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag);
-                        m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_featureFlagNames[i]).c_str(), &isEnabled);
-                        SetPathTracerFeatureFlag(m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags, flag, isEnabled);
-                        ImGui::SetItemTooltip("%s", s_featureFlagNames[i]);
+                        bool isEnabled = GetFeatFlagCore(m_config.PathTracerConfig.DebugInfo.FeatFlagsCoreQS, flag);
+                        const bool changed = ImGui::Checkbox((std::string("##") + s_featFlagNamesCore[i]).c_str(), &isEnabled);
+                        SetFeatFlagCore(m_config.PathTracerConfig.DebugInfo.FeatFlagsCoreQS, flag, isEnabled);
+                        ImGui::SetItemTooltip("%s", s_featFlagNamesCore[i]);
+
+                        if (changed)
+                            CherryPrint("(QS) Toggled " << s_featFlagNamesCore[i] << " to " << std::to_string(isEnabled));
+
+                        m_ptFrameDirty |= changed;
+                        m_lsdDirty |= changed && (flag & lsdDirtyFlags) != 0;
                     }
                     ImGui::TableNextColumn();
                 }
 
-                bool isEnabled = GetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag);
-                m_ptPipelineDirty |= ImGui::Checkbox(s_featureFlagNames[i], &isEnabled);
-                SetPathTracerFeatureFlag(m_config.PathTracerConfig.FeatureFlags, flag, isEnabled);
+                bool isEnabled = GetFeatFlagCore(m_config.PathTracerConfig.FlagsCore, flag);
+                const bool changed = ImGui::Checkbox(s_featFlagNamesCore[i], &isEnabled);
+                SetFeatFlagCore(m_config.PathTracerConfig.FlagsCore, flag, isEnabled);
 
-                ImGui::SetItemTooltip("%s", s_featureFlagNames[i]);
+                if (changed)
+                    CherryPrint("Toggled " << s_featFlagNamesCore[i] << " to " << std::to_string(isEnabled));
+
+                m_ptPipelineDirty |= changed;
+                m_lsdDirty |= changed && (flag & lsdDirtyFlags) != 0;
+
+                ImGui::SetItemTooltip("%s", s_featFlagNamesCore[i]);
             }
 
             ImGui::EndTable();
@@ -269,12 +281,7 @@ void Greenhouse::renderGuiCore()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
-        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_EnvironmentMap) != m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
-        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_Emission) != m_config.PathTracerConfig.FeatureEnabled(eFeature_Emission);
-        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_Punctuals) != m_config.PathTracerConfig.FeatureEnabled(eFeature_Punctuals);
-        m_lsdDirty |= m_config.PathTracerConfig.FeatureEnabled(prevFlags, eFeature_AliasTables) != m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
-
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_DirectionalLight))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_DirectionalLight))
         {
             ImGui::Text("Directional Light:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -288,7 +295,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_NEE))
         {
             ImGui::Text("Direct Light Sampling:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -299,7 +306,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_RestirDI))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirDI))
         {
             ImGui::Text("ReSTIR:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -311,7 +318,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_GradientDomain))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_GradientDomain))
         {
             ImGui::Text("Gradient Domain PT:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -328,7 +335,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_DepthOfField))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_DepthOfField))
         {
             ImGui::Text("Depth of Field:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -340,7 +347,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_Transient))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_Transient))
         {
             ImGui::Text("Transient Rendering:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -350,7 +357,7 @@ void Greenhouse::renderGuiCore()
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Pulse Duration", &m_config.PathTracerConfig.TransientPulseDuration);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Speed of Light", &m_config.PathTracerConfig.TransientSpeedOfLight);
 
-#if _DEBUG // TODO: Snapshots shouldn't require debug mode anymore
+#if !NDEBUG // TODO: Snapshots shouldn't require debug mode anymore
                 GuiUtils::FwInputUInt("Transient Video - Num Frames", &m_config.PathTracerConfig.TransientRenderNumFrames);
                 GuiUtils::FwInputUInt("Transient Video - Num Samples", &m_config.PathTracerConfig.TransientRenderNumSamples);
                 GuiUtils::FwInputFloat("Transient Video - Total Time", &m_config.PathTracerConfig.TransientRenderTotalTime);
@@ -378,7 +385,7 @@ void Greenhouse::renderGuiCore()
         }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE))
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_NEE))
         {
             if (ImGui::CollapsingHeader("LSD"))
             {
@@ -391,7 +398,7 @@ void Greenhouse::renderGuiCore()
                 m_lsdDirty |= ImGui::Button("Reload Light LSDs");
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
-                const bool aliasTablesEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
+                const bool aliasTablesEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_AliasTables);
                 const int numColumns = aliasTablesEnabled ? 5 : 4;
 
                 if (ImGui::BeginTable("LSD Table", numColumns))
@@ -478,52 +485,52 @@ void Greenhouse::renderGuiCore()
 #endif
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (ImGui::CollapsingHeader("Debug Flags"))
+        if (ImGui::CollapsingHeader("Feature Flags Debug"))
         {
             ImGui::Indent(IM_GUI_INDENTATION);
-            if (ImGui::BeginTable("Debug Flags", numFlagColumns))
+            if (ImGui::BeginTable("Feature Flags Debug", numFlagColumns))
             {
-                if (cbvFlagsEnabled)
+                if (quickSwitchEnabled)
                 {
-                    ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                    ImGui::TableSetupColumn("QS", ImGuiTableColumnFlags_WidthFixed, 12.0f);
                     ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
-                    ImGui::TableSetupColumn("R", ImGuiTableColumnFlags_WidthFixed, 10.0f);
+                    ImGui::TableSetupColumn("QS", ImGuiTableColumnFlags_WidthFixed, 12.0f);
                     ImGui::TableSetupColumn("Comptime", ImGuiTableColumnFlags_None);
                     ImGui::TableHeadersRow();
                 }
 
-                for (int i = 0; i < DEBUG_COUNT; i++)
+                for (int i = 0; i < FEAT_FLAG_COUNT_DBG; i++)
                 {
                     ImGui::TableNextColumn();
 
-                    const auto flag = static_cast<PathTracerDebugFlags>(1 << i);
+                    const auto flag = static_cast<FeatFlagsDbg>(1 << i);
 
-                    if (cbvFlagsEnabled)
+                    if (quickSwitchEnabled)
                     {
-                        if (s_canBeCbvValueFlagListDebug[i])
+                        if (s_featFlagsIsQsDbg[i])
                         {
-                            bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag);
-                            m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_debugFlagNames[i]).c_str(), &isEnabled);
-                            SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.CbvDebugFlags, flag, isEnabled);
-                            ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
+                            bool isEnabled = GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FeatFlagsDebugQS, flag);
+                            m_ptFrameDirty |= ImGui::Checkbox((std::string("##") + s_featFlagNamesDbg[i]).c_str(), &isEnabled);
+                            SetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FeatFlagsDebugQS, flag, isEnabled);
+                            ImGui::SetItemTooltip("%s", s_featFlagNamesDbg[i]);
                         }
                         ImGui::TableNextColumn();
                     }
 
-                    bool isEnabled = GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag);
-                    m_ptPipelineDirty |= ImGui::Checkbox(s_debugFlagNames[i], &isEnabled);
-                    SetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, flag, isEnabled);
+                    bool isEnabled = GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, flag);
+                    m_ptPipelineDirty |= ImGui::Checkbox(s_featFlagNamesDbg[i], &isEnabled);
+                    SetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, flag, isEnabled);
                     ImGui::IsItemDeactivatedAfterEdit();
 
-                    ImGui::SetItemTooltip("%s", s_debugFlagNames[i]);
+                    ImGui::SetItemTooltip("%s", s_featFlagNamesDbg[i]);
                 }
                 ImGui::EndTable();
 
                 ImGui::PopStyleVar();
                 if (ImGui::Button("Clear all##Debug Flags"))
                 {
-                    m_ptPipelineDirty |= (m_config.PathTracerConfig.DebugInfo.Flags != 0);
-                    m_config.PathTracerConfig.DebugInfo.Flags = static_cast<PathTracerDebugFlags>(0);
+                    m_ptPipelineDirty |= (m_config.PathTracerConfig.DebugInfo.FlagsDebug != 0);
+                    m_config.PathTracerConfig.DebugInfo.FlagsDebug = static_cast<FeatFlagsDbg>(0);
                 }
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
             }
@@ -531,13 +538,13 @@ void Greenhouse::renderGuiCore()
         }
         ImGui::Spacing();
 
-        if (!m_config.PathTracerConfig.DebugEnabled(eDebug_OutputColor))
+        if (!m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_OutputColor))
         {
             m_config.PathTracerConfig.DebugInfo.OutputColorIdx = DebugOutputIndex::eDebugOutput_Disabled;
             m_config.PathTracerConfig.DebugInfo.OutputColorRemap = DebugOutputColorRemap::eNone;
         }
 
-        if (m_config.PathTracerConfig.DebugEnabled(eDebug_Scales))
+        if (m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_Scales))
         {
             if (ImGui::CollapsingHeader("Scales"))
             {
@@ -598,7 +605,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.DebugEnabled(eDebug_ForceLightIndex))
+        if (m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_ForceLightIndex))
         {
             m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
             ImGui::Spacing();

@@ -78,7 +78,7 @@ void HitShiftedUnconnected(
 
     pdf *= pdf_bxdf;
 
-    if (FEATURE_ENABLED(NEE))
+    if (FEAT_CORE(NEE))
     {
         pathState.LastBxdfPdf = pdf_bxdf;
 

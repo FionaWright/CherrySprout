@@ -1,9 +1,9 @@
 #ifndef H_ASSERT_H
 #define H_ASSERT_H
 
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 
-#if DEBUG_ENABLED_PP(Asserts)
+#if FEAT_DBG_D(Asserts)
 
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/Mutex.hlsli"
@@ -24,7 +24,7 @@ void dbgAssert(
     bool expr_x, float expr_y, float expr_z, float expr_w,
     uint dbgID)
 {
-    if (!DEBUG_ENABLED(Asserts))
+    if (!FEAT_DBG(Asserts))
         return;
 
     float4 v1 = float4(v1_x, v1_y, v1_z, v1_w);
@@ -99,7 +99,7 @@ void dbgAssert(
 [noinline]
 void dbgMarkForDump()
 {
-    if (!DEBUG_ENABLED(Asserts))
+    if (!FEAT_DBG(Asserts))
         return;
 
     InterlockedAdd(gDbgBufferErrorInfo[_PATH_DUMP].ExprCounter, 1);

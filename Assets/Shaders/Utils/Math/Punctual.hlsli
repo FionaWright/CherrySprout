@@ -65,14 +65,14 @@ float PunctualLightWeight(PunctualLight light)
 
 LightSample EvaluatePointLight(PunctualLight light, float3 position)
 {
-    LightSample sample;
+    LightSample lightSample = (LightSample)0;
 
     float3 L = light.Position - position;
 
     float distance2 = dot(L, L);
 
     if (distance2 <= 1e-8f)
-        return sample;
+        return lightSample;
 
     float radius = max(light.PointRadius, 1e-4f);
     DBG_SCALE_POINT_LIGHT_RADIUS(radius);
@@ -81,46 +81,46 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position)
 
     float distance = sqrt(distance2);
 
-    sample.Direction = normalize(L);
-    sample.Distance = max(distance - radius, 0.0f);
+    lightSample.Direction = normalize(L);
+    lightSample.Distance = max(distance - radius, 0.0f);
 
     float attenuation = 1.0f / max(distance2, radius2);
 
-    sample.Radiance = light.Color * (light.Intensity * attenuation);
-    DBG_SCALE_INTENSITY_POINT(sample.Radiance);
+    lightSample.Radiance = light.Color * (light.Intensity * attenuation);
+    DBG_SCALE_INTENSITY_POINT(lightSample.Radiance);
 
-    return sample;
+    return lightSample;
 }
 
 LightSample EvaluateDistantLight(PunctualLight light)
 {
-    LightSample sample;
+    LightSample lightSample = (LightSample)0;
 
-    sample.Direction = normalize(light.Position);
-    sample.Distance = INF;
+    lightSample.Direction = normalize(light.Position);
+    lightSample.Distance = INF;
 
-    sample.Radiance = light.Color * light.Intensity;
-    DBG_SCALE_INTENSITY_DISTANT(sample.Radiance);
+    lightSample.Radiance = light.Color * light.Intensity;
+    DBG_SCALE_INTENSITY_DISTANT(lightSample.Radiance);
 
-    return sample;
+    return lightSample;
 }
 
 LightSample EvaluateSpotLight(PunctualLight light, float3 position)
 {
-    LightSample sample;
+    LightSample lightSample = (LightSample)0;
 
     float3 L = light.Position - position;
     float distance2 = dot(L, L);
 
     if (distance2 <= 1e-8f)
-        return sample;
+        return lightSample;
 
     float distance = sqrt(distance2);
 
-    sample.Direction = L / distance;
-    sample.Distance = distance;
+    lightSample.Direction = L / distance;
+    lightSample.Distance = distance;
 
-    float3 lightToPoint = -sample.Direction;
+    float3 lightToPoint = -lightSample.Direction;
 
     float cosTheta = dot(normalize(light.SpotDirection), lightToPoint);
 
@@ -134,10 +134,10 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position)
 
     float attenuation = spotFactor / distance2;
 
-    sample.Radiance = light.Color * (light.Intensity * attenuation);
-    DBG_SCALE_INTENSITY_SPOT(sample.Radiance);
+    lightSample.Radiance = light.Color * (light.Intensity * attenuation);
+    DBG_SCALE_INTENSITY_SPOT(lightSample.Radiance);
 
-    return sample;
+    return lightSample;
 }
 
 LightSample EvaluatePunctualLight(PunctualLight light, float3 position)
@@ -155,11 +155,8 @@ LightSample EvaluatePunctualLight(PunctualLight light, float3 position)
 
     default:
         DBG_ASSERT_FAIL(UNSUPPORTED_LIGHT_TYPE);
-        LightSample sample;
-        sample.Direction = NAN;
-        sample.Distance = NAN;
-        sample.Radiance = NAN;
-        return sample;
+        LightSample lightSample = (LightSample)0;
+        return lightSample;
     }
 }
 

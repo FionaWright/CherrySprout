@@ -1,7 +1,7 @@
 #ifndef H_EVALUATE_EMISSIVE_H
 #define H_EVALUATE_EMISSIVE_H
 
-#if FEATURE_ENABLED_PP(NEE)
+#if FEAT_CORE_D(NEE)
 
 #include "PathTracing/HitInfo/ExtractUtils.hlsli"
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
@@ -81,7 +81,7 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
 
     float pdf_angle = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
 
-    LightSample lightSample;
+    LightSample lightSample = (LightSample)0;
     lightSample.Direction = wi;
     lightSample.Distance = dist;
     lightSample.Radiance = emission; // TODO: Units conversion?
@@ -93,7 +93,7 @@ LightSample EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, float3 wi)
 {
     // TODO: Trace ray
 
-    LightSample lightSample;
+    LightSample lightSample = (LightSample)0;
     lightSample.Direction = wi;
     lightSample.Distance = NAN;
     lightSample.Radiance = NAN;

@@ -2,9 +2,9 @@
 #define H_OUTPUT_COLOR_H
 
 #ifdef __cplusplus
-#include "../../Flags/Internal/MethodsCpp.h"
+#   include "../../FeatFlags/FeatFlags.hpp"
 #else
-#   include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#   include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #endif
 
 #define PROCESS_AS_ENUM
@@ -18,7 +18,7 @@
 static constexpr auto s_defaultOutputIndex = DebugOutputIndex::eDebugOutput_Disabled;
 #endif
 
-#if defined(__cplusplus) || DEBUG_ENABLED_PP(PathDumper)
+#if defined(__cplusplus) || FEAT_DBG_D(PathDumper)
 struct DebugOutputPair
 {
     hlsl::float3 Value;

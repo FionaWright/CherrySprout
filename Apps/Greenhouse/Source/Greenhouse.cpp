@@ -53,14 +53,14 @@ void Greenhouse::Init(D3D* d3d)
     m_heap.Init("Main Heap", d3d->GetDevice(), numDescriptors, numSceneTextureDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_uploadHeapCBV.Init(d3d->GetDevice(), maxCbvRequiredSize + 256); // TODO: Test without extra
 
-    Config::SetBoolFromArg(&m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled, "--cbvFlagMode");
-    if (m_config.PathTracerConfig.DebugInfo.CbvFlagsModeEnabled)
+    Config::SetBoolFromArg(&m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled, "--cbvFlagMode");
+    if (m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled)
     {
-        m_config.PathTracerConfig.FeatureFlags = s_defaultFeatureFlagsCbvMode;
-        m_config.PathTracerConfig.DebugInfo.CbvFeatureFlags = s_defaultFeatureFlags;
+        m_config.PathTracerConfig.FlagsCore = s_defaultFeatFlagsCoreQS;
+        m_config.PathTracerConfig.DebugInfo.FeatFlagsCoreQS = s_defaultFeatFlagsCore;
 
-        m_config.PathTracerConfig.DebugInfo.Flags = s_defaultDebugFlagsCbvMode;
-        m_config.PathTracerConfig.DebugInfo.CbvDebugFlags = s_defaultDebugFlags;
+        m_config.PathTracerConfig.DebugInfo.FlagsDebug = s_defaultFeatFlagsDbgQS;
+        m_config.PathTracerConfig.DebugInfo.FeatFlagsDebugQS = s_defaultFeatFlagsDbg;
     }
 
     m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
@@ -169,11 +169,11 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_gbufferDirty = false;
     }
 
-    if (!m_lightImportanceSampler.IsInitialized() || (m_config.PathTracerConfig.FeatureEnabled(eFeature_NEE) && m_lsdDirty))
+    if (!m_lightImportanceSampler.IsInitialized() || (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_NEE) && m_lsdDirty))
     {
-        const bool envMapEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_EnvironmentMap);
-        const bool emissionEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_Emission);
-        const bool punctualsEnabled = m_config.PathTracerConfig.FeatureEnabled(eFeature_Punctuals);
+        const bool envMapEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_EnvironmentMap);
+        const bool emissionEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_Emission);
+        const bool punctualsEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_Punctuals);
 
         float envMapScale = 1.0f;
         float emissionScale = 1.0f;
@@ -185,7 +185,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 #endif
 
         LsdConfig lsdConfig;
-        lsdConfig.UseAliasTables = m_config.PathTracerConfig.FeatureEnabled(eFeature_AliasTables);
+        lsdConfig.UseAliasTables = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_AliasTables);
         lsdConfig.EnvMapScale = envMapEnabled ? envMapScale : 0.0f;
         lsdConfig.EmissiveScale = emissionEnabled ? emissionScale : 0.0f;
         lsdConfig.PunctualScale = punctualsEnabled ? punctualsScale : 0.0f;
@@ -213,7 +213,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (GetPathTracerDebugFlag(m_config.PathTracerConfig.DebugInfo.Flags, eDebug_PathDumper) && Input::IsMouseLeftDown())
+    if (GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, eDebug_PathDumper) && Input::IsMouseLeftDown())
     {
         XMFLOAT2 mousePos = Input::GetMousePos();
         mousePos.x -= static_cast<float>(Config::GetSystem().WindowAppGuiWidth);
@@ -241,7 +241,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     {
         d3d->Flush();
         m_pathTracer.UpdatePipeline(d3d->GetDevice(),
-            m_config.PathTracerConfig.FeatureFlags,
+            m_config.PathTracerConfig.FlagsCore,
             m_config.PathTracerConfig.DebugInfo,
             m_config.PathTracerConfig.BxdfMode,
             m_config.PathTracerConfig.MicrofacetModelType);
@@ -385,8 +385,8 @@ bool Greenhouse::GBufferRequired() const
 {
     bool debugNeeds = false;
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    const bool outputColor = m_config.PathTracerConfig.DebugEnabled(eDebug_OutputColor);
-    const bool pathDumper = m_config.PathTracerConfig.DebugEnabled(eDebug_PathDumper);
+    const bool outputColor = m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_OutputColor);
+    const bool pathDumper = m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_PathDumper);
     const bool debugFlagsNeeds = m_config.RenderBackend == RenderBackendMode::ePathTracer && (outputColor || pathDumper);
     debugNeeds = m_gizmosEnabled || debugFlagsNeeds;
 #endif

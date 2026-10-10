@@ -2,7 +2,7 @@
 #include "GradientManager.h"
 
 #include "Greenhouse.h"
-#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/FeatFlags/FeatFlags.hpp"
 
 void GradientManager::Init(const D3D* d3d)
 {
@@ -43,7 +43,7 @@ void GradientManager::Update(D3D* d3d, Heap* heap)
 D12Resource* GradientManager::Render(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* primal)
 {
     // Screen-Space Gradients
-    if (renderInfo.PathTracerConfig->FeatureEnabled(eFeature_ScreenSpaceGradients))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_ScreenSpaceGradients))
     {
         if (!m_rootSigGradientsSS.Get())
         {
@@ -71,7 +71,7 @@ D12Resource* GradientManager::Render(const D3D* d3d, ID3D12GraphicsCommandList* 
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
-        if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_OutputColor))
+        if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_OutputColor))
         {
             if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientXF)
                 return &m_gradientXF;

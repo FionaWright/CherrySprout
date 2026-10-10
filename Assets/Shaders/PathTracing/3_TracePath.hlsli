@@ -48,7 +48,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             DBG_OUTPUT3(Li, MissContrib);
             DBG_OUTPUT1(1.0f, KilledByMiss);
 
-            if (FEATURE_ENABLED(GradientDomain))
+            if (FEAT_CORE(GradientDomain))
             {
                 PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
                 currentVertexInfo.Type = VertexType::eEnvironment;
@@ -59,7 +59,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
         }
 
-        if (FEATURE_ENABLED(AlphaTesting))
+        if (FEAT_CORE(AlphaTesting))
         {
             float xi = Rand01(rngInfo);
             float alpha = hitInfo.Mat.Albedo.a;
@@ -72,7 +72,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             }
         }
 
-        if (FEATURE_ENABLED(Transient))
+        if (FEAT_CORE(Transient))
             pathState.RollingPathDistance += hitInfo.RayT;
 
         float3 L_sample;
@@ -80,7 +80,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         currentVertexInfo.PDF = 1.0f;
         Hit(pathState, rngInfo, hitInfo, pixelCoord, L_sample, currentVertexInfo);
 
-        if (FEATURE_ENABLED(GradientDomain))
+        if (FEAT_CORE(GradientDomain))
         {
             vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
             vertexList.NumVertices++;
@@ -99,7 +99,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         DBG_PATH_DUMP_PATH_STATE(pathState);
 
-        if (FEATURE_ENABLED(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
+        if (FEAT_CORE(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
         {
             float p = saturate(max(pathState.Beta.r, max(pathState.Beta.g, pathState.Beta.b)));
             p = max(p, 0.05f);
@@ -125,7 +125,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     PathSample pathSample;
     pathSample.Lo = pathState.Lo;
 
-    if (FEATURE_ENABLED(GradientDomain))
+    if (FEAT_CORE(GradientDomain))
         pathSample.VertexList = vertexList;
 
     return pathSample;

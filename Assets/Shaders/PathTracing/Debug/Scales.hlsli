@@ -1,7 +1,7 @@
 #ifndef H_DEBUG_SCALES_H
 #define H_DEBUG_SCALES_H
 
-#if DEBUG_ENABLED_PP(Scales)
+#if FEAT_DBG_D(Scales)
 
 #define DBG_SCALE_INTENSITY_GLOBAL(x)     x *= gDebugSettings.ScaleIntensityGlobal;
 #define DBG_SCALE_INTENSITY_DIRECT(x)     x *= gDebugSettings.ScaleIntensityDirect;
@@ -24,11 +24,14 @@
 #else
 
 #define DBG_SCALE_INTENSITY_GLOBAL(x)
+#define DBG_SCALE_INTENSITY_DIRECT(x)
+#define DBG_SCALE_INTENSITY_INDIRECT(x)
 #define DBG_SCALE_INTENSITY_PUNCTUAL(x)
 #define DBG_SCALE_INTENSITY_POINT(x)
 #define DBG_SCALE_INTENSITY_DISTANT(x)
 #define DBG_SCALE_INTENSITY_SPOT(x)
 #define DBG_SCALE_INTENSITY_ENV_MAP(x)
+#define DBG_SCALE_INTENSITY_EMISSION(x)
 #define DBG_SCALE_POINT_LIGHT_RADIUS(x)
 #define DBG_SCALE_F(x)
 #define DBG_SCALE_D(x)

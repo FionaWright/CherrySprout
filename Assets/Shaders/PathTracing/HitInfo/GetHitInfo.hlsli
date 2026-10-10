@@ -3,7 +3,7 @@
 
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/HlslUtils.hlsli"
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "PathTracing/Utils.hlsli"
 
@@ -23,7 +23,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
 
-    if (DEBUG_ENABLED(NaNTests))
+    if (FEAT_DBG(NaNTests))
     {
         if (instance.MaterialIndex == -1)
         {
@@ -50,7 +50,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     ApplyMaterialTextures(hitInfo);
 
-    if (FEATURE_ENABLED(NEE))
+    if (FEAT_CORE(NEE))
     {
         hitInfo.InstanceIdx = instanceIdx;
         hitInfo.PrimitiveCount = instance.MegaBufferCountIndex / 3;
@@ -59,19 +59,19 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     // Debug
     {
-        if (DEBUG_ENABLED(Checkerboard))
+        if (FEAT_DBG(Checkerboard))
         {
             uint2 uvQuant = uint2(uv * 100);
             hitInfo.Mat.Albedo.xyz = ((uvQuant.x + uvQuant.y) % 2 == 0) ? 1.0f : 0.0f;
         }
 
-        if (DEBUG_ENABLED(FurnaceTestHHE))
+        if (FEAT_DBG(FurnaceTestHHE))
         {
             hitInfo.Mat.Albedo.xyz = 1.0f;
             hitInfo.Emission = 0.0f;
         }
 
-        if (DEBUG_ENABLED(FurnaceTestHDR))
+        if (FEAT_DBG(FurnaceTestHDR))
         {
             hitInfo.Mat.Albedo.xyz = 0.0f;
             hitInfo.Emission = 1.0f;

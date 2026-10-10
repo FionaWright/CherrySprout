@@ -1,7 +1,7 @@
 #ifndef H_NEE_H
 #define H_NEE_H
 
-#if FEATURE_ENABLED_PP(NEE)
+#if FEAT_CORE_D(NEE)
 
 #include "PathTracing/NEE/SampleLight.hlsli"
 
@@ -27,8 +27,7 @@ float3 SampleNEE(
     }
 
     float shadowFactor;
-    //TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, lightSample.Index, shadowFactor);
-    TraceRayShadow(hitInfo.HitPos, lightSample.Direction, lightSample.Distance, lightSample.Index, shadowFactor);
+    TraceRayShadow(hitInfo.HitPos, lightSample.Direction, lightSample.Distance, shadowFactor); // TODO: Only works when using hitPos NOT nextOrigin, why?
     DBG_OUTPUT1(shadowFactor,     NEE_ShadowFactor);
 
     if (shadowFactor <= 0.0f)
@@ -78,7 +77,7 @@ float3 EvaluateNEE(
     }
 
     float shadowFactor;
-    TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, lightSample.Index, shadowFactor);
+    TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, shadowFactor);
     if (shadowFactor <= 0.0f)
         return 0;
 

@@ -2,7 +2,7 @@
 #include "DebugManager.h"
 
 #include "Greenhouse.h"
-#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/FeatFlags/FeatFlags.hpp"
 #include "Utils/Helper.h"
 
 void DebugManager::Init(const D3D* d3d, Heap* heap)
@@ -36,7 +36,7 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
 
 void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)
 {
-    if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_Asserts))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_Asserts))
     {
         UploadHeap uploadHeapClear;
 
@@ -76,7 +76,7 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
 
     const bool scheduledRun = m_scheduledRunState == ScheduledRunState::eReadbackPathDump;
     const bool needPathDump = m_isPathDumpAutomatic || scheduledRun;
-    if (renderInfo.PathTracerConfig->DebugEnabled(eDebug_PathDumper) && needPathDump)
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_PathDumper) && needPathDump)
     {
         static int s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
         if (s_pathDumpTimer > 0 && !scheduledRun)

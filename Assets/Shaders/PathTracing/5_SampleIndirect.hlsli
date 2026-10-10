@@ -14,7 +14,7 @@ float3 SampleIndirectLighting(
 {
     float3 f;
 
-    if (DEBUG_ENABLED(BxdfTestHemisphere) && gRunBxdfTestForPixel)
+    if (FEAT_DBG(BxdfTestHemisphere) && gRunBxdfTestForPixel)
     {
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
@@ -26,7 +26,7 @@ float3 SampleIndirectLighting(
         float NdL = dot(hitInfo.Ns_ff, wi);
         pdf = NdL / PI;
     }
-    else if (DEBUG_ENABLED(BxdfTestRevaluate) && gRunBxdfTestForPixel)
+    else if (FEAT_DBG(BxdfTestRevaluate) && gRunBxdfTestForPixel)
     {
         float3 f_sample;
         float pdf_sample;

@@ -3,7 +3,7 @@
 
 #include "Utils/HlslGlue.h"
 
-#include "../PathTracing/Flags/Internal/Flags.h"
+#include "../PathTracing/FeatFlags/Internal/Interpretations.h"
 
 struct CbvPathTracingSettings
 {
@@ -161,8 +161,8 @@ struct CbvPathTracingDebugSettings
     float ScaleRefract;
     int ForcedLightIndex;
 
-    PathTracerFeatureFlags CbvFeatureFlags;
-    PathTracerDebugFlags CbvDebugFlags;
+    FeatFlagsCore FeatFlagsCoreQS;
+    FeatFlagsDbg FeatFlagsDbgQS;
     hlsl::float2 p;
 };
 

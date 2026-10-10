@@ -5,7 +5,7 @@
 
 void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState pathState, out bool isMiss, out HitInfo hitInfo)
 {
-    if (FEATURE_ENABLED(ReconstructPrimaryRay) && pathState.RaySegmentIdx == 0)
+    if (FEAT_CORE(ReconstructPrimaryRay) && pathState.RaySegmentIdx == 0)
     {
         ReconstructPrimaryRayHit(
             gSettings.CameraPositionWorld,

@@ -16,7 +16,7 @@
 #include "HWI/Pipeline.h"
 #include "MicrofacetModels/MMTypes.h"
 #include "Utils/CBVs.h"
-#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/FeatFlags/FeatFlags.hpp"
 #include "Render/RestirManager.h"
 
 class Camera;
@@ -35,7 +35,7 @@ public:
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle) override;
     void UnreserveData() override;
-    void UpdatePipeline(ID3D12Device* device, const PathTracerFeatureFlags& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode, const MicrofacetModelType& microfacetModelType);
+    void UpdatePipeline(ID3D12Device* device, const FeatFlagsCore& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode, const MicrofacetModelType& microfacetModelType);
     void Reset();
 
     size_t TotalCbvRequiredSize() override

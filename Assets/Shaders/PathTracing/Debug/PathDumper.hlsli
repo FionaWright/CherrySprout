@@ -3,14 +3,14 @@
 
 #include "PathTracing/Debug/PathDumpOutputColor.hlsli"
 
-#if DEBUG_ENABLED_PP(PathDumper)
+#if FEAT_DBG_D(PathDumper)
 
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/Internal/OutputColor.h"
 
 void ClearBuffer()
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
@@ -32,7 +32,7 @@ void ClearBuffer()
 
 void DumpPathState(PathState pathState)
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
@@ -43,7 +43,7 @@ void DumpPathState(PathState pathState)
 
 void DumpPathVertexInfo(PathVertexInfo vertexInfo)
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
@@ -54,7 +54,7 @@ void DumpPathVertexInfo(PathVertexInfo vertexInfo)
 
 void DumpForcedOutput(float3 value)
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
@@ -65,7 +65,7 @@ void DumpForcedOutput(float3 value)
 
 void MarkExplored()
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     if (any(gDebugPixelCoord != gDebugSettings.ChosenPixelCoords))
@@ -79,7 +79,7 @@ void MarkExplored()
 
 void Highlight(inout float3 color)
 {
-    if (!DEBUG_ENABLED(PathDumper))
+    if (!FEAT_DBG(PathDumper))
         return;
 
     float dist = length((float2)gDebugSettings.ChosenPixelCoords - (float2)gDebugPixelCoord);

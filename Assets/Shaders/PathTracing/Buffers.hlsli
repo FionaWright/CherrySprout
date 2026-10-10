@@ -20,7 +20,7 @@ ConstantBuffer<CbvPathTracingDebugSettings>         gDebugSettings          : re
 
 #include "Utils/Debug/DebugStructs.h"
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/NEE/LSD/Alias.h"
 
 // =================== T Registers (Default) =====================================================================
@@ -41,7 +41,7 @@ Texture1D<float>                                    gEnvMapCdfMarginal      : re
 StructuredBuffer<uint>                              gEmissiveInstanceToInstanceMap : register(t10, REGISTER_SPACE_DEFAULT);
 StructuredBuffer<int>                               gInstanceToEmissiveInstanceMap : register(t11, REGISTER_SPACE_DEFAULT);
 
-#if FEATURE_ENABLED_PP(AliasTables)
+#if FEAT_CORE_D(AliasTables)
 StructuredBuffer<AliasEntry>                        gLightAliasTable        : register(t12, REGISTER_SPACE_DEFAULT);
 #else
 StructuredBuffer<ProbabilityDistributionSample>     gLightCDF               : register(t12, REGISTER_SPACE_DEFAULT);

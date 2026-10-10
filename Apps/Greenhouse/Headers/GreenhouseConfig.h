@@ -6,7 +6,7 @@
 #include "MicrofacetModels/MMTypes.h"
 #include "../../../Assets/Shaders/PathTracing/Debug/Internal/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
-#include "../../../Assets/Shaders/PathTracing/Flags/Internal/MethodsCpp.h"
+#include "../../../Assets/Shaders/PathTracing/FeatFlags/FeatFlags.hpp"
 #include "MicrofacetModels/MMTypes.h"
 
 constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
@@ -14,7 +14,7 @@ constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
 struct PathTracingDebugInfo
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    PathTracerDebugFlags Flags = s_defaultDebugFlags;
+    FeatFlagsDbg FlagsDebug = s_defaultFeatFlagsDbg;
     DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
     DebugOutputColorRemap OutputColorRemap = s_defaultOutputColorRemap;
     int ChosenRayDepth = -1;
@@ -46,36 +46,36 @@ struct PathTracingDebugInfo
     float ScaleRefract = 1.0f;
     float ScaleClearcoat = 1.0f;
 
-    bool CbvFlagsModeEnabled = false;
-    PathTracerFeatureFlags CbvFeatureFlags = static_cast<PathTracerFeatureFlags>(0);
-    PathTracerDebugFlags CbvDebugFlags = static_cast<PathTracerDebugFlags>(0);
+    bool FeatFlagQuickSwitchEnabled = false;
+    FeatFlagsCore FeatFlagsCoreQS = static_cast<FeatFlagsCore>(0);
+    FeatFlagsDbg FeatFlagsDebugQS = static_cast<FeatFlagsDbg>(0);
 #endif
 };
 
-inline bool FlagFeatureEnabled(
-    const bool cbvModeEnabled,
-    const PathTracerFeatureFlags& featureFlags,
-    const PathTracerFeatureFlags& cbvFeatureFlags,
-    const PathTracerFeatureFlags& flag)
+inline bool FeatFlagEnabledCore(
+    const bool quickSwitchModeEnabled,
+    const FeatFlagsCore& flags,
+    const FeatFlagsCore& flagsQS,
+    const FeatFlagsCore& flagValue)
 {
-    bool result = GetPathTracerFeatureFlag(featureFlags, flag);
+    bool result = GetFeatFlagCore(flags, flagValue);
 
-    if (cbvModeEnabled)
-        result &= GetPathTracerFeatureFlag(cbvFeatureFlags, flag);
+    if (quickSwitchModeEnabled)
+        result &= GetFeatFlagCore(flagsQS, flagValue);
 
     return result;
 }
 
-inline bool FlagDebugEnabled(
-    const bool cbvModeEnabled,
-    const PathTracerDebugFlags& debugFlags,
-    const PathTracerDebugFlags& cbvDebugFlags,
-    const PathTracerDebugFlags& flag)
+inline bool FeatFlagEnabledDebug(
+    const bool quickSwitchModeEnabled,
+    const FeatFlagsDbg& flags,
+    const FeatFlagsDbg& flagsQS,
+    const FeatFlagsDbg& flagValue)
 {
-    bool result = GetPathTracerDebugFlag(debugFlags, flag);
+    bool result = GetFeatFlagDebug(flags, flagValue);
 
-    if (cbvModeEnabled)
-        result &= GetPathTracerDebugFlag(cbvDebugFlags, flag);
+    if (quickSwitchModeEnabled)
+        result &= GetFeatFlagDebug(flagsQS, flagValue);
 
     return result;
 }
@@ -116,40 +116,40 @@ struct PathTracerConfig
     bool DisplayGradientX = false;
     bool DisplayGradientY = false;
 
-    PathTracerFeatureFlags     FeatureFlags     = s_defaultFeatureFlags;
-    BxdfMode                   BxdfMode         = s_defaultBxdfMode;
+    FeatFlagsCore              FlagsCore           = s_defaultFeatFlagsCore;
+    BxdfMode                   BxdfMode            = s_defaultBxdfMode;
     MicrofacetModelType        MicrofacetModelType = s_defaultMMType;
 
     PathTracingDebugInfo       DebugInfo        = {};
 
-    bool FeatureEnabled(const PathTracerFeatureFlags flags, const PathTracerFeatureFlags flag) const
+    bool FeatFlagEnabledCore(const FeatFlagsCore flags, const FeatFlagsCore flagValue) const
     {
-        bool cbvModeEnabled = false;
-        PathTracerFeatureFlags cbvFlags = static_cast<PathTracerFeatureFlags>(0);
+        bool quickSwitchModeEnabled = false;
+        FeatFlagsCore flagsQS = static_cast<FeatFlagsCore>(0);
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        cbvModeEnabled = DebugInfo.CbvFlagsModeEnabled;
-        cbvFlags = DebugInfo.CbvFeatureFlags;
+        quickSwitchModeEnabled = DebugInfo.FeatFlagQuickSwitchEnabled;
+        flagsQS = DebugInfo.FeatFlagsCoreQS;
 #endif
-        return FlagFeatureEnabled(cbvModeEnabled, flags, cbvFlags, flag);
+        return ::FeatFlagEnabledCore(quickSwitchModeEnabled, flags, flagsQS, flagValue);
     }
 
-    bool FeatureEnabled(const PathTracerFeatureFlags flag) const
+    bool FeatFlagEnabledCore(const FeatFlagsCore flag) const
     {
-        return FeatureEnabled(FeatureFlags, flag);
+        return FeatFlagEnabledCore(FlagsCore, flag);
     }
 
-    bool DebugEnabled(const PathTracerDebugFlags flags, const PathTracerDebugFlags flag) const
+    bool FeatFlagEnabledDebug(const FeatFlagsDbg flags, const FeatFlagsDbg flag) const
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        return FlagDebugEnabled(DebugInfo.CbvFlagsModeEnabled, flags, DebugInfo.CbvDebugFlags, flag);
+        return ::FeatFlagEnabledDebug(DebugInfo.FeatFlagQuickSwitchEnabled, flags, DebugInfo.FeatFlagsDebugQS, flag);
 #endif
         return false;
     }
 
-    bool DebugEnabled(const PathTracerDebugFlags flag) const
+    bool FeatFlagEnabledDebug(const FeatFlagsDbg flag) const
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        return DebugEnabled(DebugInfo.Flags, flag);
+        return FeatFlagEnabledDebug(DebugInfo.FlagsDebug, flag);
 #endif
         return false;
     }

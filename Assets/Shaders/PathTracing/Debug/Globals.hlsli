@@ -1,7 +1,7 @@
 #ifndef H_PT_DEBUG_GLOBALS_H
 #define H_PT_DEBUG_GLOBALS_H
 
-#if DEBUG_ENABLED_PP(OutputColor) || DEBUG_ENABLED_PP(PathDumper) || DEBUG_ENABLED_PP(Asserts)
+#if FEAT_DBG_D(OutputColor) || FEAT_DBG_D(PathDumper) || FEAT_DBG_D(Asserts)
 
 #include "Utils/Constants.h"
 

@@ -1,12 +1,12 @@
 #ifndef H_OUTPUT_COLOR_MACROS_H
 #define H_OUTPUT_COLOR_MACROS_H
 
-#if DEBUG_ENABLED_PP(OutputColor)
+#if FEAT_DBG_D(OutputColor)
 
 #include "PathTracing/Debug/Internal/OutputColor.h"
 #include "PathTracing/Debug/OutputColorRemap.h"
 
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
@@ -17,7 +17,7 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 
     DBG_PATH_DUMP_DEBUG_OUTPUT(value, index);
 
-    if (!DEBUG_ENABLED(OutputColor) || gDebugSettings.OutputColorIdx == (uint)DebugOutputIndex::eDebugOutput_Disabled)
+    if (!FEAT_DBG(OutputColor) || gDebugSettings.OutputColorIdx == (uint)DebugOutputIndex::eDebugOutput_Disabled)
         return;
 
     if (index != gDebugSettings.OutputColorIdx)
@@ -37,7 +37,7 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 
 #define DBG_OUTPUT_SET_INTERNAL(output, setWhenNotFound) \
 { \
-    if (DEBUG_ENABLED(OutputColor) && \
+    if (FEAT_DBG(OutputColor) && \
         gDebugSettings.OutputColorIdx != 0 && \
             (setWhenNotFound || gDebugValueFound)) \
     { \
@@ -55,10 +55,10 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT_SET(output) DBG_OUTPUT_SET_INTERNAL(output, true);
 #    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }
 
-#elif DEBUG_ENABLED_PP(PathDumper)
+#elif FEAT_DBG_D(PathDumper)
 
 #include "PathTracing/Debug/Internal/OutputColor.h"
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 

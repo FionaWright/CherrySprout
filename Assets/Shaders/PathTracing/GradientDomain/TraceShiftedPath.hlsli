@@ -79,7 +79,7 @@ void TraceShiftedPath(
         {
             wi = v1.Wi;
 
-            if (FEATURE_ENABLED(NEE))
+            if (FEAT_CORE(NEE))
             {
                 L_sample += v1.DirectContribution * pathState.Beta;
                 pathState.LastBxdfPdf = v1.PDF_Bxdf;
@@ -97,7 +97,7 @@ void TraceShiftedPath(
             float pdf_bxdf;
             bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
-            if (FEATURE_ENABLED(NEE))
+            if (FEAT_CORE(NEE))
             {
                 L_sample += v1.DirectContribution * pathState.Beta;
                 pathState.LastBxdfPdf = pdf_bxdf;

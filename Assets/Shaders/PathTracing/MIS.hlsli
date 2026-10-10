@@ -3,7 +3,7 @@
 
 float GenPowerHeuristic(float pdf1, float pdf2, uint N1, uint N2, float P)
 {
-    if (DEBUG_ENABLED(FixedMisHalf))
+    if (FEAT_DBG(FixedMisHalf))
         return 0.5f;
 
     float pdf1_P = pow(pdf1, P) * N1;

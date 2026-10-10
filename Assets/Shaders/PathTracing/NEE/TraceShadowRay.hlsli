@@ -7,7 +7,7 @@
 #define SHADOW_RAY_TMIN_BIAS_COEF 1
 #define SHADOW_RAY_TMAX_BIAS_COEF 1
 
-void TraceRayShadow(float3 pos, float3 dir, float lightDistance, uint lightIdx, out float shadowFactor)
+void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shadowFactor)
 {
     RayQuery<RAY_FLAGS> q;
 

@@ -22,9 +22,9 @@ Stuff in the repo that I don't like
 
 - [x] App GUI disable is in engine GUI, Remove "Hide GUI"
 
-- [ ] Remove ImGui window rounded corners
+- [x] Remove ImGui window rounded corners
 
-- [ ] Make Env Map capped at 50% LSD contribution
+- [x] Make Env Map capped at 50% LSD contribution
 
 - [ ] Consider a way to avoid having the BxDF code inline everywhere? Could be slowing comptime 
 

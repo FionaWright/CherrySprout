@@ -1,7 +1,7 @@
 #ifndef H_PBR_H
 #define H_PBR_H
 
-#include "PathTracing/Flags/Internal/MethodsHlsl.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 
 #include "Utils/Math/Fresnel.hlsli"
@@ -15,11 +15,11 @@
 
 float GetReflectProb(float iorCurrent, float iorNext, float WdV)
 {
-    if (DEBUG_ENABLED(ForceReflect))
+    if (FEAT_DBG(ForceReflect))
         return 1.0f;
     else if (CheckTIR(iorCurrent, iorNext, abs(WdV)))
         return 1.0f;
-    else if (DEBUG_ENABLED(ForceRefract))
+    else if (FEAT_DBG(ForceRefract))
         return 0.0f;
 
     return Fresnel_Dielectric_Unpolarized(iorCurrent, iorNext, saturate(abs(WdV)));
@@ -27,9 +27,9 @@ float GetReflectProb(float iorCurrent, float iorNext, float WdV)
 
 float GetSpecularProb(float WdV, float3 F0)
 {
-    if (DEBUG_ENABLED(ForceSpecular))
+    if (FEAT_DBG(ForceSpecular))
         return 1.0f;
-    else if (DEBUG_ENABLED(ForceDiffuse))
+    else if (FEAT_DBG(ForceDiffuse))
         return 0.0f;
 
     float3 F_select = F_Schlick(WdV, F0);
@@ -61,7 +61,7 @@ void BxDF::Sample(
 
     MicrofacetModel mm;
     mm.Init(hitInfo.Mat.Roughness, rngInfo, V_s);
-    if (FEATURE_ENABLED(Anisotropy))
+    if (FEAT_CORE(Anisotropy))
         mm.InitAniso(hitInfo);
 
     float3 H_s = mm.Sample(u1, u2);
@@ -88,7 +88,7 @@ void BxDF::Sample(
     DBG_OUTPUT1(mm.m_alpha,                      BxDF_Alpha);
     DBG_OUTPUT1(mm.D(H_s),                       BxDF_D);
 
-    if (FEATURE_ENABLED(Transmission) && isTransmission)
+    if (FEAT_CORE(Transmission) && isTransmission)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -169,7 +169,7 @@ void BxDF::Sample(
         DBG_ASSERT_VALUE(L_s,         BxDF_PBR_Diff_L_S);
     }
 
-    if (FEATURE_ENABLED(Transmission))
+    if (FEAT_CORE(Transmission))
         pdf *= 1.0f - hitInfo.Mat.TransmissionFactor;
 
     wi = hitInfo.SFrame.ToWorld(L_s);
@@ -199,7 +199,7 @@ void BxDF::Evaluate(
 
     MicrofacetModel mm;
     mm.Init(hitInfo.Mat.Roughness, V_s);
-    if (FEATURE_ENABLED(Anisotropy))
+    if (FEAT_CORE(Anisotropy))
         mm.InitAniso(hitInfo);
 
     float VdH = dot(H_s, V_s);
@@ -219,7 +219,7 @@ void BxDF::Evaluate(
     f = 0;
     pdf = 0;
 
-    if (FEATURE_ENABLED(Transmission) && hitInfo.Mat.TransmissionFactor > 0)
+    if (FEAT_CORE(Transmission) && hitInfo.Mat.TransmissionFactor > 0)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -240,7 +240,7 @@ void BxDF::Evaluate(
 
             pdf_reflect *= reflectProb;
 
-            if (DEBUG_ENABLED(ForceRefract))
+            if (FEAT_DBG(ForceRefract))
                 f_reflect = 0.0f;
 
             f_trans += f_reflect;
@@ -259,7 +259,7 @@ void BxDF::Evaluate(
 
             pdf_refract *= 1.0f - reflectProb;
 
-            if (DEBUG_ENABLED(ForceReflect))
+            if (FEAT_DBG(ForceReflect))
                 f_refract = 0.0f;
 
             f_trans += f_refract;
@@ -293,7 +293,7 @@ void BxDF::Evaluate(
             float pdf_spec;
             SpecularLobe_Evaluate(hitInfo, mm, V_s, N_s, H_s, L_s, F0, f_spec, pdf_spec);
 
-            if (DEBUG_ENABLED(ForceDiffuse) || DEBUG_ENABLED(ForceSpecular))
+            if (FEAT_DBG(ForceDiffuse) || FEAT_DBG(ForceSpecular))
                 f_spec *= specProb;
             pdf_spec *= specProb;
 
@@ -312,7 +312,7 @@ void BxDF::Evaluate(
             LambertianLobe_Evaluate(hitInfo, L_s, f_diff, pdf_diff);
 
             f_diff *= (1.0 - hitInfo.Mat.Metallic);
-            if (DEBUG_ENABLED(ForceDiffuse) || DEBUG_ENABLED(ForceSpecular))
+            if (FEAT_DBG(ForceDiffuse) || FEAT_DBG(ForceSpecular))
                 f_diff *= 1.0f - specProb;
             pdf_diff *= 1.0f - specProb;
 
@@ -326,7 +326,7 @@ void BxDF::Evaluate(
         }
     }
 
-    if (FEATURE_ENABLED(Transmission))
+    if (FEAT_CORE(Transmission))
     {
         f_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;
         pdf_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;

@@ -22,7 +22,7 @@ float3 SampleDirectLighting(
 
     LightSample lightSample = (LightSample)0;
 
-    if (FEATURE_ENABLED(RestirDI) && pathState.RaySegmentIdx == 0)
+    if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
     {
         E_direct += SampleReservoir(hitInfo, pixelCoord, wo, nextOrigin, bxdf, gSettings.DirectNumSamples, lightSample);
     }
@@ -30,7 +30,7 @@ float3 SampleDirectLighting(
     {
         float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, nextOrigin, lightSample);
 
-        if (DEBUG_ENABLED(NeeTestRevaluate))
+        if (FEAT_DBG(NeeTestRevaluate))
         {
             float _;
             L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, nextOrigin, lightSample.Index, lightSample.Direction, _);
@@ -41,7 +41,7 @@ float3 SampleDirectLighting(
         DBG_OUTPUT3(L_nee, NEE_Contrib);
     }
 
-	if (FEATURE_ENABLED(GradientDomain))
+	if (FEAT_CORE(GradientDomain))
 	{
         // TODO
 		//currentVertexInfo.PDF *= lightSample.PDF;
@@ -49,7 +49,7 @@ float3 SampleDirectLighting(
     	currentVertexInfo.NeeLightDirection = lightSample.Direction;
 	}
 
-    if (FEATURE_ENABLED(Transient))
+    if (FEAT_CORE(Transient))
     {
         if (gSettings.TransientLightIdx == -1 || gSettings.TransientLightIdx == lightSample.Index)
         {
