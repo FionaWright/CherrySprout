@@ -30,7 +30,7 @@ struct SceneCPU
     Object* Objects = nullptr;
     size_t ObjectCount = 0;
 
-    char** TextureFilepaths = nullptr;
+    wchar_t** TextureFilepaths = nullptr;
     size_t TextureFilepathCount = 0;
 
     Vertex* MegaBufferVertex = nullptr;

@@ -19,7 +19,7 @@ void EnvironmentMap::CreateCubemapResource(ID3D12Device* device)
         m_cubemap.Init_Tex2D("Cubemap", device, 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 }
 
-void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, const float rotation)
+void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::wstring& filePath, const float rotation)
 {
     CherryPrint("EnvMap Initializing...");
 
@@ -39,7 +39,7 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::string& filePath, con
     {
         GPU_SCOPE(cmdList, "Upload Pano Map");
 
-        const std::string fullPath = FileHelper::GetAssetTextureFullPath(("EnvMaps/" + filePath).c_str());
+        const std::wstring fullPath = FileHelper::GetAssetTextureFullPath((L"EnvMaps/" + filePath).c_str());
 
         ScratchImage scratchImage;
         m_pano = TextureLoader::LoadTexture2DHDR(d3d->GetDevice(), fullPath.c_str(), scratchImage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

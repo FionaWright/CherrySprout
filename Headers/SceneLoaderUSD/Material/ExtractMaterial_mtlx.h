@@ -17,6 +17,7 @@
 #pragma warning(pop)
 
 #include "Scene/Material.h"
+#include "Utils/CppUtils.h"
 
 namespace SceneLoaderUSD
 {
@@ -80,10 +81,10 @@ namespace SceneLoaderUSD
                 source, sourceName, sourceType, result);
         }
 
-        inline std::string RecurseTexNodeGraph(const pxr::UsdShadeShader& surface)
+        inline std::wstring RecurseTexNodeGraph(const pxr::UsdShadeShader& surface)
         {
             if (!surface)
-                return "";
+                return L"";
 
             const auto fileInput = surface.GetInput(pxr::TfToken("file"));
             if (fileInput)
@@ -91,8 +92,8 @@ namespace SceneLoaderUSD
                 pxr::SdfAssetPath assetPath;
                 if (fileInput.GetAttr().Get(&assetPath))
                 {
-                    const std::string& resolvedPath = assetPath.GetResolvedPath();
-                    return resolvedPath.empty() ? assetPath.GetAssetPath() : resolvedPath;
+                    const std::wstring& resolvedPath = stringToWString(assetPath.GetResolvedPath());
+                    return resolvedPath.empty() ? stringToWString(assetPath.GetAssetPath()) : resolvedPath;
                 }
             }
 
@@ -109,14 +110,14 @@ namespace SceneLoaderUSD
                 }
             }
 
-            return "";
+            return L"";
         }
 
-        inline std::string ExtractTextureFile(const pxr::UsdShadeShader& surface, const char* inputName)
+        inline std::wstring ExtractTextureFile(const pxr::UsdShadeShader& surface, const char* inputName)
         {
             const auto input = surface.GetInput(pxr::TfToken(inputName));
             if (!input)
-                return "";
+                return L"";
 
             pxr::UsdPrim prim;
             pxr::TfToken sourceName;
@@ -125,7 +126,7 @@ namespace SceneLoaderUSD
                 pxr::UsdShadeAttributeType sourceType;
 
                 if (!input.GetConnectedSource(&source, &sourceName, &sourceType))
-                    return "";
+                    return L"";
 
                 prim = source.GetPrim();
             }
@@ -139,8 +140,8 @@ namespace SceneLoaderUSD
                     pxr::SdfAssetPath assetPath;
                     if (fileInput.GetAttr().Get(&assetPath))
                     {
-                        const std::string resolvedPath = assetPath.GetResolvedPath();
-                        return resolvedPath.empty() ? assetPath.GetAssetPath() : resolvedPath;
+                        const std::wstring resolvedPath = stringToWString(assetPath.GetResolvedPath());
+                        return resolvedPath.empty() ? stringToWString(assetPath.GetAssetPath()) : resolvedPath;
                     }
                 }
             }
@@ -161,12 +162,12 @@ namespace SceneLoaderUSD
             }
 
 
-            return "";
+            return L"";
         }
 
-        inline int TryFetchTexture(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList, const std::vector<const char*>& inputNames)
+        inline int TryFetchTexture(const pxr::UsdShadeShader& surface, std::vector<const wchar_t*>& textureList, const std::vector<const char*>& inputNames)
         {
-            std::string path;
+            std::wstring path;
 
             bool found = false;
             for (auto& inputName : inputNames)
@@ -184,7 +185,7 @@ namespace SceneLoaderUSD
             const auto it = std::ranges::find(textureList, path);
             if (it == textureList.end())
             {
-                const char* copyPath = _strdup(path.c_str());
+                const wchar_t* copyPath = _wcsdup(path.c_str());
                 textureList.emplace_back(copyPath);
                 return static_cast<int>(textureList.size() - 1);
             }
@@ -269,7 +270,7 @@ namespace SceneLoaderUSD
         return true;
     }
 
-    inline Material ExtractMaterial_MaterialX(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList)
+    inline Material ExtractMaterial_MaterialX(const pxr::UsdShadeShader& surface, std::vector<const wchar_t*>& textureList)
     {
         Material material{};
 

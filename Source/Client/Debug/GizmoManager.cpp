@@ -15,7 +15,7 @@
 
 #define UPLOAD_HEAP_SIZE (256 * 100 + 512)
 
-void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, XMFLOAT4 color, const char* texFilepath)
+void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, XMFLOAT4 color, const wchar_t* texFilepath)
 {
     const auto fullPath = FileHelper::GetAssetFullPath(texFilepath);
 

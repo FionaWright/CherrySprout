@@ -31,7 +31,7 @@ namespace SceneLoaderUSD
         std::vector<ImporterObject> Objects;
         std::vector<Material> Materials;
         std::vector<PunctualLight> PunctualLights;
-        std::vector<const char*> TextureFilePaths;
+        std::vector<const wchar_t*> TextureFilePaths;
     };
 
     ImporterContext Import(const char* usdPath, float sceneScale);

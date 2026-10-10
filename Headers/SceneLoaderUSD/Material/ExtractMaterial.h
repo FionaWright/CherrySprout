@@ -64,7 +64,7 @@ namespace SceneLoaderUSD
         return surface.GetPrim().HasAttribute(pxr::TfToken("info:mdl:sourceAsset")) || id.GetString().find("mdl") != std::string::npos;
     }
 
-    inline Material ExtractMaterial(const pxr::UsdShadeMaterial& mat, std::vector<const char*>& textureList)
+    inline Material ExtractMaterial(const pxr::UsdShadeMaterial& mat, std::vector<const wchar_t*>& textureList)
     {
         pxr::UsdShadeShader surface;
 

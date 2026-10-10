@@ -6,66 +6,66 @@
 #include "System/FileHelper.h"
 #include "Utils/Helper.h"
 
-std::string AssetPathToDDS(const char* path)
+std::wstring AssetPathToDDS(const wchar_t* path)
 {
     const std::filesystem::path p(path);
 
-    if (p.extension() == ".dds")
+    if (p.extension() == L".dds")
         return path;
 
-    const std::string generic = p.generic_string();
+    const std::wstring generic = p.generic_wstring();
 
-    const size_t assetsPos = generic.find("/Assets/");
+    const size_t assetsPos = generic.find(L"/Assets/");
     if (assetsPos == std::string::npos)
         return {};
 
     std::filesystem::path relative = generic.substr(assetsPos + 8);
-    relative.replace_extension(".dds");
+    relative.replace_extension(L".dds");
 
-    return FileHelper::GetAssetFullPath(relative.generic_string().c_str());
+    return FileHelper::GetAssetFullPath(relative.generic_wstring().c_str());
 }
 
-D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags, const bool tryOverloadDDS)
+D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags, const bool tryOverloadDDS)
 {
     TexMetadata texMetadata{};
 
     if (tryOverloadDDS)
     {
-        const std::string ddsPath = AssetPathToDDS(path);
+        const std::wstring ddsPath = AssetPathToDDS(path);
         CherryAssert(std::filesystem::exists(ddsPath));
         CherryAssert(std::filesystem::path(ddsPath).extension().string() == ".dds");
-        const std::wstring fullPathW = stringToWString(ddsPath);
 
         constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;
 
-        V(LoadFromDDSFile(fullPathW.c_str(), ddsFlags, &texMetadata, scratchImage));
+        V(LoadFromDDSFile(ddsPath.c_str(), ddsFlags, &texMetadata, scratchImage));
     }
     else
     {
-        const std::wstring fullPathW = stringToWString(path);
-        V(LoadFromWICFile(fullPathW.c_str(), WIC_FLAGS_NONE, &texMetadata, scratchImage));
+        V(LoadFromWICFile(path, WIC_FLAGS_NONE, &texMetadata, scratchImage));
     }
 
     DXGI_FORMAT format = texMetadata.format;
     if (format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
         format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
+    const char* name = _strdup(wstringToString(path).c_str()); // TODO: Memory leak
+
     D12Resource texture;
-    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COMMON, nullptr, true);
+    texture.Init_Tex2D(name, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COMMON, nullptr, true);
     return texture;
 }
 
-D12Resource TextureLoader::LoadTexture2DHDR(ID3D12Device* device, const char* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags)
+D12Resource TextureLoader::LoadTexture2DHDR(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags)
 {
     CherryAssert(std::filesystem::exists(path) && std::filesystem::path(path).extension().string() == ".hdr");
 
-    const std::wstring fullPathW = stringToWString(path);
-
     TexMetadata texMetadata{};
-    V(LoadFromHDRFile(fullPathW.c_str(), &texMetadata, scratchImage));
+    V(LoadFromHDRFile(path, &texMetadata, scratchImage));
+
+    const char* name = _strdup(wstringToString(path).c_str()); // TODO: Memory leak
 
     D12Resource texture;
-    texture.Init_Tex2D(path, device, texMetadata.width, texMetadata.height, texMetadata.depth, texMetadata.format, flags, D3D12_RESOURCE_STATE_COPY_DEST);
+    texture.Init_Tex2D(name, device, texMetadata.width, texMetadata.height, texMetadata.depth, texMetadata.format, flags, D3D12_RESOURCE_STATE_COPY_DEST);
     return texture;
 }
 

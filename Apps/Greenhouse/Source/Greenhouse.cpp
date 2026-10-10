@@ -93,7 +93,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
     if (m_envMapDirty)
     {
-        m_envMap.Init(d3d, &m_heap, "autumn_field_puresky_4k.hdr", 0); // TODO
+        m_envMap.Init(d3d, &m_heap, L"autumn_field_puresky_4k.hdr", 0); // TODO
     }
 
     if (m_renderBackendDirty)
@@ -149,7 +149,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
             const XMFLOAT3 position = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Position;
             const XMFLOAT3 color3 = m_sceneManager.GetCPU().MegaBufferPunctualLights[i].Color;
             const XMFLOAT4 color = XMFLOAT4(color3.x, color3.y, color3.z, 1.0f);
-            m_gizmoManager.AddGizmo(d3d, &m_heap, position, color, "Textures/LightGizmo.dds");
+            m_gizmoManager.AddGizmo(d3d, &m_heap, position, color, L"Textures/LightGizmo.dds");
         }
         m_gizmosSceneLoaded = true;
     }

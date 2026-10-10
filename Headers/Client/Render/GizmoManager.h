@@ -22,14 +22,14 @@ class D3D;
 struct Gizmo
 {
     XMFLOAT3 Position;
-    std::string TextureFilepath;
+    std::wstring TextureFilepath;
     DescriptorSet DescSet;
 };
 
 class GizmoManager
 {
 public:
-    void AddGizmo(D3D* d3d, Heap* heap, XMFLOAT3 position, XMFLOAT4 color, const char* texFilepath);
+    void AddGizmo(D3D* d3d, Heap* heap, XMFLOAT3 position, XMFLOAT4 color, const wchar_t* texFilepath);
     void Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, const XMMATRIX& V, const XMMATRIX& P);
 
     void ClearGizmos() { m_uploadHeap.FreeAssignedData(); m_gizmos.clear(); }
@@ -38,7 +38,7 @@ private:
     void initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList);
 
     std::vector<Gizmo> m_gizmos;
-    std::unordered_map<std::string, D12Resource> m_textureCache;
+    std::unordered_map<std::wstring, D12Resource> m_textureCache;
 
     D12Resource m_quadVertexBuffer;
     UploadHeap m_uploadHeap;

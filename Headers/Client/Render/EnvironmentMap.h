@@ -22,7 +22,7 @@ class EnvironmentMap
 public:
     void CreateCubemapResource(ID3D12Device* device);
 
-    void Init(D3D* d3d, Heap* heap, const std::string& filePath, float rotation);
+    void Init(D3D* d3d, Heap* heap, const std::wstring& filePath, float rotation);
     void InitCubemap(D3D* d3d, Heap* heap);
 
     DirectX::XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
@@ -37,7 +37,7 @@ private:
 
     D12Resource m_pano, m_ea, m_cubemap;
     float m_rotation = 0.0f;
-    std::string m_currentPanoFilepath = "";
+    std::wstring m_currentPanoFilepath = L"";
     bool m_resourcesInitialized = false;
 
     RootSig m_rootSigPanoToEA, m_rootSigPanoToCM;

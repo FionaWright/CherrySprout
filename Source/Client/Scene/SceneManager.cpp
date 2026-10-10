@@ -138,7 +138,7 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
 
     for (int i = 0; i < textureCount; i++)
     {
-        const char* path = m_scene.CPU.TextureFilepaths[i];
+        const wchar_t* path = m_scene.CPU.TextureFilepaths[i];
         const D3D12_RESOURCE_FLAGS flags = tryOverloadDDS ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         D12Resource tex = TextureLoader::LoadTexture2DLDR(d3d->GetDevice(), path, scratchImages[i], flags, tryOverloadDDS);
 

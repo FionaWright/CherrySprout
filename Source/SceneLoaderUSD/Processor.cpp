@@ -18,10 +18,10 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
     memcpy(scene->MegaBufferMaterials, importerContext.Materials.data(), scene->MegaBufferMaterialsCount * sizeof(Material));
 
     scene->TextureFilepathCount = importerContext.TextureFilePaths.size();
-    scene->TextureFilepaths = static_cast<char**>(malloc(scene->TextureFilepathCount * sizeof(char*)));
+    scene->TextureFilepaths = static_cast<wchar_t**>(malloc(scene->TextureFilepathCount * sizeof(wchar_t*)));
     for (size_t i = 0; i < scene->TextureFilepathCount; i++)
     {
-        scene->TextureFilepaths[i] = _strdup(importerContext.TextureFilePaths[i]);
+        scene->TextureFilepaths[i] = _wcsdup(importerContext.TextureFilePaths[i]);
     }
 
     size_t totalVertexCount = 0;

@@ -5,6 +5,9 @@
 #include <ostream>
 #include <iomanip>
 
+#include <windows.h>
+#include "Utils/CppUtils.h"
+
 void PrintSceneDebug(const SceneCPU* scene)
 {
     std::cout << "\n========== Scene Debug ==========\n";
@@ -101,9 +104,7 @@ void PrintSceneDebug(const SceneCPU* scene)
 
     for (size_t i = 0; i < scene->TextureFilepathCount; ++i)
     {
-        std::cout << "[" << i << "] "
-                  << scene->TextureFilepaths[i]
-                  << '\n';
+        std::cout << "[" << i << "] " << wstringToString(scene->TextureFilepaths[i]) << std::endl;
     }
 
     std::cout << "=================================\n";
@@ -114,7 +115,8 @@ int main(const int argc, char** argv)
     //std::string filepath = R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Release\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
-    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\CityStreet\CityStreetMin.usda)";
+    //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\CityStreet\CityStreetMin.usda)";
+    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\Bedroom\Bedroom.usdc)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\Quad\Quad.usda)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fiona\source\repos\CherrySprout\Assets\Scenes\USD\GitIgnored\LivingRoom\Modernes Wohnzimmer.usda)";

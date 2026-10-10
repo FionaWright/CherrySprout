@@ -19,16 +19,17 @@
 
 #include "../Importer.h"
 #include "Scene/Material.h"
+#include "Utils/CppUtils.h"
 
 namespace SceneLoaderUSD
 {
     namespace MaterialUtils_Simple
     {
-        inline std::string ExtractTextureFile(const pxr::UsdShadeShader& surface, const char* inputName)
+        inline std::wstring ExtractTextureFile(const pxr::UsdShadeShader& surface, const char* inputName)
         {
             const auto input = surface.GetInput(pxr::TfToken(inputName));
             if (!input || !input.HasConnectedSource())
-                return "";
+                return L"";
 
             for (auto& attr : input.GetValueProducingAttributes())
             {
@@ -43,23 +44,23 @@ namespace SceneLoaderUSD
                 pxr::SdfAssetPath assetPath;
                 if (fileInput.GetAttr().Get(&assetPath))
                 {
-                    const std::string resolvedPath = assetPath.GetResolvedPath();
-                    return resolvedPath.empty() ? assetPath.GetAssetPath() : resolvedPath;
+                    const std::wstring resolvedPath = stringToWString(assetPath.GetResolvedPath());
+                    return resolvedPath.empty() ? stringToWString(assetPath.GetAssetPath()) : resolvedPath;
                 }
             }
-            return "";
+            return L"";
         }
 
-        inline int TryFetchTexture(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList, const char* inputName)
+        inline int TryFetchTexture(const pxr::UsdShadeShader& surface, std::vector<const wchar_t*>& textureList, const char* inputName)
         {
-            const std::string path = ExtractTextureFile(surface, inputName);
+            const std::wstring path = ExtractTextureFile(surface, inputName);
             if (path.empty())
                 return -1;
 
             const auto it = std::ranges::find(textureList, path);
             if (it == textureList.end())
             {
-                const char* copyPath = _strdup(path.c_str());
+                const wchar_t* copyPath = _wcsdup(path.c_str());
                 textureList.emplace_back(copyPath);
                 return static_cast<int>(textureList.size() - 1);
             }
@@ -67,7 +68,7 @@ namespace SceneLoaderUSD
         }
     }
 
-    inline Material ExtractMaterial_Simple(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList)
+    inline Material ExtractMaterial_Simple(const pxr::UsdShadeShader& surface, std::vector<const wchar_t*>& textureList)
     {
         Material material{};
 

@@ -23,7 +23,7 @@
 namespace SceneLoaderUSD
 {
     // TODO
-    inline Material ExtractMaterial_Mdl(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList)
+    inline Material ExtractMaterial_Mdl(const pxr::UsdShadeShader& surface, std::vector<const wchar_t*>& textureList)
     {
         Material material{};
         return material;
