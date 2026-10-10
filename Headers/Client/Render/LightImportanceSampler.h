@@ -45,6 +45,7 @@ public:
     [[nodiscard]] uint32_t GetLsdBasePunctuals() const;
     [[nodiscard]] uint32_t GetLsdBaseEmissives() const;
     [[nodiscard]] uint32_t GetLsdCount() const;
+    [[nodiscard]] uint32_t GetMaxEmissiveCount() const { return m_maxEmissives; }
     [[nodiscard]] uint32_t GetMaxLsdCount() const { return m_maxLsdCount; }
 
     [[nodiscard]] bool IsLsdAliasTable() const { return m_lsdIsAliasTable; }
