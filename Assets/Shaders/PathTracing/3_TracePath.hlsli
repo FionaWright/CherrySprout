@@ -40,6 +40,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             DBG_OUTPUT2(gGBufferUvMv[pixelCoord].ba,                            GBuffer_Mv);
         }
 
+        DBG_PATH_DUMP_PATH_STATE(pathState);
+
         if (isMiss)
         {
             float3 Li = pathState.Beta * Miss(pathState, i);

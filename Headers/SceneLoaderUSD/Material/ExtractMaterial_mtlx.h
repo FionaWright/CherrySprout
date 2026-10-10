@@ -22,6 +22,64 @@ namespace SceneLoaderUSD
 {
     namespace MaterialUtils_Mtlx
     {
+        inline bool ResolveConnectedShader(
+            const pxr::UsdShadeConnectableAPI& source,
+            const pxr::TfToken& sourceName,
+            const pxr::UsdShadeAttributeType sourceType,
+            pxr::UsdShadeShader& result,
+            int depth = 0)
+        {
+            if (!source || depth > 32)
+                return false;
+
+            // If the connection points directly to a shader, we're done.
+            pxr::UsdShadeShader shader(source.GetPrim());
+            if (shader)
+            {
+                result = shader;
+                return true;
+            }
+
+            // Otherwise, it may point to a NodeGraph output.
+            pxr::UsdShadeNodeGraph graph(source.GetPrim());
+            if (!graph || sourceType != pxr::UsdShadeAttributeType::Output)
+                return false;
+
+            const pxr::UsdShadeOutput output = graph.GetOutput(sourceName);
+            if (!output)
+                return false;
+
+            pxr::UsdShadeConnectableAPI nextSource;
+            pxr::TfToken nextName;
+            pxr::UsdShadeAttributeType nextType;
+
+            if (!output.GetConnectedSource(
+                    &nextSource, &nextName, &nextType))
+                return false;
+
+            return ResolveConnectedShader(
+                nextSource, nextName, nextType, result, depth + 1);
+        }
+
+        inline bool ResolveInputShader(
+            const pxr::UsdShadeInput& input,
+            pxr::UsdShadeShader& result)
+        {
+            if (!input)
+                return false;
+
+            pxr::UsdShadeConnectableAPI source;
+            pxr::TfToken sourceName;
+            pxr::UsdShadeAttributeType sourceType;
+
+            if (!input.GetConnectedSource(
+                    &source, &sourceName, &sourceType))
+                return false;
+
+            return ResolveConnectedShader(
+                source, sourceName, sourceType, result);
+        }
+
         inline std::string RecurseTexNodeGraph(const pxr::UsdShadeShader& surface)
         {
             if (!surface)
@@ -161,6 +219,56 @@ namespace SceneLoaderUSD
         return false;
     }
 
+    inline bool ExtractEDF(
+            const pxr::UsdShadeShader& surface,
+            hlsl::float3& emissiveColor,
+            float& emissiveStrength)
+    {
+        const pxr::UsdShadeInput edfInput =
+            surface.GetInput(pxr::TfToken("edf"));
+
+        pxr::UsdShadeShader edfShader;
+        if (!MaterialUtils_Mtlx::ResolveInputShader(edfInput, edfShader))
+            return false;
+
+        // Read EDF color.
+        const pxr::UsdShadeInput colorInput =
+            edfShader.GetInput(pxr::TfToken("color"));
+
+        pxr::GfVec3f color;
+        if (!colorInput || !colorInput.Get(&color))
+            return false;
+
+        emissiveColor.x = color[0];
+        emissiveColor.y = color[1];
+        emissiveColor.z = color[2];
+
+        // Default: the EDF color itself carries the emission.
+        emissiveStrength = 1.0f;
+
+        // If the EDF implementation has a separate intensity input,
+        // use it. "weight" is also checked as a possible multiplier.
+        const char* strengthInputs[] = {
+            "intensity",
+            "emissive_strength",
+            "weight"
+        };
+
+        for (const char* name : strengthInputs)
+        {
+            const pxr::UsdShadeInput strengthInput =
+                edfShader.GetInput(pxr::TfToken(name));
+
+            if (strengthInput &&
+                RecurseMtlXValue(strengthInput, emissiveStrength))
+            {
+                break;
+            }
+        }
+
+        return true;
+    }
+
     inline Material ExtractMaterial_MaterialX(const pxr::UsdShadeShader& surface, std::vector<const char*>& textureList)
     {
         Material material{};
@@ -214,13 +322,17 @@ namespace SceneLoaderUSD
             return result;
         };
 
+        if (!ExtractEDF(surface, material.EmissiveColor, material.EmissiveStrength))
+        {
+            readFloat3                  ("emission",                &material.EmissiveColor);
+            readFloatAssignedTexture    ("emissive_strength",       material.TexIdxEmissive,            material.EmissiveStrength);
+        }
+
         readFloat3                  ("base_color",              &material.Albedo);
-        readFloat3                  ("emission",                &material.EmissiveColor);
         readFloat3                  ("transmission_color",      &material.TransmissionColor);
 
         readFloatAssignedTexture    ("specular_roughness",      material.TexIdxRoughness,           material.Roughness);
         readFloatAssignedTexture    ("metalness",               material.TexIdxMetallic,            material.Metallic);
-        readFloatAssignedTexture    ("emissive_strength",       material.TexIdxEmissive,            material.EmissiveStrength);
         readFloatAssignedTexture    ("transmission",            material.TexIdxTransmissionFactor,  material.TransmissionFactor);
 
         readFloat                   ("specular_factor",      material.SpecularFactor);

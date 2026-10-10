@@ -113,6 +113,27 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPosition = {-0.114393, 0.159540, -0.291603},
         .CameraPitchYaw = {0.251301, 0.375632},
     },
+
+    {
+        .Name = "Bedroom",
+        .Filepath = "Scenes/USD/GitIgnored/Bedroom/Bedroom.usdc",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+    },
+
+    {
+        .Name = "CityStreet",
+        .Filepath = "Scenes/USD/GitIgnored/CityStreet/CityStreet.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+    },
+
+    {
+        .Name = "Hotel",
+        .Filepath = "Scenes/USD/GitIgnored/Hotel/HeartbreakHotel.usda",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+    },
 };
 
 #endif

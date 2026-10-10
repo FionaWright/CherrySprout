@@ -29,7 +29,7 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, fl
 {
     float pdf_prim = 1.0f / (float)primitiveCount;
 
-    float pdf_bary = 1.0f / triangleArea;
+    float pdf_bary = 1.0f / max(1e-6f, triangleArea);
 
     float pdf_area = pdf_prim * pdf_bary;
 

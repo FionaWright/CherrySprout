@@ -11,14 +11,16 @@ file(GLOB_RECURSE TEXTURE_FILES
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.tga"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.png"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.dds"
+        "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.tif"
 )
+
+list(REMOVE_DUPLICATES TEXTURE_FILES)
 
 set(TEXTURE_OUTPUTS "")
 
 # Note:
 # Even if the texture is converted to DDS, the orignal file is still copied to the build directory
 # This is because otherwise the OpenUSD ArResolver would break and fail to resolve filepaths
-# I tried to implement a custom ArResolver override but the online documentation wasn't good enough for me to able to figure it out without wasting loads of time
 
 foreach(SRC ${TEXTURE_FILES})
     if(IS_DIRECTORY "${SRC}")
@@ -40,41 +42,49 @@ foreach(SRC ${TEXTURE_FILES})
 
     add_custom_command(
             OUTPUT "${DST}"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${SRC}"
-            "${DST}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC}" "${DST}"
             DEPENDS "${SRC}"
             COMMENT "Copying texture ${REL_PATH}"
+            VERBATIM
     )
 
     list(APPEND TEXTURE_OUTPUTS "${DST}")
 
     if(NOT EXT STREQUAL ".hdr" AND NOT EXT STREQUAL ".exr" AND NOT EXT STREQUAL ".dds") # Don't convert HDR to DDS
 
-        get_filename_component(NAME_WE "${REL_PATH}" NAME_WE)
+        get_filename_component(NAME_WLE "${REL_PATH}" NAME_WLE)
         get_filename_component(REL_DIR "${REL_PATH}" DIRECTORY)
 
         set(DDS_OUT
-                "${CMAKE_BINARY_DIR}/Assets/${REL_DIR}/${NAME_WE}.dds"
+                "${CMAKE_BINARY_DIR}/Assets/${REL_DIR}/${NAME_WLE}.dds"
         )
 
-        get_filename_component(DDS_DIR "${DDS_OUT}" DIRECTORY)
-        file(MAKE_DIRECTORY "${DDS_DIR}")
+        message(STATUS "Texture source: ${SRC}")
+        message(STATUS "DDS output:     ${DDS_OUT}")
 
-        add_custom_command(
-                OUTPUT "${DDS_OUT}"
-                COMMAND "${TEXCONV_EXE}"
-                -y
-                -ft dds
-                -f BC7_UNORM -srgb
-                -o "${DDS_DIR}"
-                "${SRC}"
-                DEPENDS "${SRC}"
-                COMMENT "Converting ${REL_PATH} -> DDS"
-                VERBATIM
-        )
+        if(DDS_OUT IN_LIST GENERATED_DDS_OUTPUTS)
+            message(WARNING "Duplicate DDS output: ${DDS_OUT}, source: ${SRC}")
+        else()
+            get_filename_component(DDS_DIR "${DDS_OUT}" DIRECTORY)
+            file(MAKE_DIRECTORY "${DDS_DIR}")
 
-        list(APPEND TEXTURE_OUTPUTS "${DDS_OUT}")
+            add_custom_command(
+                    OUTPUT "${DDS_OUT}"
+                    COMMAND "${TEXCONV_EXE}"
+                    -y
+                    -ft dds
+                    -f BC7_UNORM -srgb
+                    -o "${DDS_DIR}"
+                    "${SRC}"
+                    DEPENDS "${SRC}"
+                    COMMENT "Converting ${REL_PATH} -> DDS"
+                    VERBATIM
+            )
+
+            list(APPEND TEXTURE_OUTPUTS "${DDS_OUT}")
+            list(APPEND GENERATED_DDS_OUTPUTS "${DDS_OUT}")
+
+        endif()
 
     endif()
 

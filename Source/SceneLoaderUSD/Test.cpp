@@ -23,16 +23,50 @@ void PrintSceneDebug(const SceneCPU* scene)
 
         std::cout
             << "[" << i << "] "
-            << "BaseColor=("
+
+            << "Albedo=("
             << mat.Albedo.x << ", "
             << mat.Albedo.y << ", "
             << mat.Albedo.z << ", "
             << mat.Albedo.w << ") "
+
+            << "EmissiveStrength=" << mat.EmissiveStrength << " "
+            << "EmissiveColor=("
+            << mat.EmissiveColor.x << ", "
+            << mat.EmissiveColor.y << ", "
+            << mat.EmissiveColor.z << ") "
+
+            << "TransmissionFactor=" << mat.TransmissionFactor << " "
+            << "TransmissionColor=("
+            << mat.TransmissionColor.x << ", "
+            << mat.TransmissionColor.y << ", "
+            << mat.TransmissionColor.z << ") "
+
             << "Roughness=" << mat.Roughness << " "
             << "Metallic=" << mat.Metallic << " "
-            << "Emission=" << mat.EmissiveStrength << " "
-            << "AlbedoTex=" << mat.TexIdxAlbedo << " "
-            << "NormalTex=" << mat.TexIdxNormal
+            << "SpecularFactor=" << mat.SpecularFactor << " "
+            << "AnisoStrength=" << mat.AnisoStrength << " "
+
+            << "IOR_N=" << mat.IOR_N << " "
+
+            << "TexIdxAlbedo=" << mat.TexIdxAlbedo << " "
+            << "TexIdxNormal=" << mat.TexIdxNormal << " "
+            << "TexIdxRoughness=" << mat.TexIdxRoughness << " "
+
+            << "TexIdxMetallic=" << mat.TexIdxMetallic << " "
+            << "TexIdxEmissive=" << mat.TexIdxEmissive << " "
+            << "TexIdxAnisotropy=" << mat.TexIdxAnisotropy << " "
+            << "TexIdxClearcoat=" << mat.TexIdxClearcoat << " "
+
+            << "TexIdxClearcoatRoughness=" << mat.TexIdxClearcoatRoughness << " "
+            << "TexIdxClearcoatNormal=" << mat.TexIdxClearcoatNormal << " "
+            << "TexIdxSheenColor=" << mat.TexIdxSheenColor << " "
+            << "TexIdxSheenRoughness=" << mat.TexIdxSheenRoughness << " "
+
+            << "TexIdxTransmissionFactor=" << mat.TexIdxTransmissionFactor << " "
+            << "TexIdxORM=" << mat.TexIdxORM << " "
+            << "TexIdxOGM=" << mat.TexIdxOGM
+
             << '\n';
     }
 
@@ -79,7 +113,8 @@ int main(const int argc, char** argv)
 {
     //std::string filepath = R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
-    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Release\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
+    //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Release\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
+    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\CityStreet\CityStreetMin.usda)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\Quad\Quad.usda)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fiona\source\repos\CherrySprout\Assets\Scenes\USD\GitIgnored\LivingRoom\Modernes Wohnzimmer.usda)";

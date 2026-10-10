@@ -32,7 +32,8 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const char* pa
     if (tryOverloadDDS)
     {
         const std::string ddsPath = AssetPathToDDS(path);
-        CherryAssert(std::filesystem::exists(ddsPath) && std::filesystem::path(ddsPath).extension().string() == ".dds");
+        CherryAssert(std::filesystem::exists(ddsPath));
+        CherryAssert(std::filesystem::path(ddsPath).extension().string() == ".dds");
         const std::wstring fullPathW = stringToWString(ddsPath);
 
         constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;

@@ -62,7 +62,7 @@ inline float PcgRand01(GLUE_INOUT(hlsl::uint) state)
 // [0, 1)
 inline float PcgRand01Ex(GLUE_INOUT(hlsl::uint) state)
 {
-    return (float)PcgRand01Uint(state) / (4294967296.0f); // UINT_MAX + 1 in fp
+    return (float)(PcgRand01Uint(state) >> 8) * (1.0f / 16777216.0f);
 }
 
 // [0, 1]
@@ -104,7 +104,7 @@ inline hlsl::uint RandRangeUInt(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint mi
     const hlsl::uint range = max - min;
     if (range == 0)
         return min;
-    
+
     return min + (PcgRand01Uint(rngInfo.IndependentRngState) % range);
 }
 
