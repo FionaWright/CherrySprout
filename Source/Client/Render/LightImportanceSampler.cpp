@@ -82,19 +82,15 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
 
             m_lsdRW.UavBarrier(cmdList);
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
             m_lsdRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
             m_lsdReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
             cmdList->CopyBufferRegion(m_lsdReadback.GetResource(), 0, m_lsdRW.GetResource(), 0, m_lsdBufferSize);
-#endif
         }
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);
         d3d->Flush();
     }
 
-
-#if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_maxLsdCount == 0)
     {
         m_cpuLsdAlias.clear();
@@ -112,7 +108,6 @@ void LightImportanceSampler::Build(D3D* d3d, Heap* heap, D12Resource* envMap, Sc
         m_cpuLsdCdf.resize(m_maxLsdCount);
         m_lsdReadback.Readback(m_cpuLsdCdf.data());
     }
-#endif
 }
 
 uint32_t LightImportanceSampler::GetLsdBasePunctuals() const

@@ -128,7 +128,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
         m_renderInfo.Scene = &m_sceneManager.GetScene();
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
         m_gizmosSceneLoaded = false;
 #endif
 
@@ -137,7 +137,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneDirty = false;
     }
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
     if (m_gizmosEnabled && !m_gizmosSceneLoaded)
     {
         m_gizmoManager.ClearGizmos();
@@ -275,7 +275,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     // Forward/Path-Tracing Pass
     m_currRenderBackend->Render(d3d, cmdList, m_renderInfo, &m_frameBuffer, rtvHandle);
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
     // Gizmos Pass
     if (m_gizmosEnabled)
     {
@@ -390,7 +390,10 @@ bool Greenhouse::GBufferRequired() const
     const bool outputColor = m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_OutputColor);
     const bool pathDumper = m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_PathDumper);
     const bool debugFlagsNeeds = m_config.RenderBackend == RenderBackendMode::ePathTracer && (outputColor || pathDumper);
-    debugNeeds = m_gizmosEnabled || debugFlagsNeeds;
+    debugNeeds = debugFlagsNeeds;
+#   if !NDEBUG
+    debugNeeds |= m_gizmosEnabled;
+#   endif
 #endif
 
     // PT only for now

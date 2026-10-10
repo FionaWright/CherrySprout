@@ -12,7 +12,7 @@
 #include "Scene/SceneManager.h"
 #include "System/App.h"
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
 #   include "Render/GizmoManager.h"
 #endif
 
@@ -72,7 +72,7 @@ private:
 
     CameraController m_cameraController;
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
     GizmoManager m_gizmoManager;
     bool m_gizmosEnabled = true;
     bool m_gizmosSceneLoaded = false;

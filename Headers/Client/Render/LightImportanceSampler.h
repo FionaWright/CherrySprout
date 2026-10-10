@@ -51,10 +51,8 @@ public:
     [[nodiscard]] bool IsLsdAliasTable() const { return m_lsdIsAliasTable; }
     [[nodiscard]] uint32_t GetEmissiveInstanceCount() const { return m_numEmissiveInstances; }
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
     [[nodiscard]] const std::vector<ProbabilityDistributionSample>& GetCpuLightsCdf() const { return m_cpuLsdCdf; }
     [[nodiscard]] const std::vector<AliasEntry>& GetCpuLightsAlias() const { return m_cpuLsdAlias; }
-#endif
 
 private:
     void buildPunctualDistributions(D3D* d3d, const Heap* heap, Scene* scene);
@@ -129,10 +127,8 @@ private:
     size_t m_punctualLightsPdfBufferSize = 0;
     size_t m_lsdBufferSize = 0;
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
     std::vector<ProbabilityDistributionSample> m_cpuLsdCdf;
     std::vector<AliasEntry> m_cpuLsdAlias;
-#endif
 };
 
 #endif

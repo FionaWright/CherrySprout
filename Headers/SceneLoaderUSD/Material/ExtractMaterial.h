@@ -17,6 +17,8 @@
 
 #pragma warning(pop)
 
+#include <iostream>
+
 #include "ExtractMaterial_mdl.h"
 #include "Scene/Material.h"
 

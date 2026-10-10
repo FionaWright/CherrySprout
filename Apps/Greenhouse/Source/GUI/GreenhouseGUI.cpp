@@ -94,7 +94,7 @@ void Greenhouse::renderGuiCore()
     ImGui::SeparatorText("Settings##PT");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
         ImGui::Checkbox("Gizmos Enabled", &m_gizmosEnabled);
 #endif
         ImGui::Spacing();
@@ -390,7 +390,6 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
         if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_NEE))
         {
             if (ImGui::CollapsingHeader("LSD"))
@@ -488,7 +487,6 @@ void Greenhouse::renderGuiCore()
             }
             ImGui::Spacing();
         }
-#endif
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
         if (ImGui::CollapsingHeader("Feature Flags Debug"))
@@ -625,7 +623,7 @@ void Greenhouse::renderGuiCore()
     ImGui::SeparatorText("Tools:");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-#if CHERRY_DEBUG_FEATURES_ENABLED
+#if !NDEBUG
         ImGui::Checkbox("Snapshot is LDR", &m_isSnapshotPtLDR);
 
         static char buff[256];
@@ -638,6 +636,7 @@ void Greenhouse::renderGuiCore()
             else
                 m_scheduledSnapshotPT = std::string(BUILD_DIR) + "/Snapshots/" + buff;
         }
+#endif
 
         if (ImGui::Button("Print Camera Location"))
         {
@@ -649,7 +648,6 @@ void Greenhouse::renderGuiCore()
             const float yaw = m_cameraController.GetCamera().GetYaw();
             CherryPrint(".CameraPitchYaw = {" << std::to_string(pitch) << ", " << std::to_string(yaw) << "},");
         }
-#endif
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 }
