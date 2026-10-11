@@ -39,7 +39,7 @@ float3 Miss(inout PathState pathState, uint bounceIdx)
         Li += Le;
     }
 
-    if (FEAT_CORE(DirectionalLight) && bounceIdx >= 1)
+    if (FEAT_CORE(DirectionalLight))
     {
         float sunCos = dot(pathState.Desc.Direction, -normalize(gSettings.DirLightDirection));
         if (FEAT_CORE(DirectionalLightDistant))

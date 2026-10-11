@@ -24,3 +24,5 @@ FLAG_PROCESS(PathDumper, true)
 
 FLAG_PROCESS(NeeTestRevaluate, true)
 FLAG_PROCESS(FixedMisHalf, true)
+
+FLAG_PROCESS(GeometricNormalOnly, true)

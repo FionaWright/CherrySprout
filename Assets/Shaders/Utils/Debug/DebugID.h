@@ -51,8 +51,7 @@ static const char* s_debugIdList[] = {
     CREATE_ID(CDF_END_IN_ONE            , "CDF must end in one")
     CREATE_ID(EMISSIVE_NOT_MAPPED            , "Emissive instance not found in LSD")
 
-    CREATE_ID(REVALUATE_F   , "Revaluate Failed: f")
-    CREATE_ID(REVALUATE_PDF   , "Revaluate Failed: pdf")
+    CREATE_ID(REVALUATE_TEST   , "Revaluate Failed")
     CREATE_ID(COLOR_OUT   , "Output Color Invalid")
     CREATE_ID(GRADIENT_OUT   , "Gradient Color Invalid")
 

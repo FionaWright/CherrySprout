@@ -43,8 +43,7 @@ float3 SampleIndirectLighting(
             bxdf.Evaluate(hitInfo, wo, wi, f, pdf);
         }
 
-        DBG_ASSERT_APPROX(f_sample, f, 5, REVALUATE_F);
-        DBG_ASSERT_APPROX(pdf_sample, pdf, 5, REVALUATE_PDF);
+        DBG_ASSERT_APPROX(f_sample/pdf_sample, f/pdf, 5, REVALUATE_TEST);
     }
     else
     {

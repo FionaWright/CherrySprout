@@ -159,7 +159,7 @@ void BxDF::Sample(
     }
     else
     {
-        LambertianLobe_Sample(hitInfo, u1, u2, L_s, f, pdf);
+        LambertianLobe_Sample(hitInfo, u1, u2, L_s, f, pdf); // TODO: New lobe wrapper that does metallic
 
         f *= (1.0 - hitInfo.Mat.Metallic);
         pdf *= 1.0f - specProb;
@@ -336,8 +336,8 @@ void BxDF::Evaluate(
     pdf += pdf_opaque;
 
     DBG_ASSERT_GE(pdf, 0.0f,                NON_POSITIVE_PDF);
-    DBG_OUTPUT1(f,                          Eval_f);
-    DBG_OUTPUT1(f_opaque,                   Eval_f_opaque);
+    DBG_OUTPUT3(f,                          Eval_f);
+    DBG_OUTPUT3(f_opaque,                   Eval_f_opaque);
     DBG_OUTPUT1(pdf,                        Eval_PDF);
     DBG_OUTPUT1(pdf_opaque,                 Eval_PDF_opaque);
 }

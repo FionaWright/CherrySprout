@@ -16,6 +16,13 @@ void LambertianLobe_Sample(
 
     float NdL = SSpaceCosTheta(L_s);
 
+    if (NdL <= 0.0f)
+    {
+        f = 0.0f;
+        pdf = 1.0f;
+        return;
+    }
+
     f = hitInfo.Mat.Albedo.rgb / PI;
     pdf = NdL / PI;
 
@@ -32,6 +39,14 @@ void LambertianLobe_Evaluate(
     )
 {
     float NdL = SSpaceCosTheta(L_s);
+
+    if (NdL <= 0.0f)
+    {
+        f = 0.0f;
+        pdf = 1.0f;
+        return;
+    }
+
     f = hitInfo.Mat.Albedo.rgb / PI;
     pdf = NdL / PI;
 }
@@ -43,6 +58,13 @@ void LambertianLobe_Pdf(
     )
 {
     float NdL = SSpaceCosTheta(L_s);
+
+    if (NdL <= 0.0f)
+    {
+        pdf = 1.0f;
+        return;
+    }
+
     pdf = NdL / PI;
 }
 

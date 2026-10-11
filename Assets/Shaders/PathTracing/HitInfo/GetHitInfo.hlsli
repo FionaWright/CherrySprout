@@ -40,6 +40,9 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     float triangleArea = NAN;
     ExtractInterpolatedAttributes(q, instance, Ns, Ng, uv, triangleArea);
 
+    if (FEAT_DBG(GeometricNormalOnly))
+        Ns = Ng;
+
     hitInfo.UV = uv;
 
     ApplyNormalMap(hitInfo.UV, hitInfo.Mat.TexIdxNormal, Ns);
@@ -56,6 +59,8 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
         hitInfo.PrimitiveCount = instance.MegaBufferCountIndex / 3;
         hitInfo.TriangleArea = triangleArea;
     }
+
+    hitInfo.Mat.Roughness = 0.1f;
 
     // Debug
     {
