@@ -15,11 +15,11 @@
 
 void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 {
-    uint instanceIdx = q.CommittedInstanceIndex();
-
     hitInfo.IsEntering = q.CommittedTriangleFrontFace() == 0;
     hitInfo.RayT = q.CommittedRayT();
     hitInfo.HitPos = q.WorldRayOrigin() + q.WorldRayDirection() * hitInfo.RayT;
+
+    uint instanceIdx = q.CommittedInstanceIndex();
 
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
 
