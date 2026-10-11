@@ -44,16 +44,19 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         if (isMiss)
         {
-            float3 Li = pathState.Beta * Miss(pathState, i);
-            pathState.Lo += ApplyFireflyThreshold(Li, gSettings.FireflyThreshold);
+            float3 L_miss = Miss(pathState);
+            float3 L_direct = pathState.Beta * L_miss;
+            pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 
-            DBG_OUTPUT3(Li, MissContrib);
+            DBG_OUTPUT3(L_direct, MissContrib);
             DBG_OUTPUT1(1.0f, KilledByMiss);
 
             if (FEAT_CORE(GradientDomain))
             {
                 PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
                 currentVertexInfo.Type = VertexType::eEnvironment;
+                currentVertexInfo.DirectContribution = L_miss;
+
                 vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
                 vertexList.NumVertices++;
                 DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);

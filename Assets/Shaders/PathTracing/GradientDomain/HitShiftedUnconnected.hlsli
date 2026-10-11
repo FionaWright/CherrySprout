@@ -12,7 +12,7 @@ void HitShiftedUnconnected(
     PathVertexInfo v2,
     HitInfo hitInfo,
     float3 wo,
-    float3 nextOrigin,
+    float3 nextOrigin, // TODO: NextOrigin not liked
 
     out float3 wi,
     out float3 contrib,
@@ -84,26 +84,13 @@ void HitShiftedUnconnected(
 
         // TODO: Multiple NEE samples
 
-        uint lightIdx = v1.NeeLightIdx;
-        float3 lightDir = v1.NeeLightDirection;
+        // TODO: Jacobian?
 
-        // TODO: Changes:
-        // - PVI stores full LightSample
-        // - EvaluateLight takes in LightSample and shiftedSourcePosition
-        // - If punctual, use (lightPos - sourcePos)
-        // - If env, use lightDir
-        // - Jacobian ?
+        float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample);
 
-        float3 E_direct;
-        float pdf_nee;
-        E_direct = EvaluateNEE(hitInfo, pathState, bxdf, 1, wo, nextOrigin, lightIdx, lightDir, pdf_nee);
+        DBG_OUTPUT3(L_nee, GD_NeeContrib);
 
-        DBG_OUTPUT3(E_direct, GD_NeeContrib);
-        DBG_OUTPUT1(pdf_nee, GD_NeePdf);
-
-        //pdf *= pdf_nee; // TODO: Wrong to combine them?
-
-        contrib += E_direct * pathState.Beta;
+        contrib += L_nee * pathState.Beta;
     }
 }
 

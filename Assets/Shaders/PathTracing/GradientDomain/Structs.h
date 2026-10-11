@@ -5,6 +5,8 @@
 #include "Utils/Random.h"
 #include "Utils/Math/ShadingFrame.h"
 
+#include "PathTracing/NEE/Structs.h"
+
 enum class VertexType : hlsl::uint
 {
     eUninitialized,
@@ -25,11 +27,9 @@ struct PathVertexInfo
 
     hlsl::float3 IndirectContribution;
     hlsl::float3 DirectContribution;
-    float PDF_Bxdf;
-    float PDF; // BXDF + NEE
+    float PDF;
 
-    hlsl::uint NeeLightIdx;
-    hlsl::float3 NeeLightDirection;
+    LightSample LightSample; // TODO: Multiple NEE samples
 };
 
 #define PATH_MAX_VERTICES 16 // TODO

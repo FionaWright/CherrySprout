@@ -13,7 +13,6 @@ float3 SampleNEE(
 
     uint numSamples,
     float3 wo,
-    float3 nextOrigin,
 
     out LightSample lightSample)
 {
@@ -60,7 +59,6 @@ float3 EvaluateNEE(
 
     uint numSamples,
     float3 wo,
-    float3 nextOrigin,
 
     LightSample lightSample)
 {
@@ -105,7 +103,6 @@ float3 SampleNEE(
 
     uint numSamples,
     float3 wo,
-    float3 nextOrigin,
 
     out LightSample lightSample) { return NAN; }
 
@@ -116,9 +113,8 @@ float3 EvaluateNEE(
 
     uint numSamples,
     float3 wo,
-    float3 nextOrigin,
 
-    LightSample lightSample) { pdf = NAN; return NAN; }
+    LightSample lightSample) { return NAN; }
 
 #endif
 

@@ -61,7 +61,7 @@ float PDF(LightSample X_i, LightSampleSelectionInfo info)
     return X_i.PDF;
 }
 
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 nextOrigin, BxDF bxdf, uint numSamples, out LightSample lightSample)
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out LightSample lightSample)
 {
     uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
@@ -88,7 +88,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
         return 0;
 
     float shadowFactor;
-    TraceRayShadow(nextOrigin, reservoir.Y.Direction, reservoir.Y.Distance, shadowFactor);
+    TraceRayShadow(hitInfo.HitPos, reservoir.Y.Direction, reservoir.Y.Distance, shadowFactor);
     DBG_OUTPUT1(shadowFactor, RESTIR_Occluded);
 
     if (shadowFactor <= 0.0f)
@@ -122,7 +122,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 next
 LightSample Generate(inout RngInfo rngInfo, LightSampleSelectionInfo info) { return (LightSample)0; }
 float Target(LightSample X_i, LightSampleSelectionInfo info) { return NAN; }
 float PDF(LightSample X_i, LightSampleSelectionInfo info) { return NAN; }
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, float3 nextOrigin, BxDF bxdf, uint numSamples, out LightSample lightSample) { return NAN; }
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out LightSample lightSample) { return NAN; }
 
 #endif
 

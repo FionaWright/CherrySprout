@@ -2,10 +2,8 @@
 #define H_TRACE_SHIFTED_RAY_H
 
 #include "PathTracing/GradientDomain/HitShiftedUnconnected.hlsli"
+#include "PathTracing/GradientDomain/MissShifted.hlsli"
 #include "Utils/Debug/Palette.h"
-
-// TODO: IsPrimaryRay field
-// TODO: NEE updated
 
 void TraceShiftedPath(
     PathVertexList mainVertices,
@@ -35,9 +33,7 @@ void TraceShiftedPath(
         DBG_OUTPUT3(Palette((uint)v1.Type), GD_V1Type);
 
         pathState.RaySegmentIdx = i;
-        //pathState.LastRayWasDiracDelta = false;
 
-        // TODO: Skip tracing once connected
         bool isMiss;
         HitInfo hitInfo;
         ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
@@ -53,16 +49,23 @@ void TraceShiftedPath(
 
         if (isMiss)
         {
-            // TODO: Value can be cached if connected (likely)
-            float3 Li = pathState.Beta * Miss(pathState, i);
-            pathState.Lo += ApplyFireflyThreshold(Li, gSettings.FireflyThreshold);
+            MissShifted(pathState, v1, reconnectionState);
             break;
         }
 
-        // TODO: EvaluateEmission
-        float3 L_sample = pathState.Beta * hitInfo.Emission; // TODO: Emission can be cached for connected rays
+        float3 L_sample = 0.0f;
 
         float3 wo = -pathState.Desc.Direction;
+
+        float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
+        bool isEmissive = any(L_emission > 0.0f);
+        if (isEmissive)
+        {
+            L_sample += pathState.Beta * L_emission;
+            pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+            break;
+        }
+
         float3 wi;
 
         DBG_OUTPUT3(wo, GD_V_w);
@@ -82,7 +85,6 @@ void TraceShiftedPath(
             if (FEAT_CORE(NEE))
             {
                 L_sample += v1.DirectContribution * pathState.Beta;
-                pathState.LastBxdfPdf = v1.PDF_Bxdf;
             }
 
             pathState.Beta *= v1.IndirectContribution;
@@ -100,7 +102,7 @@ void TraceShiftedPath(
             if (FEAT_CORE(NEE))
             {
                 L_sample += v1.DirectContribution * pathState.Beta;
-                pathState.LastBxdfPdf = pdf_bxdf;
+                pathState.LastBxdfPdf = pdf_bxdf; // Note: Not necessary, will be unused once connected. Remove?
             }
 
             float NdL = dot(hitInfo.Ns_ff, wi);
@@ -154,6 +156,8 @@ void TraceShiftedPath(
         DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi), GD_L_s);
         DBG_OUTPUT1(pdfShifted, GD_PdfShifted);
         DBG_OUTPUT1(0.0f, GD_V2Type);
+
+        pathState.IsPrimaryRay = false;
     }
 
     Lo = pathState.Lo;

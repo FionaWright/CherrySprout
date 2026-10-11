@@ -24,7 +24,6 @@ void Hit(inout PathState pathState,
 {
     L_sample = 0.0f;
 
-    float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
     float3 wo = -pathState.Desc.Direction;
 
     float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
@@ -34,7 +33,15 @@ void Hit(inout PathState pathState,
     {
         L_sample = pathState.Beta * L_emission;
         pathState.Beta = 0.0f; // Terminate Ray
-        // TODO: current vertex info
+
+        if (FEAT_CORE(GradientDomain))
+        {
+            currentVertexInfo.Type = VertexType::eDiffuse;
+            currentVertexInfo.Position = hitInfo.HitPos; // TODO: Use hitpos?
+            currentVertexInfo.SFrame = hitInfo.SFrame;
+            currentVertexInfo.Wo = wo;
+            // Eta
+        }
         return;
     }
 
@@ -45,7 +52,7 @@ void Hit(inout PathState pathState,
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, nextOrigin, currentVertexInfo);
+            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, currentVertexInfo);
         }
 
         DBG_SCALE_INTENSITY_DIRECT(E_direct);
@@ -64,7 +71,7 @@ void Hit(inout PathState pathState,
         pathState.LastBxdfPdf = pdf_bxdf;
 
     pathState.Desc.Direction = wi;
-    pathState.Desc.Origin = nextOrigin;
+    pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON; // TODO: Why use normal bias here when shadow rays don't like it?
 
     if (FEAT_CORE(GradientDomain))
     {
@@ -73,14 +80,13 @@ void Hit(inout PathState pathState,
         float eta = iorNCurrent / iorNNext;
 
         currentVertexInfo.Type = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-        currentVertexInfo.Position = nextOrigin; // TODO: Use hitpos?
+        currentVertexInfo.Position = hitInfo.HitPos; // TODO: Use hitpos?
         currentVertexInfo.SFrame = hitInfo.SFrame;
         currentVertexInfo.Wo = wo;
         currentVertexInfo.Wi = wi;
         currentVertexInfo.Eta = eta;
         currentVertexInfo.IndirectContribution = E_indirect;
         currentVertexInfo.DirectContribution = E_direct;
-        currentVertexInfo.PDF_Bxdf = pdf_bxdf;
         currentVertexInfo.PDF *= pdf_bxdf;
     }
 }

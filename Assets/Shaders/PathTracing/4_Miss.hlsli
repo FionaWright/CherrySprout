@@ -6,7 +6,7 @@
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
-float3 Miss(inout PathState pathState, uint bounceIdx)
+float3 Miss(inout PathState pathState)
 {
     if (FEAT_DBG(FurnaceTestHHE))
         return 0.0f;

@@ -2,6 +2,7 @@
 #define H_PATH_TRACING_STRUCTS_H
 
 #include "GradientDomain/Structs.h"
+#include "PathTracing/NEE/Structs.h"
 #include "Utils/HlslGlue.h"
 
 #include "Scene/Material.h"
@@ -70,24 +71,6 @@ struct ProbabilityDistributionSample
 {
     float PDF;
     float CDF;
-};
-
-struct LightSample
-{
-    hlsl::float3 Direction;
-    float Distance;
-
-    hlsl::float2 UV;
-    hlsl::uint Index;
-    hlsl::uint SubIndex; // (Emissive primitiveIdx)
-
-    bool IsDelta;
-};
-
-struct LightEval
-{
-    hlsl::float3 Radiance;
-    float PDF;
 };
 
 #endif
