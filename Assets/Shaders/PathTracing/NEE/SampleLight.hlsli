@@ -6,7 +6,7 @@
 #include "PathTracing/MIS.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
-#include "PathTracing/NEE/TraceShadowRay.hlsli"
+#include "PathTracing/VisibilityRays.hlsli"
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/NEE/SampleEnvMap.hlsli"
 #include "PathTracing/NEE/SampleEmissive.hlsli"

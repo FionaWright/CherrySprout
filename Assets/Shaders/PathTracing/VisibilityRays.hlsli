@@ -1,23 +1,58 @@
-#ifndef H_SHADOW_RAY_H
-#define H_SHADOW_RAY_H
+#ifndef H_VISIBILITY_RAYS_H
+#define H_VISIBILITY_RAYS_H
 
 #include "PathTracing/Utils.hlsli"
 #include "PathTracing/HitInfo/ExtractUtils.hlsli"
 
-#define SHADOW_RAY_TMIN_BIAS_COEF 1
-#define SHADOW_RAY_TMAX_BIAS_COEF 1
+#define TMIN_BIAS_COEF 1
+#define TMAX_BIAS_COEF 1
 
-void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shadowFactor)
+void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
+{
+    RayQuery<RAY_FLAGS> q;
+
+    float distance = length(dest - source);
+    float3 dir = normalize(dest - source);
+
+    RayDesc ray;
+    ray.Origin = source;
+    ray.Direction = dir;
+    ray.TMin = (TMIN_BIAS_COEF * EPSILON);
+    ray.TMax = distance - (TMAX_BIAS_COEF * EPSILON);
+
+    q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
+    q.Proceed();
+
+    occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+}
+
+void TestVisibilityDirection(float3 source, float3 dir, out bool occluded)
 {
     RayQuery<RAY_FLAGS> q;
 
     RayDesc ray;
-    ray.Origin = pos;
-    ray.Direction = normalize(dir);
-    ray.TMin = (SHADOW_RAY_TMIN_BIAS_COEF * EPSILON);
-    ray.TMax = lightDistance - (SHADOW_RAY_TMAX_BIAS_COEF * EPSILON);
+    ray.Origin = source;
+    ray.Direction = dir;
+    ray.TMin = TMIN_BIAS_COEF * EPSILON;
+    ray.TMax = INF;
 
-    float3 lightPos = pos + ray.Direction * lightDistance;
+    q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
+    q.Proceed();
+
+    occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
+}
+
+void TraceRayShadow(float3 source, float3 dir, float lightDistance, out float shadowFactor)
+{
+    RayQuery<RAY_FLAGS> q;
+
+    RayDesc ray;
+    ray.Origin = source;
+    ray.Direction = normalize(dir);
+    ray.TMin = (TMIN_BIAS_COEF * EPSILON);
+    ray.TMax = lightDistance - (TMAX_BIAS_COEF * EPSILON);
+
+    float3 lightPos = source + ray.Direction * lightDistance;
 
     shadowFactor = 1.0f;
 
@@ -53,6 +88,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
         float remainingDistance = length(toLight);
         if (remainingDistance <= EPSILON)
             return;
+
         ray.TMax = remainingDistance - EPSILON;
     }
 }

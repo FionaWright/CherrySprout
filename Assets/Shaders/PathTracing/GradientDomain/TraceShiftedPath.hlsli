@@ -73,8 +73,6 @@ void TraceShiftedPath(
         DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
         DBG_OUTPUT3(hitInfo.Emission, GD_Emission);
 
-        float3 nextOrigin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
-
 		float pdfMain = v1.PDF;
 		float pdfShifted;
 
@@ -126,7 +124,7 @@ void TraceShiftedPath(
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
 
             float3 E_indirect;
-            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, nextOrigin, wi, E_indirect, jacobian, pdfShifted);
+            HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, wi, E_indirect, jacobian, pdfShifted);
 
             pathState.Beta *= E_indirect;
         }
@@ -150,7 +148,7 @@ void TraceShiftedPath(
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
         pathState.Desc.Direction = wi;
-        pathState.Desc.Origin = nextOrigin;
+        pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;
 
         DBG_OUTPUT3(wi, GD_L_w);
         DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi), GD_L_s);

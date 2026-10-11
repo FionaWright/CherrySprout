@@ -3,40 +3,7 @@
 
 // https://github.com/gradientpm/gradient-mts/blob/master/src/integrators/gradient/gpt/shift_mapping/shiftmapping.h
 
-void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
-{
-    RayQuery<RAY_FLAGS> q;
-
-    float distance = length(dest - source);
-    float3 dir = normalize(dest - source);
-
-    RayDesc ray;
-    ray.Origin = source;
-    ray.Direction = dir;
-    ray.TMin = 0.001;
-    ray.TMax = distance;
-
-    q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-    q.Proceed();
-
-    occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
-}
-
-void TestVisibilityDirection(float3 source, float3 dir, out bool occluded)
-{
-    RayQuery<RAY_FLAGS> q;
-
-    RayDesc ray;
-    ray.Origin = source;
-    ray.Direction = dir;
-    ray.TMin = 0.001;
-    ray.TMax = INF;
-
-    q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-    q.Proceed();
-
-    occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
-}
+#include "PathTracing/VisibilityRays.hlsli"
 
 struct ShiftResult
 {

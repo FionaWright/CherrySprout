@@ -5,7 +5,7 @@
 
 #include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/NEE/SampleLight.hlsli"
-#include "PathTracing/NEE/TraceShadowRay.hlsli"
+#include "PathTracing/VisibilityRays.hlsli"
 
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"

@@ -12,7 +12,6 @@ void HitShiftedUnconnected(
     PathVertexInfo v2,
     HitInfo hitInfo,
     float3 wo,
-    float3 nextOrigin, // TODO: NextOrigin not liked
 
     out float3 wi,
     out float3 contrib,
@@ -36,9 +35,9 @@ void HitShiftedUnconnected(
     if (v1.Type == VertexType::eDiffuse)
     {
         if (v2.Type == VertexType::eDiffuse)
-            shiftResult = ShiftReconnect(v1.Position, nextOrigin, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
+            shiftResult = ShiftReconnect(v1.Position, hitInfo.HitPos, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
         else if (v2.Type == VertexType::eEnvironment)
-            shiftResult = ShiftReconnectEnvironment(nextOrigin, hitInfo.Ns_ff, v1.Wi);
+            shiftResult = ShiftReconnectEnvironment(hitInfo.HitPos, hitInfo.Ns_ff, v1.Wi);
 
         reconnectionState = ReconnectionState::eSemiConnected;
     }
