@@ -477,6 +477,8 @@ void Greenhouse::renderGuiCore()
                                 ImGui::TextUnformatted("Distant");
                             else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[puncIdx].Type == PunctualLightType::eSpot)
                                 ImGui::TextUnformatted("Spot");
+                            else if (m_sceneManager.GetCPU().MegaBufferPunctualLights[puncIdx].Type == PunctualLightType::eRect)
+                                ImGui::TextUnformatted("Rect");
                             else
                                 ImGui::TextUnformatted("Unknown");
                         }
@@ -625,6 +627,7 @@ void Greenhouse::renderGuiCore()
                 scaleFunc("Point##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityPoint);
                 scaleFunc("Distant##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityDistant);
                 scaleFunc("Spot##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensitySpot);
+                scaleFunc("Rect##scales", &m_config.PathTracerConfig.DebugInfo.ScaleIntensityRect);
                 scaleFunc("Point Radius##scales", &m_config.PathTracerConfig.DebugInfo.ScalePointLightRadius);
                 scaleFunc("F##scales", &m_config.PathTracerConfig.DebugInfo.ScaleF);
                 scaleFunc("D##scales", &m_config.PathTracerConfig.DebugInfo.ScaleD);

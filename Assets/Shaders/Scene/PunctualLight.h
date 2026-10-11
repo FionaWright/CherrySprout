@@ -26,11 +26,12 @@ struct PunctualLight
     // Spot
     float SpotInnerAngle;
     float SpotOuterAngle;
-    hlsl::float3 SpotDirection;
 
     // Rect
     float RectWidth;
     float RectHeight;
+
+    hlsl::float3 SpotOrRectDirection;
 
 #ifdef __cplusplus
     PunctualLight()
@@ -42,7 +43,7 @@ struct PunctualLight
         PointRadius = 0.0f;
         SpotInnerAngle = 0.0f;
         SpotOuterAngle = 0.0f;
-        SpotDirection = { 0, 0, 0 };
+        SpotOrRectDirection = { 0, 0, 0 };
         RectWidth = 0.0f;
         RectHeight = 0.0f;
     }

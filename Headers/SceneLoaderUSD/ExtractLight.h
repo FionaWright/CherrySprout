@@ -64,6 +64,14 @@ namespace SceneLoaderUSD
         light.SpotInnerAngle = 0.0f;
         light.SpotOuterAngle = 0.0f;
 
+        bool normalize = false;
+        usdLight.GetNormalizeAttr().Get(&normalize);
+
+        float exposure = 0.0f;
+        usdLight.GetExposureAttr().Get(&exposure);
+
+        light.Intensity *= std::exp2(exposure);
+
         // Determine light type
         if (prim.IsA<pxr::UsdLuxSphereLight>())
         {
@@ -76,6 +84,23 @@ namespace SceneLoaderUSD
             pxr::UsdLuxRectLight rectLight(prim);
             rectLight.GetWidthAttr().Get(&light.RectWidth);
             rectLight.GetHeightAttr().Get(&light.RectHeight);
+
+            pxr::GfVec3d direction = world.ExtractRotationMatrix() * pxr::GfVec3d(0, 0, -1);
+
+            direction.Normalize();
+
+            light.SpotOrRectDirection = {
+                static_cast<float>(direction[0]),
+                static_cast<float>(direction[1]),
+                static_cast<float>(direction[2])
+            };
+
+            if (normalize)
+            {
+                const float area = light.RectWidth * light.RectHeight;
+                if (area > 0.0f)
+                    light.Intensity /= area;
+            }
         }
         else if (prim.IsA<pxr::UsdLuxDistantLight>())
         {
@@ -105,7 +130,9 @@ namespace SceneLoaderUSD
 
                 pxr::GfVec3d worldDir = world.ExtractRotationMatrix() * pxr::GfVec3d(0, 0, -1); // TODO: Assuming Z-up?
                 worldDir.Normalize();
-                light.SpotDirection = { static_cast<float>(worldDir[0]), static_cast<float>(worldDir[1]), static_cast<float>(worldDir[2]) };
+                light.SpotOrRectDirection = { static_cast<float>(worldDir[0]), static_cast<float>(worldDir[1]), static_cast<float>(worldDir[2]) };
+
+                // TODO: normalize ?
             }
         }
 

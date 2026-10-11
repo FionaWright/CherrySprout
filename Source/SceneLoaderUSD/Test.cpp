@@ -107,6 +107,65 @@ void PrintSceneDebug(const SceneCPU* scene)
         std::cout << "[" << i << "] " << wstringToString(scene->TextureFilepaths[i]) << std::endl;
     }
 
+
+    std::cout << "\n----- Punctual Lights -----\n";
+
+    for (size_t i = 0; i < scene->MegaBufferPunctualLightsCount; ++i)
+    {
+        const PunctualLight& light = scene->MegaBufferPunctualLights[i];
+
+        std::cout
+            << "[" << i << "] "
+            << "Type=";
+
+        switch (light.Type)
+        {
+        case PunctualLightType::ePoint:
+            std::cout << "Point";
+            break;
+
+        case PunctualLightType::eSpot:
+            std::cout << "Spot";
+            break;
+
+        case PunctualLightType::eRect:
+            std::cout << "Rect";
+            break;
+
+        default:
+            std::cout << "Unknown";
+            break;
+        }
+
+        std::cout
+            << " Position=("
+            << light.Position.x << ", "
+            << light.Position.y << ", "
+            << light.Position.z << ")"
+
+            << " Color=("
+            << light.Color.x << ", "
+            << light.Color.y << ", "
+            << light.Color.z << ")"
+
+            << " Intensity=" << light.Intensity
+
+            << " PointRadius=" << light.PointRadius
+
+            << " SpotInnerAngle=" << light.SpotInnerAngle
+            << " SpotOuterAngle=" << light.SpotOuterAngle
+
+            << " SpotOrRectDirection=("
+            << light.SpotOrRectDirection.x << ", "
+            << light.SpotOrRectDirection.y << ", "
+            << light.SpotOrRectDirection.z << ")"
+
+            << " RectWidth=" << light.RectWidth
+            << " RectHeight=" << light.RectHeight
+
+            << '\n';
+    }
+
     std::cout << "=================================\n";
 }
 
@@ -115,8 +174,9 @@ int main(const int argc, char** argv)
     //std::string filepath = R"(C:\Users\fionawright\OneDrive\Documents\3D objects\USD\assets\full_assets\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Release\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
+    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\CityStreet\CityStreet.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\CityStreet\CityStreetMin.usda)";
-    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\Bedroom\Bedroom.usdc)";
+    //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\Bedroom\Bedroom.usdc)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\Quad\Quad.usda)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fiona\source\repos\CherrySprout\Assets\Scenes\USD\GitIgnored\LivingRoom\Modernes Wohnzimmer.usda)";

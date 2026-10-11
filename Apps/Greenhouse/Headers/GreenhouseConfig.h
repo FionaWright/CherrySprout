@@ -34,6 +34,7 @@ struct PathTracingDebugInfo
     float ScaleIntensityPoint = 0.1f;
     float ScaleIntensityDistant = 1.0f;
     float ScaleIntensitySpot = 1.0f;
+    float ScaleIntensityRect = 1.0f;
     float ScalePointLightRadius = 0.0f;
 
     float ScaleF = 1.0f;

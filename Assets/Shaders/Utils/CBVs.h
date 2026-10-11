@@ -149,6 +149,7 @@ struct CbvPathTracingDebugSettings
     float ScaleIntensityPoint;
     float ScaleIntensityDistant;
     float ScaleIntensitySpot;
+    float ScaleIntensityRect;
     float ScalePointLightRadius;
 
     float ScaleF;

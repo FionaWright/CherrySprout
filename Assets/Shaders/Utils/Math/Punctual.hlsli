@@ -38,6 +38,19 @@ float3 SpotLightWeight(PunctualLight light)
     return radiantIntensity;
 }
 
+// ?
+// light.Intensity is Illuminance (lm/m^2) ~= Luminous Efficacy * Irradiance (W/m^2)
+float3 RectLightWeight(PunctualLight light)
+{
+    float3 lux = light.Color * light.Intensity;
+    float3 irradiance = ILLUMINANCE_TO_IRRADIANCE * lux;
+
+    float area = light.RectWidth * light.RectHeight;
+
+    float3 lum = irradiance / area;
+    return lum;
+}
+
 float PunctualLightWeight(PunctualLight light)
 {
     float3 weight;
@@ -54,6 +67,10 @@ float PunctualLightWeight(PunctualLight light)
 
     case PunctualLightType::eSpot:
         weight = SpotLightWeight(light);
+        break;
+
+    case PunctualLightType::eRect:
+        weight = RectLightWeight(light);
         break;
 
     default:
@@ -122,7 +139,7 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position)
 
     float3 lightToPoint = -lightSample.Direction;
 
-    float cosTheta = dot(normalize(light.SpotDirection), lightToPoint);
+    float cosTheta = dot(normalize(light.SpotOrRectDirection), lightToPoint);
 
     float cosInner = cos(light.SpotInnerAngle);
     float cosOuter = cos(light.SpotOuterAngle);
@@ -140,24 +157,57 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position)
     return lightSample;
 }
 
+LightSample EvaluateRectLight(PunctualLight light, float3 position)
+{
+    LightSample lightSample = (LightSample)0;
+
+    float3 L = light.Position - position;
+    float distance2 = dot(L, L);
+
+    if (distance2 <= 1e-8f)
+        return lightSample;
+
+    float distance = sqrt(distance2);
+
+    lightSample.Direction = L / distance;
+    lightSample.Distance = distance;
+
+    float cosTheta = dot(normalize(light.SpotOrRectDirection), -L);
+
+    lightSample.Radiance = light.Color * light.Intensity * cosTheta / distance2;
+    DBG_SCALE_INTENSITY_RECT(lightSample.Radiance);
+
+    return lightSample;
+}
+
 LightSample EvaluatePunctualLight(PunctualLight light, float3 position)
 {
+    LightSample lightSample = (LightSample)0;
+
     switch (light.Type)
     {
     case PunctualLightType::ePoint:
-        return EvaluatePointLight(light, position);
+        lightSample = EvaluatePointLight(light, position);
+        break;
 
     case PunctualLightType::eDistant:
-        return EvaluateDistantLight(light);
+        lightSample = EvaluateDistantLight(light);
+        break;
 
     case PunctualLightType::eSpot:
-        return EvaluateSpotLight(light, position);
+        lightSample = EvaluateSpotLight(light, position);
+        break;
+
+    case PunctualLightType::eRect:
+        lightSample = EvaluateRectLight(light, position);
+        break;
 
     default:
         DBG_ASSERT_FAIL(UNSUPPORTED_LIGHT_TYPE);
-        LightSample lightSample = (LightSample)0;
-        return lightSample;
+        break;
     }
+
+    return lightSample;
 }
 
 #endif

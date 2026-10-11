@@ -31,9 +31,9 @@
 
 #define BOLTZMANN                                   1.38064852e-23f
 
-#define PLANK                                       6.62607015e-34f
+#define PLANCK                                      6.62607015e-34f
 
-#define SPEED_OF_LIGHT                              299792458.0f // TODO: What units?
+#define SPEED_OF_LIGHT                              299792458.0f // m/s
 
 #define STANDARD_DAYLIGHT_WAVELENGTH                555.0f // nm
 

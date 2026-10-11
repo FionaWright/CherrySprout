@@ -207,6 +207,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ScaleIntensityPoint = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPoint;
             debugSettings.ScaleIntensityDistant = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDistant;
             debugSettings.ScaleIntensitySpot = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensitySpot;
+            debugSettings.ScaleIntensityRect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityRect;
             debugSettings.ScalePointLightRadius = renderInfo.PathTracerConfig->DebugInfo.ScalePointLightRadius;
             debugSettings.ScaleF = renderInfo.PathTracerConfig->DebugInfo.ScaleF;
             debugSettings.ScaleD = renderInfo.PathTracerConfig->DebugInfo.ScaleD;
