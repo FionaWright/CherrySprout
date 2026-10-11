@@ -16,16 +16,19 @@ LightSample SampleLight(
     HitInfo hitInfo,
     PathState pathState,
     BxDF bxdf,
-    float3 wo)
+    float3 wo,
+
+    out LightEval lightEval)
 {
     LightSample lightSample = (LightSample)0;
 
     if (gSettings.LsdCount == 0)
     {
+        lightEval.Radiance = 0;
+        lightEval.PDF = 1.0f;
+
         lightSample.Index = 0;
-        lightSample.Radiance = 0;
         lightSample.Distance = INF;
-        lightSample.PDF = 1.0f;
         return lightSample;
     }
 
@@ -38,10 +41,8 @@ LightSample SampleLight(
         DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(1,0,0),  NEE_LightSampleType);
 
-        lightSample = SampleEnvMap(rngInfo);
-        DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
-
-        lightSample.IsDelta = false;
+        lightSample = SampleEnvMap(rngInfo, lightEval);
+        DBG_SCALE_INTENSITY_ENV_MAP(lightEval.Radiance);
     }
     else if (lightIdx < gSettings.LsdBaseEmissives)
     {
@@ -59,11 +60,8 @@ LightSample SampleLight(
 
         PunctualLight light = gMegaBufferPunctuals[punctualIdx];
 
-        lightSample = EvaluatePunctualLight(light, hitInfo.HitPos);
-        DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
-
-        lightSample.PDF = 1.0f;
-        lightSample.IsDelta = true;
+        lightSample = EvaluatePunctualLight(light, hitInfo.HitPos, lightEval);
+        DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
     else
     {
@@ -73,87 +71,69 @@ LightSample SampleLight(
 
         uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
 
-        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitInfo);
-        DBG_SCALE_INTENSITY_EMISSION(lightSample.Radiance);
-
-        lightSample.IsDelta = false;
+        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitInfo, lightEval);
+        DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
     }
 
     lightSample.Index = lightIdx;
-    lightSample.PDF *= pdf_lsd;
+    lightEval.PDF *= pdf_lsd;
 
     DBG_OUTPUT1(pdf_lsd,               NEE_LsdPdf);
-    DBG_OUTPUT3(lightSample.Radiance,  NEE_LightSampleRadiance);
     DBG_OUTPUT1(lightSample.Index,     NEE_LightSampleIdx);
     DBG_OUTPUT1(lightSample.Distance,  NEE_LightSampleDistance);
     DBG_OUTPUT3(lightSample.Direction, NEE_LightSampleDir);
-    DBG_OUTPUT1(lightSample.PDF,       NEE_LightSamplePDF);
+
+    DBG_OUTPUT3(lightEval.Radiance,    NEE_LightSampleRadiance);
+    DBG_OUTPUT1(lightEval.PDF,         NEE_LightSamplePDF);
 
     return lightSample;
 }
 
-LightSample EvaluateLight(
+LightEval EvaluateLight(
     HitInfo hitInfo,
     PathState pathState,
     BxDF bxdf,
+    float3 wo,
 
-    uint lightIdx,
-    float3 wi,
-
-    float3 wo)
+    LightSample lightSample)
 {
     float pdf_lsd;
-    EvaluateLSD(lightIdx, pdf_lsd);
+    EvaluateLSD(lightSample.Index, pdf_lsd);
 
-    LightSample lightSample = (LightSample)0;
+    LightEval lightEval;
 
-    if (lightIdx < gSettings.LsdBasePunctuals)
+    if (lightSample.Index < gSettings.LsdBasePunctuals)
     {
         DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
 
-        float2 uv_env = EaSphereToSquare(wi);
-
-        lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
-        DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
-
-        float pdf_env = EvaluateEnvMapPdf(uv_env);
-        lightSample.PDF = pdf_env;
-
-        lightSample.Direction = wi;
-        lightSample.Distance = INF;
-        lightSample.IsDelta = false;
+        lightEval = EvaluateEnvMap(lightSample);
+        DBG_SCALE_INTENSITY_ENV_MAP(lightEval.Radiance);
     }
-    else if (lightIdx < gSettings.LsdBaseEmissives)
+    else if (lightSample.Index < gSettings.LsdBaseEmissives)
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Punctuals), DISABLED_LIGHT_INDEX);
 
-        uint punctualIdx = lightIdx - gSettings.LsdBasePunctuals;
+        uint punctualIdx = lightSample.Index - gSettings.LsdBasePunctuals;
         PunctualLight light = gMegaBufferPunctuals[punctualIdx];
 
-        lightSample = EvaluatePunctualLight(light, hitInfo.HitPos);
-        DBG_SCALE_INTENSITY_PUNCTUAL(lightSample.Radiance);
-
-        lightSample.PDF = 1.0f;
-        lightSample.IsDelta = true;
+        EvaluatePunctualLight(light, hitInfo.HitPos, lightEval);
+        DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
     else
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
-        DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
+        DBG_ASSERT_LT(lightSample.Index, gSettings.LsdCount, OOB_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
 
-        uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
+        uint emissiveIdx = lightSample.Index - gSettings.LsdBaseEmissives;
 
-        lightSample = EvaluateEmissive(emissiveIdx, hitInfo, wi);
-        DBG_SCALE_INTENSITY_EMISSION(lightSample.Radiance);
-
-        lightSample.IsDelta = false;
+        lightEval = EvaluateEmissive(emissiveIdx, hitInfo, lightSample);
+        DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
     }
 
-    lightSample.Index = lightIdx;
-    lightSample.PDF *= pdf_lsd;
+    lightEval.PDF *= pdf_lsd;
 
-    return lightSample;
+    return lightEval;
 }
 
 #endif

@@ -60,8 +60,6 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
         hitInfo.TriangleArea = triangleArea;
     }
 
-    hitInfo.Mat.Roughness = 0.1f;
-
     // Debug
     {
         if (FEAT_DBG(Checkerboard))

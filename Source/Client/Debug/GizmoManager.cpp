@@ -27,7 +27,7 @@ void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, XMFLO
         UploadHeap uploadHeap;
         uploadHeap.Init(d3d->GetDevice(), Align(tex.GetIntermediateSize(), 512));
 
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
         {
             GPU_SCOPE(cmdList, "Upload Gizmo Texture");

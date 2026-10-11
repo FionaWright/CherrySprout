@@ -1,7 +1,7 @@
 #ifndef H_SAMPLE_ENV_MAP_H
 #define H_SAMPLE_ENV_MAP_H
 
-LightSample SampleEnvMap(inout RngInfo rngInfo)
+LightSample SampleEnvMap(inout RngInfo rngInfo, out LightEval lightEval)
 {
     float xi1 = Rand01(rngInfo);
     float xi2 = Rand01(rngInfo);
@@ -11,16 +11,23 @@ LightSample SampleEnvMap(inout RngInfo rngInfo)
     float3 wi_env;
     SampleEnvMapCdf(xi1, xi2, uv_env, wi_env, pdf_env);
 
-    LightSample lightSample = (LightSample)0;
+    lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
+    lightEval.PDF = pdf_env;
 
+    LightSample lightSample = (LightSample)0;
     lightSample.Direction = wi_env;
     lightSample.Distance = INF;
-
-    lightSample.PDF = pdf_env;
-
-    lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
-
+    lightSample.UV = uv_env;
+    lightSample.IsDelta = false;
     return lightSample;
+}
+
+LightEval EvaluateEnvMap(LightSample lightSample)
+{
+    LightEval lightEval;
+    lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, lightSample.UV).rgb;
+    lightEval.PDF = EvaluateEnvMapPdf(lightSample.UV);
+    return lightEval;
 }
 
 #endif

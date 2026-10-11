@@ -32,8 +32,7 @@ float3 SampleDirectLighting(
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            float _;
-            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, nextOrigin, lightSample.Index, lightSample.Direction, _);
+            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, nextOrigin, lightSample);
         }
 
         E_direct += L_nee;

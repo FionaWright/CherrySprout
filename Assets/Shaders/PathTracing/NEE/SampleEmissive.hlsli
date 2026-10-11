@@ -41,7 +41,7 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, fl
     return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
 
-LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo)
+LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo, out LightEval lightEval)
 {
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveIdx];
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
@@ -79,26 +79,48 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
 
     float triangleArea = GetTriangleArea(p0, p1, p2);
 
-    float pdf_angle = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
+    lightEval.Radiance = emission;
+    lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
 
     LightSample lightSample = (LightSample)0;
     lightSample.Direction = wi;
     lightSample.Distance = dist;
-    lightSample.Radiance = emission; // TODO: Units conversion?
-    lightSample.PDF = pdf_angle;
+    lightSample.UV = uv;
+    lightSample.SubIndex = primitiveIdx;
+    lightSample.IsDelta = false;
     return lightSample;
 }
 
-LightSample EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, float3 wi)
+LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightSample)
 {
-    // TODO: Trace ray
+    uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveIdx];
+    InstanceData instance = gMegaBufferInstanceData[instanceIdx];
+    Material material = gMegaBufferMaterials[instance.MaterialIndex];
 
-    LightSample lightSample = (LightSample)0;
-    lightSample.Direction = wi;
-    lightSample.Distance = NAN;
-    lightSample.Radiance = NAN;
-    lightSample.PDF = NAN;
-    return lightSample;
+    uint primitiveCount = instance.MegaBufferCountIndex / 3;
+    uint primitiveOffset = instance.MegaBufferOffsetIndex / 3;
+    uint3 tri = gMegaBufferIndex[primitiveOffset + lightSample.SubIndex];
+
+    Vertex v0 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.x];
+    Vertex v1 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.y];
+    Vertex v2 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.z];
+
+    float3 p0 = mul(instance.M, float4(v0.Position,1)).xyz;
+    float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
+    float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
+
+    float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
+
+    float3 emissionMat = material.EmissiveColor * material.EmissiveStrength;
+    float3 emissionSample = SampleSceneTexture3(lightSample.UV, material.TexIdxEmissive, 1);
+    float3 emission = SRGB_to_LRGB(emissionSample) * emissionMat;
+
+    float triangleArea = GetTriangleArea(p0, p1, p2);
+
+    LightEval lightEval;
+    lightEval.Radiance = emission;
+    lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -lightSample.Direction, lightSample.Distance);
+    return lightEval;
 }
 
 #else
@@ -106,6 +128,8 @@ LightSample EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, float3 wi)
 float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, float3 wo, float distance) { return NAN; }
 
 LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo) { return (LightSample)0; }
+
+LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightSample) { return (LightEval)0; }
 
 #endif
 

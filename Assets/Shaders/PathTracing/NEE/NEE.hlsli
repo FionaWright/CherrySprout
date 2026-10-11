@@ -17,10 +17,11 @@ float3 SampleNEE(
 
     out LightSample lightSample)
 {
-    lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo);
+    LightEval lightEval;
+    lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, lightEval);
 
     float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
-    if (length(lightSample.Radiance) == 0.0f || NdL < 0.0f)
+    if (length(lightEval.Radiance) == 0.0f || NdL < 0.0f)
     {
         DBG_OUTPUT1(0,     NEE_ShadowFactor);
         return 0;
@@ -44,12 +45,12 @@ float3 SampleNEE(
         float pdf_bxdf;
         bxdf.Evaluate(hitInfo, wo, lightSample.Direction, f_bxdf, pdf_bxdf);
 
-        m = f_bxdf * PowerHeuristic(lightSample.PDF, pdf_bxdf, numSamples, 1);
+        m = f_bxdf * PowerHeuristic(lightEval.PDF, pdf_bxdf, numSamples, 1);
     }
 
     DBG_OUTPUT1(m, NEE_MIS);
 
-    return shadowFactor * lightSample.Radiance * m * NdL / lightSample.PDF;
+    return shadowFactor * lightEval.Radiance * m * NdL / max(1e-6f, lightEval.PDF);
 }
 
 float3 EvaluateNEE(
@@ -61,23 +62,19 @@ float3 EvaluateNEE(
     float3 wo,
     float3 nextOrigin,
 
-    uint lightIdx,
-    float3 wi,
-
-    out float pdf)
+    LightSample lightSample)
 {
-    LightSample lightSample = EvaluateLight(hitInfo, pathState, bxdf, lightIdx, wi, wo);
-
-    pdf = lightSample.PDF;
-
     float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
-    if (length(lightSample.Radiance) == 0.0f || NdL < 0.0f)
-    {
+    if (NdL <= 0.0f)
         return 0;
-    }
+
+    LightEval lightEval = EvaluateLight(hitInfo, pathState, bxdf, wo, lightSample);
+
+    if (length(lightEval.Radiance) == 0.0f)
+        return 0;
 
     float shadowFactor;
-    TraceRayShadow(nextOrigin, lightSample.Direction, lightSample.Distance, shadowFactor);
+    TraceRayShadow(hitInfo.HitPos, lightSample.Direction, lightSample.Distance, shadowFactor);
     if (shadowFactor <= 0.0f)
         return 0;
 
@@ -92,10 +89,10 @@ float3 EvaluateNEE(
         float pdf_bxdf;
         bxdf.Evaluate(hitInfo, wo, lightSample.Direction, f_bxdf, pdf_bxdf);
 
-        m = f_bxdf * PowerHeuristic(lightSample.PDF, pdf_bxdf, numSamples, 1);
+        m = f_bxdf * PowerHeuristic(lightEval.PDF, pdf_bxdf, numSamples, 1);
     }
 
-    return shadowFactor * lightSample.Radiance * m * NdL / lightSample.PDF;
+    return shadowFactor * lightEval.Radiance * m * NdL / lightEval.PDF;
 }
 
 #else
@@ -121,10 +118,7 @@ float3 EvaluateNEE(
     float3 wo,
     float3 nextOrigin,
 
-    uint lightIdx,
-    float3 wi,
-
-    out float pdf) { pdf = NAN; return NAN; }
+    LightSample lightSample) { pdf = NAN; return NAN; }
 
 #endif
 
