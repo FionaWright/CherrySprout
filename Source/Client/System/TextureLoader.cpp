@@ -28,6 +28,14 @@ std::wstring AssetPathToDDS(const wchar_t* path)
     return FileHelper::GetAssetFullPath(relative.generic_wstring().c_str());
 }
 
+D12Resource TextureLoader::LoadTexture2D(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags, const bool tryOverloadDDS)
+{
+    if (std::filesystem::path(path).extension().string() == ".exr" || std::filesystem::path(path).extension().string() == ".hdr")
+        return LoadTexture2DHDR(device, path, scratchImage, flags);
+
+    return LoadTexture2DLDR(device, path, scratchImage, flags, tryOverloadDDS);
+}
+
 D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags, const bool tryOverloadDDS)
 {
     TexMetadata texMetadata{};
@@ -54,7 +62,7 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const wchar_t*
     const char* name = _strdup(wstringToString(path).c_str()); // TODO: Memory leak
 
     D12Resource texture;
-    texture.Init_Tex2D(name, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COMMON, nullptr, true);
+    texture.Init_Tex2D(name, device, texMetadata.width, texMetadata.height, texMetadata.depth, format, flags, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, true);
     return texture;
 }
 

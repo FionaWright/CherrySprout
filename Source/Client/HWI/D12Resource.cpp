@@ -131,6 +131,8 @@ void D12Resource::UploadTexture(ID3D12GraphicsCommandList* cmdList, UploadHeap* 
 {
     CherryAssert(m_desc.DepthOrArraySize == 1);
 
+    Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
     const UINT subresourceIndex = D3D12CalcSubresource(0, 0, 0, m_desc.MipLevels, m_desc.DepthOrArraySize);
 
     D3D12_SUBRESOURCE_DATA subresource = {};

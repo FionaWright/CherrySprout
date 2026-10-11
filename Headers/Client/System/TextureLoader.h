@@ -7,6 +7,7 @@ class D12Resource;
 class TextureLoader
 {
 public:
+    static D12Resource LoadTexture2D(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, D3D12_RESOURCE_FLAGS flags, bool tryOverloadDDS = true);
     static D12Resource LoadTexture2DLDR(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool tryOverloadDDS = true);
     static D12Resource LoadTexture2DHDR(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 

@@ -277,7 +277,7 @@ namespace SceneLoaderUSD
         material.TexIdxAlbedo               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"albedo", "diffuse", "diffuse_color", "base_color"});
         material.TexIdxNormal               = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"normal", "geometry_normal"});
         material.TexIdxRoughness            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"roughness", "specular_roughness"});
-        material.TexIdxMetallic             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"metallic", "metalness"});
+        material.TexIdxMetallic             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"metallic", "metalness", "base_metalness"});
         material.TexIdxEmissive             = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"emission_color", "emission"});
         material.TexIdxAnisotropy           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"anisotropy"});
         material.TexIdxClearcoat            = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"clearcoat"});
@@ -285,39 +285,48 @@ namespace SceneLoaderUSD
         material.TexIdxClearcoatNormal      = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"clearCoatNormal"});
         material.TexIdxSheenColor           = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"sheenColor"});
         material.TexIdxSheenRoughness       = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"sheenRoughness"});
-        material.TexIdxTransmissionFactor   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"transmission"});
+        material.TexIdxTransmissionFactor   = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"transmission", "transmission_weight"});
         material.TexIdxORM                  = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"orm"});
         material.TexIdxOGM                  = MaterialUtils_Mtlx::TryFetchTexture(surface, textureList, {"ogm", "specular_factor", "specular_color", "specular"});
 
-        auto readFloat = [&](const char* name, float& dest)
+        auto readFloat = [&](const std::vector<const char*>& names, float& dest)
         {
-            const pxr::UsdShadeInput input = surface.GetInput(pxr::TfToken(name));
-            if (input && input.GetAttr().HasAuthoredValue())
+            for (int i = 0; i < names.size(); ++i)
             {
-                input.GetAttr().Get(&dest);
-                return true;
-            }
-            return RecurseMtlXValue(input, dest);
-        };
-        auto readFloat3 = [&](const char* name, void* dest)
-        {
-            const pxr::UsdShadeInput input = surface.GetInput(pxr::TfToken(name));
-            pxr::GfVec3f vec3{};
-            if (input && input.GetAttr().HasAuthoredValue() && input.GetAttr().Get(&vec3))
-            {
-                memcpy(dest, &vec3, sizeof(float) * 3);
-                return true;
-            }
-            if (RecurseMtlXValue(input, vec3))
-            {
-                memcpy(dest, &vec3, sizeof(float) * 3);
-                return true;
+                const pxr::UsdShadeInput input = surface.GetInput(pxr::TfToken(names[i]));
+                if (input && input.GetAttr().HasAuthoredValue())
+                {
+                    input.GetAttr().Get(&dest);
+                    return true;
+                }
+                if (RecurseMtlXValue(input, dest))
+                    return true;
             }
             return false;
         };
-        auto readFloatAssignedTexture = [&](const char* name, const int texIdx, float& dest)
+        auto readFloat3 = [&](const std::vector<const char*>& names, void* dest)
         {
-            const bool result = readFloat(name, dest);
+            for (int i = 0; i < names.size(); ++i)
+            {
+                const pxr::UsdShadeInput input = surface.GetInput(pxr::TfToken(names[i]));
+                pxr::GfVec3f vec3{};
+                if (input && input.GetAttr().HasAuthoredValue() && input.GetAttr().Get(&vec3))
+                {
+                    memcpy(dest, &vec3, sizeof(float) * 3);
+                    return true;
+                }
+                if (RecurseMtlXValue(input, vec3))
+                {
+                    memcpy(dest, &vec3, sizeof(float) * 3);
+                    return true;
+                }
+            }
+
+            return false;
+        };
+        auto readFloatAssignedTexture = [&](const std::vector<const char*>& names, const int texIdx, float& dest)
+        {
+            const bool result = readFloat(names, dest);
             if (!result)
                 dest = (texIdx == -1) ? 0.0f : 1.0f;
             return result;
@@ -325,20 +334,20 @@ namespace SceneLoaderUSD
 
         if (!ExtractEDF(surface, material.EmissiveColor, material.EmissiveStrength))
         {
-            readFloat3                  ("emission",                &material.EmissiveColor);
-            readFloatAssignedTexture    ("emissive_strength",       material.TexIdxEmissive,            material.EmissiveStrength);
+            readFloat3                  ({"emission", "emission_color"},        &material.EmissiveColor);
+            readFloatAssignedTexture    ({"emissive_strength", "emission_luminance"},       material.TexIdxEmissive,            material.EmissiveStrength);
         }
 
-        readFloat3                  ("base_color",              &material.Albedo);
-        readFloat3                  ("transmission_color",      &material.TransmissionColor);
+        readFloat3                  ({"base_color"},              &material.Albedo);
+        readFloat3                  ({"transmission_color"},      &material.TransmissionColor);
 
-        readFloatAssignedTexture    ("specular_roughness",      material.TexIdxRoughness,           material.Roughness);
-        readFloatAssignedTexture    ("metalness",               material.TexIdxMetallic,            material.Metallic);
-        readFloatAssignedTexture    ("transmission",            material.TexIdxTransmissionFactor,  material.TransmissionFactor);
+        readFloatAssignedTexture    ({"specular_roughness", "roughness"},      material.TexIdxRoughness,           material.Roughness);
+        readFloatAssignedTexture    ({"base_metalness", "metalness", "metallic"},               material.TexIdxMetallic,            material.Metallic);
+        readFloatAssignedTexture    ({"transmission_weight", "transmission"},            material.TexIdxTransmissionFactor,  material.TransmissionFactor);
 
-        readFloat                   ("specular_factor",      material.SpecularFactor);
-        readFloat                   ("aniso_strength",       material.AnisoStrength);
-        readFloat                   ("ior",                  material.IOR_N);
+        readFloat                   ({"specular", "specular_factor", "specular_weight"},      material.SpecularFactor);
+        readFloat                   ({"aniso_strength", "aniso_weight"},       material.AnisoStrength);
+        readFloat                   ({"ior", "specular_ior"},                  material.IOR_N);
 
         return material;
     }

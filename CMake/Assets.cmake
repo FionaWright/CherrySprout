@@ -12,6 +12,8 @@ file(GLOB_RECURSE TEXTURE_FILES
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.png"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.dds"
         "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.tif"
+        "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.exr"
+        "${CMAKE_SOURCE_DIR}/Assets/Scenes/*.hdr"
 )
 
 list(REMOVE_DUPLICATES TEXTURE_FILES)

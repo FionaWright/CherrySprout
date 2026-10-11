@@ -139,8 +139,9 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
     for (int i = 0; i < textureCount; i++)
     {
         const wchar_t* path = m_scene.CPU.TextureFilepaths[i];
+
         const D3D12_RESOURCE_FLAGS flags = tryOverloadDDS ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        D12Resource tex = TextureLoader::LoadTexture2DLDR(d3d->GetDevice(), path, scratchImages[i], flags, tryOverloadDDS);
+        D12Resource tex = TextureLoader::LoadTexture2D(d3d->GetDevice(), path, scratchImages[i], flags, tryOverloadDDS);
 
         uploadHeapRequiredSize += Align(tex.GetIntermediateSize(), 512);
 
@@ -151,7 +152,7 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
     uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
 
     {
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
         const auto cmdList = cmdListPtr.Get();
         {
             GPU_SCOPE(cmdList, "Upload Scene Data");

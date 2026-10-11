@@ -47,7 +47,7 @@ float3 RectLightWeight(PunctualLight light)
 
     float area = light.RectWidth * light.RectHeight;
 
-    float3 lum = irradiance / area;
+    float3 lum = irradiance * area;
     return lum;
 }
 
@@ -157,6 +157,8 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position)
     return lightSample;
 }
 
+// TODO: Should sample a point on the rect light
+// TODO: Rect area not taking into account scene scale
 LightSample EvaluateRectLight(PunctualLight light, float3 position)
 {
     LightSample lightSample = (LightSample)0;

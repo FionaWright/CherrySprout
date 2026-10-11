@@ -10,7 +10,7 @@
 
 namespace SceneLoaderUSD
 {
-    void Process(const ImporterContext& importerContext, SceneCPU* scene);
+    void Process(const char* usdPath, const ImporterContext& importerContext, SceneCPU* scene);
 }
 
 #endif //CHERRYSPROUT_POSTPROCESSOR_H

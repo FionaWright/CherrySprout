@@ -4,10 +4,14 @@
 
 #include "Processor.h"
 
+#include <filesystem>
 #include <iostream>
 #include <ostream>
 
-void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* scene)
+#include <windows.h>
+#include "Utils/CppUtils.h"
+
+void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importerContext, SceneCPU* scene)
 {
     std::cout << "Processing scene..." << std::endl;
 
@@ -17,11 +21,17 @@ void SceneLoaderUSD::Process(const ImporterContext& importerContext, SceneCPU* s
     scene->MegaBufferMaterialsCount = importerContext.Materials.size();
     memcpy(scene->MegaBufferMaterials, importerContext.Materials.data(), scene->MegaBufferMaterialsCount * sizeof(Material));
 
+    const std::wstring sceneDir = std::filesystem::path(usdPath).parent_path().wstring();
+
     scene->TextureFilepathCount = importerContext.TextureFilePaths.size();
     scene->TextureFilepaths = static_cast<wchar_t**>(malloc(scene->TextureFilepathCount * sizeof(wchar_t*)));
     for (size_t i = 0; i < scene->TextureFilepathCount; i++)
     {
-        scene->TextureFilepaths[i] = _wcsdup(importerContext.TextureFilePaths[i]);
+        std::wstring path = importerContext.TextureFilePaths[i];
+        if (path.starts_with('.'))
+            path = path.replace(0, 1, sceneDir);
+
+        scene->TextureFilepaths[i] = _wcsdup(path.c_str());
     }
 
     size_t totalVertexCount = 0;
