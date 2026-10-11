@@ -13,6 +13,7 @@ enum class VertexType : hlsl::uint
     eGlossy,
     eDiffuse,
     eEnvironment,
+    eEmission,
 };
 
 struct PathVertexInfo

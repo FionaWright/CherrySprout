@@ -59,6 +59,15 @@ void TraceShiftedPath(
 
         float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
         bool isEmissive = any(L_emission > 0.0f);
+        bool mainIsEmissive = v1.Type == VertexType::eEmission;
+        if (isEmissive != mainIsEmissive)
+        {
+            isSymmetric = false;
+            Lo = 0.0f;
+            DBG_OUTPUT1(1.0f, GD_RejectionEmission);
+            break;
+        }
+
         if (isEmissive)
         {
             L_sample += pathState.Beta * L_emission;
