@@ -113,7 +113,7 @@ LightSample EvaluateLight(
 
         float2 uv_env = EaSphereToSquare(wi);
 
-        lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearWrap, uv_env).rgb;
+        lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
         DBG_SCALE_INTENSITY_ENV_MAP(lightSample.Radiance);
 
         float pdf_env = EvaluateEnvMapPdf(uv_env);

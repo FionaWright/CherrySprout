@@ -18,7 +18,7 @@ LightSample SampleEnvMap(inout RngInfo rngInfo)
 
     lightSample.PDF = pdf_env;
 
-    lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearWrap, uv_env).rgb;
+    lightSample.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
 
     return lightSample;
 }
