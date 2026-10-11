@@ -78,10 +78,10 @@ void Greenhouse::renderGuiCore()
         m_renderBackendDirty |= ImGui::RadioButton("Path Tracer", &e, c++);
         m_renderBackendDirty |= ImGui::RadioButton("Forward", &e, c++);
         m_config.RenderBackend = static_cast<RenderBackendMode>(e);
+
+        m_renderBackendSceneDataDirty |= ImGui::Button("Force Reload Render Backend Scene Data");
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
-
-    m_renderBackendSceneDataDirty |= ImGui::Button("Force Reload Render Backend Scene Data");
 
     ImGui::SeparatorText("Info");
     ImGui::Indent(IM_GUI_INDENTATION);
@@ -167,6 +167,9 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        ImGui::Text("Feature Flags Core:");
+        ImGui::Indent(IM_GUI_INDENTATION);
+
 #if CHERRY_DEBUG_FEATURES_ENABLED
         const bool prevQuickSwitchEnabled = m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled;
         m_ptPipelineDirty |= ImGui::Checkbox("Quick Switch Mode", &m_config.PathTracerConfig.DebugInfo.FeatFlagQuickSwitchEnabled);
@@ -230,8 +233,6 @@ void Greenhouse::renderGuiCore()
 
         const uint32_t numFlagColumns = quickSwitchEnabled ? 4 : 2;
 
-        ImGui::Text("Feature Flags Core:");
-        ImGui::Indent(IM_GUI_INDENTATION);
         if (ImGui::BeginTable("Feature Flags Core", numFlagColumns))
         {
             if (quickSwitchEnabled)
@@ -287,6 +288,8 @@ void Greenhouse::renderGuiCore()
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::Spacing();
 
+        ImGui::PopStyleVar();
+
         if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_DirectionalLight))
         {
             ImGui::Text("Directional Light:");
@@ -296,6 +299,38 @@ void Greenhouse::renderGuiCore()
                 m_ptFrameDirty |= GuiUtils::FwColorEdit3("Dir Light Color", (float*)&m_config.RenderBackendConfig.DirLightColor);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Intensity", &m_config.RenderBackendConfig.DirLightIntensity);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Radius", &m_config.RenderBackendConfig.DirLightCosAngularRadius);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
+        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_EnvironmentMap))
+        {
+            ImGui::Text("Environment Map:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                const std::string selectedEnvMap = wstringToString(m_environmentMapFiles.at(m_currentEnvMapIdx));
+
+                if (GuiUtils::BeginComboWithTooltip("Environment Map##Combo", selectedEnvMap.c_str()))
+                {
+                    for (size_t i = 0; i < m_environmentMapFiles.size(); i++)
+                    {
+                        const bool isSelected = m_currentEnvMapIdx == i;
+                        const std::string envMap = wstringToString(m_environmentMapFiles.at(i));
+                        if (ImGui::Selectable(envMap.c_str(), isSelected))
+                        {
+                            m_currentEnvMapIdx = i;
+                            m_envMapDirty = true;
+                        }
+
+                        if (isSelected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+
+                    ImGui::EndCombo();
+                }
+
+                m_envMapDirty |= GuiUtils::FwInputFloat("Rotation##Env", &m_envMapRotation);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();
@@ -369,14 +404,12 @@ void Greenhouse::renderGuiCore()
                 GuiUtils::FwInputFloat("Transient Video - Total Time", &m_config.PathTracerConfig.TransientRenderTotalTime);
                 if (m_scheduledTransientRenderFrameIdx == -1)
                 {
-                    ImGui::PopStyleVar();
                     if (ImGui::Button("Generate Transient Video"))
                     {
                         m_scheduledTransientRenderFrameIdx = 0;
                         m_scheduledTransientRenderSampleIdx = 0;
                         m_ptFrameDirty = true;
                     }
-                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
                 }
                 else
                 {
@@ -399,9 +432,7 @@ void Greenhouse::renderGuiCore()
                 ImGui::Text("Punctual Weight  : %f", m_lightImportanceSampler.GetPunctualWeight());
                 ImGui::Text("EmissiveWeight  : %f", m_lightImportanceSampler.GetEmissiveWeight());
 
-                ImGui::PopStyleVar();
                 m_lsdDirty |= ImGui::Button("Reload Light LSDs");
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
                 const bool aliasTablesEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_AliasTables);
                 const int numColumns = aliasTablesEnabled ? 5 : 4;
@@ -491,6 +522,8 @@ void Greenhouse::renderGuiCore()
 #if CHERRY_DEBUG_FEATURES_ENABLED
         if (ImGui::CollapsingHeader("Feature Flags Debug"))
         {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+
             ImGui::Indent(IM_GUI_INDENTATION);
             if (ImGui::BeginTable("Feature Flags Debug", numFlagColumns))
             {
@@ -530,14 +563,14 @@ void Greenhouse::renderGuiCore()
                 }
                 ImGui::EndTable();
 
-                ImGui::PopStyleVar();
                 if (ImGui::Button("Clear all##Debug Flags"))
                 {
                     m_ptPipelineDirty |= (m_config.PathTracerConfig.DebugInfo.FlagsDebug != 0);
                     m_config.PathTracerConfig.DebugInfo.FlagsDebug = static_cast<FeatFlagsDbg>(0);
                 }
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
             }
+
+            ImGui::PopStyleVar();
             ImGui::Unindent(IM_GUI_INDENTATION);
         }
         ImGui::Spacing();
@@ -556,8 +589,6 @@ void Greenhouse::renderGuiCore()
 
                 static bool dragFloatMode = true;
                 ImGui::Checkbox("Drag Float Mode", &dragFloatMode);
-
-                ImGui::PopStyleVar();
 
                 auto scaleFunc = [&](const char* label, float* v)
                 {
@@ -603,7 +634,6 @@ void Greenhouse::renderGuiCore()
                 scaleFunc("Reflect##scales", &m_config.PathTracerConfig.DebugInfo.ScaleReflect);
                 scaleFunc("Refract##scales", &m_config.PathTracerConfig.DebugInfo.ScaleRefract);
 
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
                 ImGui::Unindent(IM_GUI_INDENTATION);
             }
             ImGui::Spacing();
@@ -615,8 +645,6 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 #endif
-
-        ImGui::PopStyleVar();
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 

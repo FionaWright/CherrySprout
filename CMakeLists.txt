@@ -33,6 +33,7 @@ target_link_libraries(client
         dxgi
         dxguid
         imgui
+        tinyexr
         DirectXTex::DirectXTex
         WinPixEventRuntime
 )
@@ -43,6 +44,7 @@ target_include_directories(client PUBLIC
         "${CMAKE_SOURCE_DIR}/Assets/Resources"
 
         "${dxc_SOURCE_DIR}/inc"
+        "${tinyexr_SOURCE_DIR}"
 )
 target_compile_definitions(client PUBLIC NOMINMAX)
 set_target_properties(client PROPERTIES
@@ -57,6 +59,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES MATCHES "Debug
     target_compile_definitions(client PUBLIC SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 endif()
 target_compile_definitions(client PUBLIC BUILD_DIR="${CMAKE_BINARY_DIR}")
+target_compile_definitions(client PUBLIC BUILD_DIR_W=L"${CMAKE_BINARY_DIR}")
 
 set(USD_BIN_DIR ${CMAKE_BINARY_DIR}/SceneLoaderUSD/bin)
 file(MAKE_DIRECTORY "${USD_BIN_DIR}")

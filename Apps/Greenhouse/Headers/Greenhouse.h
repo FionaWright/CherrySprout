@@ -29,8 +29,6 @@ struct GreenHouseRenderInfo
     EnvironmentMap* EnvironmentMap;
     LightImportanceSampler* LightImportanceSampler;
 
-    bool EnvMapDirty = false;
-
     RenderBackendConfig* BackendConfig;
     PathTracerConfig* PathTracerConfig;
 
@@ -60,6 +58,10 @@ private:
     GreenhouseConfig m_config{};
     float m_aspectRatio = 0.0f;
     uint32_t m_currentSceneIdx = 0;
+
+    std::vector<std::wstring> m_environmentMapFiles;
+    uint32_t m_currentEnvMapIdx = 0;
+    float m_envMapRotation = 0.0f;
 
     bool m_sceneDirty = true;
     bool m_envMapDirty = true;

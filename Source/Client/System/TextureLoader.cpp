@@ -6,6 +6,9 @@
 #include "System/FileHelper.h"
 #include "Utils/Helper.h"
 
+#define TINYEXR_IMPLEMENTATION
+#include <tinyexr.h>
+
 std::wstring AssetPathToDDS(const wchar_t* path)
 {
     const std::filesystem::path p(path);
@@ -57,10 +60,62 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const wchar_t*
 
 D12Resource TextureLoader::LoadTexture2DHDR(ID3D12Device* device, const wchar_t* path, ScratchImage& scratchImage, const D3D12_RESOURCE_FLAGS flags)
 {
-    CherryAssert(std::filesystem::exists(path) && std::filesystem::path(path).extension().string() == ".hdr");
+    CherryAssert(std::filesystem::exists(path));
 
     TexMetadata texMetadata{};
-    V(LoadFromHDRFile(path, &texMetadata, scratchImage));
+
+    if (std::filesystem::path(path).extension().string() == ".hdr")
+    {
+        V(LoadFromHDRFile(path, &texMetadata, scratchImage));
+    }
+    else if (std::filesystem::path(path).extension().string() == ".exr")
+    {
+        float* rgba = nullptr;
+        int width = 0;
+        int height = 0;
+        const char* err = nullptr;
+
+        const std::string filename = wstringToString(path);
+
+        const auto result = LoadEXR(
+            &rgba,
+            &width,
+            &height,
+            filename.c_str(),
+            &err);
+
+        if (result != TINYEXR_SUCCESS)
+        {
+            std::string error = err ? err : "Unknown EXR error";
+            FreeEXRErrorMessage(err);
+            throw std::runtime_error(error);
+        }
+
+        V(scratchImage.Initialize2D(
+            DXGI_FORMAT_R32G32B32A32_FLOAT,
+            width,
+            height,
+            1,
+            1));
+
+        const Image* image = scratchImage.GetImage(0, 0, 0);
+
+        for (int y = 0; y < height; ++y)
+        {
+            memcpy(
+                image->pixels + y * image->rowPitch,
+                rgba + static_cast<size_t>(y) * width * 4,
+                static_cast<size_t>(width) * 4 * sizeof(float));
+        }
+
+        free(rgba);
+
+        texMetadata = scratchImage.GetMetadata();
+    }
+    else
+    {
+        CherryAssert(false);
+    }
 
     const char* name = _strdup(wstringToString(path).c_str()); // TODO: Memory leak
 

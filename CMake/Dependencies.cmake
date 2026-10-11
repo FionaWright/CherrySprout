@@ -49,7 +49,6 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
 
-# DirectXTex
 CPMAddPackage(
         NAME DirectXTex
         GITHUB_REPOSITORY microsoft/DirectXTex
@@ -93,3 +92,11 @@ if (WIN32)
             "${FFMPEG_ROOT}/ffmpeg.exe"
             CACHE FILEPATH "ffmpeg executable")
 endif()
+
+FetchContent_Declare(
+        tinyexr
+        GIT_REPOSITORY https://github.com/syoyo/tinyexr.git
+        GIT_TAG        v3.2.0
+        GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(tinyexr)

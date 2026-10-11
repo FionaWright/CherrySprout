@@ -86,6 +86,23 @@ void Greenhouse::Init(D3D* d3d)
 
     m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
 
+    const std::wstring envMapDir = std::wstring(BUILD_DIR_W) + L"/Assets/Textures/EnvMaps";
+    const wchar_t* defaultEnvMap = L"autumn_field_puresky_4k.hdr";
+    for (const auto& entry : std::filesystem::directory_iterator(envMapDir))
+    {
+        if (!entry.is_regular_file())
+            continue;
+
+        if (entry.path().extension() != ".hdr" && entry.path().extension() != ".exr")
+            continue;
+
+        std::wstring filePath = entry.path().filename().wstring();
+        m_environmentMapFiles.emplace_back(filePath);
+
+        if (filePath == defaultEnvMap)
+            m_currentEnvMapIdx = m_environmentMapFiles.size() - 1;
+    }
+
     CherryPrint("Greenhouse Initialized");
 }
 
@@ -93,7 +110,13 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
     if (m_envMapDirty)
     {
-        m_envMap.Init(d3d, &m_heap, L"autumn_field_puresky_4k.hdr", 0); // TODO
+        const wchar_t* envMap = m_environmentMapFiles.at(m_currentEnvMapIdx).c_str();
+        m_envMap.Init(d3d, &m_heap, envMap, m_envMapRotation);
+
+        m_ptFrameDirty = true;
+        m_renderBackendSceneDataDirty = true;
+        m_lsdDirty = true;
+        m_envMapDirty = false;
     }
 
     if (m_renderBackendDirty)
@@ -255,8 +278,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
 void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
-    m_renderInfo.EnvMapDirty = m_envMapDirty;
-
     // GBuffer Pass
     {
         if (GBufferRequired())
@@ -373,8 +394,6 @@ void Greenhouse::PostUpdate(D3D* d3d)
         m_scheduledSnapshotPT = "";
     }
 #endif
-
-    m_envMapDirty = false;
 }
 
 void Greenhouse::OnResize(uint32_t width, uint32_t height)
