@@ -85,6 +85,10 @@ void HitShiftedUnconnected(
 
         // TODO: Jacobian?
 
+        // TODO: Asymmetric if occlusion doesn't match main occlusion (Ignore alpha test)
+
+        // TODO: Make some scenes which can make jacobian/shift mapping issues obvious and simple
+
         float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample);
 
         DBG_OUTPUT3(L_nee, GD_NeeContrib);

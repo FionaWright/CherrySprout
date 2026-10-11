@@ -75,6 +75,7 @@ void TraceRayShadow(float3 source, float3 dir, float lightDistance, out float sh
         float4 albedoSample = mat.TexIdxAlbedo == -1 ? 1.0f : gSceneTextures[mat.TexIdxAlbedo].Sample(gSamplerLinearClamp, uv);
         float alpha = albedoSample.w;
 
+        // TODO: FEAT_CORE(AlphaTesting)
         if (alpha > EPSILON) // TODO: Change back to mult
         {
             shadowFactor = 0.0f;
