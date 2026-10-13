@@ -20,6 +20,7 @@ float3 SampleDirectLighting(
     float3 E_direct = 0;
 
     LightSample lightSample = (LightSample)0;
+    float shadowFactor = 0.0f;
 
     if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
     {
@@ -27,20 +28,24 @@ float3 SampleDirectLighting(
     }
     else
     {
-        float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, lightSample);
+        float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, lightSample);
+            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
         }
 
         E_direct += L_nee;
 
         DBG_OUTPUT3(L_nee, NEE_Contrib);
+        DBG_OUTPUT1(shadowFactor, NEE_ShadowFactor);
     }
 
 	if (FEAT_CORE(GradientDomain))
+    {
 	    currentVertexInfo.LightSample = lightSample;
+	    currentVertexInfo.ShadowFactor = shadowFactor;
+    }
 
     if (FEAT_CORE(Transient))
     {

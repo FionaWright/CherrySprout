@@ -31,6 +31,7 @@ struct PathVertexInfo
     float PDF;
 
     LightSample LightSample; // TODO: Multiple NEE samples
+    float ShadowFactor;
 };
 
 #define PATH_MAX_VERTICES 16 // TODO

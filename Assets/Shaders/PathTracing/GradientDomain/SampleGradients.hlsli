@@ -66,6 +66,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
         DBG_OUTPUT1(0.0f, GD_RejectionEmission);
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMapping);
+        DBG_OUTPUT1(0.0f, GD_RejectionNEE);
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMappingHalfVec);
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMappingRecOcc);
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMappingRecNdL);

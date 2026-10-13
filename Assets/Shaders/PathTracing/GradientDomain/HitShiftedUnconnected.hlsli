@@ -89,9 +89,19 @@ void HitShiftedUnconnected(
 
         // TODO: Make some scenes which can make jacobian/shift mapping issues obvious and simple
 
-        float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample);
+        float shadowFactor;
+        float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
 
         DBG_OUTPUT3(L_nee, GD_NeeContrib);
+
+        if (v1.ShadowFactor > 0.99f != shadowFactor > 0.99f)
+        {
+            isSymmetric = false;
+            contrib = 1.0f;
+            wi = NAN;
+            DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+            return;
+        }
 
         contrib += L_nee * pathState.Beta;
     }

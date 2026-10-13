@@ -14,28 +14,19 @@ float3 SampleNEE(
     uint numSamples,
     float3 wo,
 
-    out LightSample lightSample)
+    out LightSample lightSample,
+    out float shadowFactor)
 {
     LightEval lightEval;
     lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, lightEval);
 
-    if (length(lightEval.Radiance) == 0.0f)
-    {
-        DBG_OUTPUT3(float3(0,0,0),     NEE_ShadowFactor);
-        return 0;
-    }
+    shadowFactor = 0.0f;
 
     float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
-    if (NdL < 0.0f)
-    {
-        DBG_OUTPUT3(float3(1,0,0),     NEE_ShadowFactor);
+    if (NdL < 0.0f || length(lightEval.Radiance) == 0.0f)
         return 0;
-    }
 
-    float shadowFactor;
     TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor);
-    DBG_OUTPUT3(float3(0,shadowFactor,0),     NEE_ShadowFactor);
-
     if (shadowFactor <= 0.0f)
         return 0;
 
@@ -65,9 +56,12 @@ float3 EvaluateNEE(
 
     uint numSamples,
     float3 wo,
+    LightSample lightSample,
 
-    LightSample lightSample)
+    out float shadowFactor)
 {
+    shadowFactor = 0.0f;
+
     float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
     if (NdL <= 0.0f)
         return 0;
@@ -77,7 +71,6 @@ float3 EvaluateNEE(
     if (length(lightEval.Radiance) == 0.0f)
         return 0;
 
-    float shadowFactor;
     TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor);
     if (shadowFactor <= 0.0f)
         return 0;
@@ -110,7 +103,8 @@ float3 SampleNEE(
     uint numSamples,
     float3 wo,
 
-    out LightSample lightSample) { return NAN; }
+    out LightSample lightSample,
+    out float shadowFactor) { lightSample = (LightSample)0; shadowFactor = NAN; return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
@@ -119,8 +113,9 @@ float3 EvaluateNEE(
 
     uint numSamples,
     float3 wo,
+    LightSample lightSample,
 
-    LightSample lightSample) { return NAN; }
+    out float shadowFactor) { shadowFactor = NAN; return NAN; }
 
 #endif
 
