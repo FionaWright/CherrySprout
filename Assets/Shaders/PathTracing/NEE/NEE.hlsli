@@ -27,7 +27,7 @@ float3 SampleNEE(
     }
 
     float shadowFactor;
-    TraceRayShadow(hitInfo.HitPos, lightSample.Direction, lightSample.Distance, shadowFactor); // TODO: Only works when using hitPos NOT nextOrigin, why?
+    TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor); // TODO: Only works when using hitPos NOT nextOrigin, why?
     DBG_OUTPUT1(shadowFactor,     NEE_ShadowFactor);
 
     if (shadowFactor <= 0.0f)

@@ -58,6 +58,12 @@ void TraceShiftedPath(
         float3 wo = -pathState.Desc.Direction;
 
         float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
+
+        DBG_OUTPUT3(L_emission, GD_Emission);
+        DBG_OUTPUT3(wo, GD_V_w);
+        DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wo), GD_V_s);
+        DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
+
         bool isEmissive = any(L_emission > 0.0f);
         bool mainIsEmissive = v1.Type == VertexType::eEmission;
         if (isEmissive != mainIsEmissive)
@@ -76,11 +82,6 @@ void TraceShiftedPath(
         }
 
         float3 wi;
-
-        DBG_OUTPUT3(wo, GD_V_w);
-        DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wo), GD_V_s);
-        DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
-        DBG_OUTPUT3(hitInfo.Emission, GD_Emission);
 
 		float pdfMain = v1.PDF;
 		float pdfShifted;

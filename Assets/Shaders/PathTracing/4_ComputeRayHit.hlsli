@@ -22,7 +22,7 @@ void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState path
     }
 
     q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, pathState.Desc);
-    q.Proceed();
+    while (q.Proceed()) {}
 
     isMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
 

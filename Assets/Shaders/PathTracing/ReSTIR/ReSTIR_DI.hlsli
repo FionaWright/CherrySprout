@@ -32,7 +32,7 @@ float Target(LightSample X_i, LightSampleSelectionInfo info)
     if (FEAT_CORE(RestirTargetVisibility))
     {
         bool occluded;
-        TraceRayShadow(info.HitPosOffset, X_i.Direction, occluded, X_i.Distance);
+        TraceRayShadow(info.HitPosOffset, X_i.Direction, occluded, X_i.Distance); // TODO: Rename HitPosBiased
         if (occluded)
             return 0;
     }

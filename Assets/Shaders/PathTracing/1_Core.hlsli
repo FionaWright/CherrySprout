@@ -56,8 +56,7 @@ void Core(uint2 pixelCoord)
 
     primalSum /= float(gSettings.SPP);
 
-    if (!FEAT_CORE(ScreenSpaceGradients)) // TODO: Ugly. Remove when SS gradients not needed? Unsure
-        DBG_OUTPUT_SET(primalSum);
+    DBG_OUTPUT_SET(primalSum);
 
     float3 average = AccumulateAndFetch(pixelCoord, primalSum);
     DBG_PATH_DUMP_HIGHLIGHT(average);

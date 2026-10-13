@@ -369,6 +369,7 @@ void Greenhouse::renderGuiCore()
                 GuiUtils::FwInputFloat("SPR Alpha", &m_config.PathTracerConfig.SprAlpha);
                 ImGui::Spacing();
 
+                ImGui::Checkbox("SS-Gradients", &m_config.PathTracerConfig.ScreenSpaceGradients);
                 ImGui::Checkbox("Display Gradient X", &m_config.PathTracerConfig.DisplayGradientX);
                 ImGui::Checkbox("Display Gradient Y", &m_config.PathTracerConfig.DisplayGradientY);
             }

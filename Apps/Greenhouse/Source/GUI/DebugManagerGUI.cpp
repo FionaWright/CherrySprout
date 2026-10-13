@@ -202,6 +202,16 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
 
             ImGui::Checkbox("Automatic Dump", &m_isPathDumpAutomatic);
 
+            if (m_isPathDumpAutomatic)
+            {
+                ImGui::DragFloat("Path Dump Cooldown", &m_pathDumpAutoCooldown);
+            }
+
+            if (ImGui::Button("Dump##button"))
+            {
+                ScheduledRunTransition(ScheduledRunState::eReadbackPathDump);
+            }
+
             uint32_t rowIncrementer = 0;
             for (int i = 0; i < static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH); i++)
             {

@@ -19,7 +19,7 @@ void TraceRayShadow(float3 pos, float3 dir, float lightDistance, out float shado
     for (uint i = 0; i < MAX_SHADOW_RAY_DEPTH; i++)
     {
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-        q.Proceed();
+        while (q.Proceed()) {}
 
         bool isMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
         if (isMiss)

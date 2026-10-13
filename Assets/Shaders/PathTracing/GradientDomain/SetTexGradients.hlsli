@@ -3,9 +3,6 @@
 
 void SetTexGradients(uint2 pixelCoord, Gradients gradients)
 {
-    if (FEAT_CORE(ScreenSpaceGradients))
-        return;
-
     gradients.XForward /= float(gSettings.SPP);
     gradients.XBackward /= float(gSettings.SPP);
     gradients.YForward /= float(gSettings.SPP);

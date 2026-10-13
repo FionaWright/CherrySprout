@@ -51,6 +51,8 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
     hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
 
+    hitInfo.HitPosBiased = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
+
     ApplyMaterialTextures(hitInfo);
 
     if (FEAT_CORE(NEE))

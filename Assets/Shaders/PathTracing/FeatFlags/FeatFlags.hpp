@@ -14,11 +14,10 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_EnvironmentMap |
         eCore_AlphaTesting |
         //eCore_Transmission |
-        eCore_NEE |
+        //eCore_NEE |
         //eCore_FireflyThreshold |
         eCore_Emission |
-        //eCore_GradientDomain |
-        //eCore_ScreenSpaceGradients |
+        eCore_GradientDomain |
         eCore_AliasTables
         //eCore_RestirDI |
         //eCore_RussianRoulette

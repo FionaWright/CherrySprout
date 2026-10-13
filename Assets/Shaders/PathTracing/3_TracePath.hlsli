@@ -64,6 +64,28 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
         }
 
+        float3 wo = -pathState.Desc.Direction;
+        float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
+        bool isEmissive = any(L_emission > 0.0f);
+        if (isEmissive)
+        {
+            float3 L_sample = pathState.Beta * L_emission;
+            pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+
+            DBG_OUTPUT1(1.0f, KilledByEmission);
+
+            if (FEAT_CORE(GradientDomain))
+            {
+                PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
+                currentVertexInfo.Type = VertexType::eEmission;
+
+                vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
+                vertexList.NumVertices++;
+                DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);
+            }
+            break;
+        }
+
         if (FEAT_CORE(AlphaTesting))
         {
             float xi = Rand01(rngInfo);
@@ -126,6 +148,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     DBG_OUTPUT1(0.0f, KilledByBetaLoss);
     DBG_OUTPUT1(0.0f, KilledByRR);
     DBG_OUTPUT1(0.0f, KilledByMiss);
+    DBG_OUTPUT1(0.0f, KilledByEmission);
 
     PathSample pathSample;
     pathSample.Lo = pathState.Lo;

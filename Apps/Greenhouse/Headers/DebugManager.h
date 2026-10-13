@@ -57,6 +57,7 @@ private:
     D12Resource m_pathDumpBufferRW, m_pathDumpBufferReadback;
     D12Resource m_pathDumpOCBufferRW, m_pathDumpOCBufferReadback;
     bool m_isPathDumpAutomatic = true;
+    float m_pathDumpAutoCooldown = 300.0f;
 
     hlsl::uint2 m_scheduledRunPixelCoords = {};
     uint32_t m_scheduledRunFrameIdx = 0;

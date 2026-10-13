@@ -4,8 +4,8 @@
 #include "PathTracing/Utils.hlsli"
 #include "PathTracing/HitInfo/ExtractUtils.hlsli"
 
-#define TMIN_BIAS_COEF 1
-#define TMAX_BIAS_COEF 1
+#define TMIN_BIAS_COEF 3
+#define TMAX_BIAS_COEF 2
 
 void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
 {
@@ -21,7 +21,7 @@ void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
     ray.TMax = distance - (TMAX_BIAS_COEF * EPSILON);
 
     q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-    q.Proceed();
+    while (q.Proceed()) {}
 
     occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 }
@@ -32,12 +32,12 @@ void TestVisibilityDirection(float3 source, float3 dir, out bool occluded)
 
     RayDesc ray;
     ray.Origin = source;
-    ray.Direction = dir;
+    ray.Direction = normalize(dir);
     ray.TMin = TMIN_BIAS_COEF * EPSILON;
     ray.TMax = INF;
 
     q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-    q.Proceed();
+    while (q.Proceed()) {}
 
     occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 }
@@ -59,7 +59,7 @@ void TraceRayShadow(float3 source, float3 dir, float lightDistance, out float sh
     for (uint i = 0; i < gSettings.MaxShadowRayDepth; i++)
     {
         q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
-        q.Proceed();
+        while (q.Proceed()) {}
 
         bool isMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
         if (isMiss)

@@ -73,19 +73,17 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
         m_gpuErrorInfoReadback.Readback(&m_cpuErrorInfo);
     }
 
-#define PATH_DUMP_UPDATE_COOLDOWN 300
-
     const bool scheduledRun = m_scheduledRunState == ScheduledRunState::eReadbackPathDump;
     const bool needPathDump = m_isPathDumpAutomatic || scheduledRun;
     if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_PathDumper) && needPathDump)
     {
-        static int s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
+        static int s_pathDumpTimer = m_pathDumpAutoCooldown;
         if (s_pathDumpTimer > 0 && !scheduledRun)
         {
             s_pathDumpTimer--;
             return;
         }
-        s_pathDumpTimer = PATH_DUMP_UPDATE_COOLDOWN;
+        s_pathDumpTimer = m_pathDumpAutoCooldown;
 
         d3d->Flush();
 

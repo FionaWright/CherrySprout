@@ -11,7 +11,7 @@ public:
     void Init(const D3D* d3d);
     void LoadSceneData(D3D* d3d, Heap* heap, D12Resource* primal);
     void Update(D3D* d3d, Heap* heap);
-    D12Resource* Render(const D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* primal);
+    D12Resource* Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* primal);
 
     D12Resource* GetGradientXF() { return &m_gradientXF; }
     D12Resource* GetGradientXB() { return &m_gradientXB; }
@@ -28,6 +28,7 @@ private:
     DescriptorSet m_setGradientsCombine;
 
     D12Resource m_gradientXF, m_gradientXB, m_gradientYF, m_gradientYB;
+    D12Resource m_gradientXFSS, m_gradientXBSS, m_gradientYFSS, m_gradientYBSS;
 
     D12Resource m_debugGradientX, m_debugGradientY;
 

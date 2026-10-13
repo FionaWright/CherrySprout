@@ -26,25 +26,6 @@ void Hit(inout PathState pathState,
 
     float3 wo = -pathState.Desc.Direction;
 
-    float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
-
-    bool isEmissive = any(L_emission > 0.0f);
-    if (isEmissive)
-    {
-        L_sample = pathState.Beta * L_emission;
-        pathState.Beta = 0.0f; // Terminate Ray
-
-        if (FEAT_CORE(GradientDomain))
-        {
-            currentVertexInfo.Type = VertexType::eDiffuse;
-            currentVertexInfo.Position = hitInfo.HitPos; // TODO: Use hitpos?
-            currentVertexInfo.SFrame = hitInfo.SFrame;
-            currentVertexInfo.Wo = wo;
-            // Eta
-        }
-        return;
-    }
-
     BxDF bxdf;
 
     float3 E_direct = 0;

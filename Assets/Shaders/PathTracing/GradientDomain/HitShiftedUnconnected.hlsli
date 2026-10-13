@@ -35,9 +35,9 @@ void HitShiftedUnconnected(
     if (v1.Type == VertexType::eDiffuse)
     {
         if (v2.Type == VertexType::eDiffuse)
-            shiftResult = ShiftReconnect(v1.Position, hitInfo.HitPos, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
+            shiftResult = ShiftReconnect(v1.Position, hitInfo.HitPosBiased, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
         else if (v2.Type == VertexType::eEnvironment)
-            shiftResult = ShiftReconnectEnvironment(hitInfo.HitPos, hitInfo.Ns_ff, v1.Wi);
+            shiftResult = ShiftReconnectEnvironment(hitInfo.HitPosBiased, hitInfo.Ns_ff, v1.Wi);
 
         reconnectionState = ReconnectionState::eSemiConnected;
     }

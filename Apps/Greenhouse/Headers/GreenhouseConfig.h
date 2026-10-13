@@ -116,6 +116,7 @@ struct PathTracerConfig
 
     bool TrueRandomSeedMode = false;
     bool PoissonReconstructionEnabled = false;
+    bool ScreenSpaceGradients = false;
     bool DisplayGradientX = false;
     bool DisplayGradientY = false;
 
