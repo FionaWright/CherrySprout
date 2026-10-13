@@ -99,7 +99,7 @@ struct PathTracerConfig
     uint32_t TransientRenderNumSamples = 1000;
     uint32_t TransientRenderNumFrames = 60;
 
-    uint32_t SprNumIterations = 6;
+    uint32_t SprNumIterations = 200;
 
     int TransientLightIndex = -1;
 
@@ -112,7 +112,7 @@ struct PathTracerConfig
     float DofFocalDist = 0.1f;
     float DofLensRadius = 0.003f;
 
-    float SprAlpha = 0.5f;
+    float SprAlpha = 0.0f;
 
     bool TrueRandomSeedMode = false;
     bool PoissonReconstructionEnabled = false;

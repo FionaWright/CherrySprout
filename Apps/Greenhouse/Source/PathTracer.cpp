@@ -6,7 +6,6 @@
 #include "PathTracer.h"
 
 #include "Greenhouse.h"
-#include "imgui.h"
 #include "Debug/GPUEventScoped.h"
 #include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
 #include "Utils/CBVs.h"

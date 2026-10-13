@@ -1,7 +1,6 @@
 #include "System/pch.h"
 #include "PathTracer.h"
 
-#include "imgui.h"
 #include "GreenhouseConfig.h"
 
 void PathTracer::GUI(GreenhouseConfig* config)

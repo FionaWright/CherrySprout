@@ -1,8 +1,6 @@
 #ifndef H_GUI_STYLES_H
 #define H_GUI_STYLES_H
 
-#include "imgui.h"
-
 // All generated with GPT-3.5
 
 inline void ApplyCherryBlossomTheme()

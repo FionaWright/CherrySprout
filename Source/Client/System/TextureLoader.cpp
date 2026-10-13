@@ -6,9 +6,6 @@
 #include "System/FileHelper.h"
 #include "Utils/Helper.h"
 
-#define TINYEXR_IMPLEMENTATION
-#include <tinyexr.h>
-
 std::wstring AssetPathToDDS(const wchar_t* path)
 {
     const std::filesystem::path p(path);

@@ -17,7 +17,7 @@ public:
 
     static void SnapshotToRgba8(const Image* image, ScratchImage& scratch);
 
-    static void SnapshotToFile(const Image* image, const char* fileName, bool ldrIsPNG = false);
+    static void SnapshotToFile(const Image* image, const char* fileName, bool ldrIsPNG = false, bool hdrIsEXR = true);
     static ScratchImage FileToSnapshot(const char* fileName);
 
     static void Rgba8SnapshotToClipboard(const Image* image);

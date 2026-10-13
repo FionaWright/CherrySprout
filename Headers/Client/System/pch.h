@@ -53,4 +53,9 @@ using Microsoft::WRL::ComPtr;
 #include <ostream>
 #include <algorithm>
 
+//#define TINYEXR_IMPLEMENTATION
+#include <tinyexr.h>
+
+#include "imgui.h"
+
 #endif

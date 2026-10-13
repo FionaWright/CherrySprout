@@ -1,7 +1,6 @@
 #include "System/pch.h"
 #include "Greenhouse.h"
 
-#include "imgui.h"
 #include "Scenes.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
@@ -373,6 +372,14 @@ void Greenhouse::PostUpdate(D3D* d3d)
     {
         D12Resource* ptOut = m_pathTracer.GetHdrOutput();
 
+        d3d->Flush();
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        const auto cmdList = cmdListPtr.Get();
+        {
+            ptOut->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        }
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
         d3d->Flush();
 
         uint8_t* data = nullptr;

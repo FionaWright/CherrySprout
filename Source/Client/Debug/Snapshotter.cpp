@@ -33,6 +33,7 @@ void CopyTexToBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, c
 
     cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
 }
+
 void Snapshotter::ResourceToSnapshot(D3D* d3d, D12Resource* d12Resource, uint8_t*& data, size_t& dataSize)
 {
     D12Resource readbackBuffer;
@@ -53,6 +54,37 @@ void Snapshotter::ResourceToSnapshot(D3D* d3d, D12Resource* d12Resource, uint8_t
 
     data = new uint8_t[dataSize];
     readbackBuffer.Readback(data);
+
+    if (!FormatIsHDR(d12Resource->GetDesc().Format))
+        return;
+
+    const float* dataF32 = reinterpret_cast<const float*>(data);
+
+    float minValue = FLT_MAX;
+    float maxValue = -FLT_MAX;
+    size_t negativeCount = 0;
+    size_t nanCount = 0;
+    size_t infCount = 0;
+
+    for (size_t i = 0; i < dataSize / sizeof(float); ++i)
+    {
+        const float v = dataF32[i];
+
+        if (std::isnan(v))
+            ++nanCount;
+        else if (std::isinf(v))
+            ++infCount;
+        else
+        {
+            minValue = std::min(minValue, v);
+            maxValue = std::max(maxValue, v);
+
+            if (v < 0.0f)
+                ++negativeCount;
+        }
+    }
+
+    CherryPrint("Snapshot Stats:\n" << "minVal=" << minValue << "\nmaxVal=" << maxValue << "\nnegativeCount=" << negativeCount << "\nnanCount=" << nanCount << "\ninfCount=" << infCount);
 }
 
 D12Resource Snapshotter::SnapshotToResource(D3D* d3d, const ScratchImage& scratchImage, const char* name)
@@ -120,24 +152,7 @@ void Snapshotter::SnapshotToRgba8(const Image* image, ScratchImage& scratch)
     V(Convert(*image, DXGI_FORMAT_R8G8B8A8_UNORM, TEX_FILTER_DEFAULT, TEX_THRESHOLD_DEFAULT, scratch));
 }
 
-bool FormatIsHDR(const DXGI_FORMAT format)
-{
-    switch (format)
-    {
-    case DXGI_FORMAT_R16G16B16A16_FLOAT:
-    case DXGI_FORMAT_R32G32B32A32_FLOAT:
-    case DXGI_FORMAT_R32G32B32_FLOAT:
-    case DXGI_FORMAT_R11G11B10_FLOAT:
-    case DXGI_FORMAT_R16_FLOAT:
-    case DXGI_FORMAT_R32_FLOAT:
-        return true;
-
-    default:
-        return false;
-    }
-}
-
-void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const bool ldrIsPNG)
+void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const bool ldrIsPNG, const bool hdrIsEXR)
 {
     std::filesystem::create_directories(std::filesystem::path(fileName).parent_path());
 
@@ -155,7 +170,7 @@ void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const
     if (fileNameIsHDR)
         fileNameWithExt = std::string(fileName);
     else if (formatIsHDR)
-        fileNameWithExt = std::string(fileName) + ".hdr";
+        fileNameWithExt = std::string(fileName) + (hdrIsEXR ? ".exr" : ".hdr");
     else
         fileNameWithExt = std::string(fileName) + (ldrIsPNG ? ".png" : ".tga");
 
@@ -164,7 +179,15 @@ void Snapshotter::SnapshotToFile(const Image* image, const char* fileName, const
     std::cout << "Saved snapshot to: " << fileNameWithExt << std::endl;
 
     if (formatIsHDR)
-        V(SaveToHDRFile(*image, fileNameW.c_str()));
+    {
+        if (hdrIsEXR)
+        {
+            const int rslt = SaveEXR(reinterpret_cast<float*>(image->pixels), image->width, image->height, 4, false, fileNameWithExt.c_str(), nullptr);
+            CherryAssert(rslt == 0);
+        }
+        else
+            V(SaveToHDRFile(*image, fileNameW.c_str()));
+    }
     else if (ldrIsPNG)
     {
         // Disable transparency

@@ -5,7 +5,6 @@
 #include "System/pch.h"
 #include "System/Gui.h"
 #include "Utils/Helper.h"
-#include "imgui.h"
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 #include "System/Config.h"

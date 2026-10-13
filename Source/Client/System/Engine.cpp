@@ -5,12 +5,10 @@
 #include "System/pch.h"
 #include "System/Engine.h"
 #include "Utils/Helper.h"
-#include "imgui.h"
 #include "System/App.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "System/Config.h"
-#include "System/FileHelper.h"
 #include "System/Gui.h"
 #include "System/Input.h"
 
@@ -114,6 +112,13 @@ void Engine::Render()
         rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
         Gui::RenderAllWindows(cmdList.Get());
     }
+
+#if !NDEBUG
+    if (!m_scheduledSnapshotRTV.empty())
+    {
+        rtv->Transition(cmdList.Get(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
+#endif
 
     // Present
     {

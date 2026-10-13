@@ -19,16 +19,22 @@ float3 SampleNEE(
     LightEval lightEval;
     lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, lightEval);
 
-    float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
-    if (length(lightEval.Radiance) == 0.0f || NdL < 0.0f)
+    if (length(lightEval.Radiance) == 0.0f)
     {
-        DBG_OUTPUT1(0,     NEE_ShadowFactor);
+        DBG_OUTPUT3(float3(0,0,0),     NEE_ShadowFactor);
+        return 0;
+    }
+
+    float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
+    if (NdL < 0.0f)
+    {
+        DBG_OUTPUT3(float3(1,0,0),     NEE_ShadowFactor);
         return 0;
     }
 
     float shadowFactor;
-    TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor); // TODO: Only works when using hitPos NOT nextOrigin, why?
-    DBG_OUTPUT1(shadowFactor,     NEE_ShadowFactor);
+    TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor);
+    DBG_OUTPUT3(float3(0,shadowFactor,0),     NEE_ShadowFactor);
 
     if (shadowFactor <= 0.0f)
         return 0;
@@ -72,7 +78,7 @@ float3 EvaluateNEE(
         return 0;
 
     float shadowFactor;
-    TraceRayShadow(hitInfo.HitPos, lightSample.Direction, lightSample.Distance, shadowFactor);
+    TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor);
     if (shadowFactor <= 0.0f)
         return 0;
 

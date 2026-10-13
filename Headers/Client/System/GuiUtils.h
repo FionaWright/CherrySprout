@@ -5,8 +5,6 @@
 #ifndef H_IMGUIUTILS_H
 #define H_IMGUIUTILS_H
 
-#include "imgui.h"
-
 class GuiUtils
 {
 public:

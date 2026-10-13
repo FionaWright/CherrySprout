@@ -10,13 +10,13 @@
 static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_Jitter |
         eCore_Accumulation |
-        eCore_NormalMaps |
+        //eCore_NormalMaps |
         eCore_EnvironmentMap |
         eCore_AlphaTesting |
         //eCore_Transmission |
         //eCore_NEE |
         //eCore_FireflyThreshold |
-        eCore_Emission |
+        //eCore_Emission |
         eCore_GradientDomain |
         eCore_AliasTables
         //eCore_RestirDI |
@@ -30,6 +30,7 @@ static constexpr auto s_defaultFeatFlagsDbg = static_cast<FeatFlagsDbg>(
         eDebug_NaNTests |
         eDebug_Scales |
         eDebug_ForceLightIndex |
+        eDebug_GeometricNormalOnly |
         //eDebug_PathDumper |
         eDebug_Asserts
     );
