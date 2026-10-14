@@ -62,7 +62,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(misWeight, GD_MIS);
         DBG_OUTPUT3(Lo, GD_Lo);
 
-        DBG_OUTPUT_CLEAR_BEGIN();
+        DBG_OUTPUT_DUMP_DISABLE();
         DBG_OUTPUT1(0.0f, GD_RejectionUninit);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
         DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
@@ -81,7 +81,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(0.0f, GD_L_w);
         DBG_OUTPUT1(0.0f, GD_L_s);
         DBG_OUTPUT1(1.0f, GD_Jacobian);
-        DBG_OUTPUT_CLEAR_END();
+        DBG_OUTPUT_DUMP_ENABLE();
     }
 }
 
@@ -102,9 +102,13 @@ Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath)
     for (int i = 0; i < 4; i++)
     {
         if (i == 2)
-            DBG_OUTPUT_RESET();
+            { DBG_OUTPUT_ENABLE(); }
+        else
+            { DBG_OUTPUT_DISABLE(); }
+
         sampleShiftedPath(rngInfo, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
     }
+    DBG_OUTPUT_ENABLE()
 
     Gradients gradients;
     gradients.XForward = ((Lo[0] - mainPath.Lo) * mis[0]);

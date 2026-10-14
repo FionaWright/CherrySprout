@@ -13,9 +13,12 @@
 [noinline]
 void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 {
+    if (!gDebugOutputEnabled)
+        return;
+
     float3 value = float3(value_x, value_y, value_z);
 
-    if (!gDebugClearMode)
+    if (gDebugDumpOutputsEnabled)
         DBG_PATH_DUMP_DEBUG_OUTPUT(value, index);
 
     if (!FEAT_DBG(OutputColor) || gDebugSettings.OutputColorIdx == (uint)DebugOutputIndex::eDebugOutput_Disabled)
@@ -56,8 +59,10 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT_SET(output) DBG_OUTPUT_SET_INTERNAL(output, true);
 #    define DBG_OUTPUT_RESET() { gDebugValueFound = false; gDebugValue = NAN; }
 
-#    define DBG_OUTPUT_CLEAR_BEGIN() { gDebugClearMode = true; }
-#    define DBG_OUTPUT_CLEAR_END() { gDebugClearMode = false; }
+#    define DBG_OUTPUT_ENABLE() { gDebugOutputEnabled = true; }
+#    define DBG_OUTPUT_DISABLE() { gDebugOutputEnabled = false; }
+#    define DBG_OUTPUT_DUMP_ENABLE() { gDebugDumpOutputsEnabled = true; }
+#    define DBG_OUTPUT_DUMP_DISABLE() { gDebugDumpOutputsEnabled = false; }
 
 #elif FEAT_DBG_D(PathDumper)
 
@@ -66,7 +71,7 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 
-#    define DBG_OUTPUT3(value, label) { if (!gDebugClearMode) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label); }
+#    define DBG_OUTPUT3(value, label) { if (gDebugOutputEnabled && gDebugDumpOutputsEnabled) DBG_PATH_DUMP_DEBUG_OUTPUT(value, (uint)DebugOutputIndex::eDebugOutput_##label); }
 #    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
 #    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
 #    define DBG_FORCE_OUTPUT3(value) DBG_PATH_DUMP_FORCED_OUTPUT(value)
@@ -75,8 +80,10 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()
 
-#    define DBG_OUTPUT_CLEAR_BEGIN() { gDebugClearMode = true; }
-#    define DBG_OUTPUT_CLEAR_END() { gDebugClearMode = false; }
+#    define DBG_OUTPUT_ENABLE() { gDebugOutputEnabled = true; }
+#    define DBG_OUTPUT_DISABLE() { gDebugOutputEnabled = false; }
+#    define DBG_OUTPUT_DUMP_ENABLE() { gDebugDumpOutputsEnabled = true; }
+#    define DBG_OUTPUT_DUMP_DISABLE() { gDebugDumpOutputsEnabled = false; }
 
 #else
 
@@ -88,6 +95,11 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 #    define DBG_OUTPUT_SET_IF_FOUND(output)
 #    define DBG_OUTPUT_SET(output)
 #    define DBG_OUTPUT_RESET()
+
+#    define DBG_OUTPUT_ENABLE()
+#    define DBG_OUTPUT_DISABLE()
+#    define DBG_OUTPUT_DUMP_ENABLE()
+#    define DBG_OUTPUT_DUMP_DISABLE()
 
 #endif
 

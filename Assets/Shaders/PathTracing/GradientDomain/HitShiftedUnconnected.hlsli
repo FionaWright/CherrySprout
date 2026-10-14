@@ -75,7 +75,7 @@ void HitShiftedUnconnected(
     float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
-    contrib = f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
+    contrib = f_bxdf * abs(NdL) / max(1e-6, v1.PDF);
 
     pdf *= pdf_bxdf;
 
