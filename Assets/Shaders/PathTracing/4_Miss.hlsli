@@ -29,7 +29,12 @@ float3 Miss(inout PathState pathState)
             EvaluateLSD(0, pdf_lsd);
 
             float pdf_env = pdf_lsd * EvaluateEnvMapPdf(uv);
-            float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
+
+            float m = 0.0f;
+            if (FEAT_DBG(FixedMisNeeManual))
+                m = 1 - gDebugSettings.FixedMisNee;
+            else
+                m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
             Le *= m;
         }
 

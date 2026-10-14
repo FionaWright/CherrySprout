@@ -647,6 +647,13 @@ void Greenhouse::renderGuiCore()
             m_ptFrameDirty |= GuiUtils::FwInputInt("Forced Light Index", &m_config.PathTracerConfig.DebugInfo.ForcedLightIndex);
             ImGui::Spacing();
         }
+
+        if (m_config.PathTracerConfig.FeatFlagEnabledDebug(eDebug_FixedMisNeeManual))
+        {
+            m_ptFrameDirty |= GuiUtils::FwDragFloat("Fixed MIS NEE", &m_config.PathTracerConfig.DebugInfo.FixedMisNee, 0.05f, 0.0f, 1.0f);
+            ImGui::Text("NEE=%.3f, BXDF=%.3f", m_config.PathTracerConfig.DebugInfo.FixedMisNee, 1 - m_config.PathTracerConfig.DebugInfo.FixedMisNee);
+            ImGui::Spacing();
+        }
 #endif
     }
     ImGui::Unindent(IM_GUI_INDENTATION);

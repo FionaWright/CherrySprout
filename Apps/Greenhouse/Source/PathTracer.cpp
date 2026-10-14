@@ -215,6 +215,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             debugSettings.ScaleSpecular = renderInfo.PathTracerConfig->DebugInfo.ScaleSpecular;
             debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
             debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
+            debugSettings.FixedMisNee = renderInfo.PathTracerConfig->DebugInfo.FixedMisNee;
             debugSettings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
             debugSettings.FeatFlagsCoreQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsCoreQS;
             debugSettings.FeatFlagsDbgQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsDebugQS;

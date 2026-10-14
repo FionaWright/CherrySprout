@@ -31,7 +31,11 @@ float3 SampleNEE(
         return 0;
 
     float3 m;
-    if (lightSample.IsDelta)
+    if (FEAT_DBG(FixedMisNeeManual))
+    {
+        m = gDebugSettings.FixedMisNee;
+    }
+    else if (lightSample.IsDelta)
     {
         m = 1.0f;
     }

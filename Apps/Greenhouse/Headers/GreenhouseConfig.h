@@ -47,6 +47,8 @@ struct PathTracingDebugInfo
     float ScaleRefract = 1.0f;
     float ScaleClearcoat = 1.0f;
 
+    float FixedMisNee = 1.0f;
+
     bool FeatFlagQuickSwitchEnabled = false;
     FeatFlagsCore FeatFlagsCoreQS = static_cast<FeatFlagsCore>(0);
     FeatFlagsDbg FeatFlagsDebugQS = static_cast<FeatFlagsDbg>(0);

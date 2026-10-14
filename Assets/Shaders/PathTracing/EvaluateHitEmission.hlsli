@@ -33,7 +33,12 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo)
     EvaluateLSD(lightIdx, pdf_lsd);
 
     float pdf_emissive = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
-    float m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
+
+    float m = 0.0f;
+    if (FEAT_DBG(FixedMisNeeManual))
+        m = 1 - gDebugSettings.FixedMisNee;
+    else
+        m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
     L_emission *= m;
 
     return L_emission;

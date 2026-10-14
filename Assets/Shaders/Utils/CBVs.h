@@ -164,7 +164,8 @@ struct CbvPathTracingDebugSettings
 
     FeatFlagsCore FeatFlagsCoreQS;
     FeatFlagsDbg FeatFlagsDbgQS;
-    hlsl::float2 p;
+    float FixedMisNee;
+    float p;
 };
 
 struct CbvSprJacobi

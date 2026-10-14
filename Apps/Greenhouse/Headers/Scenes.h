@@ -142,6 +142,14 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPitchYaw = {0.231301, 4.355634},
         .SceneScale = 0.1f
     },
+
+    {
+        .Name = "LightTest5",
+        .Filepath = "Scenes/USD/LightTest/LightTest5.usda",
+        .CameraPosition = {0.668524, 1.753194, -7.441936},
+        .CameraPitchYaw = {0.581301, -7.944371},
+        .SceneScale = 0.1f
+    },
 };
 
 #endif
