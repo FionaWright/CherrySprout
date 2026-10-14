@@ -16,7 +16,6 @@
 #include "HWI/Pipeline.h"
 #include "MicrofacetModels/MMTypes.h"
 #include "Utils/CBVs.h"
-#include "../../../Assets/Shaders/PathTracing/FeatFlags/FeatFlags.hpp"
 #include "Render/RestirManager.h"
 
 class Camera;
@@ -49,6 +48,8 @@ public:
     D12Resource* GetTexAccum() { return &m_accum; }
     D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
+
+    const std::vector<ReservoirDI>& ReadbackReservoirBuffer() const { return std::move(m_restirManager.Readback()); }
 
     void GUI(GreenhouseConfig* config) override;
 

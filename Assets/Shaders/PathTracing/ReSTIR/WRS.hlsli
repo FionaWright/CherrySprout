@@ -10,6 +10,9 @@ bool ReservoirUpdate(
     float c_i
 )
 {
+    if (w_i <= 0.0f)
+        return false;
+
     reservoir.Confidence += c_i;
     reservoir.WeightSum += w_i;
 
@@ -46,7 +49,7 @@ void ReservoirMerge(
 template<typename T>
 float RestirMis(T X_i, uint M)
 {
-    return 1 / M;
+    return 1 / (float)M;
 }
 
 template<typename T, typename TInfo>
@@ -61,6 +64,7 @@ void WRS(
     bool candidateSelected = false;
 
     reservoir.WeightSum = 0.0f;
+    reservoir.Confidence = 0.0f;
 
     for (uint i = 0; i < M; i++)
     {

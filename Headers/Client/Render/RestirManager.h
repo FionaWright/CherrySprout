@@ -17,17 +17,22 @@ public:
     void Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs);
 
     void GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+    void PostUpdate(D3D* d3d);
+
+    const std::vector<ReservoirDI>& Readback() const { return m_cpuReservoirBufferReadback; }
 
     static size_t TotalCbvRequiredSize() { return 0; }
 
-    D12Resource* GetReservoirBuffer() { return &m_reservoirBuffer; };
+    D12Resource* GetReservoirBuffer() { return &m_reservoirBufferRW; };
     [[nodiscard]] size_t GetNumReservoirs() const { return m_numReservoirs; };
 
 private:
-    D12Resource m_reservoirBuffer;
+    D12Resource m_reservoirBufferRW, m_reservoirBufferReadback;
     size_t m_numReservoirs = 0;
 
     Pipeline m_pipelineDiGenerateSamples;
+
+    std::vector<ReservoirDI> m_cpuReservoirBufferReadback;
 };
 
 #endif

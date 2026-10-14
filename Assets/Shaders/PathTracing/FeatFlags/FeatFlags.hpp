@@ -11,7 +11,7 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_Jitter |
         eCore_Accumulation |
         //eCore_NormalMaps |
-        eCore_EnvironmentMap |
+        //eCore_EnvironmentMap |
         eCore_AlphaTesting |
         //eCore_Transmission |
         eCore_NEE |

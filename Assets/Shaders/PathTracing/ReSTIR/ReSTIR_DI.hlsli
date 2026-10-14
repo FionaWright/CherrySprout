@@ -51,10 +51,11 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
         BxDF bxdf;
         BxdfEval bxdfEval = bxdf.Evaluate(info.HitInfo, info.Wo, X_i.LightSample.Direction);
 
-        m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1); // TODO: Send in M?
+        m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
-    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL; // TODO: Divide by sampling PDF? (X_i.PDF)
+    //float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL;
+    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL / max(1e-6f, X_i.LightEval.PDF); // TODO: Divide by sampling PDF? (X_i.PDF)
     return Luminance(radiance);
 }
 
@@ -78,8 +79,8 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
         DBG_OUTPUT1(reservoir.WeightSum, RESTIR_ReservoirWeightSum);
         DBG_OUTPUT1(reservoir.Confidence / 30, RESTIR_ReservoirConfidence);
         DBG_OUTPUT3(wi, RESTIR_YDir);
-        DBG_OUTPUT3(Y.LightSample.Radiance, RESTIR_YRadiance);
-        DBG_OUTPUT3(Palette(Y.LightSample.Index), RESTIR_YLightIndex);
+        DBG_OUTPUT3(Y.LightEval.Radiance, RESTIR_YRadiance);
+        DBG_OUTPUT1(Y.LightSample.Index, RESTIR_YLightIndex);
         DBG_OUTPUT1(max(0, dot(wi, hitInfo.Ns_ff)), RESTIR_NdL);
         DBG_OUTPUT1(reservoir.W_Y, RESTIR_W_Y);
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f, RESTIR_W_Y_RANGE);

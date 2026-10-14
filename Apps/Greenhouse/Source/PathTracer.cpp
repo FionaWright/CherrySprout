@@ -117,6 +117,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_rtasBuilder.FlushAndBuild(d3d, scene);
     }
 
+    CherryAssert(m_restirManager.GetReservoirBuffer()->GetResource());
+
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_primal, m_primal.GetDesc().Format);
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, m_restirManager.GetReservoirBuffer(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
@@ -169,6 +171,11 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx, &m_outputRgba8Unorm);
+
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI))
+    {
+        m_restirManager.PostUpdate(d3d);
+    }
 #endif
 }
 
