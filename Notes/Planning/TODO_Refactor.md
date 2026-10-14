@@ -28,4 +28,4 @@ Stuff in the repo that I don't like
 
 - [ ] Consider a way to avoid having the BxDF code inline everywhere? Could be slowing comptime 
 
-- [ ] Clean up and rename aspects of the flags / CBV flags mode systems
+- [x] Clean up and rename aspects of the flags / CBV flags mode systems

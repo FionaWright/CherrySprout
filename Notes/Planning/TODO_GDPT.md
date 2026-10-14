@@ -1,9 +1,14 @@
 # TODO Gradient-Domain Path-Tracing
 
 - [x] Get gradients on the screen
-- [ ] Fix all TODOs in gradient sampling
+- [x] Fix all TODOs in gradient sampling
 - [x] Match gradients against SS gradients
-- [ ] PBR BxDF Support
+- [ ] GDPT PBR BxDF Support
+- [ ] GDPT Transmission Support
+- [ ] GDPT Env Map subtle NEE issue (See pseudo-cornell box in GradientTest)
+- [ ] Fix Emissive NEE FixedMIS=1 issue (Related to crosses?)
+- [ ] GDPT Emissive Fix
+- [ ] RR
 
 -
 
@@ -14,14 +19,10 @@
 
 -
 
-- [ ] Re-add PythonExecutor class
-- [ ] Re-add RMSE Tester system
-- [ ] Set up golden gradient test
+- [x] Re-add PythonExecutor class
+- [x] Re-add RMSE Tester system
+- [x] Set up golden gradient test
 
 -
 
-- [ ] Reimplement RR
-- [ ] Reimplement NEE
-- [ ] Reimplement Transmission
-- [ ] Reimplement ReSTIR
-
+- [ ] Clean up / Optimize GradientManager when debugging finished
