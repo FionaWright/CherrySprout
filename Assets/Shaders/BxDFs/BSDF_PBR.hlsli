@@ -38,17 +38,15 @@ float GetSpecularProb(float WdV, float3 F0)
     return clamp(specProb, 0.05f, 0.95f);
 }
 
-void BxDF::Sample(
+BxdfSample BxDF::Sample(
     inout RngInfo rngInfo,
-    inout PathState pathState,
     HitInfo hitInfo,
     float3 wo,
 
-    out float3 wi,
-    out float3 f,
-    out float pdf
-)
+    out BxdfEval eval)
 {
+    BxdfSample sample;
+
     float3 N_s = float3(0, 0, 1);
     float3 V_s = hitInfo.SFrame.ToLocal(wo);
 
@@ -106,36 +104,34 @@ void BxDF::Sample(
 
         if (isReflect)
         {
-            bool isDiracDelta;
-            SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf, isDiracDelta);
+            SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, eval.Radiance, eval.PDF, sample.IsDirac);
 
-            pathState.LastRayWasDiracDelta = isDiracDelta;
+            eval.PDF *= reflectProb;
 
-            pdf *= reflectProb;
-
-            DBG_ASSERT_VALUE(f,         BxDF_PBR_GLASS_SPEC_F);
-            DBG_ASSERT_VALUE(pdf,       BxDF_PBR_GLASS_SPEC_PDF);
+            DBG_ASSERT_VALUE(eval.Radiance,         BxDF_PBR_GLASS_SPEC_F);
+            DBG_ASSERT_VALUE(eval.PDF,       BxDF_PBR_GLASS_SPEC_PDF);
             DBG_ASSERT_VALUE(L_s,       BxDF_PBR_GLASS_SPEC_L_S);
         }
         else
         {
-            TransmissiveLobe_Sample(hitInfo, mm, V_s, N_s, H_s, iorNCurrent, iorNNext, L_s, f, pdf);
+            TransmissiveLobe_Sample(hitInfo, mm, V_s, N_s, H_s, iorNCurrent, iorNNext, L_s, eval.Radiance, eval.PDF);
 
-            pdf *= 1.0f - reflectProb;
+            eval.PDF *= 1.0f - reflectProb;
 
-            DBG_ASSERT_VALUE(f,         BxDF_PBR_GLASS_REFRACT_F);
-            DBG_ASSERT_VALUE(pdf,       BxDF_PBR_GLASS_REFRACT_PDF);
+            DBG_ASSERT_VALUE(eval.Radiance,         BxDF_PBR_GLASS_REFRACT_F);
+            DBG_ASSERT_VALUE(eval.PDF,       BxDF_PBR_GLASS_REFRACT_PDF);
             DBG_ASSERT_VALUE(L_s,       BxDF_PBR_GLASS_REFRACT_L_S);
         }
 
-        pdf *= hitInfo.Mat.TransmissionFactor;
+        eval.PDF *= hitInfo.Mat.TransmissionFactor;
 
-        wi = hitInfo.SFrame.ToWorld(L_s);
+        sample.Wi = hitInfo.SFrame.ToWorld(L_s);
+
         DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
-        DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
-        DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
+        DBG_ASSERT_APPROX(length(sample.Wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
+        DBG_ASSERT_GE(eval.PDF, 0.0f, NON_POSITIVE_PDF);
         DBG_OUTPUT3(L_s,        BxDF_L_s);
-        return;
+        return sample;
     }
 
     float specProb = GetSpecularProb(NdV, F0);
@@ -146,47 +142,49 @@ void BxDF::Sample(
 
     if (isSpecular)
     {
-        bool isDiracDelta;
-        SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, f, pdf, isDiracDelta);
+        SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, eval.Radiance, eval.PDF, sample.IsDirac);
 
-        pathState.LastRayWasDiracDelta = isDiracDelta;
+        eval.PDF *= specProb;
 
-        pdf *= specProb;
+        sample.IsSpecular = true;
 
-        DBG_ASSERT_VALUE(f,           BxDF_PBR_SPEC_F);
-        DBG_ASSERT_VALUE(pdf,         BxDF_PBR_SPEC_PDF);
+        DBG_ASSERT_VALUE(eval.Radiance,           BxDF_PBR_SPEC_F);
+        DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_SPEC_PDF);
         DBG_ASSERT_VALUE(L_s,         BxDF_PBR_SPEC_L_S);
     }
     else
     {
-        LambertianDisneyLobe_Sample(hitInfo, u1, u2, L_s, f, pdf);
+        LambertianDisneyLobe_Sample(hitInfo, u1, u2, L_s, eval.Radiance, eval.PDF);
 
-        pdf *= 1.0f - specProb;
+        eval.PDF *= 1.0f - specProb;
 
-        DBG_ASSERT_VALUE(f,           BxDF_PBR_DIFF_F);
-        DBG_ASSERT_VALUE(pdf,         BxDF_PBR_Diff_PDF);
+        sample.IsSpecular = false;
+
+        DBG_ASSERT_VALUE(eval.Radiance,           BxDF_PBR_DIFF_F);
+        DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_Diff_PDF);
         DBG_ASSERT_VALUE(L_s,         BxDF_PBR_Diff_L_S);
     }
 
     if (FEAT_CORE(Transmission))
-        pdf *= 1.0f - hitInfo.Mat.TransmissionFactor;
+        eval.PDF *= 1.0f - hitInfo.Mat.TransmissionFactor; // TODO: Move up
 
-    wi = hitInfo.SFrame.ToWorld(L_s);
+    sample.Wi = hitInfo.SFrame.ToWorld(L_s);
+
     DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
-    DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
-    DBG_ASSERT_GE(pdf, 0.0f, NON_POSITIVE_PDF);
+    DBG_ASSERT_APPROX(length(sample.Wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
+    DBG_ASSERT_GE(eval.PDF, 0.0f, NON_POSITIVE_PDF);
     DBG_OUTPUT3(L_s,        BxDF_L_s);
+
+    return sample;
 }
 
-void BxDF::Evaluate(
+BxdfEval BxDF::Evaluate(
     HitInfo hitInfo,
     float3 wo,
-    float3 wi,
-
-    out float3 f,
-    out float pdf
-)
+    float3 wi)
 {
+    BxdfEval eval;
+
     float3 N_s = float3(0, 0, 1);
     float3 V_s = hitInfo.SFrame.ToLocal(wo);
     float3 L_s = hitInfo.SFrame.ToLocal(wi);
@@ -215,8 +213,8 @@ void BxDF::Evaluate(
     DBG_OUTPUT1(mm.m_alpha,                      Eval_Alpha);
     DBG_OUTPUT1(mm.D(H_s),                       Eval_D);
 
-    f = 0;
-    pdf = 0;
+    eval.Radiance = 0;
+    eval.PDF = 0;
 
     if (FEAT_CORE(Transmission) && hitInfo.Mat.TransmissionFactor > 0)
     {
@@ -276,8 +274,8 @@ void BxDF::Evaluate(
         DBG_OUTPUT1(f_trans,                Eval_f_trans);
         DBG_OUTPUT1(pdf_trans,              Eval_PDF_trans);
 
-        f += f_trans;
-        pdf += pdf_trans;
+        eval.Radiance += f_trans;
+        eval.PDF += pdf_trans;
     }
 
     float specProb = GetSpecularProb(NdV, F0);
@@ -330,14 +328,16 @@ void BxDF::Evaluate(
         pdf_opaque *= 1.0f - hitInfo.Mat.TransmissionFactor;
     }
 
-    f += f_opaque;
-    pdf += pdf_opaque;
+    eval.Radiance += f_opaque;
+    eval.PDF += pdf_opaque;
 
-    DBG_ASSERT_GE(pdf, 0.0f,                NON_POSITIVE_PDF);
-    DBG_OUTPUT3(f,                          Eval_f);
+    DBG_ASSERT_GE(eval.PDF, 0.0f,           NON_POSITIVE_PDF);
+    DBG_OUTPUT3(eval.Radiance,              Eval_f);
     DBG_OUTPUT3(f_opaque,                   Eval_f_opaque);
-    DBG_OUTPUT1(pdf,                        Eval_PDF);
+    DBG_OUTPUT1(eval.PDF,                   Eval_PDF);
     DBG_OUTPUT1(pdf_opaque,                 Eval_PDF_opaque);
+
+    return eval;
 }
 
 #endif

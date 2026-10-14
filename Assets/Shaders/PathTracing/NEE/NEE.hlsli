@@ -41,11 +41,9 @@ float3 SampleNEE(
     }
     else
     {
-        float3 f_bxdf;
-        float pdf_bxdf;
-        bxdf.Evaluate(hitInfo, wo, lightSample.Direction, f_bxdf, pdf_bxdf);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightSample.Direction);
 
-        m = f_bxdf * PowerHeuristic(lightEval.PDF, pdf_bxdf, numSamples, 1);
+        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     DBG_OUTPUT1(m, NEE_MIS);
@@ -90,11 +88,9 @@ float3 EvaluateNEE(
     }
     else
     {
-        float3 f_bxdf;
-        float pdf_bxdf;
-        bxdf.Evaluate(hitInfo, wo, lightSample.Direction, f_bxdf, pdf_bxdf);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightSample.Direction);
 
-        m = f_bxdf * PowerHeuristic(lightEval.PDF, pdf_bxdf, numSamples, 1);
+        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     return shadowFactor * lightEval.Radiance * m * NdL / lightEval.PDF;

@@ -4,30 +4,25 @@
 #include "Utils/RandomDirection.h"
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
 #include "BxDFs/BxDFMode.h"
+#include "BxDFs/Structs.h"
 #include "PathTracing/Structs.h"
 
 struct RngInfo;
 
 struct BxDF
 {
-    void Sample(
+    BxdfSample Sample(
         inout RngInfo rngInfo,
-        inout PathState pathState,
         HitInfo hitInfo,
         float3 wo,
 
-        out float3 wi,
-        out float3 f,
-        out float pdf
+        out BxdfEval eval
     );
 
-    void Evaluate(
+    BxdfEval Evaluate(
         HitInfo hitInfo,
         float3 wo,
-        float3 wi,
-
-        out float3 f,
-        out float pdf
+        float3 wi
     );
 };
 

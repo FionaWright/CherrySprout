@@ -103,20 +103,18 @@ void TraceShiftedPath(
             wi = v1.Wi;
 
             BxDF bxdf;
-            float3 f_bxdf;
-            float pdf_bxdf;
-            bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+            BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
 
             if (FEAT_CORE(NEE))
             {
                 L_sample += v1.DirectContribution * pathState.Beta;
-                pathState.LastBxdfPdf = pdf_bxdf; // Note: Not necessary, will be unused once connected. Remove?
+                pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
             }
 
             float NdL = dot(hitInfo.Ns_ff, wi);
-            pathState.Beta *= f_bxdf * abs(NdL) / max(1e-6, pdf_bxdf);
+            pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF);
 
-			pdfShifted = pdf_bxdf;
+			pdfShifted = bxdfEval.PDF;
 
             reconnectionState = ReconnectionState::eConnected;
         }

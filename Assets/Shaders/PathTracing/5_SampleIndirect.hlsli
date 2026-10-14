@@ -5,14 +5,16 @@ float3 SampleIndirectLighting(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
     BxDF bxdf,
-    PathState pathState,
     float3 wo,
 
     out float3 wi,
-    out float pdf
+    out float pdf,
+    out bool isDirac,
+    out bool isSpecular
 )
 {
-    float3 f;
+    BxdfSample bxdfSample;
+    BxdfEval bxdfEval;
 
     if (FEAT_DBG(BxdfTestHemisphere) && gRunBxdfTestForPixel)
     {
@@ -20,43 +22,44 @@ float3 SampleIndirectLighting(
         float u2 = Rand01(rngInfo);
         wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
 
-        float bxdfPdf; // Discarded
-        bxdf.Evaluate(hitInfo, wo, wi, f, bxdfPdf);
+        bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
 
         float NdL = dot(hitInfo.Ns_ff, wi);
-        pdf = NdL / PI;
+        bxdfEval.PDF = NdL / PI;
     }
     else if (FEAT_DBG(BxdfTestRevaluate) && gRunBxdfTestForPixel)
     {
-        float3 f_sample;
-        float pdf_sample;
-        bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f_sample, pdf_sample);
+        BxdfEval bxdfEvalFromSample;
+        bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEvalFromSample);
 
-        if (pathState.LastRayWasDiracDelta)
-        {
-            f = f_sample;
-            pdf = pdf_sample;
-        }
+        if (bxdfSample.IsDirac)
+            bxdfEval = bxdfEvalFromSample;
         else
         {
             DBG_OUTPUT_RESET();
-            bxdf.Evaluate(hitInfo, wo, wi, f, pdf);
+            bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi);
         }
 
-        DBG_ASSERT_APPROX(f_sample/pdf_sample, f/pdf, 5, REVALUATE_TEST);
+        DBG_ASSERT_APPROX(bxdfEvalFromSample.Radiance/bxdfEvalFromSample.PDF, bxdfEval.Radiance/bxdfEval.PDF, 5, REVALUATE_TEST);
     }
     else
     {
-        bxdf.Sample(rngInfo, pathState, hitInfo, wo, wi, f, pdf);
+        bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEval);
     }
 
-    float NdL = dot(hitInfo.Ns_ff, wi);
+    wi = bxdfSample.Wi;
+    isDirac = bxdfSample.IsDirac;
+    isSpecular = bxdfSample.IsSpecular;
 
-    DBG_OUTPUT3(f,                                 BxDF_f);
-    DBG_OUTPUT1(pdf,                               BxDF_PDF);
-    DBG_OUTPUT3(wi,                                BxDF_L_w);
+    pdf = bxdfEval.PDF;
 
-    return f * abs(NdL) / max(1e-6, pdf);
+    float NdL = dot(hitInfo.Ns_ff, bxdfSample.Wi);
+
+    DBG_OUTPUT3(bxdfEval.Radiance,                 BxDF_f);
+    DBG_OUTPUT1(bxdfEval.PDF,                      BxDF_PDF);
+    DBG_OUTPUT3(bxdfSample.Wi,                     BxDF_L_w);
+
+    return bxdfEval.Radiance * abs(NdL) / max(1e-6, bxdfEval.PDF);
 }
 
 #endif

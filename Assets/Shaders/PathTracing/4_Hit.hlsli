@@ -43,16 +43,18 @@ void Hit(inout PathState pathState,
 
     float3 wi;
     float pdf_bxdf;
-    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, pathState, wo, wi, pdf_bxdf);
+    bool isDirac;
+    bool isSpecular;
+    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, wo, wi, pdf_bxdf, isDirac, isSpecular);
     DBG_SCALE_INTENSITY_INDIRECT(E_indirect);
 
     pathState.Beta *= E_indirect;
+    pathState.Desc.Direction = wi;
+    pathState.Desc.Origin = hitInfo.HitPosBiased;
+    pathState.LastRayWasDiracDelta = isDirac;
 
     if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
-
-    pathState.Desc.Direction = wi;
-    pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON; // TODO: Why use normal bias here when shadow rays don't like it?
 
     if (FEAT_CORE(GradientDomain))
     {
@@ -61,7 +63,7 @@ void Hit(inout PathState pathState,
         float eta = iorNCurrent / iorNNext;
 
         currentVertexInfo.Type = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-        currentVertexInfo.Position = hitInfo.HitPos; // TODO: Use hitpos?
+        currentVertexInfo.Position = hitInfo.HitPos;
         currentVertexInfo.SFrame = hitInfo.SFrame;
         currentVertexInfo.Wo = wo;
         currentVertexInfo.Wi = wi;

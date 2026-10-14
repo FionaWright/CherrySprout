@@ -6,41 +6,40 @@
 #include "PathTracing/Structs.h"
 #include "BxDFs/Lobes/LambertianLobe.hlsli"
 
-void BxDF::Sample(
+BxdfSample BxDF::Sample(
     inout RngInfo rngInfo,
-    inout PathState pathState,
     HitInfo hitInfo,
     float3 wo,
 
-    out float3 wi,
-    out float3 f,
-    out float pdf
-)
+    out BxdfEval eval)
 {
     float u1 = Rand01(rngInfo);
     float u2 = Rand01(rngInfo);
 
     float3 L_s;
-    LambertianLobe_Sample(hitInfo, u1, u2, L_s, f, pdf);
+    LambertianLobe_Sample(hitInfo, u1, u2, L_s, eval.Radiance, eval.PDF);
 
-    wi = hitInfo.SFrame.ToWorld(L_s);
+    BxdfSample sample;
+    sample.Wi = hitInfo.SFrame.ToWorld(L_s);
 
     DBG_OUTPUT3(L_s,        BxDF_L_s);
+
+    return sample;
 }
 
-void BxDF::Evaluate(
+BxdfEval BxDF::Evaluate(
     HitInfo hitInfo,
     float3 wo,
-    float3 wi,
-
-    out float3 f,
-    out float pdf
-)
+    float3 wi)
 {
-    float3 L_s = hitInfo.SFrame.ToLocal(wi);
-    LambertianLobe_Evaluate(hitInfo, L_s, f, pdf);
+    BxdfEval eval;
 
+    float3 L_s = hitInfo.SFrame.ToLocal(wi);
     DBG_OUTPUT3(L_s,        Eval_L_s);
+
+    LambertianLobe_Evaluate(hitInfo, L_s, eval.Radiance, eval.PDF);
+
+    return eval;
 }
 
 #endif

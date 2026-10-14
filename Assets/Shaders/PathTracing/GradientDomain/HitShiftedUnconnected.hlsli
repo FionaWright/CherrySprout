@@ -79,17 +79,15 @@ void HitShiftedUnconnected(
     float NdL = dot(hitInfo.Ns_ff, wi);
 
     BxDF bxdf;
-    float3 f_bxdf;
-    float pdf_bxdf;
-    bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+    BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
 
-    contrib = f_bxdf * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
+    contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
 
-    pdf *= pdf_bxdf;
+    pdf *= bxdfEval.PDF;
 
     if (FEAT_CORE(NEE))
     {
-        pathState.LastBxdfPdf = pdf_bxdf;
+        pathState.LastBxdfPdf = bxdfEval.PDF;
 
         // TODO: Multiple NEE samples
 
