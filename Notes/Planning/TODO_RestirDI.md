@@ -6,8 +6,10 @@
 - [x] Sample Gen pre-pass
 - [x] Point lights NEE
 - [ ] Find indoor scene
-- [ ] Finish and Debug
-- [ ] Python Executor
+- [ ] Fix Regressions
+- [ ] Spatio-Temporal
+- [x] Python Executor
 - [ ] Mean Test
-- [ ] Golden Test
-- [ ] RMSE Test
+- [x] Golden Test
+- [x] RMSE Test
+- [ ] ReSTIR GI

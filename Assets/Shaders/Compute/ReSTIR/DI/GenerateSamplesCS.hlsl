@@ -36,7 +36,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         isMiss
     );
 
-    ReservoirDI reservoir = CreateReservoir<LightSample>();
+    ReservoirDI reservoir = CreateReservoir<SubReservoir_DI>();
 
     if (isMiss)
     {
@@ -52,13 +52,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         rayOrigin, rayDirection);
 
-    float3 hitPos = rayOrigin + rayDirection * hitInfo.RayT;
-
-    LightSampleSelectionInfo info;
-    info.Dir_wo = -rayDirection;
+    SubReservoirInfo_DI info;
+    info.Wo = -rayDirection;
     info.HitInfo = hitInfo;
-    info.HitPos = hitPos;
-    info.HitPosOffset = hitPos + hitInfo.Ns_ff * EPSILON;
 
     WRS(rngInfo, reservoir, gSettings.RestirNumCandidates, gSettings.RestirConfidenceCap, info);
 

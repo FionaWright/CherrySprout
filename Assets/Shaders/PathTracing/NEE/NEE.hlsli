@@ -8,7 +8,6 @@
 float3 SampleNEE(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
-    PathState pathState,
     BxDF bxdf,
 
     uint numSamples,
@@ -18,7 +17,7 @@ float3 SampleNEE(
     out float shadowFactor)
 {
     LightEval lightEval;
-    lightSample = SampleLight(rngInfo, hitInfo, pathState, bxdf, wo, lightEval);
+    lightSample = SampleLight(rngInfo, hitInfo, bxdf, wo, lightEval);
 
     shadowFactor = 0.0f;
 
@@ -53,7 +52,6 @@ float3 SampleNEE(
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
-    PathState pathState,
     BxDF bxdf,
 
     uint numSamples,
@@ -68,7 +66,7 @@ float3 EvaluateNEE(
     if (NdL <= 0.0f)
         return 0;
 
-    LightEval lightEval = EvaluateLight(hitInfo, pathState, bxdf, wo, lightSample);
+    LightEval lightEval = EvaluateLight(hitInfo, bxdf, wo, lightSample);
 
     if (length(lightEval.Radiance) == 0.0f)
         return 0;
@@ -101,7 +99,6 @@ float3 EvaluateNEE(
 float3 SampleNEE(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
-    PathState pathState,
     BxDF bxdf,
 
     uint numSamples,
@@ -112,7 +109,6 @@ float3 SampleNEE(
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
-    PathState pathState,
     BxDF bxdf,
 
     uint numSamples,

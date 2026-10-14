@@ -127,7 +127,7 @@ LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightS
 
 float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, float3 wo, float distance) { return NAN; }
 
-LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo) { return (LightSample)0; }
+LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo, out LightEval lightEval) { lightEval = (LightEval)0; return (LightSample)0; }
 
 LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightSample) { return (LightEval)0; }
 

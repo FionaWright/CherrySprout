@@ -94,7 +94,7 @@ void HitShiftedUnconnected(
         // TODO: Emissive Jacobian
 
         float shadowFactor;
-        float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
+        float3 L_nee = EvaluateNEE(hitInfo, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
 
         DBG_OUTPUT3(L_nee, GD_NeeContrib);
 

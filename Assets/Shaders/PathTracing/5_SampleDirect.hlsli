@@ -24,15 +24,17 @@ float3 SampleDirectLighting(
 
     if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
     {
-        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSample);
+        SubReservoir_DI lightSE;
+        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE);
+        lightSample = lightSE.LightSample;
     }
     else
     {
-        float3 L_nee = SampleNEE(rngInfo, hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
+        float3 L_nee = SampleNEE(rngInfo, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
+            L_nee = EvaluateNEE(hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
         }
 
         E_direct += L_nee;
@@ -40,6 +42,8 @@ float3 SampleDirectLighting(
         DBG_OUTPUT3(L_nee, NEE_Contrib);
         DBG_OUTPUT1(shadowFactor, NEE_ShadowFactor);
     }
+
+    // TODO: Move shadow factor outside?
 
 	if (FEAT_CORE(GradientDomain))
     {

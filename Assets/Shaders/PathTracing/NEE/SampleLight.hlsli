@@ -14,7 +14,6 @@
 LightSample SampleLight(
     inout RngInfo rngInfo,
     HitInfo hitInfo,
-    PathState pathState,
     BxDF bxdf,
     float3 wo,
 
@@ -91,7 +90,6 @@ LightSample SampleLight(
 
 LightEval EvaluateLight(
     HitInfo hitInfo,
-    PathState pathState,
     BxDF bxdf,
     float3 wo,
 
