@@ -145,10 +145,13 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     }
 
     DBG_OUTPUT1(i == gSettings.MaxRayDepth, KilledByMaxDepth);
+
+    DBG_OUTPUT_CLEAR_BEGIN();
     DBG_OUTPUT1(0.0f, KilledByBetaLoss);
     DBG_OUTPUT1(0.0f, KilledByRR);
     DBG_OUTPUT1(0.0f, KilledByMiss);
     DBG_OUTPUT1(0.0f, KilledByEmission);
+    DBG_OUTPUT_CLEAR_END();
 
     PathSample pathSample;
     pathSample.Lo = pathState.Lo;

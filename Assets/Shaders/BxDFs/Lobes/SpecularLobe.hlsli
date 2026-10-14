@@ -25,8 +25,11 @@ void SpecularLobe_Sample(
         f = 0.0f;
         pdf = 1.0f;
         isDiracDelta = false;
+
+        DBG_OUTPUT_CLEAR_BEGIN();
         DBG_OUTPUT1(0,                BxDF_F);
         DBG_OUTPUT1(0,                BxDF_G);
+        DBG_OUTPUT_CLEAR_END();
         return;
     }
 

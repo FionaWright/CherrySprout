@@ -58,7 +58,7 @@ void HitShiftedUnconnected(
     if (!shiftResult.IsSuccessful)
     {
         isSymmetric = false;
-        contrib = 1.0f;
+        contrib = 0.0f;
         wi = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
         return;

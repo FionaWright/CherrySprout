@@ -7,6 +7,7 @@
 
 static bool gDebugValueFound = false;
 static float3 gDebugValue = NAN;
+static bool gDebugClearMode = false;
 static int gDebugCurrentRayDepth = 0;
 static uint2 gDebugPixelCoord = uint2(UINT_MAX, UINT_MAX);
 static uint gDebugFrameIndex = UINT_MAX;

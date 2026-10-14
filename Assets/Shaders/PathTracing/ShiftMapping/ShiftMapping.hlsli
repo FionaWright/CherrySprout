@@ -18,7 +18,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
     ShiftResult result = (ShiftResult)0;
 
     // TODO: Can be handled as special case
-    if (etaMain == 1.0f || etaShifted == 1.0f)
+    if (!FEAT_CORE(GdptShiftHalf) || etaMain == 1.0f || etaShifted == 1.0f)
     {
         result.IsSuccessful = false;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingHalfVec);
@@ -73,6 +73,12 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
 {
     ShiftResult result;
 
+    if (!FEAT_CORE(GdptShiftRec))
+    {
+        result.IsSuccessful = false;
+        return result;
+    }
+
     bool occluded;
     TestVisibilityPoints(y1, x2, occluded);
 
@@ -122,11 +128,16 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
 {
     ShiftResult result;
 
+    if (!FEAT_CORE(GdptShiftRecEnv))
+    {
+        result.IsSuccessful = false;
+        return result;
+    }
+
     float NdL = dot(normalShifted, dirMain);
     if (NdL <= 0.0f)
     {
         result.IsSuccessful = false;
-        result.Jacobian = 1.0f;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingEnvNdL);
         return result;
     }
@@ -137,7 +148,6 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
     if (occluded)
     {
         result.IsSuccessful = false;
-        result.Jacobian = 1.0f;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingEnvOcc);
         return result;
     }

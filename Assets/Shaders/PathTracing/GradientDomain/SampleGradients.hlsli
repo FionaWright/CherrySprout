@@ -61,6 +61,8 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
         DBG_OUTPUT1(misWeight, GD_MIS);
         DBG_OUTPUT3(Lo, GD_Lo);
+
+        DBG_OUTPUT_CLEAR_BEGIN();
         DBG_OUTPUT1(0.0f, GD_RejectionUninit);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
         DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
@@ -79,6 +81,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(0.0f, GD_L_w);
         DBG_OUTPUT1(0.0f, GD_L_s);
         DBG_OUTPUT1(1.0f, GD_Jacobian);
+        DBG_OUTPUT_CLEAR_END();
     }
 }
 
@@ -98,6 +101,8 @@ Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath)
     [loop] // Note: Do not unroll, otherwise expensive inlining will occur
     for (int i = 0; i < 4; i++)
     {
+        if (i == 2)
+            DBG_OUTPUT_RESET();
         sampleShiftedPath(rngInfo, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
     }
 
