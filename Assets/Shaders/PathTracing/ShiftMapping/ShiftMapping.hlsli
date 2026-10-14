@@ -69,12 +69,12 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
 }
 
 // TODO: Fix mismatch in Ng_ff for jacobian/hitPos but Ns_ff for NdL/bxdf
-ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 normalShifted, float3 dest, float3 normalDest)
+ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 x2_N)
 {
     ShiftResult result;
 
     bool occluded;
-    TestVisibilityPoints(sourceShifted, dest, occluded);
+    TestVisibilityPoints(y1, x2, occluded);
 
     if (occluded)
     {
@@ -83,34 +83,38 @@ ShiftResult ShiftReconnect(float3 sourceMain, float3 sourceShifted, float3 norma
         return result;
     }
 
-    float3 destToMain = sourceMain - dest;
-    float3 destToShifted = sourceShifted - dest;
+    float3 x1_x2 = x1 - x2;
+    float3 y1_x2 = y1 - x2;
 
-    float3 destToShiftedDir = normalize(destToShifted);
-    float3 shiftedToDestDir = -destToShiftedDir;
+	float3 wiX = normalize(-x1_x2);
+	float3 wiY = normalize(-y1_x2);
 
-    float cosSource = dot(normalShifted, shiftedToDestDir);
-    float cosDest   = dot(normalDest, destToShiftedDir);
-
-    result.Wi = normalize(-destToShifted);
-
-    float NdL = dot(normalShifted, result.Wi);
-    if (NdL <= 0.0f)
+    float NdL_Y = dot(y1_N, wiY);
+    if (NdL_Y <= 0.0f)
     {
         result.IsSuccessful = false;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecNdL);
         return result;
     }
 
-    float length2Main = LengthSquared(destToMain);
-    float length2Shifted = LengthSquared(destToShifted);
+    float lenSqrX = LengthSquared(x1_x2);
+	float lenSqrY = LengthSquared(y1_x2);
 
-    float cosThetaMain = dot(destToMain, normalDest) / sqrt(length2Main); // ?
-    float cosThetaShifted = dot(-result.Wi, normalDest); // ?
+	//float cosTY = abs(dot(-wiY, x2_N));
+    //float cosTX = abs(dot(-wiX, x2_N));
+	float cosTY = abs(dot(-wiY, x2_N)) * abs(dot(wiY, y1_N));
+    float cosTX = abs(dot(-wiX, x2_N)) * abs(dot(wiX, y1_N));;
+
+    if (cosTX <= 1e-6f || lenSqrY <= 1e-12f)
+    {
+        result.IsSuccessful = false;
+		DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecNdL);
+        return result;
+    }
 
     result.IsSuccessful = true;
-    result.Jacobian = abs(cosThetaShifted * length2Main) / max(EPSILON, abs(cosThetaMain * length2Shifted));
-    //result.Jacobian = abs(cosDest * length2Main) / max(EPSILON, abs(cosSource * length2Shifted));
+	result.Wi = wiY;
+    result.Jacobian = (cosTY / cosTX) * (lenSqrX / lenSqrY);
     return result;
 }
 

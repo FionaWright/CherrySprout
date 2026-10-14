@@ -255,20 +255,23 @@ bool shiftPath(int x, int y, const Path &basePath, Path &offsetPath, double &jac
                     sphereID != basePath.verts[vertId + 1].sphereID) 
                 return false;        
 
-            Vec baseP0 = basePath.verts[rayDepth - 1].position;
-            Vec baseN0 = basePath.verts[rayDepth - 1].n;
-            Vec p1 = basePath.verts[rayDepth].position;
-            Vec n1 = basePath.verts[rayDepth].n;
-            Vec baseDir = p1 - baseP0;
+            Vec x1 = basePath.verts[rayDepth - 1].position;
+            Vec x1_N = basePath.verts[rayDepth - 1].n;
+            Vec x2 = basePath.verts[rayDepth].position;
+            Vec x2_N = basePath.verts[rayDepth].n;
+            Vec x2_x1 = x2 - x1;
 
-            double baseDist2 = baseDir.dot(baseDir);
-            baseDir = baseDir * (1.0 / sqrt(baseDist2));
-            double baseGeom = fabs(baseDir.dot(n1)) * fabs(baseDir.dot(baseN0)) / baseDist2;
+            Vec y1 = vert.position;
+            Vec y1_N = vert.n;
 
-            Vec shiftDir = p1 - vert.position;
-            double shiftDist2 = shiftDir.dot(shiftDir);     
-            shiftDir = shiftDir * (1.0 / sqrt(shiftDist2));
-            double shiftGeom = fabs(shiftDir.dot(n1)) * fabs(shiftDir.dot(vert.n)) / shiftDist2;
+            double lenSqrX = x2_x1.dot(x2_x1);
+            Vec wiX = x2_x1 * (1.0 / sqrt(lenSqrX));
+            double baseGeom = fabs(wiX.dot(x2_N)) * fabs(wiX.dot(x1_N)) / lenSqrX;
+
+            Vec x2_y1 = x2 - y1;
+            double lenSqrY = x2_y1.dot(x2_y1);     
+            Vec wiY = x2_y1 * (1.0 / sqrt(lenSqrY));
+            double shiftGeom = fabs(wiY.dot(x2_N)) * fabs(wiY.dot(y1_N)) / lenSqrY;
 
             jacobian *= (shiftGeom / baseGeom);
             return true;

@@ -30,7 +30,7 @@ void HitShiftedUnconnected(
         return;
     }
 
-    ShiftResult shiftResult;
+    ShiftResult shiftResult = (ShiftResult)0;
 
     if (v1.Type == VertexType::eDiffuse)
     {
@@ -38,6 +38,8 @@ void HitShiftedUnconnected(
             shiftResult = ShiftReconnect(v1.Position, hitInfo.HitPosBiased, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
         else if (v2.Type == VertexType::eEnvironment)
             shiftResult = ShiftReconnectEnvironment(hitInfo.HitPosBiased, hitInfo.Ns_ff, v1.Wi);
+		else
+        	DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
 
         reconnectionState = ReconnectionState::eSemiConnected;
     }
@@ -85,9 +87,9 @@ void HitShiftedUnconnected(
 
         // TODO: Jacobian?
 
-        // TODO: Asymmetric if occlusion doesn't match main occlusion (Ignore alpha test)
-
         // TODO: Make some scenes which can make jacobian/shift mapping issues obvious and simple
+
+        // TODO: Thesis says to consider each sub-path as its own path and sum contributions at the end. How does this work with asymmetry?
 
         float shadowFactor;
         float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);

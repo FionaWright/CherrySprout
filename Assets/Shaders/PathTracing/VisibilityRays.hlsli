@@ -7,6 +7,7 @@
 #define TMIN_BIAS_COEF 3
 #define TMAX_BIAS_COEF 2
 
+// TODO: Alpha testing
 void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
 {
     RayQuery<RAY_FLAGS> q;
@@ -26,6 +27,7 @@ void TestVisibilityPoints(float3 source, float3 dest, out bool occluded)
     occluded = q.CommittedStatus() == COMMITTED_TRIANGLE_HIT;
 }
 
+// TODO: Alpha testing
 void TestVisibilityDirection(float3 source, float3 dir, out bool occluded)
 {
     RayQuery<RAY_FLAGS> q;
