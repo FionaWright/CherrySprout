@@ -9,7 +9,7 @@
 #include "MicrofacetModels/GetMM.hlsli"
 #include "PathTracing/Structs.h"
 
-#include "BxDFs/Lobes/LambertianLobe.hlsli"
+#include "BxDFs/Lobes/LambertianDisneyLobe.hlsli"
 #include "BxDFs/Lobes/SpecularLobe.hlsli"
 #include "BxDFs/Lobes/TransmissiveLobe.hlsli"
 
@@ -159,9 +159,8 @@ void BxDF::Sample(
     }
     else
     {
-        LambertianLobe_Sample(hitInfo, u1, u2, L_s, f, pdf); // TODO: New lobe wrapper that does metallic
+        LambertianDisneyLobe_Sample(hitInfo, u1, u2, L_s, f, pdf);
 
-        f *= (1.0 - hitInfo.Mat.Metallic);
         pdf *= 1.0f - specProb;
 
         DBG_ASSERT_VALUE(f,           BxDF_PBR_DIFF_F);
@@ -309,9 +308,8 @@ void BxDF::Evaluate(
         {
             float3 f_diff;
             float pdf_diff;
-            LambertianLobe_Evaluate(hitInfo, L_s, f_diff, pdf_diff);
+            LambertianDisneyLobe_Evaluate(hitInfo, L_s, f_diff, pdf_diff);
 
-            f_diff *= (1.0 - hitInfo.Mat.Metallic);
             if (FEAT_DBG(ForceDiffuse) || FEAT_DBG(ForceSpecular))
                 f_diff *= 1.0f - specProb;
             pdf_diff *= 1.0f - specProb;

@@ -20,6 +20,7 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_GradientDomain |
         eCore_GdptShiftRecEnv |
         eCore_GdptShiftRec |
+        eCore_GdptShiftHalf |
         eCore_AliasTables
         //eCore_RestirDI |
         //eCore_RussianRoulette
