@@ -50,7 +50,7 @@ struct Gradients
     hlsl::float3 YBackward;
 };
 
-#define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.001f // TODO: Make CBV option?
+#define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.001f
 
 inline bool GetIsVertexDiffuse(const float roughness)
 {

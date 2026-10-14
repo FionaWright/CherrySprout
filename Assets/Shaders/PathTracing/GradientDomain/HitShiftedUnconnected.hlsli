@@ -20,8 +20,17 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
+    if (v2.Type == VertexType::eUninitialized)
+    {
+        isSymmetric = false;
+        contrib = 1.0f;
+        wi = NAN;
+        DBG_OUTPUT1(1.0f, GD_RejectionUninit);
+        return;
+    }
+
     VertexType shiftedType = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-    if (v1.Type != shiftedType || v2.Type == VertexType::eUninitialized || v2.Type == VertexType::eGlossy)
+    if (v1.Type != shiftedType || v2.Type == VertexType::eGlossy)
     {
         isSymmetric = false;
         contrib = 1.0f;
@@ -49,7 +58,6 @@ void HitShiftedUnconnected(
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
         float eta = iorNCurrent / iorNNext;
 
-        // Half-Vector shift can also be achieved by copying rngInfo and sampling BxDF, but this seems more complex
         shiftResult = ShiftHalfVector(v1.SFrame, hitInfo.SFrame, v1.Wi, v1.Wo, wo, v1.Eta, eta);
     }
     else
@@ -75,7 +83,7 @@ void HitShiftedUnconnected(
     float pdf_bxdf;
     bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
-    contrib = f_bxdf * abs(NdL) / max(1e-6, v1.PDF);
+    contrib = f_bxdf * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= pdf_bxdf;
 
@@ -85,11 +93,7 @@ void HitShiftedUnconnected(
 
         // TODO: Multiple NEE samples
 
-        // TODO: Jacobian?
-
-        // TODO: Make some scenes which can make jacobian/shift mapping issues obvious and simple
-
-        // TODO: Thesis says to consider each sub-path as its own path and sum contributions at the end. How does this work with asymmetry?
+        // TODO: Emissive Jacobian
 
         float shadowFactor;
         float3 L_nee = EvaluateNEE(hitInfo, pathState, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
@@ -99,7 +103,7 @@ void HitShiftedUnconnected(
         if (v1.ShadowFactor > 0.99f != shadowFactor > 0.99f)
         {
             isSymmetric = false;
-            contrib = 1.0f;
+            contrib = 0.0f;
             wi = NAN;
             DBG_OUTPUT1(1.0f, GD_RejectionNEE);
             return;

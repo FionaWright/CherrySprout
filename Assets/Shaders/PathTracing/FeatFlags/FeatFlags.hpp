@@ -18,6 +18,8 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         //eCore_FireflyThreshold |
         //eCore_Emission |
         eCore_GradientDomain |
+        eCore_GdptShiftRecEnv |
+        eCore_GdptShiftRec |
         eCore_AliasTables
         //eCore_RestirDI |
         //eCore_RussianRoulette

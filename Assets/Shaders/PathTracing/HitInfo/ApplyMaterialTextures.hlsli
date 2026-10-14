@@ -37,7 +37,7 @@ void ApplyMaterialTextures(inout HitInfo hitInfo)
 {
     float4 albedoSample =   SampleSceneTexture4(hitInfo.UV, hitInfo.Mat.TexIdxAlbedo, 1);
     float roughnessSample = SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxRoughness, 1);
-    float metallicSample =  SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxMetallic, 0);
+    float metallicSample =  SampleSceneTexture1(hitInfo.UV, hitInfo.Mat.TexIdxMetallic, 1);
     float3 emissionSample = SampleSceneTexture3(hitInfo.UV, hitInfo.Mat.TexIdxEmissive, 1);
 
     albedoSample.xyz = SRGB_to_LRGB(albedoSample.xyz);

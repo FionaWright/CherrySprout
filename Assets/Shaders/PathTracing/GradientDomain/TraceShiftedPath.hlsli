@@ -122,7 +122,7 @@ void TraceShiftedPath(
         }
         else if (reconnectionState == ReconnectionState::eUnconnected)
         {
-            if (i == mainVertices.NumVertices - 1) // Note: Only really happens due to beta loss deaths
+            if (i == mainVertices.NumVertices - 1) // Note: Only happens due to beta loss deaths
             {
                 Lo = 0.0f;
                 isSymmetric = false;

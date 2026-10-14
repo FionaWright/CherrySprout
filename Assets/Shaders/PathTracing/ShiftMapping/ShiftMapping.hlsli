@@ -36,7 +36,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
 
     bool isRefraction = NdV * NdL < 0.0f;
 
-    if (isRefraction)
+    if (FEAT_CORE(Transmission) && isRefraction)
     {
         float3 H_s = L_s + V_s * etaMain; // TODO: Probably wrong
         H_s = normalize(H_s);
@@ -57,9 +57,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
         float3 N_s = float3(0,0,1);
         L_s_shifted = NormalizeSafe(reflect(-V_s_shifted, H_s), N_s);
 
-        float3 H_s_shifted = H_s; // TODO: Guess, idk
-
-        float VdH = abs(dot(V_s_shifted, H_s)) / max(EPSILON, abs(dot(V_s, H_s_shifted)));
+        float VdH = abs(dot(V_s_shifted, H_s)) / max(EPSILON, abs(dot(V_s, H_s)));
         result.Jacobian = abs(VdH);
     }
 

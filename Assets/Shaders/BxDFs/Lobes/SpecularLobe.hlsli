@@ -81,8 +81,11 @@ void SpecularLobe_Evaluate(
     {
         f = 0.0f;
         pdf = 1.0f;
+
+        DBG_OUTPUT_DUMP_DISABLE();
         DBG_OUTPUT1(0,                Eval_F);
         DBG_OUTPUT1(0,                Eval_G);
+        DBG_OUTPUT_DUMP_ENABLE();
         return;
     }
 
@@ -99,7 +102,11 @@ void SpecularLobe_Evaluate(
     // Dirac Delta
     if (hitInfo.Mat.Roughness < ROUGHNESS_DIRAC_THRESHOLD)
     {
-        f = 0;
+        float3 expectedL = reflect(-V_s, N_s);
+        float alignment = dot(normalize(L_s), normalize(expectedL));
+        bool isAligned = alignment > 1.0f - 1e-5f;
+
+        f = isAligned ? 1.0f : 0.0f;
         pdf = 1;
         return;
     }
