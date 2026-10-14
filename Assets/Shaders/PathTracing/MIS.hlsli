@@ -31,7 +31,10 @@ float BalanceHeuristicRatio(float pdfRatio2_1, uint N1, uint N2)
 // Directions relative to area that PDF belongs to
 float PdfAreaToSolidAngle(float pdfArea, float NdL, float distance)
 {
-    return pdfArea * distance * distance / max(EPSILON, NdL);
+    if (NdL <= 0.0f || distance <= 0.0f)
+        return 0.0f;
+
+    return pdfArea * distance * distance / NdL;
 }
 
 #endif
