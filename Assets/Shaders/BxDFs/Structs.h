@@ -7,7 +7,7 @@ struct BxdfSample
 {
     hlsl::float3 Wi;
     bool IsDirac;
-    bool IsSpecular;
+    bool IsGlossy; // TODO: Lobe Index?
 };
 
 struct BxdfEval

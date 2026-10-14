@@ -102,6 +102,8 @@ BxdfSample BxDF::Sample(
         DBG_OUTPUT1(iorNNext,                         BxDF_iorNNext);
         DBG_OUTPUT1(iorNCurrent/iorNNext,             BxDF_eta);
 
+        sample.IsGlossy = true;
+
         if (isReflect)
         {
             SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, eval.Radiance, eval.PDF, sample.IsDirac);
@@ -146,7 +148,7 @@ BxdfSample BxDF::Sample(
 
         eval.PDF *= specProb;
 
-        sample.IsSpecular = true;
+        sample.IsGlossy = true;
 
         DBG_ASSERT_VALUE(eval.Radiance,           BxDF_PBR_SPEC_F);
         DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_SPEC_PDF);
@@ -158,11 +160,11 @@ BxdfSample BxDF::Sample(
 
         eval.PDF *= 1.0f - specProb;
 
-        sample.IsSpecular = false;
+        sample.IsGlossy = false;
 
-        DBG_ASSERT_VALUE(eval.Radiance,           BxDF_PBR_DIFF_F);
+        DBG_ASSERT_VALUE(eval.Radiance,    BxDF_PBR_DIFF_F);
         DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_Diff_PDF);
-        DBG_ASSERT_VALUE(L_s,         BxDF_PBR_Diff_L_S);
+        DBG_ASSERT_VALUE(L_s,              BxDF_PBR_Diff_L_S);
     }
 
     if (FEAT_CORE(Transmission))

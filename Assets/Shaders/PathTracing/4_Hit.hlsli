@@ -44,8 +44,8 @@ void Hit(inout PathState pathState,
     float3 wi;
     float pdf_bxdf;
     bool isDirac;
-    bool isSpecular;
-    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, wo, wi, pdf_bxdf, isDirac, isSpecular);
+    bool isGlossy;
+    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, wo, wi, pdf_bxdf, isDirac, isGlossy);
     DBG_SCALE_INTENSITY_INDIRECT(E_indirect);
 
     pathState.Beta *= E_indirect;
@@ -62,6 +62,7 @@ void Hit(inout PathState pathState,
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
         float eta = iorNCurrent / iorNNext;
 
+        //currentVertexInfo.Type = isGlossy ? VertexType::eGlossy : VertexType::eDiffuse; // TODO
         currentVertexInfo.Type = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
         currentVertexInfo.Position = hitInfo.HitPos;
         currentVertexInfo.SFrame = hitInfo.SFrame;

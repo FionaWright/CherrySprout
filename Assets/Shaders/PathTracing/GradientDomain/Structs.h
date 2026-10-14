@@ -51,7 +51,6 @@ struct Gradients
 };
 
 #define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.001f
-
 inline bool GetIsVertexDiffuse(const float roughness)
 {
     return (roughness >= GDPT_VERTEX_DIFFUSE_THRESHOLD);

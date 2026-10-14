@@ -10,7 +10,7 @@ float3 SampleIndirectLighting(
     out float3 wi,
     out float pdf,
     out bool isDirac,
-    out bool isSpecular
+    out bool isGlossy
 )
 {
     BxdfSample bxdfSample;
@@ -49,7 +49,7 @@ float3 SampleIndirectLighting(
 
     wi = bxdfSample.Wi;
     isDirac = bxdfSample.IsDirac;
-    isSpecular = bxdfSample.IsSpecular;
+    isGlossy = bxdfSample.IsGlossy;
 
     pdf = bxdfEval.PDF;
 
