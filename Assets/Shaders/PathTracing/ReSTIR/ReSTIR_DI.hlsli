@@ -54,8 +54,7 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
         m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
-    //float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL;
-    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL / max(1e-6f, X_i.LightEval.PDF); // TODO: Divide by sampling PDF? (X_i.PDF)
+    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL / max(1e-6f, X_i.LightEval.PDF);
     return Luminance(radiance);
 }
 
@@ -85,7 +84,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
         DBG_OUTPUT1(reservoir.W_Y, RESTIR_W_Y);
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f, RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f, RESTIR_WEIGHT_SUM_RANGE);
-        DBG_ASSERT_RANGE(0.0f, RESTIR_CONF_RANGE, gSettings.RestirConfidenceCap, RESTIR_CONF_RANGE);
+        DBG_ASSERT_RANGE(0.0f, reservoir.Confidence, gSettings.RestirGenConfidenceCap, RESTIR_CONF_RANGE);
     }
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));

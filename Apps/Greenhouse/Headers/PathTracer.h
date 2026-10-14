@@ -50,6 +50,7 @@ public:
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
     const std::vector<ReservoirDI>& ReadbackReservoirBuffer() const { return std::move(m_restirManager.Readback()); }
+    void ScheduleRestirClear() { m_restirClearScheduled = true; }
 
     void GUI(GreenhouseConfig* config) override;
 
@@ -70,6 +71,8 @@ private:
     Pipeline m_pipelineBlit;
     RootSig m_rootSigBlit;
     DescriptorSet m_setBlit;
+
+    bool m_restirClearScheduled = false;
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     DebugManager m_debugManager;

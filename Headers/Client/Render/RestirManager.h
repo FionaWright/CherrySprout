@@ -16,7 +16,7 @@ class RestirManager
 public:
     void Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs);
 
-    void GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+    void GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, bool isTemporalEnabled, bool clear);
     void PostUpdate(D3D* d3d);
 
     const std::vector<ReservoirDI>& Readback() const { return m_cpuReservoirBufferReadback; }
@@ -31,6 +31,8 @@ private:
     size_t m_numReservoirs = 0;
 
     Pipeline m_pipelineDiGenerateSamples;
+    Pipeline m_pipelineDiTemporalMerge;
+    Pipeline m_pipelineDiClear;
 
     std::vector<ReservoirDI> m_cpuReservoirBufferReadback;
 };

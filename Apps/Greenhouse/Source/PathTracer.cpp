@@ -273,8 +273,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.DofFocalDist = renderInfo.PathTracerConfig->DofFocalDist;
         settings.DofLensRadius = renderInfo.PathTracerConfig->DofLensRadius;
 
-        settings.RestirConfidenceCap = renderInfo.PathTracerConfig->RestirConfidenceCap;
-        settings.RestirNumCandidates = renderInfo.PathTracerConfig->RestirNumCandidates;
+        settings.RestirGenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
+        settings.RestirTemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
+        settings.RestirGenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
 
         settings.LsdBasePunctuals = renderInfo.LsdBasePunctuals;
         settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;
@@ -304,7 +305,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
         m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
-        m_restirManager.GenerateSamplesDi(d3d->GetDevice(), cmdList);
+        m_restirManager.GenerateSamplesDi(d3d->GetDevice(), cmdList, renderInfo.PathTracerConfig->RestirTemporalEnabled, m_restirClearScheduled);
+        m_restirClearScheduled = false;
     }
 
     // Main Pass

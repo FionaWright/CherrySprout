@@ -95,8 +95,9 @@ struct PathTracerConfig
     uint32_t RussianRouletteMinBounces = 1;
     uint32_t DirectNumSamples = 1;
 
-    uint32_t RestirConfidenceCap = 30;
-    uint32_t RestirNumCandidates = 8;
+    uint32_t RestirGenConfidenceCap = 30;
+    uint32_t RestirTemporalConfidenceCap = 30;
+    uint32_t RestirGenCandidatesCount = 8;
 
     uint32_t TransientRenderNumSamples = 1000;
     uint32_t TransientRenderNumFrames = 60;
@@ -121,6 +122,9 @@ struct PathTracerConfig
     bool ScreenSpaceGradients = false;
     bool DisplayGradientX = false;
     bool DisplayGradientY = false;
+
+    bool RestirTemporalEnabled = false;
+    bool RestirSpatialEnabled = false;
 
     FeatFlagsCore              FlagsCore           = s_defaultFeatFlagsCore;
     BxdfMode                   BxdfMode            = s_defaultBxdfMode;

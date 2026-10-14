@@ -7,7 +7,7 @@
 #include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
-#define SEED_DECORRELATOR 0x46362346 // TODO
+#include "Compute/ReSTIR/SeedDecorrelators.h"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -20,7 +20,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-    rngInfo.IndependentRngState ^= SEED_DECORRELATOR;
+    DecorrelateRng(rngInfo, SEED_DECORRELATOR_GEN_SAMPLES);
 
     HitInfo hitInfo;
     bool isMiss;
@@ -56,7 +56,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     info.Wo = -rayDirection;
     info.HitInfo = hitInfo;
 
-    WRS(rngInfo, reservoir, gSettings.RestirNumCandidates, gSettings.RestirConfidenceCap, info);
+    WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, gSettings.RestirGenConfidenceCap, info);
 
     gReservoirBuffer[reservoirIdx] = reservoir;
 }

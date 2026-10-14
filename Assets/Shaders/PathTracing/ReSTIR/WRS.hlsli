@@ -6,21 +6,23 @@ bool ReservoirUpdate(
     inout RngInfo rngInfo,
     inout Reservoir<T> reservoir,
     T X_i,
-    float w_i,
-    float c_i
+    float w,
+    float c,
+    float pHat
 )
 {
-    if (w_i <= 0.0f)
+    if (w <= 0.0f)
         return false;
 
-    reservoir.Confidence += c_i;
-    reservoir.WeightSum += w_i;
+    reservoir.Confidence += c;
+    reservoir.WeightSum += w;
 
     float r = Rand01(rngInfo);
-    float norm_w_i = w_i / reservoir.WeightSum;
-    if (r < norm_w_i)
+    float norm_w = w / reservoir.WeightSum;
+    if (r < norm_w)
     {
         reservoir.Y = X_i;
+        reservoir.PHat = pHat;
         return true;
     }
     return false;
@@ -29,6 +31,7 @@ bool ReservoirUpdate(
 template<typename T>
 void ReservoirMerge(
     inout RngInfo rngInfo,
+    uint ConfidenceCap,
     inout Reservoir<T> reservoir,
     Reservoir<T> other,
     float w_i
@@ -41,9 +44,16 @@ void ReservoirMerge(
     if (r < norm_w_i)
     {
         reservoir.Y = other.Y;
+        reservoir.PHat = other.PHat;
     }
 
+    // TODO: Shrink TInfo and pass it through reservoir to here. Then recompute target?
+    // TODO: But before doing that re-read the paper / thesis thing
+
+    reservoir.W_Y = reservoir.PHat <= 0.0f ? 0.0f : reservoir.WeightSum / reservoir.PHat; // TODO: Not sure about this code
+
     reservoir.Confidence += other.Confidence;
+    reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
 }
 
 template<typename T>
@@ -51,6 +61,8 @@ float RestirMis(T X_i, uint M)
 {
     return 1 / (float)M;
 }
+
+// TODO: Still not using confidence
 
 template<typename T, typename TInfo>
 void WRS(
@@ -77,10 +89,11 @@ void WRS(
 
         float W_X_i = 1.0f / pdf;
 
-        float w_i = pHat * W_X_i;
-        float c_i = 1;
+        float m = RestirMis(X_i, M);
+        float w = pHat * W_X_i * m;
+        float c = 1;
 
-        candidateSelected |= ReservoirUpdate(rngInfo, reservoir, X_i, w_i, c_i);
+        candidateSelected |= ReservoirUpdate(rngInfo, reservoir, X_i, w, c, pHat);
     }
 
     if (!candidateSelected)
@@ -90,9 +103,8 @@ void WRS(
         return;
     }
 
-    // TODO: Avoid recomputation of Target(Y)
     reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
-    reservoir.W_Y = reservoir.WeightSum / (M * Target(reservoir.Y, tInfo));
+    reservoir.W_Y = reservoir.WeightSum / reservoir.PHat;
 }
 
 #endif

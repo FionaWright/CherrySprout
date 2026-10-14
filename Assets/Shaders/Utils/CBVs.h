@@ -37,14 +37,14 @@ struct CbvPathTracingSettings
     float TransientPulseDistance;
 
     hlsl::uint DirectNumSamples;
-    hlsl::uint RestirConfidenceCap;
-    hlsl::uint RestirNumCandidates;
     hlsl::uint Seed;
-
     hlsl::uint LsdBasePunctuals;
     hlsl::uint LsdBaseEmissives;
+
     hlsl::uint LsdCount;
-    float p;
+    hlsl::uint RestirGenConfidenceCap; // TODO: Move to separate CBV?
+    hlsl::uint RestirTemporalConfidenceCap; // TODO: Should there even be multiple?
+    hlsl::uint RestirGenCandidatesCount;
 };
 
 struct CbvPanoToEA

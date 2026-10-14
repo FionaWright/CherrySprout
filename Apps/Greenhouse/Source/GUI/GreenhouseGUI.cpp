@@ -351,8 +351,17 @@ void Greenhouse::renderGuiCore()
             ImGui::Text("ReSTIR:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Candidates", &m_config.PathTracerConfig.RestirNumCandidates);
-                m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap", &m_config.PathTracerConfig.RestirConfidenceCap);
+                m_ptFrameDirty |= ImGui::Checkbox("Temporal", &m_config.PathTracerConfig.RestirTemporalEnabled);
+                m_ptFrameDirty |= ImGui::Checkbox("Spatial", &m_config.PathTracerConfig.RestirSpatialEnabled);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Candidates", &m_config.PathTracerConfig.RestirGenCandidatesCount);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap (Gen)", &m_config.PathTracerConfig.RestirGenConfidenceCap);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap (Temporal)", &m_config.PathTracerConfig.RestirTemporalConfidenceCap);
+
+                if (ImGui::Button("Clear Reservoir Buffer"))
+                {
+                    m_pathTracer.ScheduleRestirClear();
+                    m_ptFrameDirty = true;
+                }
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

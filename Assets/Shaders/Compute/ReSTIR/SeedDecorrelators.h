@@ -1,0 +1,26 @@
+#ifndef H_SEED_DECORRELATORS_H
+#define H_SEED_DECORRELATORS_H
+
+#include "Utils/HlslGlue.h"
+#include "Utils/Random.h"
+
+// Must all be large prime numbers
+
+#define SEED_DECORRELATOR_GEN_SAMPLES 37374607u
+#define SEED_DECORRELATOR_TEMPORAL    15672157u
+#define SEED_DECORRELATOR_SPATIO      28001837u
+
+#define SEED_DECORRELATOR_RESERVED1 38475637u
+#define SEED_DECORRELATOR_RESERVED2 12521219u
+#define SEED_DECORRELATOR_RESERVED3 67392023u
+#define SEED_DECORRELATOR_RESERVED4 95683543u
+#define SEED_DECORRELATOR_RESERVED5 55650193u
+#define SEED_DECORRELATOR_RESERVED6 73406881u
+#define SEED_DECORRELATOR_RESERVED7 95557633u
+
+inline void DecorrelateRng(GLUE_INOUT(RngInfo) rngInfo, const hlsl::uint decorrelator)
+{
+    rngInfo.IndependentRngState ^= decorrelator;
+}
+
+#endif

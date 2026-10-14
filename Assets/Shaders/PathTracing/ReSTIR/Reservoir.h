@@ -9,7 +9,7 @@ struct Reservoir
     float W_Y;
     float WeightSum;
     float Confidence;
-    float padding; // Debug Value?
+    float PHat;
 };
 
 template<typename T>
