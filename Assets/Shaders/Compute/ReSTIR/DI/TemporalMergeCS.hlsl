@@ -23,11 +23,15 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
     ReservoirDI reservoirPrev = gReservoirBuffer[reservoirIdxPrev];
 
-    bool isValid = reservoirPrev.W_Y > 0.0f && reservoirPrev.PHat > 0.0f && reservoirPrev.Confidence > 0.0f;
-    // TODO: Normal/Distance rejection
+    bool isValidPrev = true;
+    isValidPrev &= reservoirPrev.W_Y > 0.0f;
+    isValidPrev &= reservoirPrev.PHat > 0.0f;
+    isValidPrev &= reservoirPrev.Confidence > 0.0f;
+    isValidPrev &= dot(reservoir.Info.HitInfo.Ns_ff, reservoirPrev.Info.HitInfo.Ns_ff) >= gSettings.RestirTemporalNormalDivThreshold;
+    // TODO: Depth rejection
     // TODO: Occlusion rejection
 
-    if (isValid)
+    if (isValidPrev)
     {
         ReservoirDI reservoirNew = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
         reservoirNew.Info = reservoir.Info;

@@ -276,6 +276,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RestirGenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
         settings.RestirTemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
         settings.RestirGenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
+        settings.RestirTemporalNormalDivThreshold = renderInfo.PathTracerConfig->RestirTemporalNormalDivThreshold;
+        settings.RestirTemporalDepthDivThreshold = renderInfo.PathTracerConfig->RestirTemporalDepthDivThreshold;
+        settings.RestirSpatialNormalDivThreshold = renderInfo.PathTracerConfig->RestirSpatialNormalDivThreshold;
+        settings.RestirSpatialDepthDivThreshold = renderInfo.PathTracerConfig->RestirSpatialDepthDivThreshold;
 
         settings.LsdBasePunctuals = renderInfo.LsdBasePunctuals;
         settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;

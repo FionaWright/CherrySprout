@@ -29,8 +29,13 @@ SubReservoir_DI Generate(inout RngInfo rngInfo, SubReservoirInfo_DI info)
 float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
 {
     float NdL = max(0.0f, dot(info.HitInfo.Ns_ff, X_i.LightSample.Direction));
+    if (NdL <= 0)
+        return 0.0f;
 
-    if (X_i.LightEval.PDF < EPSILON || NdL <= 0 || length(X_i.LightEval.Radiance) <= 0.0f)
+    BxDF bxdf;
+    LightEval lightEval = EvaluateLight(info.HitInfo.HitPos, bxdf, info.Wo, X_i.LightSample); // TODO: Re-evaluating is not required always
+    X_i.LightEval = lightEval;
+    if (lightEval.PDF < EPSILON || length(lightEval.Radiance) <= 0.0f)
         return 0.0f;
 
     float shadowFactor = 1.0f;
@@ -51,10 +56,10 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
         BxDF bxdf;
         BxdfEval bxdfEval = bxdf.Evaluate(info.HitInfo, info.Wo, X_i.LightSample.Direction);
 
-        m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
+        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
-    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL / max(1e-6f, X_i.LightEval.PDF);
+    float3 radiance = shadowFactor * lightEval.Radiance * m * NdL / max(1e-6f, lightEval.PDF);
     return Luminance(radiance);
 }
 
@@ -87,8 +92,11 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
         DBG_ASSERT_RANGE(0.0f, reservoir.Confidence, gSettings.RestirGenConfidenceCap, RESTIR_CONF_RANGE);
     }
 
+    //LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, Y.LightSample);
+    LightEval lightEval = Y.LightEval;
+
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (reservoir.W_Y <= 0.0f || reservoir.Confidence <= 0.0f || NdL <= 0)
+    if (reservoir.W_Y <= 0.0f || reservoir.Confidence <= 0.0f || NdL <= 0 || length(lightEval.Radiance) <= 0.0f)
         return 0;
 
     float shadowFactor;
@@ -108,13 +116,13 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
     {
         BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
 
-        m = bxdfEval.Radiance * PowerHeuristic(Y.LightEval.PDF, bxdfEval.PDF, numSamples, 1);
+        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
 
         DBG_OUTPUT3(bxdfEval.Radiance, RESTIR_Bxdf);
         DBG_OUTPUT1(bxdfEval.PDF, RESTIR_PDF);
     }
 
-    return shadowFactor * Y.LightEval.Radiance * m * NdL * reservoir.W_Y;
+    return shadowFactor * lightEval.Radiance * m * NdL * reservoir.W_Y;
 }
 
 #else

@@ -95,7 +95,7 @@ struct PathTracerConfig
     uint32_t RussianRouletteMinBounces = 1;
     uint32_t DirectNumSamples = 1;
 
-    uint32_t RestirGenConfidenceCap = 30;
+    uint32_t RestirGenConfidenceCap = 30; // TODO: Unused?
     uint32_t RestirTemporalConfidenceCap = 30;
     uint32_t RestirGenCandidatesCount = 8;
 
@@ -116,6 +116,11 @@ struct PathTracerConfig
     float DofLensRadius = 0.003f;
 
     float SprAlpha = 0.0f;
+
+    float RestirTemporalNormalDivThreshold = 0.9f;
+    float RestirSpatialNormalDivThreshold = 0.9f;
+    float RestirTemporalDepthDivThreshold = 0.9f; // TODO
+    float RestirSpatialDepthDivThreshold = 0.9f;
 
     bool TrueRandomSeedMode = false;
     bool PoissonReconstructionEnabled = false;

@@ -45,6 +45,11 @@ struct CbvPathTracingSettings
     hlsl::uint RestirGenConfidenceCap; // TODO: Move to separate CBV?
     hlsl::uint RestirTemporalConfidenceCap; // TODO: Should there even be multiple?
     hlsl::uint RestirGenCandidatesCount;
+
+    float RestirTemporalNormalDivThreshold;
+    float RestirSpatialNormalDivThreshold;
+    float RestirTemporalDepthDivThreshold;
+    float RestirSpatialDepthDivThreshold;
 };
 
 struct CbvPanoToEA
