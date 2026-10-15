@@ -31,30 +31,24 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     // TODO: Depth rejection
     // TODO: Occlusion rejection
 
+    // Note: ReEvaluate needed if animation added
+
+    // TODO: Something wrong with VisibilityTest, causes bias
+
     if (isValidPrev)
     {
-        ReservoirDI reservoirNew = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
-        reservoirNew.Info = reservoir.Info;
-
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
         DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
 
-        bool candidateSelected = false;
+        ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev);
 
-        float wCurr = GetWeight(reservoir.PHat, reservoir.Confidence, reservoir.W_Y);
-        candidateSelected |= ReservoirUpdate<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, reservoirNew, reservoir.Y, wCurr, reservoir.Confidence, reservoir.PHat);
-
-        candidateSelected |= ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoirNew, reservoirPrev);
-
-        if (!candidateSelected || reservoirNew.Confidence <= 0.0f || reservoirNew.PHat <= 0.0f)
+        if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
         {
-            reservoirNew.Confidence = 0.0f;
-            reservoirNew.W_Y = 0.0f;
+            reservoir.Confidence = 0.0f;
+            reservoir.W_Y = 0.0f;
         }
         else
-            reservoirNew.W_Y = reservoirNew.WeightSum / (reservoirNew.PHat * reservoirNew.Confidence);
-
-        reservoir = reservoirNew;
+            reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
     }
 
     gReservoirBuffer[reservoirIdx] = reservoir;

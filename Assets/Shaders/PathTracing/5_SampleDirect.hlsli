@@ -22,13 +22,16 @@ float3 SampleDirectLighting(
     LightSample lightSample = (LightSample)0;
     float shadowFactor = 0.0f;
 
+    bool invalidReservoir = true;
+
     if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
     {
         SubReservoir_DI lightSE;
-        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE);
+        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, invalidReservoir);
         lightSample = lightSE.LightSample;
     }
-    else
+
+    if (invalidReservoir)
     {
         float3 L_nee = SampleNEE(rngInfo, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
 

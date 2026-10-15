@@ -354,12 +354,15 @@ void Greenhouse::renderGuiCore()
                 m_ptFrameDirty |= ImGui::Checkbox("Temporal", &m_config.PathTracerConfig.RestirTemporalEnabled);
                 m_ptFrameDirty |= ImGui::Checkbox("Spatial", &m_config.PathTracerConfig.RestirSpatialEnabled);
                 m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Candidates", &m_config.PathTracerConfig.RestirGenCandidatesCount);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Num Spatial Samples", &m_config.PathTracerConfig.RestirSpatialNumSamples);
                 m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap (Gen)", &m_config.PathTracerConfig.RestirGenConfidenceCap);
                 m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap (Temporal)", &m_config.PathTracerConfig.RestirTemporalConfidenceCap);
+                m_ptFrameDirty |= GuiUtils::FwInputUInt("Confidence Cap (Spatial)", &m_config.PathTracerConfig.RestirSpatialConfidenceCap);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Normal Div Threshold (Temporal)", &m_config.PathTracerConfig.RestirTemporalNormalDivThreshold);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Depth Div Threshold (Temporal)", &m_config.PathTracerConfig.RestirTemporalDepthDivThreshold);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Normal Div Threshold (Spatial)", &m_config.PathTracerConfig.RestirSpatialNormalDivThreshold);
                 m_ptFrameDirty |= GuiUtils::FwInputFloat("Depth Div Threshold (Spatial)", &m_config.PathTracerConfig.RestirSpatialDepthDivThreshold);
+                m_ptFrameDirty |= GuiUtils::FwInputFloat("Spatial Radius", &m_config.PathTracerConfig.RestirSpatialRadius);
 
                 if (ImGui::Button("Clear Reservoir Buffer"))
                 {

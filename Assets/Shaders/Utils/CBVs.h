@@ -50,6 +50,11 @@ struct CbvPathTracingSettings
     float RestirSpatialNormalDivThreshold;
     float RestirTemporalDepthDivThreshold;
     float RestirSpatialDepthDivThreshold;
+
+    hlsl::uint RestirSpatialNumSamples;
+    hlsl::uint RestirSpatialConfidenceCap;
+    float RestirSpatialRadius;
+    float p;
 };
 
 struct CbvPanoToEA

@@ -15,6 +15,7 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
 {
     m_pipelineDiGenerateSamples.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
     m_pipelineDiTemporalMerge.InitCompute(device, "Compute/ReSTIR/DI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineDiSpatialSample.InitCompute(device, "Compute/ReSTIR/DI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
     m_pipelineDiClear.InitCompute(device, "Compute/ReSTIR/DI/ClearCS.hlsl", rootSig->Get(), compileArgs);
 
     if (!m_reservoirBufferRW.GetResource())
@@ -26,7 +27,7 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
     }
 }
 
-void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, bool isTemporalEnabled, bool clear)
+void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, bool isTemporalEnabled, bool isSpatialEnabled, bool clear)
 {
     GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
 
@@ -58,6 +59,18 @@ void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsComman
     // Generate Candidates Pass
     {
         cmdList->SetPipelineState(m_pipelineDiGenerateSamples.GetPSO());
+        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = m_reservoirBufferRW.GetResource();
+        cmdList->ResourceBarrier(1, &barrier);
+    }
+
+    // Spatial Merge Pass
+    if (isSpatialEnabled)
+    {
+        cmdList->SetPipelineState(m_pipelineDiSpatialSample.GetPSO());
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         D3D12_RESOURCE_BARRIER barrier = {};

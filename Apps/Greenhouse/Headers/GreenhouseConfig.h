@@ -97,7 +97,9 @@ struct PathTracerConfig
 
     uint32_t RestirGenConfidenceCap = 30; // TODO: Unused?
     uint32_t RestirTemporalConfidenceCap = 30;
+    uint32_t RestirSpatialConfidenceCap = 30;
     uint32_t RestirGenCandidatesCount = 8;
+    uint32_t RestirSpatialNumSamples = 4;
 
     uint32_t TransientRenderNumSamples = 1000;
     uint32_t TransientRenderNumFrames = 60;
@@ -121,6 +123,7 @@ struct PathTracerConfig
     float RestirSpatialNormalDivThreshold = 0.9f;
     float RestirTemporalDepthDivThreshold = 0.9f; // TODO
     float RestirSpatialDepthDivThreshold = 0.9f;
+    float RestirSpatialRadius = 5.0f;
 
     bool TrueRandomSeedMode = false;
     bool PoissonReconstructionEnabled = false;

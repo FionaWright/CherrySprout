@@ -280,6 +280,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RestirTemporalDepthDivThreshold = renderInfo.PathTracerConfig->RestirTemporalDepthDivThreshold;
         settings.RestirSpatialNormalDivThreshold = renderInfo.PathTracerConfig->RestirSpatialNormalDivThreshold;
         settings.RestirSpatialDepthDivThreshold = renderInfo.PathTracerConfig->RestirSpatialDepthDivThreshold;
+        settings.RestirSpatialNumSamples = renderInfo.PathTracerConfig->RestirSpatialNumSamples;
+        settings.RestirSpatialConfidenceCap = renderInfo.PathTracerConfig->RestirSpatialConfidenceCap;
+        settings.RestirSpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
 
         settings.LsdBasePunctuals = renderInfo.LsdBasePunctuals;
         settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;
@@ -309,7 +312,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
         m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
-        m_restirManager.GenerateSamplesDi(d3d->GetDevice(), cmdList, renderInfo.PathTracerConfig->RestirTemporalEnabled, m_restirClearScheduled);
+        m_restirManager.GenerateSamplesDi(d3d->GetDevice(), cmdList, renderInfo.PathTracerConfig->RestirTemporalEnabled, renderInfo.PathTracerConfig->RestirSpatialEnabled, m_restirClearScheduled);
         m_restirClearScheduled = false;
     }
 

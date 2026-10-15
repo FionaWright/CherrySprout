@@ -24,7 +24,7 @@ bool ReservoirUpdate(
 
     float r = Rand01(rngInfo);
     float norm_w = w / reservoir.WeightSum;
-    if (r < norm_w)
+    if (r <= norm_w)
     {
         reservoir.Y = X_i;
         reservoir.PHat = pHat;
@@ -44,19 +44,16 @@ bool ReservoirMerge(
     float pHat = Target(other.Y, reservoir.Info);
     float w = GetWeight(pHat, c, other.W_Y);
 
-    //float m = BalanceHeuristic(reservoir.PHat, pHat, reservoir.Confidence, c);
-    //w *= m;
-
     reservoir.Confidence += c;
 
-    if (w <= 0.0f)
+    if (w <= 0.0f || pHat <= 0.0f)
         return false;
 
     reservoir.WeightSum += w;
 
     float r = Rand01(rngInfo);
     float norm_w = w / reservoir.WeightSum;
-    if (r < norm_w)
+    if (r <= norm_w)
     {
         reservoir.Y = other.Y;
         reservoir.PHat = pHat;

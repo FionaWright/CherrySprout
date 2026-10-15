@@ -71,10 +71,13 @@ float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info)
     return X_i.LightEval.PDF;
 }
 
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y)
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y, out bool invalidReservoir)
 {
     uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+
+    //invalidReservoir = reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f;
+    invalidReservoir = false;
 
     Y = reservoir.Y;
     float3 wi = Y.LightSample.Direction;
