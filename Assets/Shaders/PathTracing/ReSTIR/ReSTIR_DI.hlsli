@@ -26,16 +26,19 @@ SubReservoir_DI Generate(inout RngInfo rngInfo, SubReservoirInfo_DI info)
     return X_i;
 }
 
+void ReEvaluate(inout SubReservoir_DI X_i, SubReservoirInfo_DI info)
+{
+    BxDF bxdf;
+    X_i.LightEval = EvaluateLight(info.HitInfo.HitPos, bxdf, info.Wo, X_i.LightSample);
+}
+
 float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
 {
     float NdL = max(0.0f, dot(info.HitInfo.Ns_ff, X_i.LightSample.Direction));
     if (NdL <= 0)
         return 0.0f;
 
-    BxDF bxdf;
-    LightEval lightEval = EvaluateLight(info.HitInfo.HitPos, bxdf, info.Wo, X_i.LightSample); // TODO: Re-evaluating is not required always
-    X_i.LightEval = lightEval;
-    if (lightEval.PDF < EPSILON || length(lightEval.Radiance) <= 0.0f)
+    if (X_i.LightEval.PDF < EPSILON || length(X_i.LightEval.Radiance) <= 0.0f)
         return 0.0f;
 
     float shadowFactor = 1.0f;
@@ -56,10 +59,10 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
         BxDF bxdf;
         BxdfEval bxdfEval = bxdf.Evaluate(info.HitInfo, info.Wo, X_i.LightSample.Direction);
 
-        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, 1, 1);
+        m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
-    float3 radiance = shadowFactor * lightEval.Radiance * m * NdL / max(1e-6f, lightEval.PDF);
+    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL / max(1e-6f, X_i.LightEval.PDF);
     return Luminance(radiance);
 }
 
