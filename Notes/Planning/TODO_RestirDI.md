@@ -6,7 +6,8 @@
 - [x] Sample Gen pre-pass
 - [x] Point lights NEE
 - [ ] Find indoor scene
-- [ ] Fix Regressions
+- [x] Fix Regressions
+- [ ] Reconstruct HitPosBiased is hacky, need better solution
 - [ ] Spatio-Temporal
 - [x] Python Executor
 - [ ] Mean Test

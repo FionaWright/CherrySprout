@@ -15,10 +15,11 @@ bool ReservoirUpdate(
     float c,
     float pHat)
 {
+    reservoir.Confidence += c;
+
     if (w <= 0.0f)
         return false;
 
-    reservoir.Confidence += c;
     reservoir.WeightSum += w;
 
     float r = Rand01(rngInfo);
@@ -42,6 +43,9 @@ bool ReservoirMerge(
     float c = min(other.Confidence, reservoir.Confidence * ConfidenceCap);
     float pHat = Target(other.Y, reservoir.Info);
     float w = GetWeight(pHat, c, other.W_Y);
+
+    //float m = BalanceHeuristic(reservoir.PHat, pHat, reservoir.Confidence, c);
+    //w *= m;
 
     if (w <= 0.0f)
         return false;
@@ -86,10 +90,8 @@ void WRS(
 
         float pHat = Target(X_i, tInfo);
         float pdf = PDF(X_i, tInfo);
-        if (pHat <= 0.0f || pdf <= 0.0f)
-            continue;
 
-        float W_X_i = 1.0f / pdf;
+        float W_X_i = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
 
         //float m = RestirMis(X_i, M);
         float c = 1;
