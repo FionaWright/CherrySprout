@@ -12,14 +12,16 @@ struct SubReservoir_DI
     LightEval LightEval;
 };
 
+// Note: HitInfo required due to BXDF Eval
+// TODO: Is there any way to avoid this cleanly?
+// Note: Only a single HitInfo is needed per pixel per frame. Could have ReservoirInfo buffer?
 struct SubReservoirInfo_DI
 {
     HitInfo HitInfo;
 
     hlsl::float3 Wo;
-    float p;
 };
 
-typedef Reservoir<SubReservoir_DI> ReservoirDI;
+typedef Reservoir<SubReservoir_DI, SubReservoirInfo_DI> ReservoirDI;
 
 #endif

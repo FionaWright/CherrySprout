@@ -1,10 +1,11 @@
 #ifndef H_RESERVOIR_H
 #define H_RESERVOIR_H
 
-template<typename T>
+template<typename T, typename TInfo>
 struct Reservoir
 {
     T Y;
+    TInfo Info;
 
     float W_Y;
     float WeightSum;
@@ -12,10 +13,10 @@ struct Reservoir
     float PHat;
 };
 
-template<typename T>
-Reservoir<T> CreateReservoir()
+template<typename T, typename TInfo>
+Reservoir<T, TInfo> CreateReservoir()
 {
-    Reservoir<T> r = (Reservoir<T>)0;
+    Reservoir<T, TInfo> r = (Reservoir<T, TInfo>)0;
     r.W_Y = 0;
     r.WeightSum = 0;
     r.Confidence = 0;

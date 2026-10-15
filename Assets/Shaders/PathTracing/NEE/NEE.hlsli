@@ -17,7 +17,7 @@ float3 SampleNEE(
     out float shadowFactor)
 {
     LightEval lightEval;
-    lightSample = SampleLight(rngInfo, hitInfo, bxdf, wo, lightEval);
+    lightSample = SampleLight(rngInfo, hitInfo.HitPos, bxdf, wo, lightEval);
 
     shadowFactor = 0.0f;
 
@@ -66,7 +66,7 @@ float3 EvaluateNEE(
     if (NdL <= 0.0f)
         return 0;
 
-    LightEval lightEval = EvaluateLight(hitInfo, bxdf, wo, lightSample);
+    LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, lightSample);
 
     if (length(lightEval.Radiance) == 0.0f)
         return 0;

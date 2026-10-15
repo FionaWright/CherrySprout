@@ -18,7 +18,7 @@ SubReservoir_DI Generate(inout RngInfo rngInfo, SubReservoirInfo_DI info)
     BxDF bxdf;
 
     LightEval lightEval;
-    LightSample lightSample = SampleLight(rngInfo, info.HitInfo, bxdf, info.Wo, lightEval);
+    LightSample lightSample = SampleLight(rngInfo, info.HitInfo.HitPos, bxdf, info.Wo, lightEval);
 
     SubReservoir_DI X_i;
     X_i.LightSample = lightSample;

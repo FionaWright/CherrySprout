@@ -41,7 +41,7 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, fl
     return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
 
-LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo, out LightEval lightEval)
+LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPos, out LightEval lightEval)
 {
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveIdx];
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
@@ -74,8 +74,8 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
     float3 emissionSample = SampleSceneTexture3(uv, material.TexIdxEmissive, 1);
     float3 emission = SRGB_to_LRGB(emissionSample) * emissionMat;
 
-    float3 wi = normalize(destPos - hitInfo.HitPos);
-    float dist = length(destPos - hitInfo.HitPos);
+    float3 wi = normalize(destPos - hitPos);
+    float dist = length(destPos - hitPos);
 
     float triangleArea = GetTriangleArea(p0, p1, p2);
 
@@ -91,7 +91,7 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitI
     return lightSample;
 }
 
-LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightSample)
+LightEval EvaluateEmissive(uint emissiveIdx, float3 hitPos, LightSample lightSample)
 {
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveIdx];
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
@@ -127,9 +127,9 @@ LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightS
 
 float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ns, float3 wo, float distance) { return NAN; }
 
-LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, HitInfo hitInfo, out LightEval lightEval) { lightEval = (LightEval)0; return (LightSample)0; }
+LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPos, out LightEval lightEval) { lightEval = (LightEval)0; return (LightSample)0; }
 
-LightEval EvaluateEmissive(uint emissiveIdx, HitInfo hitInfo, LightSample lightSample) { return (LightEval)0; }
+LightEval EvaluateEmissive(uint emissiveIdx, float3 hitPos, LightSample lightSample) { return (LightEval)0; }
 
 #endif
 

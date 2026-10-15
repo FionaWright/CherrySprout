@@ -16,5 +16,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
-    gReservoirBuffer[reservoirIdxPrev] = CreateReservoir<SubReservoir_DI>();
+    gReservoirBuffer[reservoirIdxPrev] = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
 }

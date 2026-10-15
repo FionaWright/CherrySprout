@@ -1,10 +1,10 @@
 #ifndef H_RIS_H
 #define H_RIS_H
 
-template<typename T>
+template<typename T, typename TInfo>
 bool ReservoirUpdate(
     inout RngInfo rngInfo,
-    inout Reservoir<T> reservoir,
+    inout Reservoir<T,TInfo> reservoir,
     T X_i,
     float w,
     float c,
@@ -28,29 +28,29 @@ bool ReservoirUpdate(
     return false;
 }
 
-template<typename T>
+template<typename T, typename TInfo>
 void ReservoirMerge(
     inout RngInfo rngInfo,
     uint ConfidenceCap,
-    inout Reservoir<T> reservoir,
-    Reservoir<T> other,
-    float w_i
+    inout Reservoir<T,TInfo> reservoir,
+    Reservoir<T,TInfo> other,
+    float w
 )
 {
-    reservoir.WeightSum += w_i;
+    if (w <= 0.0f)
+        return;
+
+    reservoir.WeightSum += w;
 
     float r = Rand01(rngInfo);
-    float norm_w_i = w_i / reservoir.WeightSum;
-    if (r < norm_w_i)
+    float norm_w = w / reservoir.WeightSum;
+    if (r < norm_w)
     {
         reservoir.Y = other.Y;
         reservoir.PHat = other.PHat;
     }
 
-    // TODO: Shrink TInfo and pass it through reservoir to here. Then recompute target?
-    // TODO: But before doing that re-read the paper / thesis thing
-
-    reservoir.W_Y = reservoir.PHat <= 0.0f ? 0.0f : reservoir.WeightSum / reservoir.PHat; // TODO: Not sure about this code
+    reservoir.W_Y = reservoir.PHat <= 0.0f ? 0.0f : reservoir.WeightSum / reservoir.PHat;
 
     reservoir.Confidence += other.Confidence;
     reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
@@ -62,12 +62,10 @@ float RestirMis(T X_i, uint M)
     return 1 / (float)M;
 }
 
-// TODO: Still not using confidence
-
 template<typename T, typename TInfo>
 void WRS(
     inout RngInfo rngInfo,
-    inout Reservoir<T> reservoir,
+    inout Reservoir<T,TInfo> reservoir,
     uint M,
     uint ConfidenceCap,
     TInfo tInfo
@@ -77,6 +75,8 @@ void WRS(
 
     reservoir.WeightSum = 0.0f;
     reservoir.Confidence = 0.0f;
+
+    reservoir.Info = tInfo;
 
     for (uint i = 0; i < M; i++)
     {
@@ -93,7 +93,7 @@ void WRS(
         float w = pHat * W_X_i * m;
         float c = 1;
 
-        candidateSelected |= ReservoirUpdate(rngInfo, reservoir, X_i, w, c, pHat);
+        candidateSelected |= ReservoirUpdate<T,TInfo>(rngInfo, reservoir, X_i, w, c, pHat);
     }
 
     if (!candidateSelected)

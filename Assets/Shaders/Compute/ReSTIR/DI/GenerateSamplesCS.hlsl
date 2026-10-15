@@ -36,7 +36,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         isMiss
     );
 
-    ReservoirDI reservoir = CreateReservoir<SubReservoir_DI>();
+    ReservoirDI reservoir = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
 
     if (isMiss)
     {

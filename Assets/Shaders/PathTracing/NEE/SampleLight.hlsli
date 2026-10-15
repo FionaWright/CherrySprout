@@ -13,7 +13,7 @@
 
 LightSample SampleLight(
     inout RngInfo rngInfo,
-    HitInfo hitInfo,
+    float3 hitPos,
     BxDF bxdf,
     float3 wo,
 
@@ -59,7 +59,7 @@ LightSample SampleLight(
 
         PunctualLight light = gMegaBufferPunctuals[punctualIdx];
 
-        lightSample = EvaluatePunctualLight(light, hitInfo.HitPos, lightEval);
+        lightSample = EvaluatePunctualLight(light, hitPos, lightEval);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
     else
@@ -70,7 +70,7 @@ LightSample SampleLight(
 
         uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
 
-        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitInfo, lightEval);
+        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitPos, lightEval);
         DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
     }
 
@@ -89,7 +89,7 @@ LightSample SampleLight(
 }
 
 LightEval EvaluateLight(
-    HitInfo hitInfo,
+    float3 hitPos,
     BxDF bxdf,
     float3 wo,
 
@@ -114,7 +114,7 @@ LightEval EvaluateLight(
         uint punctualIdx = lightSample.Index - gSettings.LsdBasePunctuals;
         PunctualLight light = gMegaBufferPunctuals[punctualIdx];
 
-        EvaluatePunctualLight(light, hitInfo.HitPos, lightEval);
+        EvaluatePunctualLight(light, hitPos, lightEval);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
     else
@@ -125,7 +125,7 @@ LightEval EvaluateLight(
 
         uint emissiveIdx = lightSample.Index - gSettings.LsdBaseEmissives;
 
-        lightEval = EvaluateEmissive(emissiveIdx, hitInfo, lightSample);
+        lightEval = EvaluateEmissive(emissiveIdx, hitPos, lightSample);
         DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
     }
 
