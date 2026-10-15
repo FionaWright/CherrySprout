@@ -55,7 +55,7 @@ void ReconstructPrimaryRayHit(
 
     float depth = gbufferDepth[pixelCoord];
     hitInfo.HitPos = DepthToWorldPos(pixelCoord, depth);
-    hitInfo.HitPosBiased = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;
+    hitInfo.HitPosBiased = hitInfo.HitPos + hitInfo.Ng_ff * 30 * EPSILON;
     hitInfo.RayT = length(hitInfo.HitPos - cameraPos);
 
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
