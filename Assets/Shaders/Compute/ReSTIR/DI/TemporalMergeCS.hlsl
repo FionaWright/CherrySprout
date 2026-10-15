@@ -30,6 +30,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (isValid)
     {
         ReservoirDI reservoirNew = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
+        reservoirNew.Info = reservoir.Info;
 
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
         DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
@@ -41,12 +42,12 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         candidateSelected |= ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoirNew, reservoirPrev);
 
-        /*if (!candidateSelected || reservoirNew.Confidence == 0.0f || reservoirNew.PHat <= 0.0f)
+        if (!candidateSelected || reservoirNew.Confidence <= 0.0f || reservoirNew.PHat <= 0.0f)
         {
             reservoirNew.Confidence = 0.0f;
             reservoirNew.W_Y = 0.0f;
         }
-        else*/
+        else
             reservoirNew.W_Y = reservoirNew.WeightSum / (reservoirNew.PHat * reservoirNew.Confidence);
 
         reservoir = reservoirNew;
