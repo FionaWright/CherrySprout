@@ -120,9 +120,9 @@ struct PathTracerConfig
     float SprAlpha = 0.0f;
 
     float RestirTemporalNormalDivThreshold = 0.9f;
-    float RestirSpatialNormalDivThreshold = 0.9f;
+    float RestirSpatialNormalDivThreshold = 0.1f;
     float RestirTemporalDepthDivThreshold = 0.9f; // TODO
-    float RestirSpatialDepthDivThreshold = 0.9f;
+    float RestirSpatialDepthDivThreshold = 0.1f;
     float RestirSpatialRadius = 5.0f;
 
     bool TrueRandomSeedMode = false;

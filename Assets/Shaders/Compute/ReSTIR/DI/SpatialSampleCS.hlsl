@@ -34,17 +34,18 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     // TODO: Occlusion rejection
 
     float3 N_main = reservoir.Info.HitInfo.Ns_ff;
+    float depth_main = gGBufferDepth[pixelCoord].x;
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_SPATIAL);
 
     for (uint i = 0; i < gSettings.RestirSpatialNumSamples; i++)
     {
-        //int2 coord = SampleDisc(rngInfo, pixelCoord, gSettings.RestirSpatialRadius);
-        //int2 coord = pixelCoord + int2(i+1,0);
+        int2 coord = SampleDisc(rngInfo, pixelCoord, gSettings.RestirSpatialRadius);
+        //int2 coord = pixelCoord + int2(i+1,2*i+1);
 
-        float2 offset = RemapUtoS(float2(Rand01(rngInfo), Rand01(rngInfo)));
-        int2 coord = int2(pixelCoord) + offset * gSettings.RestirSpatialRadius;
+        //float2 offset = RemapUtoS(float2(Rand01(rngInfo), Rand01(rngInfo)));
+        //int2 coord = int2(pixelCoord) + offset * gSettings.RestirSpatialRadius;
 
         if (all(coord == pixelCoord)) // TODO: Is this allowed?
             continue;
@@ -57,6 +58,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         float3 N_neighbour = reservoirNeighbour.Info.HitInfo.Ns_ff; // TODO: This is fine even though it's not technically from gbuffer right?
         if (dot(N_main, N_neighbour) < gSettings.RestirSpatialNormalDivThreshold)
+            continue;
+
+        float depth_neighbour = gGBufferDepth[coord].x; // TODO: Convert to linear
+        if (depth_main / depth_neighbour < 1.0f - gSettings.RestirSpatialDepthDivThreshold ||
+            depth_neighbour / depth_main > 1.0f + gSettings.RestirSpatialDepthDivThreshold)
             continue;
 
         ReEvaluate(reservoirNeighbour.Y, reservoir.Info);
