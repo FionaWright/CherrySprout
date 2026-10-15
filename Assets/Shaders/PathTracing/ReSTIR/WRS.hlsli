@@ -40,17 +40,19 @@ bool ReservoirMerge(
     inout Reservoir<T,TInfo> reservoir,
     Reservoir<T,TInfo> other)
 {
-    float c = min(other.Confidence, reservoir.Confidence * ConfidenceCap);
+    //float c = min(other.Confidence, reservoir.Confidence * ConfidenceCap);
+    float c = min(other.Confidence, ConfidenceCap);
     float pHat = Target(other.Y, reservoir.Info);
     float w = GetWeight(pHat, c, other.W_Y);
 
     //float m = BalanceHeuristic(reservoir.PHat, pHat, reservoir.Confidence, c);
     //w *= m;
 
+    reservoir.Confidence += c;
+
     if (w <= 0.0f)
         return false;
 
-    reservoir.Confidence += c;
     reservoir.WeightSum += w;
 
     float r = Rand01(rngInfo);
