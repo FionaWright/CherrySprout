@@ -25,6 +25,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     bool isValid = reservoirPrev.W_Y > 0.0f && reservoirPrev.PHat > 0.0f && reservoirPrev.Confidence > 0.0f;
     // TODO: Normal/Distance rejection
+    // TODO: Occlusion rejection
 
     if (isValid)
     {
@@ -33,46 +34,24 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
         DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
 
-        float wCurr = reservoir.PHat * reservoir.W_Y * reservoir.Confidence;
-        ReservoirUpdate<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, reservoirNew, reservoir.Y, wCurr, reservoir.Confidence, reservoir.PHat);
+        bool candidateSelected = false;
 
-        reservoirPrev.PHat = Target(reservoirPrev.Y, reservoir.Info);
-        float wPrev = reservoirPrev.PHat * reservoirPrev.W_Y * reservoirPrev.Confidence;
-        ReservoirUpdate<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, reservoirNew, reservoirPrev.Y, wPrev, reservoirPrev.Confidence, reservoirPrev.PHat);
+        float wCurr = GetWeight(reservoir.PHat, reservoir.Confidence, reservoir.W_Y);
+        candidateSelected |= ReservoirUpdate<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, reservoirNew, reservoir.Y, wCurr, reservoir.Confidence, reservoir.PHat);
 
-        reservoirNew.W_Y = reservoirNew.WeightSum / (reservoirNew.PHat * reservoirNew.Confidence);
+        candidateSelected |= ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoirNew, reservoirPrev);
+
+        /*if (!candidateSelected || reservoirNew.Confidence == 0.0f || reservoirNew.PHat <= 0.0f)
+        {
+            reservoirNew.Confidence = 0.0f;
+            reservoirNew.W_Y = 0.0f;
+        }
+        else*/
+            reservoirNew.W_Y = reservoirNew.WeightSum / (reservoirNew.PHat * reservoirNew.Confidence);
 
         reservoir = reservoirNew;
     }
 
     gReservoirBuffer[reservoirIdx] = reservoir;
     gReservoirBuffer[reservoirIdxPrev] = reservoir;
-
-    return;
-/*
-
-    float pHatPrev = reservoirPrev.PHat;
-    reservoirPrev.PHat = Target(reservoirPrev.Y, reservoir.Info);
-    float pdfPrev = PDF(reservoirPrev.Y, reservoir.Info);
-
-    if (pdfPrev <= 0.0f || pHatPrev <= 0.0f || reservoirPrev.Confidence <= 0.0f)
-    {
-        gReservoirBuffer[reservoirIdx] = reservoir;
-        gReservoirBuffer[reservoirIdxPrev] = reservoir;
-        return;
-    }
-
-    //float ConfPrev = reservoirPrev.Confidence;
-    //reservoirPrev.Confidence = min(reservoirPrev.Confidence, (float)gSettings.RestirTemporalConfidenceCap);
-    //float MCapRatio = reservoirPrev.Confidence / ConfPrev;
-    reservoirPrev.Confidence = min(reservoirPrev.Confidence, reservoir.Confidence * gSettings.RestirTemporalConfidenceCap);
-
-    float W_X_i = 1.0f / pdfPrev;
-    float w = reservoirPrev.PHat * reservoirPrev.WeightSum / pHatPrev;
-
-    ReservoirMerge(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev, w);
-
-    gReservoirBuffer[reservoirIdx] = reservoir;
-    gReservoirBuffer[reservoirIdxPrev] = reservoir;
-*/
 }

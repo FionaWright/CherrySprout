@@ -56,7 +56,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     info.Wo = -rayDirection;
     info.HitInfo = hitInfo;
 
-    WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, gSettings.RestirGenConfidenceCap, info);
+    WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, info);
 
     gReservoirBuffer[reservoirIdx] = reservoir;
 }

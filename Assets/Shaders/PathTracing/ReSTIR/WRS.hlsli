@@ -1,6 +1,11 @@
 #ifndef H_RIS_H
 #define H_RIS_H
 
+float GetWeight(float pHat, float c, float W)
+{
+    return pHat * c * W;
+}
+
 template<typename T, typename TInfo>
 bool ReservoirUpdate(
     inout RngInfo rngInfo,
@@ -8,8 +13,7 @@ bool ReservoirUpdate(
     T X_i,
     float w,
     float c,
-    float pHat
-)
+    float pHat)
 {
     if (w <= 0.0f)
         return false;
@@ -29,17 +33,20 @@ bool ReservoirUpdate(
 }
 
 template<typename T, typename TInfo>
-void ReservoirMerge(
+bool ReservoirMerge(
     inout RngInfo rngInfo,
-    uint ConfidenceCap,
+    float ConfidenceCap,
     inout Reservoir<T,TInfo> reservoir,
-    Reservoir<T,TInfo> other,
-    float w
-)
+    Reservoir<T,TInfo> other)
 {
-    if (w <= 0.0f)
-        return;
+    float c = min(other.Confidence, reservoir.Confidence * ConfidenceCap);
+    float pHat = Target(other.Y, reservoir.Info);
+    float w = GetWeight(pHat, c, other.W_Y);
 
+    if (w <= 0.0f)
+        return false;
+
+    reservoir.Confidence += c;
     reservoir.WeightSum += w;
 
     float r = Rand01(rngInfo);
@@ -47,13 +54,10 @@ void ReservoirMerge(
     if (r < norm_w)
     {
         reservoir.Y = other.Y;
-        reservoir.PHat = other.PHat;
+        reservoir.PHat = pHat;
+        return true;
     }
-
-    reservoir.Confidence += other.Confidence;
-    //reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
-
-    reservoir.W_Y = reservoir.PHat <= 0.0f ? 0.0f : reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
+    return false;
 }
 
 template<typename T>
@@ -67,9 +71,7 @@ void WRS(
     inout RngInfo rngInfo,
     inout Reservoir<T,TInfo> reservoir,
     uint M,
-    uint ConfidenceCap,
-    TInfo tInfo
-)
+    TInfo tInfo)
 {
     bool candidateSelected = false;
 
@@ -90,9 +92,8 @@ void WRS(
         float W_X_i = 1.0f / pdf;
 
         //float m = RestirMis(X_i, M);
-        //float w = pHat * W_X_i * m;
-        float w = pHat * W_X_i;
         float c = 1;
+        float w = GetWeight(pHat, c, W_X_i);
 
         candidateSelected |= ReservoirUpdate<T,TInfo>(rngInfo, reservoir, X_i, w, c, pHat);
     }
@@ -104,7 +105,6 @@ void WRS(
         return;
     }
 
-    //reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
     reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
 }
 
