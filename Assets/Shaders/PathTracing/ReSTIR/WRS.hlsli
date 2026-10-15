@@ -50,10 +50,10 @@ void ReservoirMerge(
         reservoir.PHat = other.PHat;
     }
 
-    reservoir.W_Y = reservoir.PHat <= 0.0f ? 0.0f : reservoir.WeightSum / reservoir.PHat;
-
     reservoir.Confidence += other.Confidence;
-    reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
+    //reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
+
+    reservoir.W_Y = reservoir.PHat <= 0.0f ? 0.0f : reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
 }
 
 template<typename T>
@@ -84,13 +84,14 @@ void WRS(
 
         float pHat = Target(X_i, tInfo);
         float pdf = PDF(X_i, tInfo);
-        if (pdf <= 0.0f)
+        if (pHat <= 0.0f || pdf <= 0.0f)
             continue;
 
         float W_X_i = 1.0f / pdf;
 
-        float m = RestirMis(X_i, M);
-        float w = pHat * W_X_i * m;
+        //float m = RestirMis(X_i, M);
+        //float w = pHat * W_X_i * m;
+        float w = pHat * W_X_i;
         float c = 1;
 
         candidateSelected |= ReservoirUpdate<T,TInfo>(rngInfo, reservoir, X_i, w, c, pHat);
@@ -103,8 +104,8 @@ void WRS(
         return;
     }
 
-    reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
-    reservoir.W_Y = reservoir.WeightSum / reservoir.PHat;
+    //reservoir.Confidence = min(reservoir.Confidence, ConfidenceCap);
+    reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
 }
 
 #endif
