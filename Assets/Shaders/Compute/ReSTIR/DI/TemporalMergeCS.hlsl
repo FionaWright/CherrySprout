@@ -57,6 +57,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
         DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
 
+        ReEvaluate(reservoirPrev.Y, reservoir.Info);
+
         ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev);
 
         if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)

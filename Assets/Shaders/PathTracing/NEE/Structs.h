@@ -20,7 +20,7 @@ struct LightEval
     hlsl::float3 Direction;
     float Distance;
 
-    bool IsDelta;
+    bool IsDelta; // TODO: IsDelta might actually belong in LightSample. Guess it could go in either as it's dependent on the light index and nothing else
 };
 
 #endif
