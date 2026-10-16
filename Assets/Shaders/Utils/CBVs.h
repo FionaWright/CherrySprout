@@ -100,7 +100,7 @@ struct CbvMatrices_M
 
 struct CbvMatrices_VP
 {
-    hlsl::float4x4 V, P;
+    hlsl::float4x4 V, P, PrevV;
 };
 
 struct CbvColor

@@ -14,6 +14,8 @@ struct VsOut
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
     uint materialIdx : TEXCOORD2;
+    float4 clipPos : TEXCOORD3;
+    float4 prevClipPos : TEXCOORD4;
 };
 
 ConstantBuffer<CbvGBufferPrePass_PerInstance> gInfo : register(b0); // Push Constants
@@ -32,6 +34,9 @@ VsOut VSMain(VsIn input)
 
     pos = mul(gMatricesVP.V, worldPos);
     output.position = mul(gMatricesVP.P, pos);
+
+    output.clipPos = output.position; // Note: SV_POSITION semantic converts position to screen-space which we don't want
+    output.prevClipPos = mul(gMatricesVP.P, mul(gMatricesVP.PrevV, worldPos));
 
     output.uv = input.uv;
     output.normal = normalize(mul((float3x3)instanceData.MTI, input.normal));

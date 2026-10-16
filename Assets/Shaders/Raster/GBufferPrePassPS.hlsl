@@ -10,6 +10,8 @@ struct VsOut
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
     uint materialIdx : TEXCOORD2;
+    float4 clipPos : TEXCOORD3;
+    float4 prevClipPos : TEXCOORD4;
 };
 
 StructuredBuffer<Material> gMegaBufferMaterials : register(t1);
@@ -22,10 +24,24 @@ struct GBufferOut
 {
     uint   MaterialIdx1       : SV_Target0;
     float4 Normals2_UV2       : SV_Target1;
-	float4 MV3_Reserved1      : SV_Target2;
+	float4 MV2_Reserved2      : SV_Target2;
 };
 
 #define NORMALS_MAPS_ENABLED 1
+
+float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
+{
+    float2 ndc = clipPos.xy / clipPos.w;
+    float2 ndcPrev = prevClipPos.xy / prevClipPos.w;
+
+    ndc = RemapStoU(ndc);
+    ndcPrev = RemapStoU(ndcPrev);
+
+    if (ndcPrev.x < 0.0f || ndcPrev.x > 1.0f || ndcPrev.y < 0.0f || ndcPrev.y > 1.0f)
+        return float2(10.0f, 10.0f);
+
+    return ndc - ndcPrev;
+}
 
 GBufferOut PSMain(VsOut input)
 {
@@ -48,10 +64,12 @@ GBufferOut PSMain(VsOut input)
         Ns = normalize(Ns);
     }
 
+    float2 mv = ComputeMotionVectors(input.clipPos, input.prevClipPos);
+
     Ns = RemapStoU(Ns);
 
     output.MaterialIdx1 = input.materialIdx + 1;
     output.Normals2_UV2 = float4(Ns.xy, uv);
-    output.MV3_Reserved1 = float4(0, 0, 0, 0);
+    output.MV2_Reserved2 = float4(mv, 0, 0);
     return output;
 }

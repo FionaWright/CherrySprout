@@ -43,6 +43,8 @@ private:
     uint32_t m_heapIdxDepth = 0;
     std::vector<XMFLOAT4> m_rtvClearValues;
 
+    XMMATRIX m_prevV{};
+
     D12Resource m_gbufferTexMaterialIdx;
     D12Resource m_gbufferTexNormalsUv;
     D12Resource m_gbufferTexDepth;

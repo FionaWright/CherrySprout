@@ -21,7 +21,7 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_rtvClearValues = {
         XMFLOAT4(0, 0, 0, 0),
         XMFLOAT4(1, 1, 1, 1),
-        XMFLOAT4(0, 0, 0, 0),
+        XMFLOAT4(1, 1, 0, 0),
     };
     m_gbufferTexMaterialIdx.Init_Tex2D("GBuffer Material Idx", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_MAT_IDX, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[0]);
     m_gbufferTexNormalsUv.Init_Tex2D("GBuffer Normals + UV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_NORMALS_UV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[1]);
@@ -138,7 +138,10 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
     CbvMatrices_VP matricesVP = {};
     XMStoreFloat4x4(&matricesVP.V, V);
     XMStoreFloat4x4(&matricesVP.P, P);
+    XMStoreFloat4x4(&matricesVP.PrevV, m_prevV);
     m_descriptorSet.UpdateCBV(0, &matricesVP);
+
+    m_prevV = V;
 
     CbvGBufferPrePass_PerInstance perInstance{};
 
