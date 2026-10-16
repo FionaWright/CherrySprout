@@ -19,9 +19,21 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdxIn];
 
-    // TODO: MVs
+    float2 mv = gGBufferMv[pixelCoord].xy;
 
-    uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
+    bool prevWasOffscreen = mv.x >= 9.0f || mv.y >= 9.0f;
+    if (prevWasOffscreen)
+        return;
+
+    float2 currUV = (float2(pixelCoord) + 0.5f) / (float2)gSettings.FrameDimensions;
+    float2 prevUV = currUV - mv;
+    int2 prevPixelCoord = int2(floor(prevUV * (float2)gSettings.FrameDimensions));
+
+    bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
+    if (!validPrevPixel)
+        return;
+
+    uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(prevPixelCoord);
     ReservoirDI reservoirPrev = gReservoirBuffer[reservoirIdxPrev];
 
     bool isValidPrev = true;

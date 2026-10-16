@@ -34,6 +34,9 @@ float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
     float2 ndc = clipPos.xy / clipPos.w;
     float2 ndcPrev = prevClipPos.xy / prevClipPos.w;
 
+    ndc.y = -ndc.y;
+    ndcPrev.y = -ndcPrev.y;
+
     ndc = RemapStoU(ndc);
     ndcPrev = RemapStoU(ndcPrev);
 
