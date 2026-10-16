@@ -283,6 +283,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RestirSpatialNumSamples = renderInfo.PathTracerConfig->RestirSpatialNumSamples;
         settings.RestirSpatialConfidenceCap = renderInfo.PathTracerConfig->RestirSpatialConfidenceCap;
         settings.RestirSpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
+        settings.RestirTemporalEnabled = renderInfo.PathTracerConfig->RestirTemporalEnabled;
+        settings.RestirSpatialEnabled = renderInfo.PathTracerConfig->RestirSpatialEnabled;
 
         settings.LsdBasePunctuals = renderInfo.LsdBasePunctuals;
         settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;

@@ -17,7 +17,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
+    uint reservoirIdx = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_GEN_SAMPLES);

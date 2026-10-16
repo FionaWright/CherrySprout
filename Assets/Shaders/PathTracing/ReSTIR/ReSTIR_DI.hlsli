@@ -73,7 +73,7 @@ float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info)
 
 float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y, out bool invalidReservoir)
 {
-    uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
+    uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
 
     //invalidReservoir = reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f;
@@ -136,7 +136,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
 SubReservoir_DI Generate(inout RngInfo rngInfo, SubReservoirInfo_DI info) { return (SubReservoir_DI)0; }
 float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info) { return NAN; }
 float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info) { return NAN; }
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y) { Y = (SubReservoir_DI)0; return NAN; }
+float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y, out bool invalidReservoir) { Y = (SubReservoir_DI)0; invalidReservoir = true; return NAN; }
 
 #endif
 

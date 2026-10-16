@@ -11,6 +11,8 @@
 
 #define DEBUG_MODE_READBACK 0
 
+#define NUM_RESERVOIR_SUB_BUFFERS 3 // Ping, Pong, Prev
+
 void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs)
 {
     m_pipelineDiGenerateSamples.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
@@ -20,7 +22,7 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
 
     if (!m_reservoirBufferRW.GetResource())
     {
-        m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * 2;
+        m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_RESERVOIR_SUB_BUFFERS;
         const size_t reservoirBufferSize = m_numReservoirs * sizeof(ReservoirDI);
         m_reservoirBufferRW.Init_Buffer("Reservoir (RW)", device, reservoirBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_reservoirBufferReadback.Init_Buffer("Reservoir (Readback)", device, reservoirBufferSize, D3D12_RESOURCE_FLAG_NONE, true);
@@ -33,7 +35,7 @@ void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsComman
 
     if (!m_reservoirBufferRW.GetResource())
     {
-        m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * 2;
+        m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_RESERVOIR_SUB_BUFFERS;
         const size_t reservoirBufferSize = m_numReservoirs * sizeof(ReservoirDI);
         m_reservoirBufferRW.Init_Buffer("Reservoir (RW)", device, reservoirBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_reservoirBufferReadback.Init_Buffer("Reservoir (Readback)", device, reservoirBufferSize, D3D12_RESOURCE_FLAG_NONE, true);

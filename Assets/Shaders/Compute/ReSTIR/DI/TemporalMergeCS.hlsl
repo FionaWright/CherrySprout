@@ -15,8 +15,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
-    ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+    uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
+    uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
+    ReservoirDI reservoir = gReservoirBuffer[reservoirIdxIn];
 
     // TODO: MVs
 
@@ -35,6 +36,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     // TODO: Something wrong with VisibilityTest, causes bias
 
+    // TODO: When MVs added, lack of ping-pong could cause memory collision issues
+
     if (isValidPrev)
     {
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
@@ -51,6 +54,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
     }
 
-    gReservoirBuffer[reservoirIdx] = reservoir;
+    gReservoirBuffer[reservoirIdxOut] = reservoir;
     gReservoirBuffer[reservoirIdxPrev] = reservoir;
 }

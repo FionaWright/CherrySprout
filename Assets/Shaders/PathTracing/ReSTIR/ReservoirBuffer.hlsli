@@ -1,15 +1,104 @@
 #ifndef H_RESERVOIR_BUFFER_H
 #define H_RESERVOIR_BUFFER_H
 
-uint GetReservoirBufferIndex_Current(uint2 pixelCoord)
+/*
+
+Reservoir Buffer:
+W = Frame Width
+H = Frame Height
+
+N = WxH
+
+- ReservoirxN - Reservoirs Ping
+- ReservoirxN - Reservoirs Pong
+- ReservoirxN - Previous Frame Reservoirs
+
+Initial Candidates -> (Ping)
+Temporal (Ping -> Pong, Prev)
+Spatial (Pong -> Ping)
+
+*/
+
+uint GetReservoirBufferBase_Ping()
+{
+    return 0;
+}
+
+uint GetReservoirBufferBase_Pong()
+{
+    return gSettings.FrameDimensions.x * gSettings.FrameDimensions.y;
+}
+
+uint GetReservoirBufferBase_Prev()
+{
+    return 2 * gSettings.FrameDimensions.x * gSettings.FrameDimensions.y;
+}
+
+uint GetReservoirBufferIndexLocal(uint2 pixelCoord)
 {
     return pixelCoord.y * gSettings.FrameDimensions.x + pixelCoord.x;
 }
 
+uint GetReservoirBufferIndex_Ping(uint2 pixelCoord)
+{
+    return GetReservoirBufferBase_Ping() + GetReservoirBufferIndexLocal(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_Pong(uint2 pixelCoord)
+{
+    return GetReservoirBufferBase_Pong() + GetReservoirBufferIndexLocal(pixelCoord);
+}
+
 uint GetReservoirBufferIndex_Previous(uint2 pixelCoord)
 {
-    uint bufferIdx = pixelCoord.y * gSettings.FrameDimensions.x + pixelCoord.x;
-    return bufferIdx + gSettings.FrameDimensions.x * gSettings.FrameDimensions.y;
+    return GetReservoirBufferBase_Prev() + GetReservoirBufferIndexLocal(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_InitialCandidatesOutput(uint2 pixelCoord)
+{
+    return GetReservoirBufferIndex_Ping(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_TemporalInput(uint2 pixelCoord)
+{
+    return GetReservoirBufferIndex_Ping(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_TemporalOutput(uint2 pixelCoord)
+{
+    return GetReservoirBufferIndex_Pong(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_SpatialInput(uint2 pixelCoord)
+{
+    if (gSettings.RestirTemporalEnabled)
+        return GetReservoirBufferIndex_Pong(pixelCoord);
+    else
+        return GetReservoirBufferIndex_Ping(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_SpatialOutput(uint2 pixelCoord)
+{
+    if (gSettings.RestirTemporalEnabled)
+        return GetReservoirBufferIndex_Ping(pixelCoord);
+    else
+        return GetReservoirBufferIndex_Pong(pixelCoord);
+}
+
+uint GetReservoirBufferIndex_Final(uint2 pixelCoord)
+{
+    if (gSettings.RestirTemporalEnabled)
+    {
+        if (gSettings.RestirSpatialEnabled)
+            return GetReservoirBufferIndex_Ping(pixelCoord);
+        else
+            return GetReservoirBufferIndex_Pong(pixelCoord);
+    }
+
+    if (gSettings.RestirSpatialEnabled)
+        return GetReservoirBufferIndex_Pong(pixelCoord);
+    else
+        return GetReservoirBufferIndex_Ping(pixelCoord);
 }
 
 #endif

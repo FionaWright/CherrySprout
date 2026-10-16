@@ -27,11 +27,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint reservoirIdx = GetReservoirBufferIndex_Current(pixelCoord);
-    ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+    uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
+    uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
+    ReservoirDI reservoir = gReservoirBuffer[reservoirIdxIn];
 
-    // TODO: Depth rejection
     // TODO: Occlusion rejection
+
+    // TODO: Set up path-dumper, asserts and output color systems into restir pre-passes. Basically just requires passing a little state that can be resolved on the PT side
 
     float3 N_main = reservoir.Info.HitInfo.Ns_ff;
     float depth_main = gGBufferDepth[pixelCoord].x;
@@ -53,7 +55,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         coord.x = max(0, min(coord.x, gSettings.FrameDimensions.x - 1));
         coord.y = max(0, min(coord.y, gSettings.FrameDimensions.y - 1));
 
-        uint idx = GetReservoirBufferIndex_Current(coord);
+        uint idx = GetReservoirBufferIndex_SpatialInput(coord);
         ReservoirDI reservoirNeighbour = gReservoirBuffer[idx];
 
         float3 N_neighbour = reservoirNeighbour.Info.HitInfo.Ns_ff; // TODO: This is fine even though it's not technically from gbuffer right?
@@ -81,5 +83,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (reservoir.Confidence == 0.0f)
         reservoir.Y.LightEval.Radiance = float3(1,0,0);
 
-    gReservoirBuffer[reservoirIdx] = reservoir;
+    gReservoirBuffer[reservoirIdxOut] = reservoir;
 }

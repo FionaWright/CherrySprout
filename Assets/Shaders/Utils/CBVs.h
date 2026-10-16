@@ -54,7 +54,10 @@ struct CbvPathTracingSettings
     hlsl::uint RestirSpatialNumSamples;
     hlsl::uint RestirSpatialConfidenceCap;
     float RestirSpatialRadius;
-    float p;
+    hlsl::uint RestirTemporalEnabled; // TODO: Could be flags
+
+    hlsl::uint RestirSpatialEnabled;
+    hlsl::float3 p;
 };
 
 struct CbvPanoToEA
