@@ -14,8 +14,8 @@ class D3D;
 class Heap;
 
 #define GBUFFER_FORMAT_MAT_IDX      DXGI_FORMAT_R8_UINT
-#define GBUFFER_FORMAT_NORMALS      DXGI_FORMAT_R10G10B10A2_UNORM // TODO: Change to Rg16f
-#define GBUFFER_FORMAT_UV_MV        DXGI_FORMAT_R16G16B16A16_FLOAT
+#define GBUFFER_FORMAT_NORMALS_UV   DXGI_FORMAT_R16G16B16A16_FLOAT
+#define GBUFFER_FORMAT_MV           DXGI_FORMAT_R16G16B16A16_FLOAT
 #define GBUFFER_FORMAT_DEPTH        DXGI_FORMAT_D32_FLOAT
 #define GBUFFER_FORMAT_DEPTH_SRV    DXGI_FORMAT_R32_FLOAT
 
@@ -28,9 +28,9 @@ public:
     void UnreserveData();
 
     [[nodiscard]] D12Resource* GetGBufferMaterialIdx() { return &m_gbufferTexMaterialIdx; }
-    [[nodiscard]] D12Resource* GetGBufferNormals() { return &m_gbufferTexNormals; }
+    [[nodiscard]] D12Resource* GetGBufferNormalsUv() { return &m_gbufferTexNormalsUv; }
     [[nodiscard]] D12Resource* GetGBufferDepth() { return &m_gbufferTexDepth; }
-    [[nodiscard]] D12Resource* GetGBufferUvMv() { return &m_gbufferTexUvMv; }
+    [[nodiscard]] D12Resource* GetGBufferMv() { return &m_gbufferTexMv; }
 
     [[nodiscard]] CD3DX12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const { return m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth); }
 
@@ -38,15 +38,15 @@ private:
     Heap m_heapRTV;
     Heap m_heapDSV;
     uint32_t m_heapIdxMatIdx = 0;
-    uint32_t m_heapIdxNormals = 0;
-    uint32_t m_heapIdxUvMv = 0;
+    uint32_t m_heapIdxNormalsUv = 0;
+    uint32_t m_heapIdxMv = 0;
     uint32_t m_heapIdxDepth = 0;
     std::vector<XMFLOAT4> m_rtvClearValues;
 
     D12Resource m_gbufferTexMaterialIdx;
-    D12Resource m_gbufferTexNormals;
+    D12Resource m_gbufferTexNormalsUv;
     D12Resource m_gbufferTexDepth;
-    D12Resource m_gbufferTexUvMv;
+    D12Resource m_gbufferTexMv;
 
     Pipeline m_pipeline;
     RootSig m_rootSig;

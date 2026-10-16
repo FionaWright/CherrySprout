@@ -28,9 +28,8 @@ void ReconstructPrimaryRayHit(
     uint2 pixelCoord,
 
     Texture2D<uint> gbufferMaterialIdx,
-    Texture2D<float4> gbufferNormals,
+    Texture2D<float4> gbufferNormalsUv,
     Texture2D<float> gbufferDepth,
-    Texture2D<float4> gbufferUvMv,
     StructuredBuffer<Material> megaBufferMaterials,
 
     out HitInfo hitInfo,
@@ -49,8 +48,10 @@ void ReconstructPrimaryRayHit(
 
     hitInfo.Mat = megaBufferMaterials[matIdx];
 
-    hitInfo.UV = gbufferUvMv[pixelCoord].xy;
-    hitInfo.Ns_ff = RemapUtoS(gbufferNormals[pixelCoord].xyz);
+    float2 normal2 = RemapUtoS(gbufferNormalsUv[pixelCoord].xy);
+
+    hitInfo.UV = gbufferNormalsUv[pixelCoord].zw;
+    hitInfo.Ns_ff = Normal2To3(normal2);
     hitInfo.Ng_ff = hitInfo.Ns_ff;
 
     float depth = gbufferDepth[pixelCoord];

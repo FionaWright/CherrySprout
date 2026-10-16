@@ -11,9 +11,8 @@ void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState path
             gSettings.CameraPositionWorld,
             pixelCoord,
             gGBufferMaterialIdx,
-            gGBufferNormals,
+            gGBufferNormalsUv,
             gGBufferDepth,
-            gGBufferUvMv,
             gMegaBufferMaterials,
             hitInfo,
             isMiss

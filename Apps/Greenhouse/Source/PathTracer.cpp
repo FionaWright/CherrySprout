@@ -155,9 +155,9 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     }
 
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 13, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferNormals(), gbuffer->GetGBufferNormals()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 14, gbuffer->GetGBufferNormalsUv(), gbuffer->GetGBufferNormalsUv()->GetDesc().Format);
     m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 15, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 16, gbuffer->GetGBufferUvMv(), gbuffer->GetGBufferUvMv()->GetDesc().Format);
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 16, gbuffer->GetGBufferMv(), gbuffer->GetGBufferMv()->GetDesc().Format);
 
     m_gradientManager.LoadSceneData(d3d, heap, &m_primal);
 }

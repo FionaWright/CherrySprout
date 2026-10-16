@@ -24,16 +24,16 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         XMFLOAT4(0, 0, 0, 0),
     };
     m_gbufferTexMaterialIdx.Init_Tex2D("GBuffer Material Idx", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_MAT_IDX, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[0]);
-    m_gbufferTexNormals.Init_Tex2D("GBuffer Normals", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_NORMALS, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[1]);
-    m_gbufferTexUvMv.Init_Tex2D("GBuffer UV + MV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_UV_MV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[2]);
+    m_gbufferTexNormalsUv.Init_Tex2D("GBuffer Normals + UV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_NORMALS_UV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[1]);
+    m_gbufferTexMv.Init_Tex2D("GBuffer MV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_MV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[2]);
     m_gbufferTexDepth.Init_Depth2D("GBuffer Depth", d3d->GetDevice(), w, h, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 #define NUM_RENDER_TARGETS 3
 
     m_heapRTV.Init("GBuffer Pre-Pass Heap RTV", d3d->GetDevice(), NUM_RENDER_TARGETS, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     m_heapIdxMatIdx = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexMaterialIdx);
-    m_heapIdxNormals = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexNormals);
-    m_heapIdxUvMv = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexUvMv);
+    m_heapIdxNormalsUv = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexNormalsUv);
+    m_heapIdxMv = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexMv);
 
     m_heapDSV.Init("GBuffer Pre-Pass Heap DSV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     m_heapIdxDepth = CreateDSV(d3d->GetDevice(), &m_heapDSV, &m_gbufferTexDepth, GBUFFER_FORMAT_DEPTH);
@@ -67,8 +67,8 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     desc.NumRenderTargets = NUM_RENDER_TARGETS;
     desc.RTVFormats[0] = GBUFFER_FORMAT_MAT_IDX;
-    desc.RTVFormats[1] = GBUFFER_FORMAT_NORMALS;
-    desc.RTVFormats[2] = GBUFFER_FORMAT_UV_MV;
+    desc.RTVFormats[1] = GBUFFER_FORMAT_NORMALS_UV;
+    desc.RTVFormats[2] = GBUFFER_FORMAT_MV;
     m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GBufferPrePassVS.hlsl", "Raster/GBufferPrePassPS.hlsl", desc);
 }
 
@@ -89,14 +89,14 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
         CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         m_gbufferTexMaterialIdx.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_gbufferTexNormals.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_gbufferTexUvMv.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        m_gbufferTexNormalsUv.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        m_gbufferTexMv.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferTexDepth.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {
             m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxMatIdx),
-            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxNormals),
-            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxUvMv),
+            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxNormalsUv),
+            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxMv),
         };
 
         const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth);
@@ -157,7 +157,7 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
 void GBufferPrePass::UnreserveData()
 {
     m_gbufferTexMaterialIdx.Release();
-    m_gbufferTexNormals.Release();
-    m_gbufferTexUvMv.Release();
+    m_gbufferTexNormalsUv.Release();
+    m_gbufferTexMv.Release();
     m_gbufferTexDepth.Release();
 }

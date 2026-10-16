@@ -48,9 +48,9 @@ StructuredBuffer<ProbabilityDistributionSample>     gLightCDF               : re
 #endif
 
 Texture2D<uint>                                     gGBufferMaterialIdx     : register(t13, REGISTER_SPACE_DEFAULT);
-Texture2D<float4>                                   gGBufferNormals         : register(t14, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                                   gGBufferNormalsUv       : register(t14, REGISTER_SPACE_DEFAULT);
 Texture2D<float>                                    gGBufferDepth           : register(t15, REGISTER_SPACE_DEFAULT);
-Texture2D<float4>                                   gGBufferUvMv            : register(t16, REGISTER_SPACE_DEFAULT);
+Texture2D<float4>                                   gGBufferMv              : register(t16, REGISTER_SPACE_DEFAULT);
 
 // =================== T Registers (Scene Textures) ==============================================================
 

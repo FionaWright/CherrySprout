@@ -21,8 +21,8 @@ SamplerState gSampler : register(s0);
 struct GBufferOut
 {
     uint   MaterialIdx1       : SV_Target0;
-    float4 Normals3_Reserved1 : SV_Target1;
-	float4 UV2_MV2            : SV_Target2;
+    float4 Normals2_UV2       : SV_Target1;
+	float4 MV3_Reserved1      : SV_Target2;
 };
 
 #define NORMALS_MAPS_ENABLED 1
@@ -51,7 +51,7 @@ GBufferOut PSMain(VsOut input)
     Ns = RemapStoU(Ns);
 
     output.MaterialIdx1 = input.materialIdx + 1;
-    output.Normals3_Reserved1 = float4(Ns, 0);
-    output.UV2_MV2 = float4(uv, 0, 0);
+    output.Normals2_UV2 = float4(Ns.xy, uv);
+    output.MV3_Reserved1 = float4(0, 0, 0, 0);
     return output;
 }

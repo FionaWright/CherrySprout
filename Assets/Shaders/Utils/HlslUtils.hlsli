@@ -121,4 +121,10 @@ float LengthSquared(float2 v) { return dot(v, v); }
 float LengthSquared(float3 v) { return dot(v, v); }
 float LengthSquared(float4 v) { return dot(v, v); }
 
+float3 Normal2To3(float2 normal)
+{
+    float z = sqrt(max(0.0f, 1.0f - normal.x * normal.x - normal.y * normal.y));
+    return normalize(float3(normal, z));
+}
+
 #endif

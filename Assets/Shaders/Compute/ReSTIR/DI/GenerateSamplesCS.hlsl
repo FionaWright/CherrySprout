@@ -28,9 +28,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gSettings.CameraPositionWorld,
         pixelCoord,
         gGBufferMaterialIdx,
-        gGBufferNormals,
+        gGBufferNormalsUv,
         gGBufferDepth,
-        gGBufferUvMv,
         gMegaBufferMaterials,
         hitInfo,
         isMiss

@@ -285,9 +285,9 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         }
 
         m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gbufferPrePass.GetGBufferNormals()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferNormalsUv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_gbufferPrePass.GetGBufferUvMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_gbufferPrePass.GetGBufferMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
     const auto rtvHandle = m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxFrameBuffer);

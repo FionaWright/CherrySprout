@@ -27,10 +27,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     {
         float2 normalXY = sourceVal.xy;
         normalXY = RemapUtoS(normalXY);
-
-        float z = sqrt(max(0.0f, 1.0f - normalXY.x * normalXY.x - normalXY.y * normalXY.y));
-
-        float3 normalXYZ = normalize(float3(normalXY, z));
+        float3 normalXYZ = Normal2To3(normalXY);
         normalXYZ = RemapStoU(normalXYZ);
 
         gDest_4Channel[pixelCoord].xyz = normalXYZ;
