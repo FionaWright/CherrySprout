@@ -76,8 +76,11 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
 
-    //invalidReservoir = reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f;
-    invalidReservoir = false;
+    invalidReservoir = reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f;
+    //invalidReservoir = false;
+
+    if (invalidReservoir)
+        return 0.0f;
 
     Y = reservoir.Y;
     float3 wi = Y.LightSample.Direction;

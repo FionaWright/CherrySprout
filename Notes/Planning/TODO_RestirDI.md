@@ -9,6 +9,7 @@
 - [x] Fix Regressions
 - [ ] Reconstruct HitPosBiased is hacky, need better solution
 - [ ] Spatio-Temporal
+- [ ] Fix env map / emissive issues
 - [x] Python Executor
 - [ ] Mean Test
 - [x] Golden Test

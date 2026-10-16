@@ -50,6 +50,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     // TODO: When MVs added, lack of ping-pong could cause memory collision issues
 
+    // TODO: Direction/Distance need to be moved out of light sample. Then ReEvaluate here
+
     if (isValidPrev)
     {
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
