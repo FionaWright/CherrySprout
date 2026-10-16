@@ -34,7 +34,7 @@ void ReEvaluate(inout SubReservoir_DI X_i, SubReservoirInfo_DI info)
 
 float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
 {
-    float NdL = max(0.0f, dot(info.HitInfo.Ns_ff, X_i.LightSample.Direction));
+    float NdL = max(0.0f, dot(info.HitInfo.Ns_ff, X_i.LightEval.Direction));
     if (NdL <= 0)
         return 0.0f;
 
@@ -44,20 +44,20 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
     float shadowFactor = 1.0f;
     if (FEAT_CORE(RestirTargetVisibility))
     {
-        TraceRayShadow(info.HitInfo.HitPosBiased, X_i.LightSample.Direction, X_i.LightSample.Distance, shadowFactor);
+        TraceRayShadow(info.HitInfo.HitPosBiased, X_i.LightEval.Direction, X_i.LightEval.Distance, shadowFactor);
         if (shadowFactor <= 0.0f)
             return 0;
     }
 
     float3 m;
-    if (X_i.LightSample.IsDelta)
+    if (X_i.LightEval.IsDelta)
     {
         m = 1.0f;
     }
     else
     {
         BxDF bxdf;
-        BxdfEval bxdfEval = bxdf.Evaluate(info.HitInfo, info.Wo, X_i.LightSample.Direction);
+        BxdfEval bxdfEval = bxdf.Evaluate(info.HitInfo, info.Wo, X_i.LightEval.Direction);
 
         m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
@@ -71,20 +71,27 @@ float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info)
     return X_i.LightEval.PDF;
 }
 
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y, out bool invalidReservoir)
+float3 SampleReservoir(
+    HitInfo hitInfo,
+    uint2 pixelCoord,
+    float3 wo,
+    BxDF bxdf,
+    uint numSamples,
+    out SubReservoir_DI Y,
+    out float lightDistance,
+    out bool invalidReservoir)
 {
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
 
     invalidReservoir = reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f;
-    //invalidReservoir = false;
+
+    Y = reservoir.Y;
+    float3 wi = Y.LightEval.Direction;
+    lightDistance = Y.LightEval.Distance;
 
     if (invalidReservoir)
         return 0.0f;
-
-    Y = reservoir.Y;
-    float3 wi = Y.LightSample.Direction;
-    float dist = Y.LightSample.Distance;
 
     // Debug
     {
@@ -109,7 +116,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
         return 0;
 
     float shadowFactor;
-    TraceRayShadow(hitInfo.HitPosBiased, wi, dist, shadowFactor);
+    TraceRayShadow(hitInfo.HitPosBiased, wi, lightDistance, shadowFactor);
     DBG_OUTPUT1(shadowFactor, RESTIR_Occluded);
     if (shadowFactor <= 0.0f)
         return 0;
@@ -117,7 +124,7 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
     //DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason
 
     float3 m;
-    if (Y.LightSample.IsDelta)
+    if (lightEval.IsDelta)
     {
         m = 1.0f;
     }
@@ -139,7 +146,15 @@ float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, 
 SubReservoir_DI Generate(inout RngInfo rngInfo, SubReservoirInfo_DI info) { return (SubReservoir_DI)0; }
 float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info) { return NAN; }
 float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info) { return NAN; }
-float3 SampleReservoir(HitInfo hitInfo, uint2 pixelCoord, float3 wo, BxDF bxdf, uint numSamples, out SubReservoir_DI Y, out bool invalidReservoir) { Y = (SubReservoir_DI)0; invalidReservoir = true; return NAN; }
+float3 SampleReservoir(
+    HitInfo hitInfo,
+    uint2 pixelCoord,
+    float3 wo,
+    BxDF bxdf,
+    uint numSamples,
+    out SubReservoir_DI Y,
+    out float lightDistance,
+    out bool invalidReservoir) { Y = (SubReservoir_DI)0; lightDistance = NAN; invalidReservoir = true; return NAN; }
 
 #endif
 

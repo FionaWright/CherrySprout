@@ -25,9 +25,9 @@ LightSample SampleLight(
     {
         lightEval.Radiance = 0;
         lightEval.PDF = 1.0f;
+        lightEval.Distance = 0;
 
         lightSample.Index = 0;
-        lightSample.Distance = INF;
         return lightSample;
     }
 
@@ -79,9 +79,9 @@ LightSample SampleLight(
 
     DBG_OUTPUT1(pdf_lsd,               NEE_LsdPdf);
     DBG_OUTPUT1(lightSample.Index,     NEE_LightSampleIdx);
-    DBG_OUTPUT1(lightSample.Distance,  NEE_LightSampleDistance);
-    DBG_OUTPUT3(lightSample.Direction, NEE_LightSampleDir);
 
+    DBG_OUTPUT1(lightEval.Distance,    NEE_LightSampleDistance);
+    DBG_OUTPUT3(lightEval.Direction,   NEE_LightSampleDir);
     DBG_OUTPUT3(lightEval.Radiance,    NEE_LightSampleRadiance);
     DBG_OUTPUT1(lightEval.PDF,         NEE_LightSamplePDF);
 

@@ -98,8 +98,8 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position, out LightEv
 
     float distance = sqrt(distance2);
 
-    lightSample.Direction = normalize(L);
-    lightSample.Distance = max(distance - radius, 0.0f);
+    lightEval.Direction = normalize(L);
+    lightEval.Distance = max(distance - radius, 0.0f);
 
     float attenuation = 1.0f / max(distance2, radius2);
 
@@ -113,8 +113,8 @@ LightSample EvaluateDistantLight(PunctualLight light, out LightEval lightEval)
 {
     LightSample lightSample = (LightSample)0;
 
-    lightSample.Direction = normalize(light.Position);
-    lightSample.Distance = INF;
+    lightEval.Direction = normalize(light.Position);
+    lightEval.Distance = INF;
 
     lightEval.Radiance = light.Color * light.Intensity;
     DBG_SCALE_INTENSITY_DISTANT(lightEval.Radiance);
@@ -134,10 +134,10 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position, out LightEva
 
     float distance = sqrt(distance2);
 
-    lightSample.Direction = L / distance;
-    lightSample.Distance = distance;
+    lightEval.Direction = L / distance;
+    lightEval.Distance = distance;
 
-    float3 lightToPoint = -lightSample.Direction;
+    float3 lightToPoint = -lightEval.Direction;
 
     float cosTheta = dot(normalize(light.SpotOrRectDirection), lightToPoint);
 
@@ -171,8 +171,8 @@ LightSample EvaluateRectLight(PunctualLight light, float3 position, out LightEva
 
     float distance = sqrt(distance2);
 
-    lightSample.Direction = L / distance;
-    lightSample.Distance = distance;
+    lightEval.Direction = L / distance;
+    lightEval.Distance = distance;
 
     float cosTheta = dot(normalize(light.SpotOrRectDirection), -L);
 
@@ -181,6 +181,8 @@ LightSample EvaluateRectLight(PunctualLight light, float3 position, out LightEva
 
     return lightSample;
 }
+
+// TODO: Refactor into Sample and Evaluate
 
 LightSample EvaluatePunctualLight(PunctualLight light, float3 position, out LightEval lightEval)
 {
@@ -210,7 +212,7 @@ LightSample EvaluatePunctualLight(PunctualLight light, float3 position, out Ligh
     }
 
     lightEval.PDF = 1.0f;
-    lightSample.IsDelta = true;
+    lightEval.IsDelta = true;
     return lightSample;
 }
 

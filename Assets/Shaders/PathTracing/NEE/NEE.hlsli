@@ -14,18 +14,21 @@ float3 SampleNEE(
     float3 wo,
 
     out LightSample lightSample,
+    out float lightDistance,
     out float shadowFactor)
 {
     LightEval lightEval;
     lightSample = SampleLight(rngInfo, hitInfo.HitPos, bxdf, wo, lightEval);
 
+    lightDistance = lightEval.Distance;
+
     shadowFactor = 0.0f;
 
-    float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
+    float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
     if (NdL < 0.0f || length(lightEval.Radiance) == 0.0f)
         return 0;
 
-    TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor);
+    TraceRayShadow(hitInfo.HitPosBiased, lightEval.Direction, lightEval.Distance, shadowFactor);
     if (shadowFactor <= 0.0f)
         return 0;
 
@@ -34,13 +37,13 @@ float3 SampleNEE(
     {
         m = gDebugSettings.FixedMisNee;
     }
-    else if (lightSample.IsDelta)
+    else if (lightEval.IsDelta)
     {
         m = 1.0f;
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightSample.Direction);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
@@ -62,16 +65,16 @@ float3 EvaluateNEE(
 {
     shadowFactor = 0.0f;
 
-    float NdL = dot(hitInfo.Ns_ff, lightSample.Direction);
+    LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, lightSample);
+
+    float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
     if (NdL <= 0.0f)
         return 0;
-
-    LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, lightSample);
 
     if (length(lightEval.Radiance) == 0.0f)
         return 0;
 
-    TraceRayShadow(hitInfo.HitPosBiased, lightSample.Direction, lightSample.Distance, shadowFactor);
+    TraceRayShadow(hitInfo.HitPosBiased, lightEval.Direction, lightEval.Distance, shadowFactor);
     if (shadowFactor <= 0.0f)
         return 0;
 
@@ -80,13 +83,13 @@ float3 EvaluateNEE(
     {
         m = gDebugSettings.FixedMisNee;
     }
-    else if (lightSample.IsDelta)
+    else if (lightEval.IsDelta)
     {
         m = 1.0f;
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightSample.Direction);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
@@ -105,7 +108,8 @@ float3 SampleNEE(
     float3 wo,
 
     out LightSample lightSample,
-    out float shadowFactor) { lightSample = (LightSample)0; shadowFactor = NAN; return NAN; }
+    out float lightDistance,
+    out float shadowFactor) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,

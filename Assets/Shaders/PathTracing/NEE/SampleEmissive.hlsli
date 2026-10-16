@@ -50,8 +50,6 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
     uint primitiveCount = instance.MegaBufferCountIndex / 3;
     uint primitiveIdx = RandRangeUInt(rngInfo, 0, primitiveCount-1);
 
-    float3 bary = SampleEmissiveBary(rngInfo);
-
     uint primitiveOffset = instance.MegaBufferOffsetIndex / 3;
     uint3 tri = gMegaBufferIndex[primitiveOffset + primitiveIdx];
 
@@ -63,10 +61,12 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
     float3 p1 = mul(instance.M, float4(v1.Position,1)).xyz;
     float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
 
+    float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
+
+    float3 bary = SampleEmissiveBary(rngInfo);
+
     float2 uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
-
-    float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
 
     float3 destPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
 
@@ -81,13 +81,13 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
 
     lightEval.Radiance = emission;
     lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
+    lightEval.Direction = wi;
+    lightEval.Distance = dist;
+    lightEval.IsDelta = false;
 
     LightSample lightSample = (LightSample)0;
-    lightSample.Direction = wi;
-    lightSample.Distance = dist;
-    lightSample.UV = uv;
+    lightSample.BaryOrUV = bary;
     lightSample.SubIndex = primitiveIdx;
-    lightSample.IsDelta = false;
     return lightSample;
 }
 
@@ -111,15 +111,28 @@ LightEval EvaluateEmissive(uint emissiveIdx, float3 hitPos, LightSample lightSam
 
     float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
 
+    float3 bary = lightSample.BaryOrUV;
+
+    float2 uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
+    uv.y = 1 - uv.y;
+
+    float3 destPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
+
     float3 emissionMat = material.EmissiveColor * material.EmissiveStrength;
-    float3 emissionSample = SampleSceneTexture3(lightSample.UV, material.TexIdxEmissive, 1);
+    float3 emissionSample = SampleSceneTexture3(uv, material.TexIdxEmissive, 1);
     float3 emission = SRGB_to_LRGB(emissionSample) * emissionMat;
+
+    float3 wi = normalize(destPos - hitPos);
+    float dist = length(destPos - hitPos);
 
     float triangleArea = GetTriangleArea(p0, p1, p2);
 
     LightEval lightEval;
     lightEval.Radiance = emission;
-    lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -lightSample.Direction, lightSample.Distance);
+    lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
+    lightEval.Direction = wi;
+    lightEval.Distance = dist;
+    lightEval.IsDelta = false;
     return lightEval;
 }
 

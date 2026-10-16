@@ -23,17 +23,18 @@ float3 SampleDirectLighting(
     float shadowFactor = 0.0f;
 
     bool invalidReservoir = true;
+    float lightDistance = INF;
 
     if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
     {
         SubReservoir_DI lightSE;
-        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, invalidReservoir);
+        E_direct += SampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, lightDistance, invalidReservoir);
         lightSample = lightSE.LightSample;
     }
 
     if (invalidReservoir)
     {
-        float3 L_nee = SampleNEE(rngInfo, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
+        float3 L_nee = SampleNEE(rngInfo, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
@@ -58,7 +59,7 @@ float3 SampleDirectLighting(
     {
         if (gSettings.TransientLightIdx == -1 || gSettings.TransientLightIdx == lightSample.Index)
         {
-            float transientFactor = GetTransientFactor(pathState.RollingPathDistance + lightSample.Distance);
+            float transientFactor = GetTransientFactor(pathState.RollingPathDistance + lightDistance);
             E_direct *= transientFactor;
         }
         else

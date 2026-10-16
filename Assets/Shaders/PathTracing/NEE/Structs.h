@@ -5,20 +5,22 @@
 
 struct LightSample
 {
-    hlsl::float3 Direction;
-    float Distance;
-
-    hlsl::float2 UV;
     hlsl::uint Index;
-    hlsl::uint SubIndex; // (Emissive primitiveIdx)
+    hlsl::float3 p;
 
-    bool IsDelta;
+    hlsl::float3 BaryOrUV; // Emissive Bary or Env Map UV
+    hlsl::uint SubIndex; // Emissive PrimitiveIdx
 };
 
 struct LightEval
 {
     hlsl::float3 Radiance;
     float PDF;
+
+    hlsl::float3 Direction;
+    float Distance;
+
+    bool IsDelta;
 };
 
 #endif

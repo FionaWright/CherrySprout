@@ -13,20 +13,23 @@ LightSample SampleEnvMap(inout RngInfo rngInfo, out LightEval lightEval)
 
     lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
     lightEval.PDF = pdf_env;
+    lightEval.Direction = wi_env;
+    lightEval.Distance = INF;
+    lightEval.IsDelta = false;
 
     LightSample lightSample = (LightSample)0;
-    lightSample.Direction = wi_env;
-    lightSample.Distance = INF;
-    lightSample.UV = uv_env;
-    lightSample.IsDelta = false;
+    lightSample.BaryOrUV.xy = uv_env;
     return lightSample;
 }
 
 LightEval EvaluateEnvMap(LightSample lightSample)
 {
     LightEval lightEval;
-    lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, lightSample.UV).rgb;
-    lightEval.PDF = EvaluateEnvMapPdf(lightSample.UV);
+    lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, lightSample.BaryOrUV.xy).rgb;
+    lightEval.PDF = EvaluateEnvMapPdf(lightSample.BaryOrUV.xy);
+    lightEval.Direction = EaSquareToSphere(lightSample.BaryOrUV.xy);
+    lightEval.Distance = INF;
+    lightEval.IsDelta = false;
     return lightEval;
 }
 
