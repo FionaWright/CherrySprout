@@ -23,6 +23,8 @@ float3 DepthToWorldPos(uint2 pixelCoord, float depth)
     return worldPos.xyz;
 }
 
+#define HIT_POS_NORMAL_BIAS 30
+
 void ReconstructPrimaryRayHit(
     float3 cameraPos,
     uint2 pixelCoord,
@@ -48,15 +50,15 @@ void ReconstructPrimaryRayHit(
 
     hitInfo.Mat = megaBufferMaterials[matIdx];
 
-    float2 normal2 = RemapUtoS(gbufferNormalsUv[pixelCoord].xy);
+    float2 normal_oct = gbufferNormalsUv[pixelCoord].xy;
 
     hitInfo.UV = gbufferNormalsUv[pixelCoord].zw;
-    hitInfo.Ns_ff = Normal2To3(normal2);
+    hitInfo.Ns_ff = DecodeNormalOctahedral(normal_oct);
     hitInfo.Ng_ff = hitInfo.Ns_ff;
 
     float depth = gbufferDepth[pixelCoord];
     hitInfo.HitPos = DepthToWorldPos(pixelCoord, depth);
-    hitInfo.HitPosBiased = hitInfo.HitPos + hitInfo.Ng_ff * 30 * EPSILON;
+    hitInfo.HitPosBiased = hitInfo.HitPos + hitInfo.Ng_ff * HIT_POS_NORMAL_BIAS * EPSILON;
     hitInfo.RayT = length(hitInfo.HitPos - cameraPos);
 
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);

@@ -23,8 +23,8 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_GdptShiftRec |
         eCore_GdptShiftHalf |
         eCore_AliasTables |
-        eCore_RestirDI
-        //eCore_RussianRoulette
+        eCore_RestirDI |
+        eCore_RussianRoulette
     );
 
 static constexpr auto s_defaultFeatFlagsCoreQS = static_cast<FeatFlagsCore>(~0);

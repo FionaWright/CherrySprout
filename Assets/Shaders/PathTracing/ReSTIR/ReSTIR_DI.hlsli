@@ -71,7 +71,7 @@ float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info)
     return X_i.LightEval.PDF;
 }
 
-float3 SampleReservoir(
+bool TrySampleReservoir(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,
@@ -79,19 +79,16 @@ float3 SampleReservoir(
     uint numSamples,
     out SubReservoir_DI Y,
     out float lightDistance,
-    out bool invalidReservoir)
+    out float3 radiance)
 {
+    radiance = 0.0f;
+
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
-
-    invalidReservoir = reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f;
 
     Y = reservoir.Y;
     float3 wi = Y.LightEval.Direction;
     lightDistance = Y.LightEval.Distance;
-
-    if (invalidReservoir)
-        return 0.0f;
 
     // Debug
     {
@@ -108,18 +105,21 @@ float3 SampleReservoir(
         DBG_ASSERT_RANGE(0.0f, reservoir.Confidence, gSettings.RestirGenConfidenceCap, RESTIR_CONF_RANGE);
     }
 
+    if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
+        return false;
+
     //LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, Y.LightSample);
     LightEval lightEval = Y.LightEval;
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (reservoir.W_Y <= 0.0f || reservoir.Confidence <= 0.0f || NdL <= 0 || length(lightEval.Radiance) <= 0.0f)
-        return 0;
+    if (NdL <= 0 || length(lightEval.Radiance) <= 0.0f)
+        return false;
 
     float shadowFactor;
     TraceRayShadow(hitInfo.HitPosBiased, wi, lightDistance, shadowFactor);
     DBG_OUTPUT1(shadowFactor, RESTIR_Occluded);
     if (shadowFactor <= 0.0f)
-        return 0;
+        return false;
 
     //DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason
 
@@ -138,7 +138,8 @@ float3 SampleReservoir(
         DBG_OUTPUT1(bxdfEval.PDF, RESTIR_PDF);
     }
 
-    return shadowFactor * lightEval.Radiance * m * NdL * reservoir.W_Y;
+    radiance = shadowFactor * lightEval.Radiance * m * NdL * reservoir.W_Y;
+    return true;
 }
 
 #else
@@ -146,7 +147,7 @@ float3 SampleReservoir(
 SubReservoir_DI Generate(inout RngInfo rngInfo, SubReservoirInfo_DI info) { return (SubReservoir_DI)0; }
 float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info) { return NAN; }
 float PDF(SubReservoir_DI X_i, SubReservoirInfo_DI info) { return NAN; }
-float3 SampleReservoir(
+bool TrySampleReservoir(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,
@@ -154,7 +155,7 @@ float3 SampleReservoir(
     uint numSamples,
     out SubReservoir_DI Y,
     out float lightDistance,
-    out bool invalidReservoir) { Y = (SubReservoir_DI)0; lightDistance = NAN; invalidReservoir = true; return NAN; }
+    out float3 radiance) { Y = (SubReservoir_DI)0; lightDistance = NAN; radiance = NAN; return NAN; }
 
 #endif
 

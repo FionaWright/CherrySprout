@@ -127,4 +127,28 @@ float3 Normal2To3(float2 normal)
     return normalize(float3(normal, z));
 }
 
+float2 EncodeNormalOctahedral(float3 n_snorm)
+{
+    float2 f;
+    f.x = atan2(n_snorm.y, n_snorm.x) / PI;
+    f.y = n_snorm.z;
+
+    return RemapStoU(f);
+}
+
+float3 DecodeNormalOctahedral(float2 oct_unorm)
+{
+    float2 ang = RemapUtoS(oct_unorm);
+
+    float2 scth;
+    sincos(ang.x * PI, scth.x, scth.y);
+    float2 scphi = float2(sqrt(1.0 - ang.y * ang.y), ang.y);
+
+    float3 n;
+    n.x = scth.y * scphi.x;
+    n.y = scth.x * scphi.x;
+    n.z = scphi.y;
+    return n;
+}
+
 #endif

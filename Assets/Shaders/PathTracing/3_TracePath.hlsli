@@ -34,7 +34,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             DBG_SET_CURRENT_RAY_DEPTH(i);
             DBG_PATH_DUMP_MARK_EXPLORED();
             DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),             GBuffer_MatIdx);
-            DBG_OUTPUT3(Normal2To3(RemapUtoS(gGBufferNormalsUv[pixelCoord].xy)),  GBuffer_NormalsUnorm);
+            DBG_OUTPUT3(DecodeNormalOctahedral(gGBufferNormalsUv[pixelCoord].xy), GBuffer_NormalsUnorm);
             DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                              GBuffer_Depth);
             DBG_OUTPUT2(gGBufferNormalsUv[pixelCoord].zw,                         GBuffer_Uv);
             DBG_OUTPUT2(gGBufferMv[pixelCoord].xy,                                GBuffer_Mv);

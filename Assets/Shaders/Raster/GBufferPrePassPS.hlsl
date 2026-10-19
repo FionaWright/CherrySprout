@@ -69,10 +69,10 @@ GBufferOut PSMain(VsOut input)
 
     float2 mv = ComputeMotionVectors(input.clipPos, input.prevClipPos);
 
-    Ns = RemapStoU(Ns);
+    float2 Ns_oct = EncodeNormalOctahedral(Ns);
 
     output.MaterialIdx1 = input.materialIdx + 1;
-    output.Normals2_UV2 = float4(Ns.xy, uv);
+    output.Normals2_UV2 = float4(Ns_oct, uv);
     output.MV2_Reserved2 = float4(mv, 0, 0);
     return output;
 }

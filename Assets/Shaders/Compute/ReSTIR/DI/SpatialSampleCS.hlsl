@@ -80,8 +80,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence); // TODO: Recompute between samples?
     }
 
-    if (reservoir.Confidence == 0.0f)
-        reservoir.Y.LightEval.Radiance = float3(1,0,0);
-
     gReservoirBuffer[reservoirIdxOut] = reservoir;
 }

@@ -54,8 +54,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     // TODO: Depth rejection
     // TODO: Occlusion rejection
 
-    // TODO: Something wrong with VisibilityTest, causes bias
-
     // TODO: When MVs added, lack of ping-pong could cause memory collision issues
 
     if (isValidPrev)

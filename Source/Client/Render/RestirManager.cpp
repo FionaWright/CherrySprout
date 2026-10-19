@@ -69,10 +69,10 @@ void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsComman
         cmdList->ResourceBarrier(1, &barrier);
     }
 
-    // Spatial Merge Pass
-    if (isSpatialEnabled)
+    // Temporal Merge Pass
+    if (isTemporalEnabled)
     {
-        cmdList->SetPipelineState(m_pipelineDiSpatialSample.GetPSO());
+        cmdList->SetPipelineState(m_pipelineDiTemporalMerge.GetPSO());
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         D3D12_RESOURCE_BARRIER barrier = {};
@@ -81,10 +81,10 @@ void RestirManager::GenerateSamplesDi(ID3D12Device* device, ID3D12GraphicsComman
         cmdList->ResourceBarrier(1, &barrier);
     }
 
-    // Temporal Merge Pass
-    if (isTemporalEnabled)
+    // Spatial Merge Pass
+    if (isSpatialEnabled)
     {
-        cmdList->SetPipelineState(m_pipelineDiTemporalMerge.GetPSO());
+        cmdList->SetPipelineState(m_pipelineDiSpatialSample.GetPSO());
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         D3D12_RESOURCE_BARRIER barrier = {};
