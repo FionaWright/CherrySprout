@@ -62,16 +62,21 @@ LightSample SampleLight(
         lightSample = EvaluatePunctualLight(light, hitPos, lightEval);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
-    else
+    else if (lightIdx < gSettings.LsdCount)
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
-        DBG_ASSERT_LT(lightIdx, gSettings.LsdCount, OOB_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
 
         uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
 
         lightSample = SampleEmissive(rngInfo, emissiveIdx, hitPos, lightEval);
         DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
+    }
+    else
+    {
+        DBG_ASSERT_EXPR(false, OOB_LIGHT_INDEX);
+        lightEval.Radiance = 0.0f;
+        return lightSample;
     }
 
     lightSample.Index = lightIdx;
@@ -117,7 +122,7 @@ LightEval EvaluateLight(
         EvaluatePunctualLight(light, hitPos, lightEval);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
-    else
+    else if (lightSample.Index < gSettings.LsdCount)
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
         DBG_ASSERT_LT(lightSample.Index, gSettings.LsdCount, OOB_LIGHT_INDEX);
@@ -127,6 +132,12 @@ LightEval EvaluateLight(
 
         lightEval = EvaluateEmissive(emissiveIdx, hitPos, lightSample);
         DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
+    }
+    else
+    {
+        DBG_ASSERT_EXPR(false, OOB_LIGHT_INDEX);
+        lightEval.Radiance = 0.0f;
+        return lightEval;
     }
 
     lightEval.PDF *= pdf_lsd;

@@ -50,7 +50,11 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
     }
 
     float3 m;
-    if (X_i.LightEval.IsDelta)
+    if (FEAT_DBG(FixedMisNeeManual))
+    {
+        m = gDebugSettings.FixedMisNee;
+    }
+    else if (X_i.LightEval.IsDelta)
     {
         m = 1.0f;
     }
@@ -62,7 +66,7 @@ float Target(SubReservoir_DI X_i, SubReservoirInfo_DI info)
         m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
-    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL / max(1e-6f, X_i.LightEval.PDF);
+    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL; // Note: Don't divide by PDF here
     return Luminance(radiance);
 }
 

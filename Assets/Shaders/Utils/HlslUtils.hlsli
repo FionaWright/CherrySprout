@@ -1,6 +1,8 @@
 #ifndef H_MATH_UTILS_H
 #define H_MATH_UTILS_H
 
+#include "Utils/Constants.h"
+
 float3 NormalizeSafe(float3 v, float3 fallback)
 {
     float len2 = dot(v, v);
