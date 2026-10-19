@@ -31,6 +31,11 @@ struct GBufferOut
 
 float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
 {
+    if (abs(clipPos.w) < 1e-6f || abs(prevClipPos.w) < 1e-6f)
+    {
+        return float2(10.0f, 10.0f);
+    }
+
     float2 ndc = clipPos.xy / clipPos.w;
     float2 ndcPrev = prevClipPos.xy / prevClipPos.w;
 

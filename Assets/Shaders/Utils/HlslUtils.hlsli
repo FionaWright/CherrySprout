@@ -153,4 +153,11 @@ float3 DecodeNormalOctahedral(float2 oct_unorm)
     return n;
 }
 
+int2 MotionVectorToPixelCoord(int2 pixelCoord, float2 mv, float2 dimensions)
+{
+    float2 currUV = (float2(pixelCoord) + 0.5f) / dimensions;
+    float2 prevUV = currUV - mv;
+    return int2(floor(prevUV * dimensions));
+}
+
 #endif

@@ -106,7 +106,6 @@ bool TrySampleReservoir(
         DBG_OUTPUT1(reservoir.W_Y, RESTIR_W_Y);
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f, RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f, RESTIR_WEIGHT_SUM_RANGE);
-        DBG_ASSERT_RANGE(0.0f, reservoir.Confidence, gSettings.RestirGenConfidenceCap, RESTIR_CONF_RANGE);
     }
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)

@@ -31,9 +31,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
     }
 
-    float2 currUV = (float2(pixelCoord) + 0.5f) / (float2)gSettings.FrameDimensions;
-    float2 prevUV = currUV - mv;
-    int2 prevPixelCoord = int2(floor(prevUV * (float2)gSettings.FrameDimensions));
+    int2 prevPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
 
     bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
