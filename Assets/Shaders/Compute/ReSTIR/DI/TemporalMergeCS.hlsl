@@ -17,13 +17,19 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
+    uint reservoirIdxPrevOut = GetReservoirBufferIndex_Previous(pixelCoord);
+
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
     bool prevWasOffscreen = mv.x >= 9.0f || mv.y >= 9.0f;
     if (prevWasOffscreen)
+    {
+        gReservoirBuffer[reservoirIdxOut] = reservoir;
+        gReservoirBuffer[reservoirIdxPrevOut] = reservoir;
         return;
+    }
 
     float2 currUV = (float2(pixelCoord) + 0.5f) / (float2)gSettings.FrameDimensions;
     float2 prevUV = currUV - mv;
@@ -31,10 +37,14 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
+    {
+        gReservoirBuffer[reservoirIdxOut] = reservoir;
+        gReservoirBuffer[reservoirIdxPrevOut] = reservoir;
         return;
+    }
 
-    uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    ReservoirDI reservoirPrev = gReservoirBuffer[reservoirIdxPrev];
+    uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
+    ReservoirDI reservoirPrev = gReservoirBuffer[reservoirIdxPrevIn];
 
     bool isValidPrev = true;
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
@@ -44,13 +54,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     // TODO: Depth rejection
     // TODO: Occlusion rejection
 
-    // Note: ReEvaluate needed if animation added
-
     // TODO: Something wrong with VisibilityTest, causes bias
 
     // TODO: When MVs added, lack of ping-pong could cause memory collision issues
-
-    // TODO: Direction/Distance need to be moved out of light sample. Then ReEvaluate here
 
     if (isValidPrev)
     {
@@ -71,5 +77,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     }
 
     gReservoirBuffer[reservoirIdxOut] = reservoir;
-    gReservoirBuffer[reservoirIdxPrev] = reservoir;
+    gReservoirBuffer[reservoirIdxPrevOut] = reservoir;
 }
