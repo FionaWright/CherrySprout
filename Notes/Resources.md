@@ -65,6 +65,48 @@ Reservoir Splatting:
 Multi-Layer Reservoir Splatting:
     https://graphics.cs.utah.edu/research/projects/multi-layer-restir/
 
+ReSTIR Course:
+    https://intro-to-restir.cwyman.org/presentations/2023ReSTIR_Course_DirectLight_and_Spatiotemporal.pdf
+
+## GDPT:
+
+Original Paper:
+    https://dl.acm.org/doi/epdf/10.1145/2766997
+
+GDPT ReSTIR:
+    https://onlinelibrary.wiley.com/doi/full/10.1111/cgf.70328
+    https://research.nvidia.com/labs/rtr/publication/wang2026gradient/
+
+Mitsuba Implementation:
+    https://github.com/gradientpm/gradient-mts/tree/master/src/integrators/gradient/gpt
+    https://github.com/mmanzi/gradientdomain-mitsuba/tree/master/src/integrators/gpt
+
+GDPT ReSTIR Implementation:
+    https://github.com/elite-sheep/gradient-restir
+
+Temporal GDPT:
+    https://dl.acm.org/doi/10.1145/2980179.2980256
+
+Thesis:
+    TODO
+
+SmallGdpt:
+    https://gist.github.com/BachiLi/4f5c6e5a4fef5773dab1
+
+SPR:
+    https://grail.cs.washington.edu/projects/screenedPoissonEq/
+
+## Path-Guiding:
+
+Path-Guiding in Production:
+    https://dl.acm.org/doi/10.1145/3305366.3328091 
+
+ReSTIR-PG:
+    https://research.nvidia.com/labs/rtr/publication/zeng2025restirpg/
+
+PG Mitsuba Implementation:
+    https://github.com/Tom94/practical-path-guiding/blob/master/mitsuba/src/integrators/path/guided_path.cpp#L374
+
 ## Misc
 
 Primary Ray PDF:

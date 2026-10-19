@@ -8,8 +8,10 @@
 - [ ] Find indoor scene
 - [x] Fix Regressions
 - [ ] Reconstruct HitPosBiased is hacky, need better solution
-- [ ] Spatio-Temporal
-- [ ] Fix env map / emissive issues
+- [x] Spatio-Temporal
+- [x] Fix env map 
+- [ ] Fix emissive issues 
+- [ ] Fix temporal MV issue
 - [x] Python Executor
 - [ ] Mean Test
 - [x] Golden Test
