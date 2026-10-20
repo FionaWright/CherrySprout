@@ -8,6 +8,7 @@
 #include "PathTracing/4_ComputeRayHit.hlsli"
 #include "PathTracing/Debug/PathDumper.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
+#include "PathTracing/ReSTIR/GI.hlsli"
 
 #include "Utils/Random.h"
 #include "Utils/HlslUtils.hlsli"
@@ -105,6 +106,17 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         if (FEAT_CORE(Transient))
             pathState.RollingPathDistance += hitInfo.RayT;
+
+        if (FEAT_CORE(RestirGI) && pathState.RaySegmentIdx == 0)
+        {
+            BxDF bxdf;
+            CandidateGI Y;
+            float3 L_gi;
+            TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, bxdf, Y, L_gi);
+            pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
+
+            DBG_OUTPUT3(L_gi, RESTIR_GiLo);
+        }
 
         float3 L_sample;
         PathVertexInfo currentVertexInfo = (PathVertexInfo)0;

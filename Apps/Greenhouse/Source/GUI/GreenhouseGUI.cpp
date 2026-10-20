@@ -346,7 +346,9 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirDI))
+        const bool restirDiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirDI);
+        const bool restirGiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirGI);
+        if (restirDiEnabled || restirGiEnabled)
         {
             ImGui::Text("ReSTIR:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -531,65 +533,6 @@ void Greenhouse::renderGuiCore()
                         }
                     }
                 }
-                ImGui::EndTable();
-                ImGui::Unindent(IM_GUI_INDENTATION);
-            }
-            ImGui::Spacing();
-        }
-
-        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirDI))
-        {
-            if (ImGui::CollapsingHeader("Reservoir Buffer (DI)"))
-            {
-                ImGui::Indent(IM_GUI_INDENTATION);
-                const auto& reservoirBuffer = m_pathTracer.ReadbackReservoirBuffer();
-
-                static int beginIdx = 0;
-                static int endIdx = 20;
-                ImGui::InputInt("Start Idx", &beginIdx);
-                ImGui::InputInt("End Idx", &endIdx);
-                endIdx = max(0, min(endIdx, static_cast<int>(reservoirBuffer.size())));
-                beginIdx = max(0, min(beginIdx, endIdx));
-
-                if (ImGui::BeginTable("RestirDI Table", 6))
-                {
-                    ImGui::TableSetupColumn("i");
-                    ImGui::TableSetupColumn("W_Y");
-                    ImGui::TableSetupColumn("WeightSum");
-                    ImGui::TableSetupColumn("Confidence");
-                    ImGui::TableSetupColumn("Index");
-                    ImGui::TableSetupColumn("Radiance");
-
-                    ImGui::TableHeadersRow();
-
-                    for (int i = beginIdx; i < endIdx; ++i)
-                    {
-                        ImGui::TableNextRow();
-
-                        const auto& reservoir = reservoirBuffer[i];
-
-                        ImGui::TableSetColumnIndex(0);
-                        ImGui::Text("%i", i);
-
-                        ImGui::TableSetColumnIndex(1);
-                        ImGui::Text("%.3f", reservoir.W_Y);
-
-                        ImGui::TableSetColumnIndex(2);
-                        ImGui::Text("%.3f", reservoir.WeightSum);
-
-                        ImGui::TableSetColumnIndex(3);
-                        ImGui::Text("%.3f", reservoir.Confidence);
-
-                        ImGui::TableSetColumnIndex(4);
-                        ImGui::Text("%if", reservoir.Y.LightSample.Index);
-
-                        ImGui::TableSetColumnIndex(5);
-                        XMFLOAT3 rad = reservoir.Y.LightEval.Radiance;
-                        const ImVec4 color(std::clamp(rad.x, 0.0f, 1.0f), std::clamp(rad.y, 0.0f, 1.0f), std::clamp(rad.z, 0.0f, 1.0f), 1.0f);
-                        ImGui::ColorButton((std::string("##color3-") + std::to_string(i)).c_str(), color, ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(15, 15));
-                    }
-                }
-
                 ImGui::EndTable();
                 ImGui::Unindent(IM_GUI_INDENTATION);
             }

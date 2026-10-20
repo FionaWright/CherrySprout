@@ -121,7 +121,7 @@ struct PathTracerConfig
 
     float RestirTemporalNormalDivThreshold = 0.9f;
     float RestirSpatialNormalDivThreshold = 0.9f;
-    float RestirTemporalDepthDivThreshold = 0.1f; // TODO
+    float RestirTemporalDepthDivThreshold = 0.1f; 
     float RestirSpatialDepthDivThreshold = 0.1f;
     float RestirSpatialRadius = 5.0f;
 

@@ -1,11 +1,14 @@
 #ifndef H_RESTIR_GI_H
 #define H_RESTIR_GI_H
 
+#include "BxDFs/GetBxDF.hlsli"
+
 #if FEAT_CORE_D(RestirGI)
 
-#include "BxDFs/GetBxDF.hlsli"
-#include "PathTracing/NEE/SampleLight.hlsli"
+#include "PathTracing/NEE/SampleNEE.hlsli"
 #include "PathTracing/VisibilityRays.hlsli"
+#include "PathTracing/HitInfo/GetHitInfo.hlsli"
+#include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
@@ -21,7 +24,7 @@ When sampling the reservoir, does the main path continue from the sample point o
 
 */
 
-CandidateGI Generate(inout RngInfo rngInfo, ContextPrimaryRay context)
+void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i)
 {
     BxDF bxdf;
     BxdfEval bxdfEval;
@@ -56,7 +59,6 @@ CandidateGI Generate(inout RngInfo rngInfo, ContextPrimaryRay context)
 
     // TODO: Extension: Missed ray candidates
 
-    CandidateGI X_i;
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
     X_i.DestPosition = isMiss ? 0 : secondaryHitInfo.HitPos;
     X_i.Ns_ff = isMiss ? 0 : secondaryHitInfo.Ns_ff;
@@ -65,7 +67,6 @@ CandidateGI Generate(inout RngInfo rngInfo, ContextPrimaryRay context)
     X_i.DirectContribution = E_direct;
     X_i.BxdfEval = bxdfEval;
     X_i.Jacobian = 1.0f;
-    return X_i;
 }
 
 void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
@@ -78,7 +79,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     float3 v1PosMain = X_i.SourcePositionBiased;
     float3 v1PosShift = context.HitInfo.HitPosBiased;
 
-    if (v1PosMain == v1PosShift)
+    if (all(v1PosMain == v1PosShift))
     {
         X_i.Jacobian = 1.0f;
         return;
@@ -122,7 +123,7 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     float3 beta = 1.0f;
 
     // Primary Hit BxDF Sample
-    E_indirect = bxdfEval.Radiance * abs(NdL);
+    float3 E_indirect = X_i.BxdfEval.Radiance * abs(NdL);
     beta *= E_indirect;
 
     // NEE Sample
@@ -142,33 +143,31 @@ bool TrySampleReservoirGI(
     uint2 pixelCoord,
     float3 wo,
     BxDF bxdf,
-    uint numSamples,
     out CandidateGI Y,
     out float3 Lo)
 {
     Lo = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirDI reservoir = gReservoirBufferGI[reservoirIdx];
+    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
     Y = reservoir.Y;
     float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
-    BxdfEval bxdfEval = Y.BxdfEval;
 
     if (Y.IsMiss)
         return false;
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (NdL <= 0 || length(bxdfEval.Radiance) <= 0.0f)
+    if (NdL <= 0 || length(Y.BxdfEval.Radiance) <= 0.0f)
         return false;
 
     // TODO: Do I need to recompute this rather than just use reservoir.PHat?
 
     // Primary Hit BxDF Sample
-    float3 E_indirect = bxdfEval.Radiance * abs(NdL) * reservoir.W_Y;
+    float3 E_indirect = Y.BxdfEval.Radiance * abs(NdL) * reservoir.W_Y;
     beta *= E_indirect;
 
     // NEE Sample
@@ -179,7 +178,8 @@ bool TrySampleReservoirGI(
 
 #else
 
-CandidateGI Generate(inout RngInfo rngInfo, ContextPrimaryRay context) { return (CandidateGI)0; }
+void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i) { X_i = (CandidateGI)0; }
+void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context) {}
 float Target(CandidateGI X_i, ContextPrimaryRay context) { return NAN; }
 float PDF(CandidateGI X_i, ContextPrimaryRay context) { return NAN; }
 bool TrySampleReservoirGI(
@@ -188,7 +188,6 @@ bool TrySampleReservoirGI(
     uint2 pixelCoord,
     float3 wo,
     BxDF bxdf,
-    uint numSamples,
     out CandidateGI Y,
     out float3 Lo) { Y = (CandidateGI)0; Lo = NAN; return NAN; }
 

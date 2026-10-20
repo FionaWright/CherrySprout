@@ -49,7 +49,6 @@ public:
     D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
     [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
-    const std::vector<ReservoirDI>& ReadbackReservoirBuffer() const { return std::move(m_restirManager.Readback()); }
     void ScheduleRestirClear() { m_restirClearScheduled = true; }
 
     void GUI(GreenhouseConfig* config) override;

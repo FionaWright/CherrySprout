@@ -5,6 +5,8 @@
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
 
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Thresholds.hlsli"
 
@@ -23,7 +25,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    ReservoirDI reservoir = gReservoirBufferGI[reservoirIdxIn];
+    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdxIn];
 
     float3 normalMain = context.HitInfo.Ns_ff;
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
@@ -48,7 +50,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             continue;
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        ReservoirDI reservoirNeighbour = gReservoirBufferGI[idx];
+        ReservoirGI reservoirNeighbour = gReservoirBufferGI[idx];
 
         float3 normalOther = contextOther.HitInfo.Ns_ff;
         if (!PassNormalThreshold(normalMain, normalOther, gSettings.RestirSpatialNormalDivThreshold))

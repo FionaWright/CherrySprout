@@ -1,9 +1,10 @@
 #ifndef H_TARGET_H
 #define H_TARGET_H
 
+#include "BxDFs/GetBxDF.hlsli"
+
 #if FEAT_CORE_D(RestirDI)
 
-#include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/NEE/SampleLight.hlsli"
 #include "PathTracing/VisibilityRays.hlsli"
 
@@ -13,17 +14,15 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-CandidateDI Generate(inout RngInfo rngInfo, ContextPrimaryRay context)
+void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI X_i)
 {
     BxDF bxdf;
 
     LightEval lightEval;
     LightSample lightSample = SampleLight(rngInfo, context.HitInfo.HitPos, bxdf, context.Wo, lightEval);
 
-    CandidateDI X_i;
     X_i.LightSample = lightSample;
     X_i.LightEval = lightEval;
-    return X_i;
 }
 
 void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context)
@@ -147,7 +146,8 @@ bool TrySampleReservoirDI(
 
 #else
 
-CandidateDI Generate(inout RngInfo rngInfo, ContextPrimaryRay context) { return (CandidateDI)0; }
+void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI X_i) { X_i = (CandidateDI)0; }
+void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context) {}
 float Target(CandidateDI X_i, ContextPrimaryRay context) { return NAN; }
 float PDF(CandidateDI X_i, ContextPrimaryRay context) { return NAN; }
 bool TrySampleReservoirDI(

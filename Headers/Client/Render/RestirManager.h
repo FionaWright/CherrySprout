@@ -11,19 +11,27 @@
 
 class D3D;
 
+struct RestirConfig
+{
+    bool ClearBuffers;
+
+    bool EnabledDI;
+    bool EnabledGI;
+    bool EnabledTemporal;
+    bool EnabledSpatial;
+};
+
 class RestirManager
 {
 public:
     void Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs);
 
-    void PrePassesDI(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, bool isTemporalEnabled, bool isSpatialEnabled, bool clear);
+    void PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config);
     void PostUpdate(D3D* d3d);
-
-    const std::vector<ReservoirDI>& Readback() const { return m_cpuReservoirBufferReadback; }
 
     static size_t TotalCbvRequiredSize() { return 0; }
 
-    D12Resource* GetReservoirBufferDI() { return &m_reservoirBufferDiRW; }
+    D12Resource* GetReservoirBufferDI() { return &m_reservoirBufferDi; }
     D12Resource* GetReservoirBufferGI() { return &m_reservoirBufferGi; }
     D12Resource* GetContextsBuffer() { return &m_contextsPrimaryRay; }
 
@@ -33,19 +41,22 @@ public:
 private:
     void initResources(ID3D12Device* device);
 
-    D12Resource m_reservoirBufferDiRW, m_reservoirBufferDiReadback;
+    D12Resource m_reservoirBufferDi;
     D12Resource m_reservoirBufferGi;
     D12Resource m_contextsPrimaryRay;
     size_t m_numReservoirs = 0;
     size_t m_numContexts = 0;
 
     Pipeline m_pipelineInitContext;
-    Pipeline m_pipelineDiGenerateSamples;
-    Pipeline m_pipelineDiTemporalMerge;
-    Pipeline m_pipelineDiSpatialSample;
-    Pipeline m_pipelineDiClear;
+    Pipeline m_pipelineClear;
 
-    std::vector<ReservoirDI> m_cpuReservoirBufferReadback;
+    Pipeline m_pipelineDiGen;
+    Pipeline m_pipelineDiTemporal;
+    Pipeline m_pipelineDiSpatio;
+
+    Pipeline m_pipelineGiGen;
+    Pipeline m_pipelineGiTemporal;
+    Pipeline m_pipelineGiSpatio;
 
     bool m_initialisedResources = false;
 };

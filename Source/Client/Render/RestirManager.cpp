@@ -6,10 +6,7 @@
 #include "HWI/D3D.h"
 #include "PathTracing/ReSTIR/Structs.h"
 #include "System/Config.h"
-#include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
-
-#define DEBUG_MODE_READBACK 0
 
 #define NUM_RESERVOIR_SUB_BUFFERS 3 // Ping, Pong, Prev
 #define NUM_CONTEXT_SUB_BUFFERS 2 // Curr, Prev
@@ -20,11 +17,10 @@ void RestirManager::initResources(ID3D12Device* device)
     m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_CONTEXT_SUB_BUFFERS;
 
     const size_t reservoirBufferSizeDI = m_numReservoirs * sizeof(ReservoirDI);
-    m_reservoirBufferDiRW.Init_Buffer("Reservoir DI (RW)", device, reservoirBufferSizeDI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    m_reservoirBufferDiReadback.Init_Buffer("Reservoir DI (Readback)", device, reservoirBufferSizeDI, D3D12_RESOURCE_FLAG_NONE, true);
+    m_reservoirBufferDi.Init_Buffer("Reservoir DI", device, reservoirBufferSizeDI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     const size_t reservoirBufferSizeGI = m_numReservoirs * sizeof(ReservoirGI);
-    m_reservoirBufferGi.Init_Buffer("Reservoir GI (RW)", device, reservoirBufferSizeGI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_reservoirBufferGi.Init_Buffer("Reservoir GI", device, reservoirBufferSizeGI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     const size_t contextBufferSize = m_numContexts * sizeof(ContextPrimaryRay);
     m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, contextBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -35,10 +31,15 @@ void RestirManager::initResources(ID3D12Device* device)
 void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs)
 {
     m_pipelineInitContext.InitCompute(device, "Compute/ReSTIR/InitContextCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiGenerateSamples.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiTemporalMerge.InitCompute(device, "Compute/ReSTIR/DI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiSpatialSample.InitCompute(device, "Compute/ReSTIR/DI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiClear.InitCompute(device, "Compute/ReSTIR/DI/ClearCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineClear.InitCompute(device, "Compute/ReSTIR/ClearCS.hlsl", rootSig->Get(), compileArgs);
+
+    m_pipelineDiGen.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineDiSpatio.InitCompute(device, "Compute/ReSTIR/DI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
+
+    m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
 
     if (!m_initialisedResources)
     {
@@ -46,7 +47,7 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
     }
 }
 
-void RestirManager::PrePassesDI(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, bool isTemporalEnabled, bool isSpatialEnabled, bool clear)
+void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config)
 {
     GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
 
@@ -55,19 +56,19 @@ void RestirManager::PrePassesDI(ID3D12Device* device, ID3D12GraphicsCommandList*
         initResources(device);
     }
 
-    if (!m_pipelineDiGenerateSamples.GetPSO())
+    if (!m_pipelineDiGen.GetPSO())
         return;
 
-    m_reservoirBufferDiRW.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    m_reservoirBufferDi.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     m_contextsPrimaryRay.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     // Clear Pass
-    if (clear)
+    if (config.ClearBuffers)
     {
-        cmdList->SetPipelineState(m_pipelineDiClear.GetPSO());
+        cmdList->SetPipelineState(m_pipelineClear.GetPSO());
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
-        m_reservoirBufferDiRW.UavBarrier(cmdList);
+        m_reservoirBufferDi.UavBarrier(cmdList);
     }
 
     // Init Context
@@ -78,47 +79,68 @@ void RestirManager::PrePassesDI(ID3D12Device* device, ID3D12GraphicsCommandList*
         m_contextsPrimaryRay.UavBarrier(cmdList);
     }
 
-    // Generate Candidates Pass
+    // DI
+    if (config.EnabledDI)
     {
-        cmdList->SetPipelineState(m_pipelineDiGenerateSamples.GetPSO());
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        // Generate Candidates Pass
+        {
+            cmdList->SetPipelineState(m_pipelineDiGen.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
-        m_reservoirBufferDiRW.UavBarrier(cmdList);
+            m_reservoirBufferDi.UavBarrier(cmdList);
+        }
+
+        // Temporal Merge Pass
+        if (config.EnabledTemporal)
+        {
+            cmdList->SetPipelineState(m_pipelineDiTemporal.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferDi.UavBarrier(cmdList);
+        }
+
+        // Spatial Merge Pass
+        if (config.EnabledSpatial)
+        {
+            cmdList->SetPipelineState(m_pipelineDiSpatio.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferDi.UavBarrier(cmdList);
+        }
     }
 
-    // Temporal Merge Pass
-    if (isTemporalEnabled)
+    // GI
+    if (config.EnabledGI)
     {
-        cmdList->SetPipelineState(m_pipelineDiTemporalMerge.GetPSO());
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        // Generate Candidates Pass
+        {
+            cmdList->SetPipelineState(m_pipelineGiGen.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
-        m_reservoirBufferDiRW.UavBarrier(cmdList);
-        m_contextsPrimaryRay.UavBarrier(cmdList);
+            m_reservoirBufferGi.UavBarrier(cmdList);
+        }
+
+        // Temporal Merge Pass
+        if (config.EnabledTemporal)
+        {
+            cmdList->SetPipelineState(m_pipelineGiTemporal.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferGi.UavBarrier(cmdList);
+        }
+
+        // Spatial Merge Pass
+        if (config.EnabledSpatial)
+        {
+            cmdList->SetPipelineState(m_pipelineGiSpatio.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferGi.UavBarrier(cmdList);
+        }
     }
-
-    // Spatial Merge Pass
-    if (isSpatialEnabled)
-    {
-        cmdList->SetPipelineState(m_pipelineDiSpatialSample.GetPSO());
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
-
-        m_reservoirBufferDiRW.UavBarrier(cmdList);
-    }
-
-#if DEBUG_MODE_READBACK
-    m_reservoirBufferDiRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    m_reservoirBufferDiReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-    cmdList->CopyBufferRegion(m_reservoirBufferDiReadback.GetResource(), 0, m_reservoirBufferDiRW.GetResource(), 0, m_numReservoirs * sizeof(ReservoirDI));
-#endif
 }
 
 void RestirManager::PostUpdate(D3D* d3d)
 {
-#if DEBUG_MODE_READBACK
-    d3d->Flush();
 
-    m_cpuReservoirBufferReadback.resize(m_numReservoirs);
-
-    m_reservoirBufferDiReadback.Readback(m_cpuReservoirBufferReadback.data());
-#endif
 }

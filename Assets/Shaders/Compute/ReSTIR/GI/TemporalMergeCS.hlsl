@@ -5,6 +5,8 @@
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
 
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Thresholds.hlsli"
 
@@ -16,15 +18,14 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint contextIdxMain = GetContextBufferIndex(pixelCoord);
-    uint contextIdxMainPrev = GetContextBufferIndex_Prev(pixelCoord);
-    ContextPrimaryRay context = gContextsPrimaryRay[contextIdxMain];
+    uint contextIdx = GetContextBufferIndex(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
     uint reservoirIdxPrevOut = GetReservoirBufferIndex_Previous(pixelCoord);
 
-    ReservoirDI reservoir = gReservoirBufferGI[reservoirIdxIn];
+    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
@@ -47,7 +48,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     }
 
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    ReservoirDI reservoirPrev = gReservoirBufferGI[reservoirIdxPrevIn];
+    ReservoirGI reservoirPrev = gReservoirBufferGI[reservoirIdxPrevIn];
 
     uint contextIdxOther = GetContextBufferIndex_Prev(prevPixelCoord);
     ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];

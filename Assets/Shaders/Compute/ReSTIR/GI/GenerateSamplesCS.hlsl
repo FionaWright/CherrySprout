@@ -4,9 +4,9 @@
 
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
-#include "PathTracing/3_GetPrimaryRay.hlsli"
-#include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
 [numthreads(16,16,1)]

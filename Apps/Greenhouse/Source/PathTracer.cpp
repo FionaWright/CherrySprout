@@ -312,14 +312,23 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI))
+    const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI);
+    const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirGI);
+    if (restirDiEnabled || restirGiEnabled)
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         heap->Bind(cmdList);
         heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
         m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
-        m_restirManager.PrePassesDI(d3d->GetDevice(), cmdList, renderInfo.PathTracerConfig->RestirTemporalEnabled, renderInfo.PathTracerConfig->RestirSpatialEnabled, m_restirClearScheduled);
+        RestirConfig restirConfig;
+        restirConfig.ClearBuffers = m_restirClearScheduled;
+        restirConfig.EnabledDI = restirDiEnabled;
+        restirConfig.EnabledGI = restirGiEnabled;
+        restirConfig.EnabledTemporal = renderInfo.PathTracerConfig->RestirTemporalEnabled;
+        restirConfig.EnabledSpatial = renderInfo.PathTracerConfig->RestirSpatialEnabled;
+
+        m_restirManager.PrePasses(d3d->GetDevice(), cmdList, restirConfig);
         m_restirClearScheduled = false;
     }
 

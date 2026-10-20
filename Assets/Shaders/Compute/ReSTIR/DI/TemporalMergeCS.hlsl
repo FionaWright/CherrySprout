@@ -5,6 +5,8 @@
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/DI.hlsli"
 
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Thresholds.hlsli"
 
@@ -16,9 +18,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint contextIdxMain = GetContextBufferIndex(pixelCoord);
-    uint contextIdxMainPrev = GetContextBufferIndex_Prev(pixelCoord);
-    ContextPrimaryRay context = gContextsPrimaryRay[contextIdxMain];
+    uint contextIdx = GetContextBufferIndex(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
@@ -57,6 +58,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
     float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
+
+    // TODO: Turn off thresholds, looks strange like maybe MVs are still wrong
 
     bool isValidPrev = true;
     isValidPrev &= !contextOther.IsMiss;

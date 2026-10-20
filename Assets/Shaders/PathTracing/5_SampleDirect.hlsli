@@ -1,7 +1,7 @@
 #ifndef H_SAMPLE_DIRECT_H
 #define H_SAMPLE_DIRECT_H
 
-#include "PathTracing/NEE/NEE.hlsli"
+#include "PathTracing/NEE/SampleNEE.hlsli"
 
 #include "PathTracing/ReSTIR/DI.hlsli"
 #include "PathTracing/Transient.hlsli"

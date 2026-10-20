@@ -96,7 +96,8 @@ void WRS(
 
     for (uint i = 0; i < M; i++)
     {
-        TCandidate X_i = Generate(rngInfo, context);
+        TCandidate X_i;
+        Generate(rngInfo, context, X_i);
 
         float pHat = Target(X_i, context);
         float pdf = PDF(X_i, context);
