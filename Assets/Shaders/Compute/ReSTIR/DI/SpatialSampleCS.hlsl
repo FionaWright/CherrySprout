@@ -8,18 +8,6 @@
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Thresholds.hlsli"
 
-int2 SampleDisc(inout RngInfo rngInfo, int2 pixelCoord, float radius)
-{
-    float u1 = Rand01(rngInfo);
-    float u2 = Rand01(rngInfo);
-
-    float r = radius * sqrt(u1);
-    float theta = 2.0f * PI * u2;
-
-    int2 offset = int2(round(r * float2(cos(theta), sin(theta))));
-    return pixelCoord + offset;
-}
-
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
@@ -37,17 +25,17 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
     ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
 
-    // TODO: Set up path-dumper, asserts and output color systems into restir pre-passes. Basically just requires passing a little state that can be resolved on the PT side
-
     float3 normalMain = context.HitInfo.Ns_ff;
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-    DecorrelateRng(rngInfo, SEED_DECORRELATOR_SPATIAL);
+    DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_SPATIAL);
 
     for (uint i = 0; i < gSettings.RestirSpatialNumSamples; i++)
     {
-        int2 coord = SampleDisc(rngInfo, pixelCoord, gSettings.RestirSpatialRadius);
+        float u1 = Rand01(rngInfo);
+        float u2 = Rand01(rngInfo);
+        int2 coord = SampleDisc(u1, u2, pixelCoord, gSettings.RestirSpatialRadius);
         coord.x = max(0, min(coord.x, gSettings.FrameDimensions.x - 1));
         coord.y = max(0, min(coord.y, gSettings.FrameDimensions.y - 1));
 

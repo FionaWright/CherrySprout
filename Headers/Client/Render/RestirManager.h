@@ -39,6 +39,7 @@ private:
     size_t m_numReservoirs = 0;
     size_t m_numContexts = 0;
 
+    Pipeline m_pipelineInitContext;
     Pipeline m_pipelineDiGenerateSamples;
     Pipeline m_pipelineDiTemporalMerge;
     Pipeline m_pipelineDiSpatialSample;

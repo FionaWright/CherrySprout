@@ -134,6 +134,17 @@ constexpr auto sqrt(T x)
 }
 
 template <typename T>
+constexpr auto round(T x)
+{
+    return std::round(std::forward<T>(x));
+}
+
+constexpr auto round(const DirectX::XMFLOAT2& x)
+{
+    return DirectX::XMFLOAT2(round(x.x), round(x.y));
+}
+
+template <typename T>
 constexpr auto cos(T x)
 {
     return std::cos(std::forward<T>(x));

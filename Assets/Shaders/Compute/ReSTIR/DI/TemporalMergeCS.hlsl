@@ -71,7 +71,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (isValidPrev)
     {
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-        DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
+        DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_TEMPORAL);
 
         ReEvaluate(reservoirPrev.Y, context);
 

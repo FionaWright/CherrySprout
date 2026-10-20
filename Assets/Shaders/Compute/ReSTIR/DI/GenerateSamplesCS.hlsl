@@ -4,8 +4,6 @@
 
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/DI.hlsli"
-#include "PathTracing/3_GetPrimaryRay.hlsli"
-#include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
@@ -17,55 +15,17 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     uint contextIdx = GetContextBufferIndex(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+    if (context.IsMiss)
+        return;
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-    DecorrelateRng(rngInfo, SEED_DECORRELATOR_GEN_SAMPLES);
-
-    // TODO: Jitter GBuffers. Requires per-frame jitter option instead of per-pixel
-
-    HitInfo hitInfo;
-    bool isMiss;
-    float depthNonLinear;
-    ReconstructPrimaryRayHit(
-        gSettings.CameraPositionWorld,
-        pixelCoord,
-        gGBufferMaterialIdx,
-        gGBufferNormalsUv,
-        gGBufferDepth,
-        gMegaBufferMaterials,
-        hitInfo,
-        isMiss,
-        depthNonLinear
-    );
+    DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_GEN_SAMPLES);
 
     ReservoirDI reservoir = CreateReservoir<CandidateDI>();
-    ContextPrimaryRay context = (ContextPrimaryRay)0;
-
-    context.IsMiss = isMiss;
-    context.DepthNonLinear = depthNonLinear;
-
-    if (isMiss)
-    {
-        gReservoirBufferDI[reservoirIdxOut] = reservoir;
-        gContextsPrimaryRay[contextIdx] = context;
-        return;
-    }
-
-    float3 rayOrigin;
-    float3 rayDirection;
-    GetPrimaryRay(
-        rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
-        pixelCoord, gSettings.InvV, gSettings.InvP,
-        gSettings.DofFocalDist, gSettings.DofLensRadius,
-        rayOrigin, rayDirection);
-
-    context.HitInfo = hitInfo;
-    context.Wo = -rayDirection;
-    gContextsPrimaryRay[contextIdx] = context;
-
     WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, context);
 
+    uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     gReservoirBufferDI[reservoirIdxOut] = reservoir;
 }

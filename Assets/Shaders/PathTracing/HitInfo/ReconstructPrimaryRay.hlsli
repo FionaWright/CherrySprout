@@ -43,6 +43,7 @@ void ReconstructPrimaryRayHit(
     uint matIdx = gbufferMaterialIdx[pixelCoord];
     if (matIdx == 0)
     {
+        depthNonLinear = INF;
         isMiss = true;
         return;
     }

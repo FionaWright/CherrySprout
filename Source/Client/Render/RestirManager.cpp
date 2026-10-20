@@ -34,6 +34,7 @@ void RestirManager::initResources(ID3D12Device* device)
 
 void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs)
 {
+    m_pipelineInitContext.InitCompute(device, "Compute/ReSTIR/InitContextCS.hlsl", rootSig->Get(), compileArgs);
     m_pipelineDiGenerateSamples.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
     m_pipelineDiTemporalMerge.InitCompute(device, "Compute/ReSTIR/DI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
     m_pipelineDiSpatialSample.InitCompute(device, "Compute/ReSTIR/DI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
@@ -69,13 +70,20 @@ void RestirManager::PrePassesDI(ID3D12Device* device, ID3D12GraphicsCommandList*
         m_reservoirBufferDiRW.UavBarrier(cmdList);
     }
 
+    // Init Context
+    {
+        cmdList->SetPipelineState(m_pipelineInitContext.GetPSO());
+        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+        m_contextsPrimaryRay.UavBarrier(cmdList);
+    }
+
     // Generate Candidates Pass
     {
         cmdList->SetPipelineState(m_pipelineDiGenerateSamples.GetPSO());
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         m_reservoirBufferDiRW.UavBarrier(cmdList);
-        m_contextsPrimaryRay.UavBarrier(cmdList);
     }
 
     // Temporal Merge Pass
