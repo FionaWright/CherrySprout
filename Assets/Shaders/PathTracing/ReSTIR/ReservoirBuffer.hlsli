@@ -94,18 +94,36 @@ uint GetReservoirBufferIndex_Final(uint2 pixelCoord)
         return GetReservoirBufferIndex_Ping(pixelCoord);
 }
 
-uint GetContextBufferBase_Prev()
+uint GetContextBufferBase_Ping()
+{
+    return 0;
+}
+uint GetContextBufferBase_Pong()
 {
     return gSettings.FrameDimensions.x * gSettings.FrameDimensions.y;
 }
 
-uint GetContextBufferIndex(uint2 pixelCoord)
+uint GetContextBufferIndex_Local(uint2 pixelCoord)
 {
     return pixelCoord.y * gSettings.FrameDimensions.x + pixelCoord.x;
 }
+
+uint GetContextBufferIndex_Ping(uint2 pixelCoord)
+{
+    return GetContextBufferIndex_Local(pixelCoord) + GetContextBufferBase_Ping();
+}
+uint GetContextBufferIndex_Pong(uint2 pixelCoord)
+{
+    return GetContextBufferIndex_Local(pixelCoord) + GetContextBufferBase_Pong();
+}
+
+uint GetContextBufferIndex(uint2 pixelCoord)
+{
+    return gSettings.FrameIdx % 2 == 0 ? GetContextBufferIndex_Ping(pixelCoord) : GetContextBufferIndex_Pong(pixelCoord);
+}
 uint GetContextBufferIndex_Prev(uint2 pixelCoord)
 {
-    return GetContextBufferIndex(pixelCoord) + GetContextBufferBase_Prev();
+    return gSettings.FrameIdx % 2 == 0 ? GetContextBufferIndex_Pong(pixelCoord) : GetContextBufferIndex_Ping(pixelCoord);
 }
 
 #endif

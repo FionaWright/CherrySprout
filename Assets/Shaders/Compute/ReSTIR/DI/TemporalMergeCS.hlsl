@@ -66,7 +66,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     isValidPrev &= PassNormalThreshold(normalMain, normalOther, gSettings.RestirTemporalNormalDivThreshold);
     isValidPrev &= PassDepthThreshold(depthMain, depthOther, gSettings.RestirTemporalDepthDivThreshold);
 
-    // TODO: When MVs added, lack of ping-pong could cause memory collision issues
+    // TODO: When MVs added, lack of ping-pong on prev could cause memory collision issues
 
     if (isValidPrev)
     {
@@ -82,5 +82,4 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     gReservoirBufferDI[reservoirIdxOut] = reservoir;
     gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
-    gContextsPrimaryRay[contextIdxMainPrev] = context; // Optimization: Could use ping-pong alternating on frames
 }

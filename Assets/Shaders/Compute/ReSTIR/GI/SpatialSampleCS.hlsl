@@ -23,7 +23,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
+    ReservoirDI reservoir = gReservoirBufferGI[reservoirIdxIn];
 
     float3 normalMain = context.HitInfo.Ns_ff;
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
@@ -48,7 +48,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             continue;
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        ReservoirDI reservoirNeighbour = gReservoirBufferDI[idx];
+        ReservoirDI reservoirNeighbour = gReservoirBufferGI[idx];
 
         float3 normalOther = contextOther.HitInfo.Ns_ff;
         if (!PassNormalThreshold(normalMain, normalOther, gSettings.RestirSpatialNormalDivThreshold))
@@ -65,5 +65,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     NormalizeUnbiasedContributionWeight(reservoir);
 
-    gReservoirBufferDI[reservoirIdxOut] = reservoir;
+    gReservoirBufferGI[reservoirIdxOut] = reservoir;
 }

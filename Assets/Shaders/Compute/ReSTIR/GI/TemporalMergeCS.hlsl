@@ -24,15 +24,15 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
     uint reservoirIdxPrevOut = GetReservoirBufferIndex_Previous(pixelCoord);
 
-    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
+    ReservoirDI reservoir = gReservoirBufferGI[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
     bool prevWasOffscreen = mv.x >= 9.0f || mv.y >= 9.0f;
     if (context.IsMiss || prevWasOffscreen)
     {
-        gReservoirBufferDI[reservoirIdxOut] = reservoir;
-        gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
+        gReservoirBufferGI[reservoirIdxOut] = reservoir;
+        gReservoirBufferGI[reservoirIdxPrevOut] = reservoir;
         return;
     }
 
@@ -41,13 +41,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
     {
-        gReservoirBufferDI[reservoirIdxOut] = reservoir;
-        gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
+        gReservoirBufferGI[reservoirIdxOut] = reservoir;
+        gReservoirBufferGI[reservoirIdxPrevOut] = reservoir;
         return;
     }
 
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    ReservoirDI reservoirPrev = gReservoirBufferDI[reservoirIdxPrevIn];
+    ReservoirDI reservoirPrev = gReservoirBufferGI[reservoirIdxPrevIn];
 
     uint contextIdxOther = GetContextBufferIndex_Prev(prevPixelCoord);
     ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
@@ -80,7 +80,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         NormalizeUnbiasedContributionWeight(reservoir);
     }
 
-    gReservoirBufferDI[reservoirIdxOut] = reservoir;
-    gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
-    gContextsPrimaryRay[contextIdxMainPrev] = context; // Optimization: Could use ping-pong alternating on frames
+    gReservoirBufferGI[reservoirIdxOut] = reservoir;
+    gReservoirBufferGI[reservoirIdxPrevOut] = reservoir;
 }
