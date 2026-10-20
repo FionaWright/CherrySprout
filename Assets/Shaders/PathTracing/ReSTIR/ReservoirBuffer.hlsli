@@ -94,4 +94,18 @@ uint GetReservoirBufferIndex_Final(uint2 pixelCoord)
         return GetReservoirBufferIndex_Ping(pixelCoord);
 }
 
+uint GetContextBufferBase_Prev()
+{
+    return gSettings.FrameDimensions.x * gSettings.FrameDimensions.y;
+}
+
+uint GetContextBufferIndex(uint2 pixelCoord)
+{
+    return pixelCoord.y * gSettings.FrameDimensions.x + pixelCoord.x;
+}
+uint GetContextBufferIndex_Prev(uint2 pixelCoord)
+{
+    return GetContextBufferIndex(pixelCoord) + GetContextBufferBase_Prev();
+}
+
 #endif

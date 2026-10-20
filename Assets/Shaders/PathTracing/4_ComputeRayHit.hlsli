@@ -7,6 +7,7 @@ void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState path
 {
     if (FEAT_CORE(ReconstructPrimaryRay) && pathState.RaySegmentIdx == 0)
     {
+        float _;
         ReconstructPrimaryRayHit(
             gSettings.CameraPositionWorld,
             pixelCoord,
@@ -15,7 +16,8 @@ void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState path
             gGBufferDepth,
             gMegaBufferMaterials,
             hitInfo,
-            isMiss
+            isMiss,
+            _
         );
         return;
     }

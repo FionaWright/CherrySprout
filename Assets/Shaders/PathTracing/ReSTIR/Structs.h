@@ -10,8 +10,10 @@
 struct ContextPrimaryRay
 {
     HitInfo HitInfo;
+
     hlsl::float3 Wo;
     hlsl::uint IsMiss;
+    float DepthNonLinear;
 };
 
 struct CandidateDI

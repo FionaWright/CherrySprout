@@ -12,10 +12,12 @@
 #define DEBUG_MODE_READBACK 0
 
 #define NUM_RESERVOIR_SUB_BUFFERS 3 // Ping, Pong, Prev
+#define NUM_CONTEXT_SUB_BUFFERS 2 // Curr, Prev
 
 void RestirManager::initResources(ID3D12Device* device)
 {
     m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_RESERVOIR_SUB_BUFFERS;
+    m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_CONTEXT_SUB_BUFFERS;
 
     const size_t reservoirBufferSizeDI = m_numReservoirs * sizeof(ReservoirDI);
     m_reservoirBufferDiRW.Init_Buffer("Reservoir DI (RW)", device, reservoirBufferSizeDI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -24,7 +26,6 @@ void RestirManager::initResources(ID3D12Device* device)
     const size_t reservoirBufferSizeGI = m_numReservoirs * sizeof(ReservoirGI);
     m_reservoirBufferGi.Init_Buffer("Reservoir GI (RW)", device, reservoirBufferSizeGI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight;
     const size_t contextBufferSize = m_numContexts * sizeof(ContextPrimaryRay);
     m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, contextBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
@@ -84,6 +85,7 @@ void RestirManager::PrePassesDI(ID3D12Device* device, ID3D12GraphicsCommandList*
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         m_reservoirBufferDiRW.UavBarrier(cmdList);
+        m_contextsPrimaryRay.UavBarrier(cmdList);
     }
 
     // Spatial Merge Pass

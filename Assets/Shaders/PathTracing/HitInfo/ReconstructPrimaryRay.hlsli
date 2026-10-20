@@ -35,7 +35,8 @@ void ReconstructPrimaryRayHit(
     StructuredBuffer<Material> megaBufferMaterials,
 
     out HitInfo hitInfo,
-    out bool isMiss)
+    out bool isMiss,
+    out float depthNonLinear)
 {
     hitInfo.IsEntering = true;
 
@@ -56,8 +57,8 @@ void ReconstructPrimaryRayHit(
     hitInfo.Ns_ff = DecodeNormalOctahedral(normal_oct);
     hitInfo.Ng_ff = hitInfo.Ns_ff;
 
-    float depth = gbufferDepth[pixelCoord];
-    hitInfo.HitPos = DepthToWorldPos(pixelCoord, depth);
+    depthNonLinear = gbufferDepth[pixelCoord];
+    hitInfo.HitPos = DepthToWorldPos(pixelCoord, depthNonLinear);
     hitInfo.HitPosBiased = hitInfo.HitPos + hitInfo.Ng_ff * HIT_POS_NORMAL_BIAS * EPSILON;
     hitInfo.RayT = length(hitInfo.HitPos - cameraPos);
 

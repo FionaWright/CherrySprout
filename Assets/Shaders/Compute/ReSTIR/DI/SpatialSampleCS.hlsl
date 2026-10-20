@@ -6,6 +6,7 @@
 #include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
+#include "Compute/ReSTIR/Thresholds.hlsli"
 
 int2 SampleDisc(inout RngInfo rngInfo, int2 pixelCoord, float radius)
 {
@@ -27,7 +28,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint contextIdx = GetReservoirBufferIndexLocal(pixelCoord);
+    uint contextIdx = GetContextBufferIndex(pixelCoord);
     ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
         return;
@@ -36,12 +37,10 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
     ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
 
-    // TODO: Occlusion rejection
-
     // TODO: Set up path-dumper, asserts and output color systems into restir pre-passes. Basically just requires passing a little state that can be resolved on the PT side
 
     float3 normalMain = context.HitInfo.Ns_ff;
-    float depthMain = LinearizeDepth(gGBufferDepth[pixelCoord].x, gSettings.NearPlane, gSettings.FarPlane);
+    float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_SPATIAL);
@@ -64,12 +63,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         ReservoirDI reservoirNeighbour = gReservoirBufferDI[idx];
 
         float3 normalOther = contextOther.HitInfo.Ns_ff;
-        if (dot(normalMain, normalOther) < gSettings.RestirSpatialNormalDivThreshold)
+        if (!PassNormalThreshold(normalMain, normalOther, gSettings.RestirSpatialNormalDivThreshold))
             continue;
 
-        float depthOther = LinearizeDepth(gGBufferDepth[coord].x, gSettings.NearPlane, gSettings.FarPlane);
-        if (depthMain / depthOther < 1.0f - gSettings.RestirSpatialDepthDivThreshold ||
-            depthOther / depthMain > 1.0f + gSettings.RestirSpatialDepthDivThreshold)
+        float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
+        if (!PassDepthThreshold(depthMain, depthOther, gSettings.RestirSpatialDepthDivThreshold))
             continue;
 
         ReEvaluate(reservoirNeighbour.Y, context);

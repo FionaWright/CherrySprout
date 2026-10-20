@@ -6,6 +6,7 @@
 #include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
+#include "Compute/ReSTIR/Thresholds.hlsli"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -15,8 +16,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint contextIdx = GetReservoirBufferIndexLocal(pixelCoord);
-    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+    uint contextIdxMain = GetContextBufferIndex(pixelCoord);
+    uint contextIdxMainPrev = GetContextBufferIndex_Prev(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdxMain];
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
@@ -47,25 +49,22 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
     ReservoirDI reservoirPrev = gReservoirBufferDI[reservoirIdxPrevIn];
 
-    //uint contextIdxOther = GetReservoirBufferIndexLocal(prevPixelCoord);
-    //ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
+    uint contextIdxOther = GetContextBufferIndex_Prev(prevPixelCoord);
+    ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
 
-    //float3 normalMain = context.HitInfo.Ns_ff;
-    //float depthMain = gGBufferDepth[pixelCoord].x;
+    float3 normalMain = context.HitInfo.Ns_ff;
+    float3 normalOther = contextOther.HitInfo.Ns_ff;
 
-    //float3 normalOther = contextOther.HitInfo.Ns_ff;
-    //float depthOther = gGBufferDepth[prevPixelCoord].x;
-
-    // TODO: Need previous context to do normal/depth thresholding
+    float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
+    float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
 
     bool isValidPrev = true;
-    //isValidPrev &= !contextOther.IsMiss;
+    isValidPrev &= !contextOther.IsMiss;
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
     isValidPrev &= reservoirPrev.PHat > 0.0f;
     isValidPrev &= reservoirPrev.Confidence > 0.0f;
-    //isValidPrev &= dot(normalMain, normalOther) >= gSettings.RestirTemporalNormalDivThreshold;
-    // TODO: Depth
-    // TODO: Occlusion rejection
+    isValidPrev &= PassNormalThreshold(normalMain, normalOther, gSettings.RestirTemporalNormalDivThreshold);
+    isValidPrev &= PassDepthThreshold(depthMain, depthOther, gSettings.RestirTemporalDepthDivThreshold);
 
     // TODO: When MVs added, lack of ping-pong could cause memory collision issues
 
@@ -83,4 +82,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     gReservoirBufferDI[reservoirIdxOut] = reservoir;
     gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
+    gContextsPrimaryRay[contextIdxMainPrev] = context; // Optimization: Could use ping-pong alternating on frames
 }

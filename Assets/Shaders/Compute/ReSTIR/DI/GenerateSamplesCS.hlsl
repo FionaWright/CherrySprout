@@ -18,7 +18,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
-    uint contextIdx = GetReservoirBufferIndexLocal(pixelCoord);
+    uint contextIdx = GetContextBufferIndex(pixelCoord);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_GEN_SAMPLES);
@@ -27,6 +27,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     HitInfo hitInfo;
     bool isMiss;
+    float depthNonLinear;
     ReconstructPrimaryRayHit(
         gSettings.CameraPositionWorld,
         pixelCoord,
@@ -35,13 +36,15 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gGBufferDepth,
         gMegaBufferMaterials,
         hitInfo,
-        isMiss
+        isMiss,
+        depthNonLinear
     );
 
     ReservoirDI reservoir = CreateReservoir<CandidateDI>();
     ContextPrimaryRay context = (ContextPrimaryRay)0;
 
     context.IsMiss = isMiss;
+    context.DepthNonLinear = depthNonLinear;
 
     if (isMiss)
     {
