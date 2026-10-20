@@ -6,11 +6,11 @@ float GetWeight(float pHat, float c, float W)
     return pHat * c * W;
 }
 
-template<typename T, typename TInfo>
+template<typename TCandidate, typename TContext>
 bool ReservoirUpdate(
     inout RngInfo rngInfo,
-    inout Reservoir<T,TInfo> reservoir,
-    T X_i,
+    inout Reservoir<TCandidate,TContext> reservoir,
+    TCandidate X_i,
     float w,
     float c,
     float pHat)
@@ -33,15 +33,15 @@ bool ReservoirUpdate(
     return false;
 }
 
-template<typename T, typename TInfo>
+template<typename TCandidate, typename TContext>
 bool ReservoirMerge(
     inout RngInfo rngInfo,
     float ConfidenceCap,
-    inout Reservoir<T,TInfo> reservoir,
-    Reservoir<T,TInfo> other)
+    inout Reservoir<TCandidate,TContext> reservoir,
+    Reservoir<TCandidate,TContext> other)
 {
     float c = min(other.Confidence, ConfidenceCap);
-    float pHat = Target(other.Y, reservoir.Info);
+    float pHat = Target(other.Y, reservoir.Context);
     float w = GetWeight(pHat, c, other.W_Y);
 
     reservoir.Confidence += c;
@@ -62,32 +62,32 @@ bool ReservoirMerge(
     return false;
 }
 
-template<typename T>
-float RestirMis(T X_i, uint M)
+template<typename TCandidate>
+float RestirMis(TCandidate X_i, uint M)
 {
     return 1 / (float)M;
 }
 
-template<typename T, typename TInfo>
+template<typename TCandidate, typename TContext>
 void WRS(
     inout RngInfo rngInfo,
-    inout Reservoir<T,TInfo> reservoir,
+    inout Reservoir<TCandidate,TContext> reservoir,
     uint M,
-    TInfo tInfo)
+    TContext context)
 {
     bool candidateSelected = false;
 
     reservoir.WeightSum = 0.0f;
     reservoir.Confidence = 0.0f;
 
-    reservoir.Info = tInfo;
+    reservoir.Context = context;
 
     for (uint i = 0; i < M; i++)
     {
-        T X_i = Generate(rngInfo, tInfo);
+        TCandidate X_i = Generate(rngInfo, context);
 
-        float pHat = Target(X_i, tInfo);
-        float pdf = PDF(X_i, tInfo);
+        float pHat = Target(X_i, context);
+        float pdf = PDF(X_i, context);
 
         float W_X_i = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
 
@@ -95,7 +95,7 @@ void WRS(
         float c = 1;
         float w = GetWeight(pHat, c, W_X_i);
 
-        candidateSelected |= ReservoirUpdate<T,TInfo>(rngInfo, reservoir, X_i, w, c, pHat);
+        candidateSelected |= ReservoirUpdate<TCandidate,TContext>(rngInfo, reservoir, X_i, w, c, pHat);
     }
 
     if (!candidateSelected)

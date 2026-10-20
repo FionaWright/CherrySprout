@@ -19,7 +19,7 @@ ConstantBuffer<CbvPathTracingSettings>              gSettings               : re
 ConstantBuffer<CbvPathTracingDebugSettings>         gDebugSettings          : register(b1, REGISTER_SPACE_DEFAULT);
 
 #include "Utils/Debug/DebugStructs.h"
-#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/ReSTIR/Structs.h"
 #include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/NEE/LSD/Alias.h"
 

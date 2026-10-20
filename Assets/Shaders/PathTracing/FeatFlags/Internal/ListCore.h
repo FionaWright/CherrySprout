@@ -23,7 +23,10 @@ FLAG_PROCESS(Emission, true)
 FLAG_PROCESS(Punctuals, true)
 
 FLAG_PROCESS(RestirDI, true)
+FLAG_PROCESS(RestirGI, true)
+
 FLAG_PROCESS(RestirTargetVisibility, true)
+FLAG_PROCESS(Anisotropy, true)
 
 FLAG_PROCESS(GradientDomain, true)
 FLAG_PROCESS(GdptShiftRec, true)
@@ -33,5 +36,3 @@ FLAG_PROCESS(GdptShiftHalf, true)
 
 FLAG_PROCESS(ReconstructPrimaryRay, true)
 FLAG_PROCESS(Transient, true)
-
-FLAG_PROCESS(Anisotropy, true)

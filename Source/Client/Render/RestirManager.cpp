@@ -4,7 +4,7 @@
 
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
-#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/ReSTIR/Structs.h"
 #include "System/Config.h"
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"

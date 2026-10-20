@@ -3,7 +3,7 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
@@ -16,11 +16,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     uint reservoirIdxPing = GetReservoirBufferIndex_Ping(pixelCoord);
-    gReservoirBuffer[reservoirIdxPing] = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
+    gReservoirBuffer[reservoirIdxPing] = CreateReservoir<CandidateDI, ContextDI>();
 
     uint reservoirIdxPong = GetReservoirBufferIndex_Pong(pixelCoord);
-    gReservoirBuffer[reservoirIdxPong] = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
+    gReservoirBuffer[reservoirIdxPong] = CreateReservoir<CandidateDI, ContextDI>();
 
     uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
-    gReservoirBuffer[reservoirIdxPrev] = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
+    gReservoirBuffer[reservoirIdxPrev] = CreateReservoir<CandidateDI, ContextDI>();
 }

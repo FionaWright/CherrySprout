@@ -7,7 +7,7 @@
 
 #include "Greenhouse.h"
 #include "Debug/GPUEventScoped.h"
-#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/ReSTIR/Structs.h"
 #include "Utils/CBVs.h"
 #include "Scene/InstanceData.h"
 #include "System/HighResolutionClock.h"

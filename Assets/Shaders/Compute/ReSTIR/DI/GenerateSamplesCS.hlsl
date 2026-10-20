@@ -3,7 +3,7 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 #include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
@@ -35,7 +35,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         isMiss
     );
 
-    ReservoirDI reservoir = CreateReservoir<SubReservoir_DI, SubReservoirInfo_DI>();
+    ReservoirDI reservoir = CreateReservoir<CandidateDI, ContextDI>();
 
     if (isMiss)
     {
@@ -51,11 +51,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         rayOrigin, rayDirection);
 
-    SubReservoirInfo_DI info;
-    info.Wo = -rayDirection;
-    info.HitInfo = hitInfo;
+    ContextDI context;
+    context.Wo = -rayDirection;
+    context.HitInfo = hitInfo;
 
-    WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, info);
+    WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, context);
 
     gReservoirBuffer[reservoirIdx] = reservoir;
 }

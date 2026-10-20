@@ -3,7 +3,7 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
@@ -48,7 +48,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
     isValidPrev &= reservoirPrev.PHat > 0.0f;
     isValidPrev &= reservoirPrev.Confidence > 0.0f;
-    isValidPrev &= dot(reservoir.Info.HitInfo.Ns_ff, reservoirPrev.Info.HitInfo.Ns_ff) >= gSettings.RestirTemporalNormalDivThreshold;
+    isValidPrev &= dot(reservoir.Context.HitInfo.Ns_ff, reservoirPrev.Context.HitInfo.Ns_ff) >= gSettings.RestirTemporalNormalDivThreshold;
     // TODO: Depth rejection
     // TODO: Occlusion rejection
 
@@ -59,9 +59,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
         DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
 
-        ReEvaluate(reservoirPrev.Y, reservoir.Info);
+        ReEvaluate(reservoirPrev.Y, reservoir.Context);
 
-        ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev);
+        ReservoirMerge<CandidateDI, ContextDI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev);
 
         if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
         {

@@ -5,7 +5,7 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
-#include "PathTracing/ReSTIR/ReSTIR_DI_Structs.h"
+#include "PathTracing/ReSTIR/Structs.h"
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 

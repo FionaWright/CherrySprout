@@ -3,7 +3,7 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
@@ -35,7 +35,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     // TODO: Set up path-dumper, asserts and output color systems into restir pre-passes. Basically just requires passing a little state that can be resolved on the PT side
 
-    float3 N_main = reservoir.Info.HitInfo.Ns_ff;
+    float3 N_main = reservoir.Context.HitInfo.Ns_ff;
     float depth_main = gGBufferDepth[pixelCoord].x;
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
@@ -58,7 +58,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
         ReservoirDI reservoirNeighbour = gReservoirBuffer[idx];
 
-        float3 N_neighbour = reservoirNeighbour.Info.HitInfo.Ns_ff; // TODO: This is fine even though it's not technically from gbuffer right?
+        float3 N_neighbour = reservoirNeighbour.Context.HitInfo.Ns_ff; // TODO: This is fine even though it's not technically from gbuffer right?
         if (dot(N_main, N_neighbour) < gSettings.RestirSpatialNormalDivThreshold)
             continue;
 
@@ -67,9 +67,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             depth_neighbour / depth_main > 1.0f + gSettings.RestirSpatialDepthDivThreshold)
             continue;
 
-        ReEvaluate(reservoirNeighbour.Y, reservoir.Info);
+        ReEvaluate(reservoirNeighbour.Y, reservoir.Context);
 
-        ReservoirMerge<SubReservoir_DI, SubReservoirInfo_DI>(rngInfo, gSettings.RestirSpatialConfidenceCap, reservoir, reservoirNeighbour);
+        ReservoirMerge<CandidateDI, ContextDI>(rngInfo, gSettings.RestirSpatialConfidenceCap, reservoir, reservoirNeighbour);
 
         if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
         {

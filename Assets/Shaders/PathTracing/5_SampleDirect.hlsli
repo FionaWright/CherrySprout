@@ -3,7 +3,7 @@
 
 #include "PathTracing/NEE/NEE.hlsli"
 
-#include "PathTracing/ReSTIR/ReSTIR_DI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 #include "PathTracing/Transient.hlsli"
 
 float3 SampleDirectLighting(
@@ -26,7 +26,7 @@ float3 SampleDirectLighting(
 
     if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
     {
-        SubReservoir_DI lightSE;
+        CandidateDI lightSE;
         float3 L_restir;
         bool validReservoir = TrySampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
 
