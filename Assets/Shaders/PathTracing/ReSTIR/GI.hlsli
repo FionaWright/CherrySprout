@@ -21,7 +21,7 @@ When sampling the reservoir, does the main path continue from the sample point o
 
 */
 
-CandidateGI Generate(inout RngInfo rngInfo, ContextGI context)
+CandidateGI Generate(inout RngInfo rngInfo, ContextPrimaryRay context)
 {
     BxDF bxdf;
     BxdfEval bxdfEval;
@@ -68,7 +68,7 @@ CandidateGI Generate(inout RngInfo rngInfo, ContextGI context)
     return X_i;
 }
 
-void ReEvaluate(inout CandidateGI X_i, ContextGI context)
+void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 {
     float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
 
@@ -98,7 +98,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextGI context)
     X_i.Jacobian = shiftResult.Jacobian;
 }
 
-float Target(CandidateGI X_i, ContextGI context)
+float Target(CandidateGI X_i, ContextPrimaryRay context)
 {
     if (X_i.IsMiss) // TODO
         return 0.0f;
@@ -131,7 +131,7 @@ float Target(CandidateGI X_i, ContextGI context)
     return Luminance(Lo);
 }
 
-float PDF(CandidateGI X_i, ContextGI context)
+float PDF(CandidateGI X_i, ContextPrimaryRay context)
 {
     return X_i.BxdfEval.PDF;
 }
@@ -149,7 +149,7 @@ bool TrySampleReservoirGI(
     Lo = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+    ReservoirDI reservoir = gReservoirBufferGI[reservoirIdx];
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
@@ -179,9 +179,9 @@ bool TrySampleReservoirGI(
 
 #else
 
-CandidateGI Generate(inout RngInfo rngInfo, ContextGI context) { return (CandidateGI)0; }
-float Target(CandidateGI X_i, ContextGI context) { return NAN; }
-float PDF(CandidateGI X_i, ContextGI context) { return NAN; }
+CandidateGI Generate(inout RngInfo rngInfo, ContextPrimaryRay context) { return (CandidateGI)0; }
+float Target(CandidateGI X_i, ContextPrimaryRay context) { return NAN; }
+float PDF(CandidateGI X_i, ContextPrimaryRay context) { return NAN; }
 bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,

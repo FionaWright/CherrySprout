@@ -15,19 +15,22 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
+    uint contextIdx = GetReservoirBufferIndexLocal(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
     uint reservoirIdxPrevOut = GetReservoirBufferIndex_Previous(pixelCoord);
 
-    ReservoirDI reservoir = gReservoirBuffer[reservoirIdxIn];
+    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
     bool prevWasOffscreen = mv.x >= 9.0f || mv.y >= 9.0f;
-    if (prevWasOffscreen)
+    if (context.IsMiss || prevWasOffscreen)
     {
-        gReservoirBuffer[reservoirIdxOut] = reservoir;
-        gReservoirBuffer[reservoirIdxPrevOut] = reservoir;
+        gReservoirBufferDI[reservoirIdxOut] = reservoir;
+        gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
         return;
     }
 
@@ -36,20 +39,32 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
     {
-        gReservoirBuffer[reservoirIdxOut] = reservoir;
-        gReservoirBuffer[reservoirIdxPrevOut] = reservoir;
+        gReservoirBufferDI[reservoirIdxOut] = reservoir;
+        gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
         return;
     }
 
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    ReservoirDI reservoirPrev = gReservoirBuffer[reservoirIdxPrevIn];
+    ReservoirDI reservoirPrev = gReservoirBufferDI[reservoirIdxPrevIn];
+
+    //uint contextIdxOther = GetReservoirBufferIndexLocal(prevPixelCoord);
+    //ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
+
+    //float3 normalMain = context.HitInfo.Ns_ff;
+    //float depthMain = gGBufferDepth[pixelCoord].x;
+
+    //float3 normalOther = contextOther.HitInfo.Ns_ff;
+    //float depthOther = gGBufferDepth[prevPixelCoord].x;
+
+    // TODO: Need previous context to do normal/depth thresholding
 
     bool isValidPrev = true;
+    //isValidPrev &= !contextOther.IsMiss;
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
     isValidPrev &= reservoirPrev.PHat > 0.0f;
     isValidPrev &= reservoirPrev.Confidence > 0.0f;
-    isValidPrev &= dot(reservoir.Context.HitInfo.Ns_ff, reservoirPrev.Context.HitInfo.Ns_ff) >= gSettings.RestirTemporalNormalDivThreshold;
-    // TODO: Depth rejection
+    //isValidPrev &= dot(normalMain, normalOther) >= gSettings.RestirTemporalNormalDivThreshold;
+    // TODO: Depth
     // TODO: Occlusion rejection
 
     // TODO: When MVs added, lack of ping-pong could cause memory collision issues
@@ -59,9 +74,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
         DecorrelateRng(rngInfo, SEED_DECORRELATOR_TEMPORAL);
 
-        ReEvaluate(reservoirPrev.Y, reservoir.Context);
+        ReEvaluate(reservoirPrev.Y, context);
 
-        ReservoirMerge<CandidateDI, ContextDI>(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev);
+        ReservoirMerge(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev, context);
 
         if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
         {
@@ -72,6 +87,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
     }
 
-    gReservoirBuffer[reservoirIdxOut] = reservoir;
-    gReservoirBuffer[reservoirIdxPrevOut] = reservoir;
+    gReservoirBufferDI[reservoirIdxOut] = reservoir;
+    gReservoirBufferDI[reservoirIdxPrevOut] = reservoir;
 }

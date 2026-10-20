@@ -27,16 +27,21 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
+    uint contextIdx = GetReservoirBufferIndexLocal(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+    if (context.IsMiss)
+        return;
+
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    ReservoirDI reservoir = gReservoirBuffer[reservoirIdxIn];
+    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
 
     // TODO: Occlusion rejection
 
     // TODO: Set up path-dumper, asserts and output color systems into restir pre-passes. Basically just requires passing a little state that can be resolved on the PT side
 
-    float3 N_main = reservoir.Context.HitInfo.Ns_ff;
-    float depth_main = gGBufferDepth[pixelCoord].x;
+    float3 normalMain = context.HitInfo.Ns_ff;
+    float depthMain = gGBufferDepth[pixelCoord].x;
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_SPATIAL);
@@ -44,33 +49,35 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     for (uint i = 0; i < gSettings.RestirSpatialNumSamples; i++)
     {
         int2 coord = SampleDisc(rngInfo, pixelCoord, gSettings.RestirSpatialRadius);
-        //int2 coord = pixelCoord + int2(i+1,2*i+1);
-
-        //float2 offset = RemapUtoS(float2(Rand01(rngInfo), Rand01(rngInfo)));
-        //int2 coord = int2(pixelCoord) + offset * gSettings.RestirSpatialRadius;
 
         if (all(coord == pixelCoord)) // TODO: Is this allowed?
+            continue;
+
+        uint contextIdxOther = GetReservoirBufferIndexLocal(coord);
+        ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
+        if (contextOther.IsMiss)
             continue;
 
         coord.x = max(0, min(coord.x, gSettings.FrameDimensions.x - 1));
         coord.y = max(0, min(coord.y, gSettings.FrameDimensions.y - 1));
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        ReservoirDI reservoirNeighbour = gReservoirBuffer[idx];
+        ReservoirDI reservoirNeighbour = gReservoirBufferDI[idx];
 
-        float3 N_neighbour = reservoirNeighbour.Context.HitInfo.Ns_ff; // TODO: This is fine even though it's not technically from gbuffer right?
-        if (dot(N_main, N_neighbour) < gSettings.RestirSpatialNormalDivThreshold)
+        float3 normalOther = contextOther.HitInfo.Ns_ff;
+        if (dot(normalMain, normalOther) < gSettings.RestirSpatialNormalDivThreshold)
             continue;
 
-        float depth_neighbour = gGBufferDepth[coord].x; // TODO: Convert to linear
-        if (depth_main / depth_neighbour < 1.0f - gSettings.RestirSpatialDepthDivThreshold ||
-            depth_neighbour / depth_main > 1.0f + gSettings.RestirSpatialDepthDivThreshold)
+        float depthOther = gGBufferDepth[coord].x; // TODO: Convert to linear
+        if (depthMain / depthOther < 1.0f - gSettings.RestirSpatialDepthDivThreshold ||
+            depthOther / depthMain > 1.0f + gSettings.RestirSpatialDepthDivThreshold)
             continue;
 
-        ReEvaluate(reservoirNeighbour.Y, reservoir.Context);
+        ReEvaluate(reservoirNeighbour.Y, context);
 
-        ReservoirMerge<CandidateDI, ContextDI>(rngInfo, gSettings.RestirSpatialConfidenceCap, reservoir, reservoirNeighbour);
+        ReservoirMerge(rngInfo, gSettings.RestirSpatialConfidenceCap, reservoir, reservoirNeighbour, context);
 
+        // TODO: Move inside merge
         if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
         {
             reservoir.Confidence = 0.0f;
@@ -80,5 +87,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence); // TODO: Recompute between samples?
     }
 
-    gReservoirBuffer[reservoirIdxOut] = reservoir;
+    gReservoirBufferDI[reservoirIdxOut] = reservoir;
 }

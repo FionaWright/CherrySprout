@@ -13,7 +13,6 @@
 - [ ] Fix emissive issues 
 - [ ] Fix temporal MV issue
 - [x] Python Executor
-- [ ] Mean Test
 - [x] Golden Test
 - [x] RMSE Test
-- [ ] ReSTIR GI
+- [ ] GBuffer Jitter

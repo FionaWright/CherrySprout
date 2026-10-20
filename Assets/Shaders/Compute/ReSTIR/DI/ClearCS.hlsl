@@ -16,11 +16,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         return;
 
     uint reservoirIdxPing = GetReservoirBufferIndex_Ping(pixelCoord);
-    gReservoirBuffer[reservoirIdxPing] = CreateReservoir<CandidateDI, ContextDI>();
+    gReservoirBufferDI[reservoirIdxPing] = CreateReservoir<CandidateDI>();
 
     uint reservoirIdxPong = GetReservoirBufferIndex_Pong(pixelCoord);
-    gReservoirBuffer[reservoirIdxPong] = CreateReservoir<CandidateDI, ContextDI>();
+    gReservoirBufferDI[reservoirIdxPong] = CreateReservoir<CandidateDI>();
 
     uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
-    gReservoirBuffer[reservoirIdxPrev] = CreateReservoir<CandidateDI, ContextDI>();
+    gReservoirBufferDI[reservoirIdxPrev] = CreateReservoir<CandidateDI>();
 }

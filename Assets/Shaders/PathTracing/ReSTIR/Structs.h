@@ -7,24 +7,17 @@
 
 #include "PathTracing/ReSTIR/Reservoir.h"
 
-// Sub-reservoir must be pixel independent
+struct ContextPrimaryRay
+{
+    HitInfo HitInfo;
+    hlsl::float3 Wo;
+    hlsl::uint IsMiss;
+};
 
 struct CandidateDI
 {
     LightSample LightSample;
     LightEval LightEval;
-};
-
-// Note: HitInfo required due to BXDF Eval
-// TODO: Is there any way to avoid this cleanly?
-// Note: Only a single HitInfo is needed per pixel per frame. Could have ReservoirInfo buffer?
-// If I do use ContextBuffer, should be used instead of tracing primary ray
-// Maybe PT should have separate TracePrimaryRay pass to build context buffer when using ReSTIR?
-struct ContextDI
-{
-    HitInfo HitInfo;
-
-    hlsl::float3 Wo;
 };
 
 struct CandidateGI
@@ -42,14 +35,7 @@ struct CandidateGI
     float Jacobian;
 };
 
-struct ContextGI
-{
-    HitInfo HitInfo;
-
-    hlsl::float3 Wo;
-};
-
-typedef Reservoir<CandidateDI, ContextDI> ReservoirDI;
-typedef Reservoir<CandidateGI, ContextGI> ReservoirGI;
+typedef Reservoir<CandidateDI> ReservoirDI;
+typedef Reservoir<CandidateGI> ReservoirGI;
 
 #endif

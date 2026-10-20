@@ -17,10 +17,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint reservoirIdx = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
+    uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
+    uint contextIdx = GetReservoirBufferIndexLocal(pixelCoord);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_GEN_SAMPLES);
+
+    // TODO: Jitter GBuffers. Requires per-frame jitter option instead of per-pixel
 
     HitInfo hitInfo;
     bool isMiss;
@@ -35,11 +38,15 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         isMiss
     );
 
-    ReservoirDI reservoir = CreateReservoir<CandidateDI, ContextDI>();
+    ReservoirDI reservoir = CreateReservoir<CandidateDI>();
+    ContextPrimaryRay context = (ContextPrimaryRay)0;
+
+    context.IsMiss = isMiss;
 
     if (isMiss)
     {
-        gReservoirBuffer[reservoirIdx] = reservoir;
+        gReservoirBufferDI[reservoirIdxOut] = reservoir;
+        gContextsPrimaryRay[contextIdx] = context;
         return;
     }
 
@@ -51,11 +58,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         rayOrigin, rayDirection);
 
-    ContextDI context;
-    context.Wo = -rayDirection;
     context.HitInfo = hitInfo;
+    context.Wo = -rayDirection;
+    gContextsPrimaryRay[contextIdx] = context;
 
     WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, context);
 
-    gReservoirBuffer[reservoirIdx] = reservoir;
+    gReservoirBufferDI[reservoirIdxOut] = reservoir;
 }

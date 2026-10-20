@@ -117,20 +117,22 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_rtasBuilder.FlushAndBuild(d3d, scene);
     }
 
-    CherryAssert(m_restirManager.GetReservoirBuffer()->GetResource());
+    CherryAssert(m_restirManager.GetReservoirBufferDI()->GetResource());
 
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 0, &m_accum, m_accum.GetDesc().Format);
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 1, &m_primal, m_primal.GetDesc().Format);
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 2, m_restirManager.GetReservoirBuffer(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 3, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 4, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 5, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 6, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 2, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 3, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 4, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 5, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirGI));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 8, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 7, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 8, m_debugManager.GetBufferPathDumpRW(), PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 9, m_debugManager.GetBufferPathDumpOCRW(), PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 9, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 10, m_debugManager.GetBufferPathDumpRW(), PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 11, m_debugManager.GetBufferPathDumpOCRW(), PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -314,7 +316,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
         m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
-        m_restirManager.GenerateSamplesDi(d3d->GetDevice(), cmdList, renderInfo.PathTracerConfig->RestirTemporalEnabled, renderInfo.PathTracerConfig->RestirSpatialEnabled, m_restirClearScheduled);
+        m_restirManager.PrePassesDI(d3d->GetDevice(), cmdList, renderInfo.PathTracerConfig->RestirTemporalEnabled, renderInfo.PathTracerConfig->RestirSpatialEnabled, m_restirClearScheduled);
         m_restirClearScheduled = false;
     }
 

@@ -6,10 +6,10 @@ float GetWeight(float pHat, float c, float W)
     return pHat * c * W;
 }
 
-template<typename TCandidate, typename TContext>
+template<typename TCandidate>
 bool ReservoirUpdate(
     inout RngInfo rngInfo,
-    inout Reservoir<TCandidate,TContext> reservoir,
+    inout Reservoir<TCandidate> reservoir,
     TCandidate X_i,
     float w,
     float c,
@@ -37,11 +37,12 @@ template<typename TCandidate, typename TContext>
 bool ReservoirMerge(
     inout RngInfo rngInfo,
     float ConfidenceCap,
-    inout Reservoir<TCandidate,TContext> reservoir,
-    Reservoir<TCandidate,TContext> other)
+    inout Reservoir<TCandidate> reservoir,
+    Reservoir<TCandidate> other,
+    TContext context)
 {
     float c = min(other.Confidence, ConfidenceCap);
-    float pHat = Target(other.Y, reservoir.Context);
+    float pHat = Target(other.Y, context);
     float w = GetWeight(pHat, c, other.W_Y);
 
     reservoir.Confidence += c;
@@ -71,7 +72,7 @@ float RestirMis(TCandidate X_i, uint M)
 template<typename TCandidate, typename TContext>
 void WRS(
     inout RngInfo rngInfo,
-    inout Reservoir<TCandidate,TContext> reservoir,
+    inout Reservoir<TCandidate> reservoir,
     uint M,
     TContext context)
 {
@@ -79,8 +80,6 @@ void WRS(
 
     reservoir.WeightSum = 0.0f;
     reservoir.Confidence = 0.0f;
-
-    reservoir.Context = context;
 
     for (uint i = 0; i < M; i++)
     {
@@ -95,7 +94,7 @@ void WRS(
         float c = 1;
         float w = GetWeight(pHat, c, W_X_i);
 
-        candidateSelected |= ReservoirUpdate<TCandidate,TContext>(rngInfo, reservoir, X_i, w, c, pHat);
+        candidateSelected |= ReservoirUpdate<TCandidate>(rngInfo, reservoir, X_i, w, c, pHat);
     }
 
     if (!candidateSelected)

@@ -13,7 +13,7 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-CandidateDI Generate(inout RngInfo rngInfo, ContextDI context)
+CandidateDI Generate(inout RngInfo rngInfo, ContextPrimaryRay context)
 {
     BxDF bxdf;
 
@@ -26,13 +26,13 @@ CandidateDI Generate(inout RngInfo rngInfo, ContextDI context)
     return X_i;
 }
 
-void ReEvaluate(inout CandidateDI X_i, ContextDI context)
+void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context)
 {
     BxDF bxdf;
     X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, bxdf, context.Wo, X_i.LightSample);
 }
 
-float Target(CandidateDI X_i, ContextDI context)
+float Target(CandidateDI X_i, ContextPrimaryRay context)
 {
     float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, X_i.LightEval.Direction));
     if (NdL <= 0)
@@ -70,7 +70,7 @@ float Target(CandidateDI X_i, ContextDI context)
     return Luminance(radiance);
 }
 
-float PDF(CandidateDI X_i, ContextDI context)
+float PDF(CandidateDI X_i, ContextPrimaryRay context)
 {
     return X_i.LightEval.PDF;
 }
@@ -88,7 +88,7 @@ bool TrySampleReservoirDI(
     radiance = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
+    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdx];
 
     Y = reservoir.Y;
     float3 wi = Y.LightEval.Direction;
@@ -147,9 +147,9 @@ bool TrySampleReservoirDI(
 
 #else
 
-CandidateDI Generate(inout RngInfo rngInfo, ContextDI context) { return (CandidateDI)0; }
-float Target(CandidateDI X_i, ContextDI context) { return NAN; }
-float PDF(CandidateDI X_i, ContextDI context) { return NAN; }
+CandidateDI Generate(inout RngInfo rngInfo, ContextPrimaryRay context) { return (CandidateDI)0; }
+float Target(CandidateDI X_i, ContextPrimaryRay context) { return NAN; }
+float PDF(CandidateDI X_i, ContextPrimaryRay context) { return NAN; }
 bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,

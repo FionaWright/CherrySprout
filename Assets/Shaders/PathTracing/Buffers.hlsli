@@ -62,18 +62,21 @@ Texture2D<float4>                                   gSceneTextures[]        : re
 
 RWTexture2D<float4>                                 gTexAccumulation        : register(u0, REGISTER_SPACE_DEFAULT);
 RWTexture2D<float4>                                 gTexPrimal              : register(u1, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<ReservoirDI>                     gReservoirBuffer        : register(u2, REGISTER_SPACE_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientXF          : register(u3, REGISTER_SPACE_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientXB          : register(u4, REGISTER_SPACE_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientYF          : register(u5, REGISTER_SPACE_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientYB          : register(u6, REGISTER_SPACE_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientXF          : register(u2, REGISTER_SPACE_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientXB          : register(u3, REGISTER_SPACE_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientYF          : register(u4, REGISTER_SPACE_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientYB          : register(u5, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ReservoirDI>                     gReservoirBufferDI      : register(u6, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ReservoirGI>                     gReservoirBufferGI      : register(u7, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : register(u8, REGISTER_SPACE_DEFAULT);
+//                                                  Note: Don't forget indices below!
 
 // =================== U Registers (Debug) =======================================================================
 
 // TODO: Handle register spaces properly in root sig. Then have all debug buffers dependent on _DEBUG
-RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u7, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<RayDump>                         gPathDump               : register(u8, REGISTER_SPACE_DEFAULT);
-RWByteAddressBuffer                                 gPathDumpDebugOutput    : register(u9, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u9, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<RayDump>                         gPathDump               : register(u10, REGISTER_SPACE_DEFAULT);
+RWByteAddressBuffer                                 gPathDumpDebugOutput    : register(u11, REGISTER_SPACE_DEFAULT);
 
 // =================== S Registers ===============================================================================
 
