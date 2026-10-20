@@ -13,6 +13,7 @@ struct ShiftResult
 };
 
 // Is this eta relative or n?
+// TODO: Should this use geometric normals?
 ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted, float3 wiMain, float3 woMain, float3 woShifted, float etaMain, float etaShifted)
 {
     ShiftResult result = (ShiftResult)0;
@@ -66,7 +67,7 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
     return result;
 }
 
-ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 x2_N)
+ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3 x2_Ng)
 {
     ShiftResult result;
 
@@ -82,7 +83,7 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
 	float3 wiX = normalize(-x1_x2);
 	float3 wiY = normalize(-y1_x2);
 
-    float NdL_Y = dot(y1_N, wiY);
+    float NdL_Y = dot(y1_Ng, wiY);
     if (NdL_Y <= 0.0f)
     {
         result.IsSuccessful = false;
@@ -93,8 +94,8 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
     float lenSqrX = LengthSquared(x1_x2);
 	float lenSqrY = LengthSquared(y1_x2);
 
-	float cosTY = abs(dot(-wiY, x2_N));
-    float cosTX = abs(dot(-wiX, x2_N));
+	float cosTY = abs(dot(-wiY, x2_Ng));
+    float cosTX = abs(dot(-wiX, x2_Ng));
 
     if (cosTX <= 1e-6f || lenSqrY <= 1e-12f)
     {
@@ -109,7 +110,7 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
     return result;
 }
 
-ShiftResult ShiftReconnectVis(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 x2_N)
+ShiftResult ShiftReconnectVis(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3 x2_Ng)
 {
     ShiftResult result;
 
@@ -129,10 +130,10 @@ ShiftResult ShiftReconnectVis(float3 x1, float3 y1, float3 y1_N, float3 x2, floa
         return result;
     }
 
-    return ShiftReconnect(x1, y1, y1_N, x2, x2_N);
+    return ShiftReconnect(x1, y1, y1_Ng, x2, x2_Ng);
 }
 
-ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted, float3 dirMain)
+ShiftResult ShiftReconnectEnvironment(float3 y1_Ng, float3 dirMain)
 {
     ShiftResult result;
 
@@ -142,7 +143,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
         return result;
     }
 
-    float NdL = dot(normalShifted, dirMain);
+    float NdL = dot(y1_Ng, dirMain);
     if (NdL <= 0.0f)
     {
         result.IsSuccessful = false;
@@ -156,7 +157,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
     return result;
 }
 
-ShiftResult ShiftReconnectEnvironmentVis(float3 sourceShifted, float3 normalShifted, float3 dirMain)
+ShiftResult ShiftReconnectEnvironmentVis(float3 x1, float3 y1_Ng, float3 dirMain)
 {
     ShiftResult result;
 
@@ -167,7 +168,7 @@ ShiftResult ShiftReconnectEnvironmentVis(float3 sourceShifted, float3 normalShif
     }
 
     bool occluded;
-    TestVisibilityDirection(sourceShifted, dirMain, occluded);
+    TestVisibilityDirection(x1, dirMain, occluded);
 
     if (occluded)
     {
@@ -176,7 +177,7 @@ ShiftResult ShiftReconnectEnvironmentVis(float3 sourceShifted, float3 normalShif
         return result;
     }
 
-    return ShiftReconnectEnvironment(sourceShifted, normalShifted, dirMain);
+    return ShiftReconnectEnvironment(y1_Ng, dirMain);
 }
 
 #endif

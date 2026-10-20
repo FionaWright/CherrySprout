@@ -16,14 +16,6 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-/*
-
-Sample a random direction, trace the point, then sample a random light and get its direct contribution
-
-When sampling the reservoir, does the main path continue from the sample point or does it continue from primary ray hit?
-
-*/
-
 void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i)
 {
     BxDF bxdf;
@@ -61,8 +53,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
 
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
     X_i.DestPosition = isMiss ? 0 : secondaryHitInfo.HitPos;
-    X_i.Ns_ff = isMiss ? 0 : secondaryHitInfo.Ns_ff;
-    X_i.Ng_ff = isMiss ? 0 : secondaryHitInfo.Ng_ff;
+    X_i.DestNg_ff = isMiss ? 0 : secondaryHitInfo.Ng_ff;
     X_i.IsMiss = isMiss;
     X_i.DirectContribution = E_direct;
     X_i.BxdfEval = bxdfEval;
@@ -85,9 +76,9 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
         return;
     }
 
-    float3 v1NormalShift = context.HitInfo.Ns_ff;
+    float3 v1NormalShift = context.HitInfo.Ng_ff;
     float3 v2Pos = X_i.DestPosition;
-    float3 v2Normal = X_i.Ns_ff;
+    float3 v2Normal = X_i.DestNg_ff;
     ShiftResult shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
 
     if (!shiftResult.IsSuccessful)
@@ -151,11 +142,29 @@ bool TrySampleReservoirGI(
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
 
-    if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
-        return false;
-
     Y = reservoir.Y;
     float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
+
+    // Debug
+    {
+        DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
+        DBG_OUTPUT1(reservoir.WeightSum,            RESTIR_ReservoirWeightSum);
+        DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
+        DBG_OUTPUT1(max(0, dot(wi, hitInfo.Ns_ff)), RESTIR_NdL);
+        DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
+
+        DBG_OUTPUT3(wi,                             RESTIRGI_Dir);
+        DBG_OUTPUT3(Y.DirectContribution,           RESTIRGI_DirectContrib);
+        DBG_OUTPUT3(Y.BxdfEval.Radiance,            RESTIRGI_BxdfRadiance);
+        DBG_OUTPUT1(Y.BxdfEval.PDF,                 RESTIRGI_BxdfPDF);
+        DBG_OUTPUT1(Y.Jacobian,                     RESTIRGI_Jacobian);
+
+        DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
+        DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
+    }
+
+    if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
+        return false;
 
     if (Y.IsMiss)
         return false;
@@ -163,6 +172,8 @@ bool TrySampleReservoirGI(
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
     if (NdL <= 0 || length(Y.BxdfEval.Radiance) <= 0.0f)
         return false;
+
+    // TODO: Visibility test?
 
     // TODO: Do I need to recompute this rather than just use reservoir.PHat?
 

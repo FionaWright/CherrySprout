@@ -95,22 +95,23 @@ bool TrySampleReservoirDI(
 
     // Debug
     {
-        DBG_OUTPUT3(Palette(reservoirIdx), RESTIR_ReservoirIdx);
-        DBG_OUTPUT1(reservoir.WeightSum, RESTIR_ReservoirWeightSum);
-        DBG_OUTPUT1(reservoir.Confidence / 30, RESTIR_ReservoirConfidence);
-        DBG_OUTPUT3(wi, RESTIR_YDir);
-        DBG_OUTPUT3(Y.LightEval.Radiance, RESTIR_YRadiance);
-        DBG_OUTPUT1(Y.LightSample.Index, RESTIR_YLightIndex);
+        DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
+        DBG_OUTPUT1(reservoir.WeightSum,            RESTIR_ReservoirWeightSum);
+        DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
         DBG_OUTPUT1(max(0, dot(wi, hitInfo.Ns_ff)), RESTIR_NdL);
-        DBG_OUTPUT1(reservoir.W_Y, RESTIR_W_Y);
-        DBG_ASSERT_GE(reservoir.W_Y, 0.0f, RESTIR_W_Y_RANGE);
-        DBG_ASSERT_GE(reservoir.WeightSum, 0.0f, RESTIR_WEIGHT_SUM_RANGE);
+        DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
+
+        DBG_OUTPUT3(wi,                             RESTIRDI_Y_Dir);
+        DBG_OUTPUT3(Y.LightEval.Radiance,           RESTIRDI_Y_Radiance);
+        DBG_OUTPUT1(Y.LightSample.Index,            RESTIRDI_Y_LightIndex);
+
+        DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
+        DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    //LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, Y.LightSample);
     LightEval lightEval = Y.LightEval;
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
@@ -119,7 +120,7 @@ bool TrySampleReservoirDI(
 
     float shadowFactor;
     TraceRayShadow(hitInfo.HitPosBiased, wi, lightDistance, shadowFactor);
-    DBG_OUTPUT1(shadowFactor, RESTIR_Occluded);
+    DBG_OUTPUT1(shadowFactor, RESTIRDI_ShadowFactor);
     if (shadowFactor <= 0.0f)
         return false;
 
@@ -136,8 +137,8 @@ bool TrySampleReservoirDI(
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
 
-        DBG_OUTPUT3(bxdfEval.Radiance, RESTIR_Bxdf);
-        DBG_OUTPUT1(bxdfEval.PDF, RESTIR_PDF);
+        DBG_OUTPUT3(bxdfEval.Radiance, RESTIRDI_Bxdf);
+        DBG_OUTPUT1(bxdfEval.PDF,      RESTIRDI_PDF);
     }
 
     radiance = shadowFactor * lightEval.Radiance * m * NdL * reservoir.W_Y;

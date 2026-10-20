@@ -83,6 +83,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
                 currentVertexInfo.Type = VertexType::eEmission;
                 currentVertexInfo.Position = hitInfo.HitPos;
                 currentVertexInfo.SFrame = hitInfo.SFrame;
+                currentVertexInfo.Ng_ff = hitInfo.Ng_ff;
 
                 vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
                 vertexList.NumVertices++;
@@ -115,7 +116,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, bxdf, Y, L_gi);
             pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
 
-            DBG_OUTPUT3(L_gi, RESTIR_GiLo);
+            DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
         }
 
         float3 L_sample;

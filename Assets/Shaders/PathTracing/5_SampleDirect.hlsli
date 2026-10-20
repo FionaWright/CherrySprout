@@ -30,7 +30,7 @@ float3 SampleDirectLighting(
         float3 L_restir;
         bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
 
-        DBG_OUTPUT1(validReservoir, RESTIR_ValidReservoir);
+        DBG_OUTPUT1(validReservoir, RESTIRDI_ValidReservoir);
 
         E_direct += L_restir;
         lightSample = lightSE.LightSample;

@@ -44,9 +44,9 @@ void HitShiftedUnconnected(
     if (v1.Type == VertexType::eDiffuse)
     {
         if (v2.Type == VertexType::eDiffuse || v2.Type == VertexType::eEmission)
-            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ns_ff, v2.Position, v2.SFrame.N);
+            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);
         else if (v2.Type == VertexType::eEnvironment)
-            shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ns_ff, v1.Wi);
+            shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ng_ff, v1.Wi);
 		else
         	DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
 
