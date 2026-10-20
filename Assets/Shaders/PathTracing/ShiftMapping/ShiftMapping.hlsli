@@ -104,10 +104,8 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
     float lenSqrX = LengthSquared(x1_x2);
 	float lenSqrY = LengthSquared(y1_x2);
 
-	//float cosTY = abs(dot(-wiY, x2_N));
-    //float cosTX = abs(dot(-wiX, x2_N));
-	float cosTY = abs(dot(-wiY, x2_N)) * abs(dot(wiY, y1_N));
-    float cosTX = abs(dot(-wiX, x2_N)) * abs(dot(wiX, y1_N));;
+	float cosTY = abs(dot(-wiY, x2_N));
+    float cosTX = abs(dot(-wiX, x2_N));
 
     if (cosTX <= 1e-6f || lenSqrY <= 1e-12f)
     {
