@@ -71,6 +71,9 @@ ReSTIR Course:
 ReSTIR GI:
     https://research.nvidia.com/publication/2021-06_restir-gi-path-resampling-real-time-path-tracing
 
+ReSTIR GI RTXDI:
+    https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/ShaderAPI-RestirGI.md
+
 ## GDPT:
 
 Original Paper:

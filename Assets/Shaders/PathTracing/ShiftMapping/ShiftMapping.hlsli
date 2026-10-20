@@ -66,7 +66,6 @@ ShiftResult ShiftHalfVector(ShadingFrame sframeMain, ShadingFrame sframeShifted,
     return result;
 }
 
-// TODO: Fix mismatch in Ng_ff for jacobian/hitPos but Ns_ff for NdL/bxdf
 ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 x2_N)
 {
     ShiftResult result;
@@ -74,16 +73,6 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
     if (!FEAT_CORE(GdptShiftRec))
     {
         result.IsSuccessful = false;
-        return result;
-    }
-
-    bool occluded;
-    TestVisibilityPoints(y1, x2, occluded);
-
-    if (occluded)
-    {
-        result.IsSuccessful = false;
-        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecOcc);
         return result;
     }
 
@@ -120,6 +109,29 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 
     return result;
 }
 
+ShiftResult ShiftReconnectVis(float3 x1, float3 y1, float3 y1_N, float3 x2, float3 x2_N)
+{
+    ShiftResult result;
+
+    if (!FEAT_CORE(GdptShiftRec))
+    {
+        result.IsSuccessful = false;
+        return result;
+    }
+
+    bool occluded;
+    TestVisibilityPoints(y1, x2, occluded);
+
+    if (occluded)
+    {
+        result.IsSuccessful = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecOcc);
+        return result;
+    }
+
+    return ShiftReconnect(x1, y1, y1_N, x2, x2_N);
+}
+
 ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted, float3 dirMain)
 {
     ShiftResult result;
@@ -138,6 +150,22 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
         return result;
     }
 
+    result.IsSuccessful = true;
+    result.Jacobian = 1.0f;
+    result.Wi = dirMain;
+    return result;
+}
+
+ShiftResult ShiftReconnectEnvironmentVis(float3 sourceShifted, float3 normalShifted, float3 dirMain)
+{
+    ShiftResult result;
+
+    if (!FEAT_CORE(GdptShiftRecEnv))
+    {
+        result.IsSuccessful = false;
+        return result;
+    }
+
     bool occluded;
     TestVisibilityDirection(sourceShifted, dirMain, occluded);
 
@@ -148,10 +176,7 @@ ShiftResult ShiftReconnectEnvironment(float3 sourceShifted, float3 normalShifted
         return result;
     }
 
-    result.IsSuccessful = true;
-    result.Jacobian = 1.0f;
-    result.Wi = dirMain;
-    return result;
+    return ShiftReconnectEnvironment(sourceShifted, normalShifted, dirMain);
 }
 
 #endif

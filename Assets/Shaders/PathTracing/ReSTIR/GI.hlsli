@@ -64,6 +64,7 @@ CandidateGI Generate(inout RngInfo rngInfo, ContextGI context)
     X_i.IsMiss = isMiss;
     X_i.DirectContribution = E_direct;
     X_i.BxdfEval = bxdfEval;
+    X_i.Jacobian = 1.0f;
     return X_i;
 }
 
@@ -74,7 +75,27 @@ void ReEvaluate(inout CandidateGI X_i, ContextGI context)
     BxDF bxdf;
     X_i.BxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, wi);
 
-    // TODO: Jacobian here?
+    float3 v1PosMain = X_i.SourcePositionBiased;
+    float3 v1PosShift = context.HitInfo.HitPosBiased;
+
+    if (v1PosMain == v1PosShift)
+    {
+        X_i.Jacobian = 1.0f;
+        return;
+    }
+
+    float3 v1NormalShift = context.HitInfo.Ns_ff;
+    float3 v2Pos = X_i.DestPosition;
+    float3 v2Normal = X_i.Ns_ff;
+    ShiftResult shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
+
+    if (!shiftResult.IsSuccessful)
+    {
+        X_i.BxdfEval.Radiance = 0.0f; // TODO: IsValid flag in reservoir?
+        return;
+    }
+
+    X_i.Jacobian = shiftResult.Jacobian;
 }
 
 float Target(CandidateGI X_i, ContextGI context)
@@ -90,25 +111,22 @@ float Target(CandidateGI X_i, ContextGI context)
     if (X_i.BxdfEval.PDF < EPSILON || length(X_i.BxdfEval.Radiance) <= 0.0f || length(X_i.DirectContribution) <= 0.0f)
         return 0.0f;
 
-    float3 v1PosMain = X_i.SourcePositionBiased;
-    float3 v1PosShift = context.HitInfo.HitPosBiased;
-    float3 v1NormalShift = context.HitInfo.Ns_ff;
-    float3 v2Pos = X_i.DestPosition;
-    float3 v2Normal = X_i.Ns_ff;
-    ShiftResult shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
-
-    if (!shiftResult.IsSuccessful)
-        return 0.0f;
-
-    // TODO: What do I do with shiftResult.Jacobian?
+    if (FEAT_CORE(RestirTargetVisibility))
+    {
+        bool occluded;
+        TestVisibilityPoints(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
+        if (occluded)
+            return 0.0f;
+    }
 
     float3 beta = 1.0f;
 
     // Primary Hit BxDF Sample
     E_indirect = bxdfEval.Radiance * abs(NdL);
+    beta *= E_indirect;
 
     // NEE Sample
-    float3 Lo = beta * X_i.DirectContribution;
+    float3 Lo = beta * X_i.DirectContribution / X_i.Jacobian; // TODO
 
     return Luminance(Lo);
 }
@@ -140,16 +158,21 @@ bool TrySampleReservoirGI(
     float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
     BxdfEval bxdfEval = Y.BxdfEval;
 
+    if (Y.IsMiss)
+        return false;
+
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
     if (NdL <= 0 || length(bxdfEval.Radiance) <= 0.0f)
         return false;
+
+    // TODO: Do I need to recompute this rather than just use reservoir.PHat?
 
     // Primary Hit BxDF Sample
     float3 E_indirect = bxdfEval.Radiance * abs(NdL) * reservoir.W_Y;
     beta *= E_indirect;
 
     // NEE Sample
-    Lo = beta * Y.DirectContribution;
+    Lo = beta * Y.DirectContribution / Y.Jacobian;
 
     return true;
 }

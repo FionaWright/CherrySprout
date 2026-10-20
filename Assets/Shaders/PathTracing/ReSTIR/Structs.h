@@ -37,7 +37,9 @@ struct CandidateGI
     hlsl::uint IsMiss;
     hlsl::float3 DirectContribution;
 
+    // TODO: Differentiate between sample and evaluate candidate members?
     BxdfEval BxdfEval;
+    float Jacobian;
 };
 
 struct ContextGI
