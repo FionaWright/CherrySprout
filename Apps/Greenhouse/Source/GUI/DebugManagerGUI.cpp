@@ -557,17 +557,63 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         ImGui::Unindent(IM_GUI_INDENTATION);
         ImGui::EndTable();
 
+        std::string currentHeader;
+        bool currentHeaderOpen = false;
+
         if (ImGui::BeginTable("Debug Outputs", 2))
         {
-            static int e = static_cast<int>(config.DebugInfo.OutputColorIdx);
-            int c = 0;
-            for (auto& debugOutputIdxName : s_debugOutputIdxNames)
+            auto RowSection = [&](const char* lab, int dbgIdx) -> bool
             {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+
+                const std::string fullLabel = lab + std::string("##section2-") + std::to_string(dbgIdx);
+
+                const bool open = ImGui::TreeNodeEx(fullLabel.c_str(), ImGuiTreeNodeFlags_SpanAllColumns);
+                ImGui::TableNextRow();
+                return open;
+            };
+
+            static int e = static_cast<int>(config.DebugInfo.OutputColorIdx);
+            for (int i = 0; i < _countof(s_debugOutputIdxNames); i++)
+            {
+                std::string name = s_debugOutputIdxNames[i];
+                const auto underscoreIdx = name.find_first_of('_');
+
+                if (underscoreIdx != std::string::npos)
+                {
+                    const std::string newHeader = name.substr(0, underscoreIdx);
+                    name = name.substr(underscoreIdx + 1);
+
+                    if (currentHeader != newHeader)
+                    {
+                        if (!currentHeader.empty() && currentHeaderOpen)
+                            ImGui::TreePop();
+
+                        currentHeader = newHeader;
+                        currentHeaderOpen = RowSection(currentHeader.c_str(), i);
+                    }
+                }
+                else if (!currentHeader.empty())
+                {
+                    if (currentHeaderOpen)
+                        ImGui::TreePop();
+                    currentHeader = "";
+                    currentHeaderOpen = false;
+                }
+
+                if (!currentHeader.empty() && !currentHeaderOpen)
+                    continue;
+
                 ImGui::TableNextColumn();
-                ptFrameDirty |= ImGui::RadioButton(debugOutputIdxName, &e, c++);
+                ptFrameDirty |= ImGui::RadioButton(name.c_str(), &e, i);
                 ImGui::IsItemDeactivatedAfterEdit();
-                ImGui::SetItemTooltip("%s", debugOutputIdxName);
+                ImGui::SetItemTooltip("%s", name.c_str());
             }
+
+            if (!currentHeader.empty() && currentHeaderOpen)
+                ImGui::TreePop();
+
             config.DebugInfo.OutputColorIdx = static_cast<DebugOutputIndex>(e);
         }
 
