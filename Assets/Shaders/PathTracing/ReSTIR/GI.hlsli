@@ -13,134 +13,161 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-SubReservoir_GI Generate(inout RngInfo rngInfo, SubReservoirInfo_GI info)
+/*
+
+Sample a random direction, trace the point, then sample a random light and get its direct contribution
+
+When sampling the reservoir, does the main path continue from the sample point or does it continue from primary ray hit?
+
+*/
+
+CandidateGI Generate(inout RngInfo rngInfo, ContextGI context)
 {
     BxDF bxdf;
     BxdfEval bxdfEval;
-    BxdfSample bxdfSample = bxdf.Sample(rngInfo, info.HitInfo, info.Wo, bxdfEval);
+    BxdfSample bxdfSample = bxdf.Sample(rngInfo, context.HitInfo, context.Wo, bxdfEval);
 
+    // TODO: Simpler function that doesn't extract everything?
     bool isMiss;
-    float3 hitPos;
-    float3 Ns_ff;
-    TraceHitData(info.HitInfo.HitPosBiased, bxdfSample.Wi, isMiss, hitPos, Ns_ff);
+    HitInfo secondaryHitInfo;
+    {
+        RayQuery<RAY_FLAGS> q;
+        RayDesc ray;
+        ray.Origin = context.HitInfo.HitPosBiased;
+        ray.Direction = bxdfSample.Wi;
+        ray.TMin = TMIN_BIAS_COEF * EPSILON;
+        ray.TMax = INF;
 
-    SubReservoir_GI X_i;
-    X_i.Position = isMiss ? INF : hitPos;
-    X_i.Normal = isMiss ? 0 : Ns_ff;
+        q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, ray);
+        while (q.Proceed()) {}
+        isMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
+
+        if (!isMiss)
+            GetHitInfo(q, secondaryHitInfo);
+    }
+
+    // TODO: Does SampleNEE PDF need to be accounted for in reservoir?
+    float3 E_direct = 0.0f;
+    if (!isMiss)
+    {
+        float3 wo = -bxdfSample.Wi;
+        E_direct = SampleNEE(rngInfo, secondaryHitInfo, bxdf, 1, wo);
+    }
+
+    // TODO: Extension: Missed ray candidates
+
+    CandidateGI X_i;
+    X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
+    X_i.DestPosition = isMiss ? 0 : secondaryHitInfo.HitPos;
+    X_i.Ns_ff = isMiss ? 0 : secondaryHitInfo.Ns_ff;
+    X_i.Ng_ff = isMiss ? 0 : secondaryHitInfo.Ng_ff;
+    X_i.IsMiss = isMiss;
+    X_i.DirectContribution = E_direct;
     X_i.BxdfEval = bxdfEval;
     return X_i;
 }
 
-void ReEvaluate(inout SubReservoir_GI X_i, SubReservoirInfo_GI info)
+void ReEvaluate(inout CandidateGI X_i, ContextGI context)
 {
+    float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
+
     BxDF bxdf;
-    X_i.LightEval = EvaluateLight(info.HitInfo.HitPos, bxdf, info.Wo, X_i.LightSample);
+    X_i.BxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, wi);
+
+    // TODO: Jacobian here?
 }
 
-float Target(SubReservoir_GI X_i, SubReservoirInfo_GI info)
+float Target(CandidateGI X_i, ContextGI context)
 {
-    float NdL = max(0.0f, dot(info.HitInfo.Ns_ff, X_i.LightEval.Direction));
+    if (X_i.IsMiss) // TODO
+        return 0.0f;
+
+    float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
+    float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, wi));
     if (NdL <= 0)
         return 0.0f;
 
-    if (X_i.LightEval.PDF < EPSILON || length(X_i.LightEval.Radiance) <= 0.0f)
+    if (X_i.BxdfEval.PDF < EPSILON || length(X_i.BxdfEval.Radiance) <= 0.0f || length(X_i.DirectContribution) <= 0.0f)
         return 0.0f;
 
-    float shadowFactor = 1.0f;
-    if (FEAT_CORE(RestirTargetVisibility))
-    {
-        TraceRayShadow(info.HitInfo.HitPosBiased, X_i.LightEval.Direction, X_i.LightEval.Distance, shadowFactor);
-        if (shadowFactor <= 0.0f)
-            return 0;
-    }
+    float3 v1PosMain = X_i.SourcePositionBiased;
+    float3 v1PosShift = context.HitInfo.HitPosBiased;
+    float3 v1NormalShift = context.HitInfo.Ns_ff;
+    float3 v2Pos = X_i.DestPosition;
+    float3 v2Normal = X_i.Ns_ff;
+    ShiftResult shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
 
-    float3 m;
-    if (FEAT_DBG(FixedMisNeeManual))
-    {
-        m = gDebugSettings.FixedMisNee;
-    }
-    else if (X_i.LightEval.IsDelta)
-    {
-        m = 1.0f;
-    }
-    else
-    {
-        BxDF bxdf;
-        BxdfEval bxdfEval = bxdf.Evaluate(info.HitInfo, info.Wo, X_i.LightEval.Direction);
+    if (!shiftResult.IsSuccessful)
+        return 0.0f;
 
-        m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
-    }
+    // TODO: What do I do with shiftResult.Jacobian?
 
-    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL; // Note: Don't divide by PDF here
-    return Luminance(radiance);
+    float3 beta = 1.0f;
+
+    // Primary Hit BxDF Sample
+    E_indirect = bxdfEval.Radiance * abs(NdL);
+
+    // NEE Sample
+    float3 Lo = beta * X_i.DirectContribution;
+
+    return Luminance(Lo);
 }
 
-float PDF(SubReservoir_GI X_i, SubReservoirInfo_GI info)
+float PDF(CandidateGI X_i, ContextGI context)
 {
-    return X_i.LightEval.PDF;
+    return X_i.BxdfEval.PDF;
 }
 
-bool TrySampleReservoir(
+bool TrySampleReservoirGI(
     HitInfo hitInfo,
+    float3 beta,
     uint2 pixelCoord,
     float3 wo,
     BxDF bxdf,
     uint numSamples,
-    out SubReservoir_GI Y,
-    out float lightDistance,
-    out float3 radiance)
+    out CandidateGI Y,
+    out float3 Lo)
 {
-    radiance = 0.0f;
+    Lo = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirDI reservoir = gReservoirBuffer[reservoirIdx];
 
-    Y = reservoir.Y;
-    float3 wi = Y.LightEval.Direction;
-    lightDistance = Y.LightEval.Distance;
-
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    LightEval lightEval = Y.LightEval;
+    Y = reservoir.Y;
+    float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
+    BxdfEval bxdfEval = Y.BxdfEval;
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (NdL <= 0 || length(lightEval.Radiance) <= 0.0f)
+    if (NdL <= 0 || length(bxdfEval.Radiance) <= 0.0f)
         return false;
 
-    float3 m;
-    if (lightEval.IsDelta)
-    {
-        m = 1.0f;
-    }
-    else
-    {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
+    // Primary Hit BxDF Sample
+    float3 E_indirect = bxdfEval.Radiance * abs(NdL) * reservoir.W_Y;
+    beta *= E_indirect;
 
-        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
+    // NEE Sample
+    Lo = beta * Y.DirectContribution;
 
-        DBG_OUTPUT3(bxdfEval.Radiance, RESTIR_Bxdf);
-        DBG_OUTPUT1(bxdfEval.PDF, RESTIR_PDF);
-    }
-
-    radiance = shadowFactor * lightEval.Radiance * m * NdL * reservoir.W_Y;
     return true;
 }
 
 #else
 
-SubReservoir_GI Generate(inout RngInfo rngInfo, SubReservoirInfo_GI info) { return (SubReservoir_GI)0; }
-float Target(SubReservoir_GI X_i, SubReservoirInfo_GI info) { return NAN; }
-float PDF(SubReservoir_GI X_i, SubReservoirInfo_GI info) { return NAN; }
-bool TrySampleReservoir(
+CandidateGI Generate(inout RngInfo rngInfo, ContextGI context) { return (CandidateGI)0; }
+float Target(CandidateGI X_i, ContextGI context) { return NAN; }
+float PDF(CandidateGI X_i, ContextGI context) { return NAN; }
+bool TrySampleReservoirGI(
     HitInfo hitInfo,
+    float3 beta,
     uint2 pixelCoord,
     float3 wo,
     BxDF bxdf,
     uint numSamples,
-    out SubReservoir_GI Y,
-    out float lightDistance,
-    out float3 radiance) { Y = (SubReservoir_GI)0; lightDistance = NAN; radiance = NAN; return NAN; }
+    out CandidateGI Y,
+    out float3 Lo) { Y = (CandidateGI)0; Lo = NAN; return NAN; }
 
 #endif
 

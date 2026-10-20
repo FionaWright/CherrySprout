@@ -53,6 +53,20 @@ float3 SampleNEE(
     return shadowFactor * lightEval.Radiance * m * NdL / max(1e-6f, lightEval.PDF);
 }
 
+float3 SampleNEE(
+    inout RngInfo rngInfo,
+    HitInfo hitInfo,
+    BxDF bxdf,
+
+    uint numSamples,
+    float3 wo)
+{
+    LightSample _1;
+    float _2;
+    float _3;
+    return SampleNEE(rngInfo, hitInfo, bxdf, numSamples, wo, _1, _2, _3);
+}
+
 float3 EvaluateNEE(
     HitInfo hitInfo,
     BxDF bxdf,
@@ -110,6 +124,14 @@ float3 SampleNEE(
     out LightSample lightSample,
     out float lightDistance,
     out float shadowFactor) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; return NAN; }
+
+float3 SampleNEE(
+    inout RngInfo rngInfo,
+    HitInfo hitInfo,
+    BxDF bxdf,
+
+    uint numSamples,
+    float3 wo) { return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,

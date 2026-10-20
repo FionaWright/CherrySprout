@@ -28,7 +28,7 @@ float3 SampleDirectLighting(
     {
         CandidateDI lightSE;
         float3 L_restir;
-        bool validReservoir = TrySampleReservoir(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
+        bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
 
         DBG_OUTPUT1(validReservoir, RESTIR_ValidReservoir);
 

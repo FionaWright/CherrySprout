@@ -68,6 +68,9 @@ Multi-Layer Reservoir Splatting:
 ReSTIR Course:
     https://intro-to-restir.cwyman.org/presentations/2023ReSTIR_Course_DirectLight_and_Spatiotemporal.pdf
 
+ReSTIR GI:
+    https://research.nvidia.com/publication/2021-06_restir-gi-path-resampling-real-time-path-tracing
+
 ## GDPT:
 
 Original Paper:

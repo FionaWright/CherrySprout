@@ -75,7 +75,7 @@ float PDF(CandidateDI X_i, ContextDI context)
     return X_i.LightEval.PDF;
 }
 
-bool TrySampleReservoir(
+bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,
@@ -150,7 +150,7 @@ bool TrySampleReservoir(
 CandidateDI Generate(inout RngInfo rngInfo, ContextDI context) { return (CandidateDI)0; }
 float Target(CandidateDI X_i, ContextDI context) { return NAN; }
 float PDF(CandidateDI X_i, ContextDI context) { return NAN; }
-bool TrySampleReservoir(
+bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,

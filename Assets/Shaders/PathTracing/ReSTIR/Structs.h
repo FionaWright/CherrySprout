@@ -18,6 +18,8 @@ struct CandidateDI
 // Note: HitInfo required due to BXDF Eval
 // TODO: Is there any way to avoid this cleanly?
 // Note: Only a single HitInfo is needed per pixel per frame. Could have ReservoirInfo buffer?
+// If I do use ContextBuffer, should be used instead of tracing primary ray
+// Maybe PT should have separate TracePrimaryRay pass to build context buffer when using ReSTIR?
 struct ContextDI
 {
     HitInfo HitInfo;
@@ -25,17 +27,20 @@ struct ContextDI
     hlsl::float3 Wo;
 };
 
-struct SubReservoir_GI
+struct CandidateGI
 {
-    hlsl::float3 Position;
+    hlsl::float3 SourcePositionBiased; // For Jacobian
+    hlsl::float3 DestPosition;
     hlsl::float3 Ns_ff;
     hlsl::float3 Ng_ff;
-    hlsl::uint MaterialIndex;
+
+    hlsl::uint IsMiss;
+    hlsl::float3 DirectContribution;
 
     BxdfEval BxdfEval;
 };
 
-struct SubReservoirInfo_GI
+struct ContextGI
 {
     HitInfo HitInfo;
 
@@ -43,6 +48,6 @@ struct SubReservoirInfo_GI
 };
 
 typedef Reservoir<CandidateDI, ContextDI> ReservoirDI;
-typedef Reservoir<SubReservoir_GI, SubReservoirInfo_GI> ReservoirGI;
+typedef Reservoir<CandidateGI, ContextGI> ReservoirGI;
 
 #endif
