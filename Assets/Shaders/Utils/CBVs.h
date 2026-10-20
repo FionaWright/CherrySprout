@@ -57,7 +57,9 @@ struct CbvPathTracingSettings
     hlsl::uint RestirTemporalEnabled; // TODO: Could be flags
 
     hlsl::uint RestirSpatialEnabled;
-    hlsl::float3 p;
+    float NearPlane;
+    float FarPlane;
+    float p;
 };
 
 struct CbvPanoToEA

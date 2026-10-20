@@ -160,4 +160,10 @@ int2 MotionVectorToPixelCoord(int2 pixelCoord, float2 mv, float2 dimensions)
     return int2(floor(prevUV * dimensions));
 }
 
+// TODO: Reversed-Z with infinite far plane
+float LinearizeDepth(float depth, float nearPlane, float farPlane)
+{
+    return (nearPlane * farPlane) / (farPlane - depth * (farPlane - nearPlane));
+}
+
 #endif

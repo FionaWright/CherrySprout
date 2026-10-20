@@ -106,6 +106,8 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position, out LightEv
     lightEval.Radiance = light.Color * (light.Intensity * attenuation);
     DBG_SCALE_INTENSITY_POINT(lightEval.Radiance);
 
+    lightEval.Radiance *= 0.1f; // TODO
+
     return lightSample;
 }
 
@@ -211,6 +213,7 @@ LightSample EvaluatePunctualLight(PunctualLight light, float3 position, out Ligh
         break;
     }
 
+    lightEval.Radiance *= 0.01f; // TODO
     lightEval.PDF = 1.0f;
     lightEval.IsDelta = true;
     return lightSample;

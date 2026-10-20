@@ -292,6 +292,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;
         settings.LsdCount = renderInfo.LsdCount;
 
+        settings.NearPlane = Config::GetRender().NearPlane;
+        settings.FarPlane = Config::GetRender().FarPlane;
+
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
         m_descriptorSet.UpdateCBV(0, &settings);

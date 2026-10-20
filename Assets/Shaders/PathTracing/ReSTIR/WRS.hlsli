@@ -69,6 +69,19 @@ float RestirMis(TCandidate X_i, uint M)
     return 1 / (float)M;
 }
 
+template<typename TCandidate>
+void NormalizeUnbiasedContributionWeight(inout Reservoir<TCandidate> reservoir)
+{
+    if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
+    {
+        reservoir.Confidence = 0.0f;
+        reservoir.W_Y = 0.0f;
+        return;
+    }
+
+    reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
+}
+
 template<typename TCandidate, typename TContext>
 void WRS(
     inout RngInfo rngInfo,
@@ -104,7 +117,7 @@ void WRS(
         return;
     }
 
-    reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
+    NormalizeUnbiasedContributionWeight(reservoir);
 }
 
 #endif

@@ -27,11 +27,11 @@ struct PathTracingDebugInfo
     float ScaleIntensityDirect = 1.0f;
     float ScaleIntensityIndirect = 1.0f;
 
-    float ScaleIntensityPunctual = 0.01f;
+    float ScaleIntensityPunctual = 1.0f;
     float ScaleIntensityEnvMap = 1.0f;
     float ScaleIntensityEmission = 1.0f;
 
-    float ScaleIntensityPoint = 0.1f;
+    float ScaleIntensityPoint = 1.0f;
     float ScaleIntensityDistant = 1.0f;
     float ScaleIntensitySpot = 1.0f;
     float ScaleIntensityRect = 1.0f;
@@ -120,8 +120,8 @@ struct PathTracerConfig
     float SprAlpha = 0.0f;
 
     float RestirTemporalNormalDivThreshold = 0.9f;
-    float RestirSpatialNormalDivThreshold = 0.1f;
-    float RestirTemporalDepthDivThreshold = 0.9f; // TODO
+    float RestirSpatialNormalDivThreshold = 0.9f;
+    float RestirTemporalDepthDivThreshold = 0.1f; // TODO
     float RestirSpatialDepthDivThreshold = 0.1f;
     float RestirSpatialRadius = 5.0f;
 

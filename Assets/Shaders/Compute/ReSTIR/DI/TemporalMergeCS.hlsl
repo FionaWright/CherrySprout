@@ -78,13 +78,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         ReservoirMerge(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev, context);
 
-        if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
-        {
-            reservoir.Confidence = 0.0f;
-            reservoir.W_Y = 0.0f;
-        }
-        else
-            reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
+        NormalizeUnbiasedContributionWeight(reservoir);
     }
 
     gReservoirBufferDI[reservoirIdxOut] = reservoir;
