@@ -3,13 +3,9 @@
 
 #include "GreenhouseConfig.h"
 
-void PathTracer::GUI(GreenhouseConfig* config)
+void PathTracer::GUI(GreenhouseConfig* config, bool& frameDirty)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    bool ptFrameDirty = false;
-    m_debugManager.GUI(config->PathTracerConfig, ptFrameDirty);
-
-    if (ptFrameDirty)
-        Reset();
+    m_debugManager.GUI(config->PathTracerConfig, frameDirty);
 #endif
 }

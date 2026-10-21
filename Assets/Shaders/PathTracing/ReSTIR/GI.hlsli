@@ -152,9 +152,6 @@ bool TrySampleReservoirGI(
     ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
     Y = reservoir.Y;
 
-    if (all(Y.DestPosition == hitInfo.HitPos))
-        return false;
-
     float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
 
     // Debug
@@ -174,6 +171,9 @@ bool TrySampleReservoirGI(
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
+
+    if (all(Y.DestPosition == hitInfo.HitPos))
+        return false;
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;

@@ -51,7 +51,7 @@ public:
 
     void ScheduleRestirClear() { m_restirClearScheduled = true; }
 
-    void GUI(GreenhouseConfig* config) override;
+    void GUI(GreenhouseConfig* config, bool& frameDirty) override;
 
 private:
     RtasBuilder m_rtasBuilder;

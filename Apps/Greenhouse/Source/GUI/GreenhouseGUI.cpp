@@ -29,7 +29,7 @@ void Greenhouse::RenderGUI()
 
         if (ImGui::BeginTabItem("Backend"))
         {
-            m_currRenderBackend->GUI(&m_config);
+            m_currRenderBackend->GUI(&m_config, m_ptFrameDirty);
             ImGui::EndTabItem();
         }
 
