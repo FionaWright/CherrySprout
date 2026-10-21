@@ -128,11 +128,11 @@ namespace SceneLoaderUSD
                 light.SpotOuterAngle *= DegToRad;
                 light.SpotInnerAngle *= DegToRad;
 
-                pxr::GfVec3d worldDir = world.ExtractRotationMatrix() * pxr::GfVec3d(0, 0, -1); // TODO: Assuming Z-up?
+                pxr::GfVec3d worldDir = world.TransformDir(pxr::GfVec3d(0, 0, -1));
                 worldDir.Normalize();
                 light.SpotOrRectDirection = { static_cast<float>(worldDir[0]), static_cast<float>(worldDir[1]), static_cast<float>(worldDir[2]) };
 
-                // TODO: normalize ?
+                // TODO: Normalize not applied
             }
         }
 

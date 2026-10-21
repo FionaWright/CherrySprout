@@ -178,7 +178,9 @@ int main(const int argc, char** argv)
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\CityStreet\CityStreetMin.usda)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GitIgnored\Bedroom\Bedroom.usdc)";
     //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GradientTest\GradientTestMin.usda)";
-    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GradientTest\GradientTest.usda)";
+    //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\GradientTest\GradientTest.usda)";
+    //std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\LightTest\SpotTest.usda)";
+    std::string filepath = R"(C:\Users\fionawright\build\CherrySprout\Debug\Assets\Scenes\USD\LightTest\RestirTestGI.usda)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\Quad\Quad.usda)";
     //std::string filepath = R"(C:\Users\fiona\build\CherrySprout\Debug\Assets\Scenes\USD\OpenChessSet\chess_set.usda)";
     //std::string filepath = R"(C:\Users\fiona\source\repos\CherrySprout\Assets\Scenes\USD\GitIgnored\LivingRoom\Modernes Wohnzimmer.usda)";

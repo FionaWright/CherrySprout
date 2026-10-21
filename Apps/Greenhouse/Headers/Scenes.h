@@ -158,6 +158,22 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPitchYaw = {1.561300, -7.844365},
         .SceneScale = 0.1f
     },
+
+    {
+        .Name = "RestirTestGI",
+        .Filepath = "Scenes/USD/LightTest/RestirTestGI.usda",
+        .CameraPosition = {1.042621, 0.541313, 0.028015},
+        .CameraPitchYaw = {0.061300, -7.874362},
+        .SceneScale = 0.1f
+    },
+
+    {
+        .Name = "SpotTest",
+        .Filepath = "Scenes/USD/LightTest/SpotTest.usda",
+        .CameraPosition = {1.042621, 0.541313, 0.028015},
+        .CameraPitchYaw = {0.061300, -7.874362},
+        .SceneScale = 0.1f
+    },
 };
 
 #endif
