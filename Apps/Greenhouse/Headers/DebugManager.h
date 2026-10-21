@@ -39,7 +39,7 @@ public:
     hlsl::uint2 GetScheduledRunPixelCoords() const { return m_scheduledRunPixelCoords; }
     void ScheduledRunTransition(const ScheduledRunState state) { m_scheduledRunState = state; }
 
-    void SetScheduledRunParameters(CbvPathTracingSettings* settings) const;
+    void SetScheduledRunParameters(size_t& frameIdx, XMFLOAT3& camPos, XMMATRIX& invV) const;
 
     void GUI(PathTracerConfig& config, bool& ptFrameDirty);
 

@@ -254,13 +254,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
     }
 #endif
 
-    const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
-    if (m_ptFrameDirty || (!inTextField && Input::IsKeyDown(KeyCode::R)))
-    {
-        m_pathTracer.Reset();
-        m_ptFrameDirty = false;
-    }
-
     if (m_ptPipelineDirty)
     {
         d3d->Flush();
@@ -269,7 +262,17 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
             m_config.PathTracerConfig.DebugInfo,
             m_config.PathTracerConfig.BxdfMode,
             m_config.PathTracerConfig.MicrofacetModelType);
+
         m_ptPipelineDirty = false;
+        m_ptFrameDirty = true;
+    }
+
+    const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
+    if (m_ptFrameDirty || (!inTextField && Input::IsKeyDown(KeyCode::R)))
+    {
+        m_pathTracer.Reset();
+        m_renderInfo.FrameIndex = 0;
+        m_ptFrameDirty = false;
     }
 
     m_currRenderBackend->Update(d3d, &m_heap, timeArgs);
@@ -281,7 +284,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     {
         if (GBufferRequired())
         {
-            m_gbufferPrePass.Render(d3d, cmdList, &m_sceneManager.GetScene(), &m_heap, m_renderInfo.V, m_renderInfo.P);
+            m_gbufferPrePass.Render(cmdList, &m_sceneManager.GetScene(), m_renderInfo);
         }
 
         m_gbufferPrePass.GetGBufferMaterialIdx()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -401,6 +404,8 @@ void Greenhouse::PostUpdate(D3D* d3d)
         m_scheduledSnapshotPT = "";
     }
 #endif
+
+    m_renderInfo.FrameIndex++;
 }
 
 void Greenhouse::OnResize(uint32_t width, uint32_t height)

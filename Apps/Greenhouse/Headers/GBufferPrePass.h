@@ -9,6 +9,7 @@
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
 
+struct GreenHouseRenderInfo;
 struct Scene;
 class D3D;
 class Heap;
@@ -24,7 +25,7 @@ class GBufferPrePass
 public:
     void Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV);
     void LoadSceneData(D3D* d3d, Scene* scene);
-    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene, const Heap* heap, const XMMATRIX& V, const XMMATRIX& P);
+    void Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, const GreenHouseRenderInfo& renderInfo);
     void UnreserveData();
 
     [[nodiscard]] D12Resource* GetGBufferMaterialIdx() { return &m_gbufferTexMaterialIdx; }

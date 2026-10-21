@@ -65,14 +65,14 @@ uint GetReservoirBufferIndex_TemporalOutput(uint2 pixelCoord)
 
 uint GetReservoirBufferIndex_SpatialInput(uint2 pixelCoord)
 {
-    if (gSettings.RestirTemporalEnabled)
+    if (gRestirSettings.TemporalEnabled)
         return GetReservoirBufferIndex_Pong(pixelCoord);
     else
         return GetReservoirBufferIndex_Ping(pixelCoord);
 }
 uint GetReservoirBufferIndex_SpatialOutput(uint2 pixelCoord)
 {
-    if (gSettings.RestirTemporalEnabled)
+    if (gRestirSettings.TemporalEnabled)
         return GetReservoirBufferIndex_Ping(pixelCoord);
     else
         return GetReservoirBufferIndex_Pong(pixelCoord);
@@ -80,15 +80,15 @@ uint GetReservoirBufferIndex_SpatialOutput(uint2 pixelCoord)
 
 uint GetReservoirBufferIndex_Final(uint2 pixelCoord)
 {
-    if (gSettings.RestirTemporalEnabled)
+    if (gRestirSettings.TemporalEnabled)
     {
-        if (gSettings.RestirSpatialEnabled)
+        if (gRestirSettings.SpatialEnabled)
             return GetReservoirBufferIndex_Ping(pixelCoord);
         else
             return GetReservoirBufferIndex_Pong(pixelCoord);
     }
 
-    if (gSettings.RestirSpatialEnabled)
+    if (gRestirSettings.SpatialEnabled)
         return GetReservoirBufferIndex_Pong(pixelCoord);
     else
         return GetReservoirBufferIndex_Ping(pixelCoord);

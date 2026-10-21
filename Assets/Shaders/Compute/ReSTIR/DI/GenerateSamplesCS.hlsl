@@ -26,7 +26,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_GEN_SAMPLES);
 
     ReservoirDI reservoir = CreateReservoir<CandidateDI>();
-    WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, context);
+    WRS(rngInfo, reservoir, gRestirSettings.GenCandidatesCount, context);
 
     uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     gReservoirBufferDI[reservoirIdxOut] = reservoir;

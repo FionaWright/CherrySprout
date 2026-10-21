@@ -85,8 +85,8 @@ void Greenhouse::renderGuiCore()
     ImGui::SeparatorText("Info");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-        ImGui::Text("Frames : %i", m_pathTracer.GetCurrentFrameIdx());
-        ImGui::Text("Samples: %i", m_pathTracer.GetCurrentFrameIdx() * m_config.PathTracerConfig.SPP);
+        ImGui::Text("Frames : %zu", m_renderInfo.FrameIndex);
+        ImGui::Text("Samples: %zu", m_renderInfo.FrameIndex * m_config.PathTracerConfig.SPP);
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 

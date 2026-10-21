@@ -16,6 +16,7 @@
 #include "Utils/Helper.h"
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
+#include "Utils/MathUtils.h"
 
 #if !NDEBUG
 #include "Debug/Profiler.h"
@@ -103,6 +104,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.Init         (heap, true);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingSettings), uploadHeapCBV);
     m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
+    m_descriptorSet.AddCBV       (d3d->GetDevice(), sizeof(CbvRestirSettings), uploadHeapCBV);
 
     m_gradientManager.Init(d3d);
 
@@ -172,7 +174,7 @@ void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.PostUpdate(d3d, renderInfo, m_frameIdx, &m_outputRgba8Unorm);
+    m_debugManager.PostUpdate(d3d, renderInfo, renderInfo.FrameIndex, &m_outputRgba8Unorm);
 
     if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI))
     {
@@ -188,67 +190,39 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
+    size_t frameIdx = renderInfo.FrameIndex;
+    XMFLOAT3 camPos = renderInfo.Camera->GetPosition();
+    XMMATRIX invV = renderInfo.InvV;
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    const bool dbgRunFrameState = m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame);
+
+    if (m_debugManager.IsScheduledRunState(ScheduledRunState::eRecompilePipelineAndRunFrame))
+    {
+        d3d->Flush();
+        UpdatePipeline(d3d->GetDevice(),
+            renderInfo.PathTracerConfig->FlagsCore,
+            renderInfo.PathTracerConfig->DebugInfo,
+            renderInfo.PathTracerConfig->BxdfMode,
+            renderInfo.PathTracerConfig->MicrofacetModelType);
+
+        m_debugManager.ScheduledRunTransition(ScheduledRunState::eRunFrame);
+    }
+
+    if (m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame))
+    {
+        m_debugManager.SetScheduledRunParameters(frameIdx, camPos, invV);
+        m_debugManager.ScheduledRunTransition(ScheduledRunState::eReadbackPathDump);
+    }
+#endif
+
     // Fill Settings
     {
         CbvPathTracingSettings settings{};
+        settings.FrameIdx = frameIdx;
+        settings.CameraPositionWorld = camPos;
+        XMStoreFloat4x4(&settings.InvV, invV);
         XMStoreFloat4x4(&settings.InvP, renderInfo.InvP);
-        XMStoreFloat4x4(&settings.InvV, renderInfo.InvV);
-        settings.FrameIdx = m_frameIdx;
-        settings.CameraPositionWorld = renderInfo.Camera->GetPosition();
-
-#if CHERRY_DEBUG_FEATURES_ENABLED
-        if (renderInfo.PathTracerConfig->DebugInfo.FlagsDebug != 0)
-        {
-            const hlsl::uint2 chosenPixelCoords = m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame) ? m_debugManager.GetScheduledRunPixelCoords() : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
-
-            CbvPathTracingDebugSettings debugSettings{};
-            debugSettings.OutputColorIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx);
-            debugSettings.OutputColorRemapIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorRemap);
-            debugSettings.ChosenRayDepth = renderInfo.PathTracerConfig->DebugInfo.ChosenRayDepth;
-            debugSettings.ChosenPixelCoords = chosenPixelCoords;
-            debugSettings.ScaleIntensityGlobal = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityGlobal;
-            debugSettings.ScaleIntensityDirect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDirect;
-            debugSettings.ScaleIntensityIndirect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityIndirect;
-            debugSettings.ScaleIntensityPunctual = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPunctual;
-            debugSettings.ScaleIntensityEmission = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEmission;
-            debugSettings.ScaleIntensityEnvMap = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEnvMap;
-            debugSettings.ScaleIntensityPoint = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPoint;
-            debugSettings.ScaleIntensityDistant = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDistant;
-            debugSettings.ScaleIntensitySpot = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensitySpot;
-            debugSettings.ScaleIntensityRect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityRect;
-            debugSettings.ScalePointLightRadius = renderInfo.PathTracerConfig->DebugInfo.ScalePointLightRadius;
-            debugSettings.ScaleF = renderInfo.PathTracerConfig->DebugInfo.ScaleF;
-            debugSettings.ScaleD = renderInfo.PathTracerConfig->DebugInfo.ScaleD;
-            debugSettings.ScaleG = renderInfo.PathTracerConfig->DebugInfo.ScaleG;
-            debugSettings.ScaleDiffuse = renderInfo.PathTracerConfig->DebugInfo.ScaleDiffuse;
-            debugSettings.ScaleSpecular = renderInfo.PathTracerConfig->DebugInfo.ScaleSpecular;
-            debugSettings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
-            debugSettings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
-            debugSettings.FixedMisNee = renderInfo.PathTracerConfig->DebugInfo.FixedMisNee;
-            debugSettings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
-            debugSettings.FeatFlagsCoreQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsCoreQS;
-            debugSettings.FeatFlagsDbgQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsDebugQS;
-            m_descriptorSet.UpdateCBV(1, &debugSettings);
-        }
-
-        if (m_debugManager.IsScheduledRunState(ScheduledRunState::eRecompilePipelineAndRunFrame))
-        {
-            d3d->Flush();
-            UpdatePipeline(d3d->GetDevice(),
-                renderInfo.PathTracerConfig->FlagsCore,
-                renderInfo.PathTracerConfig->DebugInfo,
-                renderInfo.PathTracerConfig->BxdfMode,
-                renderInfo.PathTracerConfig->MicrofacetModelType);
-
-            m_debugManager.ScheduledRunTransition(ScheduledRunState::eRunFrame);
-        }
-
-        if (m_debugManager.IsScheduledRunState(ScheduledRunState::eRunFrame))
-        {
-            m_debugManager.SetScheduledRunParameters(&settings);
-            m_debugManager.ScheduledRunTransition(ScheduledRunState::eReadbackPathDump);
-        }
-#endif
 
         if (renderInfo.PathTracerConfig->TrueRandomSeedMode)
             renderInfo.PathTracerConfig->Seed = std::rand();
@@ -259,7 +233,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RussianRouletteMinBounces = renderInfo.PathTracerConfig->RussianRouletteMinBounces;
         settings.SPP = renderInfo.PathTracerConfig->SPP;
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
-        settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && m_frameIdx > renderInfo.PathTracerConfig->MaxFrameNumber;
+        settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && renderInfo.FrameIndex > renderInfo.PathTracerConfig->MaxFrameNumber;
         settings.DirectNumSamples = renderInfo.PathTracerConfig->DirectNumSamples;
 
         float speedOfLight = renderInfo.PathTracerConfig->TransientSpeedOfLight;
@@ -275,19 +249,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.DofFocalDist = renderInfo.PathTracerConfig->DofFocalDist;
         settings.DofLensRadius = renderInfo.PathTracerConfig->DofLensRadius;
 
-        settings.RestirGenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
-        settings.RestirTemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
-        settings.RestirGenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
-        settings.RestirTemporalNormalDivThreshold = renderInfo.PathTracerConfig->RestirTemporalNormalDivThreshold;
-        settings.RestirTemporalDepthDivThreshold = renderInfo.PathTracerConfig->RestirTemporalDepthDivThreshold;
-        settings.RestirSpatialNormalDivThreshold = renderInfo.PathTracerConfig->RestirSpatialNormalDivThreshold;
-        settings.RestirSpatialDepthDivThreshold = renderInfo.PathTracerConfig->RestirSpatialDepthDivThreshold;
-        settings.RestirSpatialNumSamples = renderInfo.PathTracerConfig->RestirSpatialNumSamples;
-        settings.RestirSpatialConfidenceCap = renderInfo.PathTracerConfig->RestirSpatialConfidenceCap;
-        settings.RestirSpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
-        settings.RestirTemporalEnabled = renderInfo.PathTracerConfig->RestirTemporalEnabled;
-        settings.RestirSpatialEnabled = renderInfo.PathTracerConfig->RestirSpatialEnabled;
-
         settings.LsdBasePunctuals = renderInfo.LsdBasePunctuals;
         settings.LsdBaseEmissives = renderInfo.LsdBaseEmissives;
         settings.LsdCount = renderInfo.LsdCount;
@@ -295,9 +256,70 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.NearPlane = Config::GetRender().NearPlane;
         settings.FarPlane = Config::GetRender().FarPlane;
 
+        if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
+        {
+            RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(renderInfo.FrameIndex,renderInfo.FrameIndex), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
+            settings.JitterPerFrame = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);
+        }
+        else
+            settings.JitterPerFrame = XMFLOAT2(0,0);
+
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
         m_descriptorSet.UpdateCBV(0, &settings);
+    }
+
+#if CHERRY_DEBUG_FEATURES_ENABLED
+    if (renderInfo.PathTracerConfig->DebugInfo.FlagsDebug != 0)
+    {
+        const hlsl::uint2 chosenPixelCoords = dbgRunFrameState ? m_debugManager.GetScheduledRunPixelCoords() : renderInfo.PathTracerConfig->DebugInfo.ChosenPixelCoords;
+
+        CbvPathTracingDebugSettings settings{};
+        settings.OutputColorIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx);
+        settings.OutputColorRemapIdx = static_cast<uint32_t>(renderInfo.PathTracerConfig->DebugInfo.OutputColorRemap);
+        settings.ChosenRayDepth = renderInfo.PathTracerConfig->DebugInfo.ChosenRayDepth;
+        settings.ChosenPixelCoords = chosenPixelCoords;
+        settings.ScaleIntensityGlobal = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityGlobal;
+        settings.ScaleIntensityDirect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDirect;
+        settings.ScaleIntensityIndirect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityIndirect;
+        settings.ScaleIntensityPunctual = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPunctual;
+        settings.ScaleIntensityEmission = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEmission;
+        settings.ScaleIntensityEnvMap = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityEnvMap;
+        settings.ScaleIntensityPoint = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityPoint;
+        settings.ScaleIntensityDistant = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityDistant;
+        settings.ScaleIntensitySpot = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensitySpot;
+        settings.ScaleIntensityRect = renderInfo.PathTracerConfig->DebugInfo.ScaleIntensityRect;
+        settings.ScalePointLightRadius = renderInfo.PathTracerConfig->DebugInfo.ScalePointLightRadius;
+        settings.ScaleF = renderInfo.PathTracerConfig->DebugInfo.ScaleF;
+        settings.ScaleD = renderInfo.PathTracerConfig->DebugInfo.ScaleD;
+        settings.ScaleG = renderInfo.PathTracerConfig->DebugInfo.ScaleG;
+        settings.ScaleDiffuse = renderInfo.PathTracerConfig->DebugInfo.ScaleDiffuse;
+        settings.ScaleSpecular = renderInfo.PathTracerConfig->DebugInfo.ScaleSpecular;
+        settings.ScaleReflect = renderInfo.PathTracerConfig->DebugInfo.ScaleReflect;
+        settings.ScaleRefract = renderInfo.PathTracerConfig->DebugInfo.ScaleRefract;
+        settings.FixedMisNee = renderInfo.PathTracerConfig->DebugInfo.FixedMisNee;
+        settings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
+        settings.FeatFlagsCoreQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsCoreQS;
+        settings.FeatFlagsDbgQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsDebugQS;
+        m_descriptorSet.UpdateCBV(1, &settings);
+    }
+#endif
+
+    {
+        CbvRestirSettings settings;
+        settings.GenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
+        settings.TemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
+        settings.GenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
+        settings.TemporalNormalDivThreshold = renderInfo.PathTracerConfig->RestirTemporalNormalDivThreshold;
+        settings.TemporalDepthDivThreshold = renderInfo.PathTracerConfig->RestirTemporalDepthDivThreshold;
+        settings.SpatialNormalDivThreshold = renderInfo.PathTracerConfig->RestirSpatialNormalDivThreshold;
+        settings.SpatialDepthDivThreshold = renderInfo.PathTracerConfig->RestirSpatialDepthDivThreshold;
+        settings.SpatialNumSamples = renderInfo.PathTracerConfig->RestirSpatialNumSamples;
+        settings.SpatialConfidenceCap = renderInfo.PathTracerConfig->RestirSpatialConfidenceCap;
+        settings.SpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
+        settings.TemporalEnabled = renderInfo.PathTracerConfig->RestirTemporalEnabled;
+        settings.SpatialEnabled = renderInfo.PathTracerConfig->RestirSpatialEnabled;
+        m_descriptorSet.UpdateCBV(2, &settings);
     }
 
     {
@@ -344,8 +366,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         m_descriptorSet.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
-
-        m_frameIdx++;
     }
 
     m_finalHdrOutput = &m_primal;
@@ -406,7 +426,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     const BxdfMode& bxdfMode,
     const MicrofacetModelType& microfacetModelType)
 {
-    constexpr uint32_t numCBV = 2;
+    constexpr uint32_t numCBV = 3;
     constexpr uint32_t numSRV = 17;
     constexpr uint32_t numUAV = 10;
 
@@ -468,8 +488,6 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
 void PathTracer::Reset()
 {
-    m_frameIdx = 0;
-
 #if CHERRY_DEBUG_FEATURES_ENABLED
     if (m_debugManager.IsScheduledRunState(ScheduledRunState::eDisplay))
         m_debugManager.ScheduledRunTransition(ScheduledRunState::eIdle);

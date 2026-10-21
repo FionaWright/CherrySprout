@@ -2,6 +2,7 @@
 
 #include "GBufferPrePass.h"
 
+#include "Greenhouse.h"
 #include "Debug/GPUEventScoped.h"
 #include "HWI/D3D.h"
 #include "HWI/Heap.h"
@@ -81,9 +82,34 @@ void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 }
 
-void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene* scene, const Heap* heap, const XMMATRIX& V, const XMMATRIX& P)
+XMMATRIX ApplyProjectionJitter(const XMMATRIX& projection, const XMFLOAT2& jitterPixels, const float width, const float height)
+{
+    XMMATRIX jitteredProjection = projection;
+
+    const float jitterX =  2.0f * jitterPixels.x / width;
+    const float jitterY = -2.0f * jitterPixels.y / height;
+
+    jitteredProjection.r[3] = XMVectorAdd(
+        jitteredProjection.r[3],
+        XMVectorAdd(
+            XMVectorScale(projection.r[0], jitterX),
+            XMVectorScale(projection.r[1], jitterY)));
+
+    return jitteredProjection;
+}
+
+void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, const GreenHouseRenderInfo& renderInfo)
 {
     GPU_SCOPE(cmdList, "GBuffer Pre-Pass");
+
+    XMMATRIX P = renderInfo.P;
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
+    {
+        RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(renderInfo.FrameIndex,renderInfo.FrameIndex), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
+        const XMFLOAT2 frameJitter = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);
+
+        P = ApplyProjectionJitter(P, frameJitter, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+    }
 
     {
         CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
@@ -130,18 +156,18 @@ void GBufferPrePass::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Scene*
 
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
-        heap->Bind(cmdList);
-        heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
+        renderInfo.Heap->Bind(cmdList);
+        renderInfo.Heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
         m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
     }
 
     CbvMatrices_VP matricesVP = {};
-    XMStoreFloat4x4(&matricesVP.V, V);
+    XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
     XMStoreFloat4x4(&matricesVP.P, P);
     XMStoreFloat4x4(&matricesVP.PrevV, m_prevV);
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
-    m_prevV = V;
+    m_prevV = renderInfo.V;
 
     CbvGBufferPrePass_PerInstance perInstance{};
 

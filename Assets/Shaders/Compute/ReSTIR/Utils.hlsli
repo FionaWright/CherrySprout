@@ -18,7 +18,7 @@ bool PassDepthThreshold(float depthLinear1, float depthLinear2, float threshold)
 template <typename TReservoir>
 void TryPreserveReservoirTemporal(RWStructuredBuffer<TReservoir> buffer, TReservoir reservoir, uint2 pixelCoord)
 {
-    if (gSettings.RestirSpatialEnabled) // Wait until after spatial pass
+    if (gRestirSettings.SpatialEnabled) // Wait until after spatial pass
         return;
 
     uint idx = GetReservoirBufferIndex_Previous(pixelCoord);
@@ -28,7 +28,7 @@ void TryPreserveReservoirTemporal(RWStructuredBuffer<TReservoir> buffer, TReserv
 template <typename TReservoir>
 void TryPreserveReservoirSpatial(RWStructuredBuffer<TReservoir> buffer, TReservoir reservoir, uint2 pixelCoord)
 {
-    if (!gSettings.RestirTemporalEnabled)
+    if (!gRestirSettings.TemporalEnabled)
         return;
 
     uint idx = GetReservoirBufferIndex_Previous(pixelCoord);

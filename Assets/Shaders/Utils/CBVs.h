@@ -8,6 +8,7 @@
 struct CbvPathTracingSettings
 {
     hlsl::float4x4 InvP;
+
     hlsl::float4x4 InvV;
 
     hlsl::float3 CameraPositionWorld;
@@ -28,38 +29,41 @@ struct CbvPathTracingSettings
     hlsl::float3 DirLightColor;
     float DirLightIntensity;
 
-    float FireflyThreshold;
     hlsl::uint2 FrameDimensions;
-
+    float FireflyThreshold;
     hlsl::uint MaxShadowRayDepth;
+
     int TransientLightIdx;
     float TransientDistanceSinceStart;
     float TransientPulseDistance;
-
     hlsl::uint DirectNumSamples;
+
     hlsl::uint Seed;
     hlsl::uint LsdBasePunctuals;
     hlsl::uint LsdBaseEmissives;
-
     hlsl::uint LsdCount;
-    hlsl::uint RestirGenConfidenceCap; // TODO: Move to separate CBV?
-    hlsl::uint RestirTemporalConfidenceCap; // TODO: Should there even be multiple?
-    hlsl::uint RestirGenCandidatesCount;
 
-    float RestirTemporalNormalDivThreshold;
-    float RestirSpatialNormalDivThreshold;
-    float RestirTemporalDepthDivThreshold;
-    float RestirSpatialDepthDivThreshold;
-
-    hlsl::uint RestirSpatialNumSamples;
-    hlsl::uint RestirSpatialConfidenceCap;
-    float RestirSpatialRadius;
-    hlsl::uint RestirTemporalEnabled; // TODO: Could be flags
-
-    hlsl::uint RestirSpatialEnabled;
     float NearPlane;
     float FarPlane;
-    float p;
+    hlsl::float2 JitterPerFrame;
+};
+
+struct CbvRestirSettings
+{
+    hlsl::uint GenConfidenceCap;
+    hlsl::uint TemporalConfidenceCap;
+    hlsl::uint GenCandidatesCount;
+    hlsl::uint SpatialNumSamples;
+
+    float TemporalNormalDivThreshold;
+    float SpatialNormalDivThreshold;
+    float TemporalDepthDivThreshold;
+    float SpatialDepthDivThreshold;
+
+    hlsl::uint SpatialConfidenceCap;
+    float SpatialRadius;
+    hlsl::uint TemporalEnabled; // TODO: Could be flags
+    hlsl::uint SpatialEnabled;
 };
 
 struct CbvPanoToEA

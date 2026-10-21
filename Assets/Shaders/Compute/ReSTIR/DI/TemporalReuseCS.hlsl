@@ -65,8 +65,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
     isValidPrev &= reservoirPrev.PHat > 0.0f;
     isValidPrev &= reservoirPrev.Confidence > 0.0f;
-    isValidPrev &= PassNormalThreshold(normalMain, normalOther, gSettings.RestirTemporalNormalDivThreshold);
-    isValidPrev &= PassDepthThreshold(depthMain, depthOther, gSettings.RestirTemporalDepthDivThreshold);
+    isValidPrev &= PassNormalThreshold(normalMain, normalOther, gRestirSettings.TemporalNormalDivThreshold);
+    isValidPrev &= PassDepthThreshold(depthMain, depthOther, gRestirSettings.TemporalDepthDivThreshold);
 
     // TODO: When MVs added, lack of ping-pong on prev could cause memory collision issues
 
@@ -77,7 +77,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         ReEvaluate(reservoirPrev.Y, context);
 
-        ReservoirMerge(rngInfo, gSettings.RestirTemporalConfidenceCap, reservoir, reservoirPrev, context);
+        ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, context);
 
         NormalizeUnbiasedContributionWeight(reservoir);
     }

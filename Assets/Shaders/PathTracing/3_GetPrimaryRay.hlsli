@@ -3,10 +3,9 @@
 
 #include "Utils/Random.h"
 #include "PathTracing/FeatFlags/FeatFlags.hlsli"
+#include "PathTracing/Debug/Globals.hlsli"
+#include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "Utils/HlslUtils.hlsli"
-
-// TODO: Move to Globals.hlsli
-static bool gRunBxdfTestForPixel = false;
 
 void GetPrimaryRay(
     inout RngInfo rngInfo,
@@ -27,13 +26,20 @@ void GetPrimaryRay(
     origin = cameraPos;
 
     float2 pixelUV = pixelCoord + 0.5f;
-    if (FEAT_CORE(Jitter))
+
+    float2 jitter = 0.0f;
+    if (FEAT_CORE(JitterPerPixel))
     {
         float rJitterX = Rand01(rngInfo);
         float rJitterY = Rand01(rngInfo);
-        float2 jitter = float2(rJitterX, rJitterY) - 0.5f;
-        pixelUV += jitter;
+        jitter = float2(rJitterX, rJitterY) - 0.5f;
     }
+    else if (FEAT_CORE(JitterPerFrame))
+        jitter = gSettings.JitterPerFrame;
+    pixelUV += jitter;
+
+    DBG_OUTPUT2(jitter, Jitter);
+
     pixelUV *= texelSize;
 
     if ((FEAT_DBG(BxdfTestRevaluate) || FEAT_DBG(BxdfTestHemisphere)) && pixelUV.x < 0.5f)

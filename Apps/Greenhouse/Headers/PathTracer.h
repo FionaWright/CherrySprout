@@ -41,13 +41,13 @@ public:
     {
         return Align(sizeof(CbvPathTracingSettings), 256) +
             Align(sizeof(CbvPathTracingDebugSettings), 256) +
+            Align(sizeof(CbvRestirSettings), 256) +
             RestirManager::TotalCbvRequiredSize();
     }
 
     D12Resource* GetTexPrimal() { return &m_primal; }
     D12Resource* GetTexAccum() { return &m_accum; }
     D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
-    [[nodiscard]] uint32_t GetCurrentFrameIdx() const { return m_frameIdx; }
 
     void ScheduleRestirClear() { m_restirClearScheduled = true; }
 
@@ -57,8 +57,6 @@ private:
     RtasBuilder m_rtasBuilder;
     RestirManager m_restirManager;
     GradientManager m_gradientManager;
-
-    uint32_t m_frameIdx = 0;
 
     Pipeline m_pipeline;
     RootSig m_rootSig;

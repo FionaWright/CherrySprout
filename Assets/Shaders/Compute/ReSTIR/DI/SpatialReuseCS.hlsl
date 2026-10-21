@@ -33,11 +33,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_SPATIAL);
 
-    for (uint i = 0; i < gSettings.RestirSpatialNumSamples; i++)
+    for (uint i = 0; i < gRestirSettings.SpatialNumSamples; i++)
     {
         float u1 = Rand01(rngInfo);
         float u2 = Rand01(rngInfo);
-        int2 coord = SampleDisc(u1, u2, pixelCoord, gSettings.RestirSpatialRadius);
+        int2 coord = SampleDisc(u1, u2, pixelCoord, gRestirSettings.SpatialRadius);
         coord.x = max(0, min(coord.x, gSettings.FrameDimensions.x - 1));
         coord.y = max(0, min(coord.y, gSettings.FrameDimensions.y - 1));
 
@@ -53,16 +53,16 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         ReservoirDI reservoirNeighbour = gReservoirBufferDI[idx];
 
         float3 normalOther = contextOther.HitInfo.Ns_ff;
-        if (!PassNormalThreshold(normalMain, normalOther, gSettings.RestirSpatialNormalDivThreshold))
+        if (!PassNormalThreshold(normalMain, normalOther, gRestirSettings.SpatialNormalDivThreshold))
             continue;
 
         float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
-        if (!PassDepthThreshold(depthMain, depthOther, gSettings.RestirSpatialDepthDivThreshold))
+        if (!PassDepthThreshold(depthMain, depthOther, gRestirSettings.SpatialDepthDivThreshold))
             continue;
 
         ReEvaluate(reservoirNeighbour.Y, context);
 
-        ReservoirMerge(rngInfo, gSettings.RestirSpatialConfidenceCap, reservoir, reservoirNeighbour, context);
+        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);
     }
 
     NormalizeUnbiasedContributionWeight(reservoir);

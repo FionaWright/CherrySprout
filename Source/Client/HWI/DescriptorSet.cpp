@@ -36,24 +36,22 @@ void DescriptorSet::Init(Heap* heap, const bool hasBindlessParam, const bool has
 
 void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* uploadHeap, const char* debugName)
 {
+    CherryAssert(size <= 65536); // 64KB
+
     CBV cbv;
     cbv.Size = size;
 
-    // Allocate space in upload heap
     const size_t assignedOffset = uploadHeap->GetAssignedUploadOffset(size, 256);
     cbv.MappedGpuPtr = uploadHeap->GetMappedPointer(assignedOffset);
 
-    // Get descriptor idx / handle
     cbv.HeapIndex = m_pHeap->GetNextDescriptorIdx(debugName);
     const auto handle = m_pHeap->GetDescriptorHandleAtIndex(cbv.HeapIndex);
 
-    // Create CBV
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
     cbvDesc.BufferLocation = uploadHeap->GetUploadResource()->GetGPUVirtualAddress() + assignedOffset;
     cbvDesc.SizeInBytes = static_cast<uint32_t>(Align(size, 256));
     device->CreateConstantBufferView(&cbvDesc, handle);
 
-    // Add to list
     m_cbvs.emplace_back(cbv);
 }
 

@@ -35,6 +35,8 @@ struct GreenHouseRenderInfo
     uint32_t LsdBasePunctuals = 0;
     uint32_t LsdBaseEmissives = 0;
     uint32_t LsdCount = 0;
+
+    size_t FrameIndex = 0;
 };
 
 class Greenhouse final : public App

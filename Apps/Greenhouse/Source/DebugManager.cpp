@@ -120,11 +120,11 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
 #endif
 }
 
-void DebugManager::SetScheduledRunParameters(CbvPathTracingSettings* settings) const
+void DebugManager::SetScheduledRunParameters(size_t& frameIdx, XMFLOAT3& camPos, XMMATRIX& invV) const
 {
-    settings->FrameIdx = m_scheduledRunFrameIdx;
-    settings->CameraPositionWorld = m_scheduledRunCameraPosition;
-    XMStoreFloat4x4(&settings->InvV, XMMatrixInverse(nullptr, m_scheduledRunViewMatrix));
+    frameIdx = m_scheduledRunFrameIdx;
+    camPos = m_scheduledRunCameraPosition;
+    invV = XMMatrixInverse(nullptr, m_scheduledRunViewMatrix);
 }
 
 void DebugManager::UnreserveData()

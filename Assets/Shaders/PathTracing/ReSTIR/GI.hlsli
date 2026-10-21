@@ -127,7 +127,7 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     beta *= E_indirect;
 
     // NEE Sample
-    float3 Lo = beta * X_i.DirectContribution * X_i.Jacobian; // TODO
+    float3 Lo = beta * X_i.DirectContribution * X_i.Jacobian;
 
     return Luminance(Lo);
 }

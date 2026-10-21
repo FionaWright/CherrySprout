@@ -8,7 +8,8 @@
 #include "Internal/Interpretations.h"
 
 static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
-        //eCore_Jitter |
+        //eCore_JitterPerPixel |
+        eCore_JitterPerFrame |
         eCore_Accumulation |
         //eCore_NormalMaps |
         //eCore_EnvironmentMap |
