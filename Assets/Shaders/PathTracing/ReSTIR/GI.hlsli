@@ -41,7 +41,6 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
             GetHitInfo(q, secondaryHitInfo);
     }
 
-    // TODO: Does SampleNEE PDF need to be accounted for in reservoir?
     float3 E_direct = 0.0f;
     if (!isMiss)
     {
@@ -50,18 +49,25 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
     }
 
     // TODO: Extension: Missed ray candidates
+    // TODO: Extension: More bounces
 
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
     X_i.DestPosition = isMiss ? 0 : secondaryHitInfo.HitPos;
     X_i.DestNg_ff = isMiss ? 0 : secondaryHitInfo.Ng_ff;
     X_i.IsMiss = isMiss;
-    X_i.DirectContribution = E_direct;
+    X_i.DirectContribution = isMiss ? 0 : E_direct;
     X_i.BxdfEval = bxdfEval;
     X_i.Jacobian = 1.0f;
 }
 
 void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 {
+    if (all(X_i.DestPosition == context.HitInfo.HitPos))
+    {
+        X_i.BxdfEval.Radiance = 0.0f; // TODO: IsValid flag in reservoir?
+        return;
+    }
+
     float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
 
     BxDF bxdf;
@@ -95,9 +101,12 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     if (X_i.IsMiss) // TODO
         return 0.0f;
 
+    if (all(X_i.DestPosition == context.HitInfo.HitPos))
+        return 0.0f;
+
     float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
     float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, wi));
-    if (NdL <= 0)
+    if (NdL <= 0 || X_i.Jacobian <= 0.0f)
         return 0.0f;
 
     if (X_i.BxdfEval.PDF < EPSILON || length(X_i.BxdfEval.Radiance) <= 0.0f || length(X_i.DirectContribution) <= 0.0f)
@@ -118,7 +127,7 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     beta *= E_indirect;
 
     // NEE Sample
-    float3 Lo = beta * X_i.DirectContribution / X_i.Jacobian; // TODO
+    float3 Lo = beta * X_i.DirectContribution * X_i.Jacobian; // TODO
 
     return Luminance(Lo);
 }
@@ -141,8 +150,11 @@ bool TrySampleReservoirGI(
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
-
     Y = reservoir.Y;
+
+    if (all(Y.DestPosition == hitInfo.HitPos))
+        return false;
+
     float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
 
     // Debug
@@ -170,7 +182,7 @@ bool TrySampleReservoirGI(
         return false;
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (NdL <= 0 || length(Y.BxdfEval.Radiance) <= 0.0f)
+    if (NdL <= 0 || length(Y.BxdfEval.Radiance) <= 0.0f || Y.Jacobian <= 0.0f || length(Y.DirectContribution) <= 0.0f)
         return false;
 
     // TODO: Visibility test?
@@ -182,7 +194,7 @@ bool TrySampleReservoirGI(
     beta *= E_indirect;
 
     // NEE Sample
-    Lo = beta * Y.DirectContribution / Y.Jacobian;
+    Lo = beta * Y.DirectContribution * Y.Jacobian;
 
     return true;
 }

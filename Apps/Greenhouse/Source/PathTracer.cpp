@@ -453,8 +453,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         Profiler::PopAndPrint();
 #endif
 
-        if (GetFeatFlagCore(featureFlags, eCore_RestirDI))
-            m_restirManager.Init(device, &m_rootSig, compileArgs);
+        m_restirManager.Init(device, &m_rootSig, compileArgs);
     }
 
     {

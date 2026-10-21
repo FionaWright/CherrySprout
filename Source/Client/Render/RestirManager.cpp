@@ -34,12 +34,12 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
     m_pipelineClear.InitCompute(device, "Compute/ReSTIR/ClearCS.hlsl", rootSig->Get(), compileArgs);
 
     m_pipelineDiGen.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiSpatio.InitCompute(device, "Compute/ReSTIR/DI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineDiSpatio.InitCompute(device, "Compute/ReSTIR/DI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs);
 
     m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalMergeCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialSampleCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs);
+    m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs);
 
     if (!m_initialisedResources)
     {

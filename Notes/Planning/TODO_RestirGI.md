@@ -2,8 +2,11 @@
 
 - [x] Research 
 - [x] Figure out structure
-- [ ] Get running
+- [x] Get running
 - [ ] Add Path-Dumper / OutputColor support to pre-passes
-- [ ] Get working without NEE
-- [ ] Get working with NEE
+- [x] Get working 
 - [ ] Get working with ReSTIR DI
+- [ ] Separate settings per ReSTIR type. Use common struct?
+- [ ] Env map support
+- [ ] Emissive support
+- [ ] Multiple bounce support

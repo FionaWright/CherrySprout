@@ -3,12 +3,12 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/GI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Compute/ReSTIR/SeedDecorrelators.h"
-#include "Compute/ReSTIR/Thresholds.hlsli"
+#include "Compute/ReSTIR/Utils.hlsli"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -23,17 +23,16 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
-    uint reservoirIdxPrevOut = GetReservoirBufferIndex_Previous(pixelCoord);
 
-    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdxIn];
+    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
     bool prevWasOffscreen = mv.x >= 9.0f || mv.y >= 9.0f;
     if (context.IsMiss || prevWasOffscreen)
     {
-        gReservoirBufferGI[reservoirIdxOut] = reservoir;
-        gReservoirBufferGI[reservoirIdxPrevOut] = reservoir;
+        gReservoirBufferDI[reservoirIdxOut] = reservoir;
+        TryPreserveReservoirTemporal(gReservoirBufferDI, reservoir, pixelCoord);
         return;
     }
 
@@ -42,13 +41,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
     {
-        gReservoirBufferGI[reservoirIdxOut] = reservoir;
-        gReservoirBufferGI[reservoirIdxPrevOut] = reservoir;
+        gReservoirBufferDI[reservoirIdxOut] = reservoir;
+        TryPreserveReservoirTemporal(gReservoirBufferDI, reservoir, pixelCoord);
         return;
     }
 
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    ReservoirGI reservoirPrev = gReservoirBufferGI[reservoirIdxPrevIn];
+    ReservoirDI reservoirPrev = gReservoirBufferDI[reservoirIdxPrevIn];
 
     uint contextIdxOther = GetContextBufferIndex_Prev(prevPixelCoord);
     ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
@@ -59,6 +58,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
     float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
 
+    // TODO: Turn off thresholds, looks strange like maybe MVs are still wrong
+
     bool isValidPrev = true;
     isValidPrev &= !contextOther.IsMiss;
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
@@ -67,12 +68,12 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     isValidPrev &= PassNormalThreshold(normalMain, normalOther, gSettings.RestirTemporalNormalDivThreshold);
     isValidPrev &= PassDepthThreshold(depthMain, depthOther, gSettings.RestirTemporalDepthDivThreshold);
 
-    // TODO: When MVs added, lack of ping-pong could cause memory collision issues
+    // TODO: When MVs added, lack of ping-pong on prev could cause memory collision issues
 
     if (isValidPrev)
     {
         RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-        DecorrelateRng(rngInfo, SEED_DECORRELATOR_GI_TEMPORAL);
+        DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_TEMPORAL);
 
         ReEvaluate(reservoirPrev.Y, context);
 
@@ -81,6 +82,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         NormalizeUnbiasedContributionWeight(reservoir);
     }
 
-    gReservoirBufferGI[reservoirIdxOut] = reservoir;
-    gReservoirBufferGI[reservoirIdxPrevOut] = reservoir;
+    gReservoirBufferDI[reservoirIdxOut] = reservoir;
+    TryPreserveReservoirTemporal(gReservoirBufferDI, reservoir, pixelCoord);
 }

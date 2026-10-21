@@ -3,7 +3,7 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/DI.hlsli"
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 

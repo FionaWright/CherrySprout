@@ -3,12 +3,12 @@
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
-#include "PathTracing/ReSTIR/GI.hlsli"
+#include "PathTracing/ReSTIR/DI.hlsli"
 
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Compute/ReSTIR/SeedDecorrelators.h"
-#include "Compute/ReSTIR/Thresholds.hlsli"
+#include "Compute/ReSTIR/Utils.hlsli"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -25,13 +25,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdxIn];
+    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdxIn];
 
     float3 normalMain = context.HitInfo.Ns_ff;
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-    DecorrelateRng(rngInfo, SEED_DECORRELATOR_GI_SPATIAL);
+    DecorrelateRng(rngInfo, SEED_DECORRELATOR_DI_SPATIAL);
 
     for (uint i = 0; i < gSettings.RestirSpatialNumSamples; i++)
     {
@@ -50,7 +50,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
             continue;
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        ReservoirGI reservoirNeighbour = gReservoirBufferGI[idx];
+        ReservoirDI reservoirNeighbour = gReservoirBufferDI[idx];
 
         float3 normalOther = contextOther.HitInfo.Ns_ff;
         if (!PassNormalThreshold(normalMain, normalOther, gSettings.RestirSpatialNormalDivThreshold))
@@ -67,5 +67,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     NormalizeUnbiasedContributionWeight(reservoir);
 
-    gReservoirBufferGI[reservoirIdxOut] = reservoir;
+    gReservoirBufferDI[reservoirIdxOut] = reservoir;
+    TryPreserveReservoirSpatial(gReservoirBufferDI, reservoir, pixelCoord);
 }

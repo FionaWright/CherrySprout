@@ -17,17 +17,21 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
+    uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
+    ReservoirGI reservoir = CreateReservoir<CandidateGI>();
+
     uint contextIdx = GetContextBufferIndex(pixelCoord);
     ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
+    {
+        gReservoirBufferGI[reservoirIdxOut] = reservoir;
         return;
+    }
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_GI_GEN_SAMPLES);
 
-    ReservoirGI reservoir = CreateReservoir<CandidateGI>();
     WRS(rngInfo, reservoir, gSettings.RestirGenCandidatesCount, context);
 
-    uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     gReservoirBufferGI[reservoirIdxOut] = reservoir;
 }

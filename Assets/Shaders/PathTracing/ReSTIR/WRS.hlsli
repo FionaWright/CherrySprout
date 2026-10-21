@@ -102,6 +102,9 @@ void WRS(
         float pHat = Target(X_i, context);
         float pdf = PDF(X_i, context);
 
+        DBG_ASSERT_GE(pHat, 0.0f, RESTIR_PHAT);
+        DBG_ASSERT_GE(pdf, 0.0f, RESTIR_PDF);
+
         float W_X_i = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
 
         //float m = RestirMis(X_i, M);
@@ -113,7 +116,6 @@ void WRS(
 
     if (!candidateSelected)
     {
-        reservoir.Confidence = 0.0f;
         reservoir.W_Y = 0.0f;
         return;
     }
