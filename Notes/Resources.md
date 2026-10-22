@@ -77,6 +77,9 @@ ReSTIR GI RTXDI:
 ReSTIR PT Improvements:
     https://research.nvidia.com/labs/rtr/publication/lin2026restirptenhanced/lin2026restirptenhanced.pdf
 
+ReSTIR PT Implementation:   
+    https://github.com/NVIDIAGameWorks/Falcor/tree/master/Source/Modules/ReSTIRPathTracing
+
 ## GDPT:
 
 Original Paper:

@@ -83,3 +83,56 @@ When tracing the base path, the first vertex (That isn't the primary vertex) tha
 When the shifted path runs, the offset path is generated using random replay until it reaches the reconnection vertex index. Then it checks both conditions 
 
 I'd recommend trying to implement hybrid shift into GDPT before starting ReSTIR PT
+
+### Jacobian
+
+Random-Replay shift has no/identity jacobian. But hybrid shift has a jacobian on the reconnection
+
+$x_k$ is the reconnection vertex (Not the final vertex)
+
+$\mathcal{p}_{k-1}(x_k)$ is the probability of selecting the lobe $\mathcal{l}_{k-1}$ multiplied by the probability of sampling direction $\omega_{k-1}$ on path $x$ 
+
+If $x_k$ is a regular vertex:
+
+$J = \dfrac{\mathcal{p}_{k-1}(y_k)}{\mathcal{p}_{k-1}(x_k)} \dfrac{\mathcal{p}_{k} (y_{k+1})}{\mathcal{p}_{k}(x_{k+1})} J_R$
+
+$J_R$ is the reconnection shift jacobian
+
+If $x_k$ is an NEE vertex:
+
+$J = \dfrac{\mathcal{p}_{k-1}(y_k)}{\mathcal{p}_{k-1}(x_k)} J_R$
+
+Note that the lobes and directions will always be the same between paths assuming the scene is static. But their sampling PDFs will be different due to different outgoing directions towards the previous path vertices
+
+If $x_k$ is a light vertex sampled by NEE then $p_{k-1}(y_k)$ is just the light sampling PDF, ignoring the lobe sampling PDF
+
+The denominator relating to the $x$ path can be cached in the candidate data to avoid re-computation
+
+## Lobe Tags
+
+Each vertex gets assigned a lobe tag on the main path
+
+NEE is its own sampling technique and as such gets its own tag. This tag can only be applied on the final vertex! (Unless you consider the NEE hit vertex as the last vertex)
+
+## Struct
+
+```cpp
+struct ReconnectionVertexInfo
+{
+    float3 Wi;
+    float3 Lo;
+    uint GlobalPrimitiveOffset; // To ID triangle
+    float2 Bary;
+    LobeTag LobePrev;
+    LobeTag Lobe;
+};
+
+struct CandidatePT
+{
+    ReconnectionVertexInfo RcVertexInfo;
+    uint InitialRngState;
+    uint PostReconnectRngState; // Only needed when scene is not static
+    uint ReconnectVertexIndex;
+    float JacobianDenominator;
+};
+```

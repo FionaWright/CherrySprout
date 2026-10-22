@@ -89,8 +89,8 @@ XMMATRIX ApplyProjectionJitter(const XMMATRIX& projection, const XMFLOAT2& jitte
     const float jitterX =  2.0f * jitterPixels.x / width;
     const float jitterY = -2.0f * jitterPixels.y / height;
 
-    jitteredProjection.r[3] = XMVectorAdd(
-        jitteredProjection.r[3],
+    jitteredProjection.r[2] = XMVectorAdd(
+        jitteredProjection.r[2],
         XMVectorAdd(
             XMVectorScale(projection.r[0], jitterX),
             XMVectorScale(projection.r[1], jitterY)));
