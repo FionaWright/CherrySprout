@@ -16,4 +16,4 @@
 - [x] Golden Test
 - [x] RMSE Test
 - [x] GBuffer Jitter
-- [ ] MVs not taking into account jitter? 
+- [ ] MVs not taking into account jitter?

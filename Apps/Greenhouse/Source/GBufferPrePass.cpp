@@ -102,14 +102,25 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
 {
     GPU_SCOPE(cmdList, "GBuffer Pre-Pass");
 
+    // TODO: Jitter wrong
+
     XMMATRIX P = renderInfo.P;
     if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
     {
         RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(0,0), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
+        //const XMFLOAT2 frameJitter = XMFLOAT2(0.5f, 0.5f);
         const XMFLOAT2 frameJitter = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);
+
+        //CherryPrint("Jitter: (" << std::to_string(frameJitter.x) << ", " << std::to_string(frameJitter.y) << ")\n");
 
         P = ApplyProjectionJitter(P, frameJitter, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
     }
+
+    //CherryPrint("NonJittered:");
+    //PrintMatrix(renderInfo.P);
+//
+    //CherryPrint("Jittered:");
+    //PrintMatrix(P);
 
     {
         CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);

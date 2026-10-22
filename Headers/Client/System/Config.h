@@ -41,7 +41,7 @@ struct SettingsRender
     float FoV = 60.0f;
     float NearPlane = 0.01f;
     float FarPlane = 500.0f;
-    DepthBufferType DepthBufferType = DepthBufferType::eForward;
+    DepthBufferType DepthBufferType = DepthBufferType::eReversed;
 };
 
 class Config

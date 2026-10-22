@@ -74,6 +74,9 @@ ReSTIR GI:
 ReSTIR GI RTXDI:
     https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/ShaderAPI-RestirGI.md
 
+ReSTIR PT Improvements:
+    https://research.nvidia.com/labs/rtr/publication/lin2026restirptenhanced/lin2026restirptenhanced.pdf
+
 ## GDPT:
 
 Original Paper:

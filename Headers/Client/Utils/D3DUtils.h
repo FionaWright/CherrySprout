@@ -1,6 +1,7 @@
 #ifndef H_D3D_UTILS_H
 #define H_D3D_UTILS_H
 
+#include "Helper.h"
 #include "System/Config.h"
 #include "HWI/D12Resource.h"
 #include "HWI/D3D.h"
@@ -311,6 +312,14 @@ inline bool FormatIsHDR(const DXGI_FORMAT format)
     default:
         return false;
     }
+}
+
+inline void PrintMatrix(const XMMATRIX& matrix)
+{
+    XMFLOAT4X4 m;
+    XMStoreFloat4x4(&m, matrix);
+
+    CherryPrint(m._11 << ' ' << m._12 << ' ' << m._13 << ' ' << m._14 << '\n' << m._21 << ' ' << m._22 << ' ' << m._23 << ' ' << m._24 << '\n' << m._31 << ' ' << m._32 << ' ' << m._33 << ' ' << m._34 << '\n' << m._41 << ' ' << m._42 << ' ' << m._43 << ' ' << m._44 << '\n');
 }
 
 #endif
