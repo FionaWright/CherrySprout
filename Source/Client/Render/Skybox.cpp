@@ -26,8 +26,12 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
         }
     };
 
+    std::vector<std::string> compileArgs;
+    if (Config::GetRender().DepthBufferType == DepthBufferType::eReversed)
+        compileArgs.emplace_back("-DUSING_REVERSED_Z");
+
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
-    m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc);
+    m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc, compileArgs);
 
     constexpr XMFLOAT3 vertexBuffer[8] = {
         {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},

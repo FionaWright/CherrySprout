@@ -437,6 +437,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
     std::vector<std::string> compileArgsCommon = {};
 
+    if (Config::GetRender().DepthBufferType == DepthBufferType::eReversed)
+        compileArgsCommon.emplace_back("-DUSING_REVERSED_Z");
+
     for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
     {
         const hlsl::uint flagValue = 1u << i;

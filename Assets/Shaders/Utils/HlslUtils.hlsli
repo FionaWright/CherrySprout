@@ -160,10 +160,28 @@ int2 MotionVectorToPixelCoord(int2 pixelCoord, float2 mv, float2 dimensions)
     return int2(floor(prevUV * dimensions));
 }
 
-// TODO: Reversed-Z with infinite far plane
-float LinearizeDepth(float depth, float nearPlane, float farPlane)
+float LinearizeDepthForward(float depth, float nearPlane, float farPlane)
 {
     return (nearPlane * farPlane) / (farPlane - depth * (farPlane - nearPlane));
+}
+
+float LinearizeDepthReversed(float depth, float nearPlane, float farPlane)
+{
+    return (nearPlane * farPlane) / (nearPlane + depth * (farPlane - nearPlane));
+}
+
+float LinearizeDepthReversedInfiniteFar(float depth, float nearPlane, float farPlane)
+{
+    return NAN; // TODO
+}
+
+float LinearizeDepth(float depth, float nearPlane, float farPlane)
+{
+#if USING_REVERSED_Z
+    return LinearizeDepthReversed(depth, nearPlane, farPlane);
+#else
+    return LinearizeDepthForward(depth, nearPlane, farPlane);
+#endif
 }
 
 #endif

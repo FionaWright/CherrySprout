@@ -15,4 +15,5 @@
 - [x] Python Executor
 - [x] Golden Test
 - [x] RMSE Test
-- [ ] GBuffer Jitter
+- [x] GBuffer Jitter
+- [ ] MVs not taking into account jitter? 

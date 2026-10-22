@@ -22,7 +22,11 @@ VsOut VSMain(VsIn input)
     V_rot._14 = V_rot._24 = V_rot._34 = 0.0f;
     o.Position = mul(gMatrices.P, mul(V_rot, pos));
 
+#if USING_REVERSED_Z
+    o.Position.z = 0.0f;
+#else
     o.Position.z = o.Position.w;
+#endif
 
     o.ViewDirection = normalize(input.Position.xyz);
 
