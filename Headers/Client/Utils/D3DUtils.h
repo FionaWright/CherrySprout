@@ -229,7 +229,7 @@ inline D3D12_GRAPHICS_PIPELINE_STATE_DESC CreateGraphicsPipelineDesc(ID3D12RootS
     desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     desc.DepthStencilState.DepthEnable = dsvEnabled ? TRUE : FALSE;
     desc.DepthStencilState.StencilEnable = dsvEnabled ? TRUE : FALSE;
-    desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    desc.DepthStencilState.DepthFunc = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_GREATER_EQUAL;
 
     desc.NumRenderTargets = numRTVs;
     for (uint32_t i = 0; i < numRTVs; i++)

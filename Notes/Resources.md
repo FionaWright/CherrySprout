@@ -102,6 +102,9 @@ SmallGdpt:
 SPR:
     https://grail.cs.washington.edu/projects/screenedPoissonEq/
 
+SPR 2024:
+    https://dl.acm.org/doi/10.1145/3680528.3687568?__cf_chl_tk=vShJEHIcefTNURr3fHKp7Nhlb3gN2_kTVquK6YSW.KE-1792660947-1.0.1.1-bMrqt44WoxkhBze_mxTHkvvP8JLIeiA4TKC0wqwT56o
+
 ## Path-Guiding:
 
 Path-Guiding in Production:

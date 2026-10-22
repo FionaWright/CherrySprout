@@ -23,6 +23,13 @@ struct SettingsSystem
     bool DebugHeapEnabled = false;
 };
 
+enum class DepthBufferType : uint32_t
+{
+    eForward,
+    eReversed,
+    eReversedInfiniteFar
+};
+
 struct SettingsRender
 {
     DXGI_FORMAT RtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -33,6 +40,7 @@ struct SettingsRender
     float FoV = 60.0f;
     float NearPlane = 0.1f;
     float FarPlane = 100.0f;
+    DepthBufferType DepthBufferType = DepthBufferType::eForward;
 };
 
 class Config
@@ -44,6 +52,8 @@ public:
     static void ParseCommandLineArgs(const char* args);
     static SettingsSystem& GetSystem() { return ms_settingsSystem; }
     static SettingsRender& GetRender() { return ms_settingsRender; }
+
+    static XMMATRIX ComputeProjectionMatrix();
 
 private:
     static SettingsSystem ms_settingsSystem;

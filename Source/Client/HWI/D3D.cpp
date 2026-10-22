@@ -365,9 +365,10 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
             V(rtvResource->SetName(name.c_str()));
         }
 
+        const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
         D3D12_CLEAR_VALUE clearValue = {};
         clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        clearValue.DepthStencil = {1, 0};
+        clearValue.DepthStencil = {depthClearValue, 0};
         auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, width, height, 1, 1, msaaSamples, 0,
                                                             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 

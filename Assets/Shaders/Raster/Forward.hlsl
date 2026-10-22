@@ -3,6 +3,12 @@
 #include "Utils/SharedUtils.h"
 #include "Utils/Math/ShadingFrame.h"
 #include "Scene/Material.h"
+#include "Utils/Debug/Palette.h"
+#include "PathTracing/Structs.h"
+#include "Utils/Random.h"
+
+#define BXDF_MODE BXDF_PBR
+#include "BxDFs/GetBxDF.hlsli"
 
 struct VsIn
 {
@@ -16,19 +22,22 @@ struct VsOut
     float4 position : SV_POSITION;
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
+    float4 worldPos : TEXCOORD2;
 };
 
-ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0); // Push Constants
-ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1);
-ConstantBuffer<CbvForward> gSettings : register(b2);
+ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0, space0); // Push Constants
+ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1, space0);
+ConstantBuffer<CbvForward> gSettings : register(b2, space0);
 
-//Texture2D<float2> gBrdfInt : register(t0);
-TextureCube gEnvMap : register(t0);
-//TextureCube gIrradiance : register(t2);
+StructuredBuffer<Material> gMaterials : register(t0, space0);
+//TextureCube gIrradiance : register(t1, space0);
+
+//Texture2D<float2> gBrdfInt : register(t0, space0);
+//TextureCube gEnvMap : register(t0, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
-SamplerState gSampler : register(s0);
+SamplerState gSampler : register(s0, space0);
 
 VsOut VSMain(VsIn input)
 {
@@ -38,8 +47,8 @@ VsOut VSMain(VsIn input)
     output.uv = input.uv;
 
     float4 pos = float4(input.position, 1.0f);
-    float4 worldPos = mul(gCbvObject.M, pos);
-    pos = mul(gMatricesVP.V, worldPos);
+    output.worldPos = mul(gCbvObject.M, pos);
+    pos = mul(gMatricesVP.V, output.worldPos);
     output.position = mul(gMatricesVP.P, pos);
 
     return output;
@@ -47,120 +56,66 @@ VsOut VSMain(VsIn input)
 
 float4 PSMain(VsOut input) : SV_TARGET
 {
-    //float3 bumpSample = gTextures[gMaterial.TexIdxNormal].SampleLevel(gSampler, input.uv, 0).rgb * 2.0f - 1.0f;
-    //bumpSample.y = -bumpSample.y; // DX convention
+    return float4(1,0,0,1);
 
-    float3 Ns = normalize(input.normal);
-    //ShadingFrame bumpFrame = CreateShadingFrame(Ns);
-    //float3 N_w = bumpFrame.ToWorld(bumpSample);
-
-    return float4(Ns, 1);
 /*
 
-    float4 albedo = gTextures[gMaterial.TexIdxAlbedo].Sample(gSampler, input.uv).rgba;
-	float4 albedoGamma = float4(pow(albedo.rgb, 2.2f), albedo.a);
+    float3 Ng = normalize(input.normal);
+    float2 uv = input.uv;
+    uv.y *= gCbvObject.ScaleY;
 
-    float2 roughMet = gTextures[gMaterial.TexIdxRoughMet].Sample(gSampler, input.uv).gb;
-    float3 emission = gTextures[gMaterial.TexIdxEmissive].Sample(gSampler, input.uv).rgb;
+    Material mat = gMaterials[gCbvObject.MaterialIdx];
+    mat.Roughness = 0.0f;
+    mat.Metallic = 0.1f;
 
-    float3 irradianceIblSample = gIrradiance.SampleLevel(gSampler, N_w, 0).rgb;
+    float3 worldPos = input.worldPos.xyz / input.worldPos.w;
 
-    float3 V = normalize(input.viewDir);
-    float3 L = normalize(-gSettings.DirLightDir); // Surface to Light Vector
-    float3 H = normalize(L + V);
+    float3 albedoSample = gSceneTextures[mat.TexIdxAlbedo].Sample(gSampler, uv).rgb;
 
-    float NdL = saturate(dot(N_w, L));
-    float NdV = saturate(dot(N_w, V));
-    float NdH = saturate(dot(N_w, H));
-    float HdV = saturate(dot(H, V));
+    if (Ng.y >= 0.9f)
+        albedoSample.rgb = float3(0.3, 0.3, 0.3);
 
-    float roughness = roughMet.r; // TODO: MaterialData CBV
-    float metalness = roughMet.g;
-    float3 F0 = lerp(0.04f, albedoGamma.rgb, metalness);
+    mat.Albedo.rgb = albedoSample;
 
-    float D = D_GGX(NdH, roughness);
-    float3 F = F_Schlick(HdV, F0);
-    float G = G_SmithFast(NdL, NdV, roughness);
+    HitInfo hitInfo;
+    hitInfo.Mat = mat;
+    hitInfo.Ng_ff = Ng;
+    hitInfo.Ns_ff = Ng;
+    hitInfo.SFrame = CreateShadingFrame(Ng);
+    hitInfo.Emission = 0.0f;
+    hitInfo.UV = uv;
+    hitInfo.IsEntering = true;
+    hitInfo.RayT = 0.0f; // TODO
+    hitInfo.HitPos = worldPos;
 
-    float3 kS = max(0.0f, F);
-    float3 kD = 1.0f - kS;
+    float3 wo = normalize(gSettings.CameraPosition - worldPos);
+    float3 wi = normalize(-gSettings.DirLightDir);
 
-    float3 specularBrdf = (D * F * G) / max(0.001f, 4.0f * NdV);
-    // specularBrdf *= dirLightColor;
-    specularBrdf *= irradianceIblSample;
-    specularBrdf = max(0.0f, specularBrdf);
+    //float3 irradianceIblSample = gIrradiance.SampleLevel(gSampler, Ng, 0).rgb;
 
-    float3 diffuseBrdf = kD * albedoGamma.rgb * NdL;
-	// diffuseBrdf /= PI; // ?
-    // diffuseBrdf *= dirLightColor;
-    diffuseBrdf *= irradianceIblSample;
-    diffuseBrdf *= 1.0f - metalness;
+    float3 Li = 5.0f;
 
-    float3 combinedBrdf = diffuseBrdf + specularBrdf;
-    float3 Lo = pow(combinedBrdf, 1.0f / 2.2f);
+    float3 E_direct_sum = 0.0f;
 
-    float3 R = reflect(-V, N_w);
-    float lod = roughness * (gSettings.MaxCubemapMipMaps - 1);
-    float3 envSample = gEnvMap.SampleLevel(gSampler, R, lod).rgb;
-    //envSample = pow(envSample, 2.2f);
+    BxDF bxdf;
+    float3 f_bxdf;
+    float pdf_bxdf;
+    bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
 
-    float2 brdfIntSample = gBrdfInt.SampleLevel(gSampler, saturate(float2(max(NdV, 0), roughness)), 0).rg;
-    float3 indirectSpecular = envSample * (F * brdfIntSample.r + brdfIntSample.g) * kS;
-    indirectSpecular = max(0, indirectSpecular);
-    float3 combinedBrdfWithIndirect = combinedBrdf + indirectSpecular;
-    float3 LoWithIndirect = pow(combinedBrdfWithIndirect, 1.0f / 2.2f);
+    //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
-    switch (gSettings.Mode)
-    {
-    case ePosition:
-        return float4(input.position.xyz / input.position.w, 1);
-	case eNormalsVertex:
-		return float4(input.normal, 1);
-    case eNormalsBumped:
-        return float4(N_w, 1);
-    case eTangent:
-        return float4(bumpFrame.T, 1);
-    case eBinormal:
-        return float4(bumpFrame.B, 1);
-    case eUV:
-        return float4(input.uv, 0, 1);
-    case eDirLighting:
-        return float4(NdL.xxx, 1);
-    case eTex:
-        return albedo;
-    case eDirLightingTex:
-        return albedo * float4(NdL.xxx, 1);
-    case eRoughness:
-        return float4(roughness.xxx, 1);
-    case eMetalness:
-        return float4(metalness.xxx, 1);
-    case eEmission:
-        return float4(emission, 1);
-    case eViewDir:
-        return float4(V, 1);
-    case eHalfVec:
-        return float4(H, 1);
-    case eNDF:
-        return float4(D.xxx, 1);
-	case eFresnel:
-		return float4(F, 1);
-    case eGeometricMasking:
-        return float4(G.xxx, 1);
-    case eReflection:
-        return float4(envSample, 1);
-    case eIrradianceIBL:
-        return float4(irradianceIblSample, 1);
-    case eMicrofacetSpecular:
-        return float4(pow(specularBrdf, 1.0f / 2.2f), 1);
-    case eMicrofacetDiffuse:
-        return float4(pow(diffuseBrdf, 1.0f / 2.2f), 1);
-    case eMicrofacetIndirect:
-        return float4(pow(indirectSpecular, 1.0f / 2.2f), 1);
-    case eMicrofacetLo:
-        return float4(Lo, 1);
-    case eMicrofacetLoWithIndirect:
-        return float4(LoWithIndirect, 1);
-    }
-    return float4(0, 1, 1, 1);
+    float NdLCenter = dot(Ng, wi);
+
+    float3 E_direct = E_direct_sum / float(NUM_SHADOW_SAMPLES);
+
+    E_direct *= f_bxdf;
+
+    // TODO: E_indirect
+
+    float3 E_ambient = mat.Albedo.rgb * 0.2f;
+
+    float3 E = E_direct + E_ambient;
+
+    return float4(E, mat.Albedo.a);
 */
 }

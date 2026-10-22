@@ -83,8 +83,9 @@ void D12Resource::Init_Depth2D(const char* name, ID3D12Device* device, const uin
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
 
+    const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
     D3D12_CLEAR_VALUE d12ClearValue;
-    d12ClearValue.DepthStencil = { 1, 0 };
+    d12ClearValue.DepthStencil = { depthClearValue, 0 };
     d12ClearValue.Format = DXGI_FORMAT_D32_FLOAT;
 
     Init(name, device, desc, initialState, &d12ClearValue);

@@ -21,9 +21,9 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 2, 0, 0, false, &sampler, 1, &m_rootConstants);
+    m_rootSig.SmartInit(d3d->GetDevice(), 2, 1, 0, true, &sampler, 1, &m_rootConstants);
 
-    m_descriptorSet.Init(heap, false, true);
+    m_descriptorSet.Init(heap, true, true);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), uploadHeapCBV);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), uploadHeapCBV);
 
@@ -58,6 +58,8 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
         m_skybox.Init(d3d, envMap->GetCubemap());
         m_skybox.UpdateDescriptorSet(d3d->GetDevice(), envMap->GetCubemap(), heap, uploadHeapCBV);
     }
+
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 }
 
 void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -82,7 +84,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
         cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
-        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+        const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
+        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depthClearValue, 0, 0, nullptr);
     }
 
     heap->Bind(cmdList);

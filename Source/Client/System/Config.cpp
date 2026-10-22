@@ -57,6 +57,15 @@ void Config::ParseCommandLineArgs(const char* args)
     SetUIntFromArg(&ms_settingsSystem.RtvWidth, "--window_width");
     SetUIntFromArg(&ms_settingsSystem.RtvHeight, "--window_height");
     SetUIntFromArg(&ms_settingsRender.MsaaSampleCount, "--msaa");
+    SetUIntFromArg(reinterpret_cast<uint32_t*>(&ms_settingsRender.DepthBufferType), "--depthType");
     SetBoolFromArg(&ms_settingsSystem.VSyncEnabled, "--vsync");
     SetBoolFromArg(&ms_settingsSystem.DebugHeapEnabled, "--debugHeap");
+}
+
+XMMATRIX Config::ComputeProjectionMatrix()
+{
+    const float aspectRatio = static_cast<float>(ms_settingsSystem.RtvWidth) / static_cast<float>(ms_settingsSystem.RtvHeight);
+    const float nearZ = ms_settingsRender.DepthBufferType == DepthBufferType::eForward ? ms_settingsRender.NearPlane : ms_settingsRender.FarPlane;
+    const float farZ = ms_settingsRender.DepthBufferType == DepthBufferType::eForward ? ms_settingsRender.FarPlane : ms_settingsRender.NearPlane;
+    return XMMatrixPerspectiveFovLH(XMConvertToRadians(ms_settingsRender.FoV), aspectRatio, nearZ, farZ);
 }

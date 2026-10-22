@@ -64,8 +64,7 @@ void Greenhouse::Init(D3D* d3d)
     }
 #endif
 
-    m_aspectRatio = static_cast<float>(Config::GetSystem().RtvWidth) / static_cast<float>(Config::GetSystem().RtvHeight);
-    m_renderInfo.P = XMMatrixPerspectiveFovLH(XMConvertToRadians(Config::GetRender().FoV), m_aspectRatio, Config::GetRender().NearPlane, Config::GetRender().FarPlane);
+    m_renderInfo.P = Config::ComputeProjectionMatrix();
     m_renderInfo.InvP = XMMatrixInverse(nullptr, m_renderInfo.P);
     m_renderInfo.Heap = &m_heap;
     m_renderInfo.Camera = &m_cameraController.GetCamera();
@@ -236,43 +235,46 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_ptFrameDirty = true;
     }
 
-#if CHERRY_DEBUG_FEATURES_ENABLED
-    if (GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, eDebug_PathDumper) && Input::IsMouseLeftDown())
+    if (m_config.RenderBackend == RenderBackendMode::ePathTracer)
     {
-        XMFLOAT2 mousePos = Input::GetMousePos();
-        mousePos.x -= static_cast<float>(Config::GetSystem().WindowAppGuiWidth);
-
-        if (mousePos.x > 0 &&
-            mousePos.y > 0 &&
-            mousePos.x < static_cast<float>(Config::GetSystem().RtvWidth) &&
-            mousePos.y < static_cast<float>(Config::GetSystem().RtvHeight))
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        if (GetFeatFlagDebug(m_config.PathTracerConfig.DebugInfo.FlagsDebug, eDebug_PathDumper) && Input::IsMouseLeftDown())
         {
-            m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.x = static_cast<uint32_t>(mousePos.x);
-            m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.y = static_cast<uint32_t>(mousePos.y);
-            m_ptFrameDirty = true;
+            XMFLOAT2 mousePos = Input::GetMousePos();
+            mousePos.x -= static_cast<float>(Config::GetSystem().WindowAppGuiWidth);
+
+            if (mousePos.x > 0 &&
+                mousePos.y > 0 &&
+                mousePos.x < static_cast<float>(Config::GetSystem().RtvWidth) &&
+                mousePos.y < static_cast<float>(Config::GetSystem().RtvHeight))
+            {
+                m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.x = static_cast<uint32_t>(mousePos.x);
+                m_config.PathTracerConfig.DebugInfo.ChosenPixelCoords.y = static_cast<uint32_t>(mousePos.y);
+                m_ptFrameDirty = true;
+            }
         }
-    }
 #endif
 
-    if (m_ptPipelineDirty)
-    {
-        d3d->Flush();
-        m_pathTracer.UpdatePipeline(d3d->GetDevice(),
-            m_config.PathTracerConfig.FlagsCore,
-            m_config.PathTracerConfig.DebugInfo,
-            m_config.PathTracerConfig.BxdfMode,
-            m_config.PathTracerConfig.MicrofacetModelType);
+        if (m_ptPipelineDirty)
+        {
+            d3d->Flush();
+            m_pathTracer.UpdatePipeline(d3d->GetDevice(),
+                m_config.PathTracerConfig.FlagsCore,
+                m_config.PathTracerConfig.DebugInfo,
+                m_config.PathTracerConfig.BxdfMode,
+                m_config.PathTracerConfig.MicrofacetModelType);
 
-        m_ptPipelineDirty = false;
-        m_ptFrameDirty = true;
-    }
+            m_ptPipelineDirty = false;
+            m_ptFrameDirty = true;
+        }
 
-    const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
-    if (m_ptFrameDirty || (!inTextField && Input::IsKeyDown(KeyCode::R)))
-    {
-        m_pathTracer.Reset();
-        m_renderInfo.FrameIndex = 0;
-        m_ptFrameDirty = false;
+        const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
+        if (m_ptFrameDirty || (!inTextField && Input::IsKeyDown(KeyCode::R)))
+        {
+            m_pathTracer.Reset();
+            m_renderInfo.FrameIndex = 0;
+            m_ptFrameDirty = false;
+        }
     }
 
     m_currRenderBackend->Update(d3d, &m_heap, timeArgs);
