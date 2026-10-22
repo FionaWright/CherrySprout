@@ -105,7 +105,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
     XMMATRIX P = renderInfo.P;
     if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
     {
-        RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(renderInfo.FrameIndex,renderInfo.FrameIndex), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
+        RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(0,0), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
         const XMFLOAT2 frameJitter = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);
 
         P = ApplyProjectionJitter(P, frameJitter, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);

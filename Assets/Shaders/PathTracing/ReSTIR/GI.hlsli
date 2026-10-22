@@ -8,6 +8,7 @@
 #include "PathTracing/NEE/SampleNEE.hlsli"
 #include "PathTracing/VisibilityRays.hlsli"
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"
+#include "PathTracing/4_Miss.hlsli"
 #include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
@@ -42,20 +43,23 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
     }
 
     float3 E_direct = 0.0f;
-    if (!isMiss)
+    if (isMiss)
+    {
+        E_direct = Miss(bxdfSample.Wi, bxdfEval.PDF, false, bxdfSample.IsDirac);
+    }
+    else
     {
         float3 wo = -bxdfSample.Wi;
         E_direct = SampleNEE(rngInfo, secondaryHitInfo, bxdf, 1, wo);
     }
 
-    // TODO: Extension: Missed ray candidates
     // TODO: Extension: More bounces
 
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
-    X_i.DestPosition = isMiss ? 0 : secondaryHitInfo.HitPos;
+    X_i.DestPosition = isMiss ? bxdfSample.Wi : secondaryHitInfo.HitPos;
     X_i.DestNg_ff = isMiss ? 0 : secondaryHitInfo.Ng_ff;
     X_i.IsMiss = isMiss;
-    X_i.DirectContribution = isMiss ? 0 : E_direct;
+    X_i.DirectContribution = E_direct;
     X_i.BxdfEval = bxdfEval;
     X_i.Jacobian = 1.0f;
 }
@@ -68,7 +72,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
         return;
     }
 
-    float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
+    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
 
     BxDF bxdf;
     X_i.BxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, wi);
@@ -83,9 +87,18 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     }
 
     float3 v1NormalShift = context.HitInfo.Ng_ff;
-    float3 v2Pos = X_i.DestPosition;
-    float3 v2Normal = X_i.DestNg_ff;
-    ShiftResult shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
+
+    ShiftResult shiftResult;
+    if (X_i.IsMiss)
+    {
+        shiftResult = ShiftReconnectEnvironment(v1NormalShift, wi);
+    }
+    else
+    {
+        float3 v2Pos = X_i.DestPosition;
+        float3 v2Normal = X_i.DestNg_ff;
+        shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
+    }
 
     if (!shiftResult.IsSuccessful)
     {
@@ -98,13 +111,10 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 
 float Target(CandidateGI X_i, ContextPrimaryRay context)
 {
-    if (X_i.IsMiss) // TODO
+    if (!X_i.IsMiss && all(X_i.DestPosition == context.HitInfo.HitPos))
         return 0.0f;
 
-    if (all(X_i.DestPosition == context.HitInfo.HitPos))
-        return 0.0f;
-
-    float3 wi = normalize(X_i.DestPosition - context.HitInfo.HitPos);
+    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
     float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, wi));
     if (NdL <= 0 || X_i.Jacobian <= 0.0f)
         return 0.0f;
@@ -115,7 +125,10 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     if (FEAT_CORE(RestirTargetVisibility))
     {
         bool occluded;
-        TestVisibilityPoints(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
+        if (X_i.IsMiss)
+            TestVisibilityDirection(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
+        else
+            TestVisibilityPoints(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
         if (occluded)
             return 0.0f;
     }
@@ -152,7 +165,7 @@ bool TrySampleReservoirGI(
     ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
     Y = reservoir.Y;
 
-    float3 wi = normalize(Y.DestPosition - hitInfo.HitPos);
+    float3 wi = Y.IsMiss ? Y.DestPosition : normalize(Y.DestPosition - hitInfo.HitPos);
 
     // Debug
     {
@@ -172,7 +185,7 @@ bool TrySampleReservoirGI(
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
 
-    if (all(Y.DestPosition == hitInfo.HitPos))
+    if (!Y.IsMiss && all(Y.DestPosition == hitInfo.HitPos))
         return false;
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)

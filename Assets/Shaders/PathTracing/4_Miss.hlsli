@@ -6,7 +6,7 @@
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 
-float3 Miss(inout PathState pathState)
+float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDelta)
 {
     if (FEAT_DBG(FurnaceTestHHE))
         return 0.0f;
@@ -17,13 +17,13 @@ float3 Miss(inout PathState pathState)
 
     if (FEAT_CORE(EnvironmentMap))
     {
-        float2 uv = EaSphereToSquare(pathState.Desc.Direction);
+        float2 uv = EaSphereToSquare(wi);
         float3 Le = gTexEnvMap.Sample(gSamplerLinearClamp, uv).rgb;
 
         DBG_SCALE_INTENSITY_ENV_MAP(Le);
 
         bool envMapInLSD = gSettings.LsdBasePunctuals >= 1;
-        if (FEAT_CORE(NEE) && envMapInLSD && !pathState.IsPrimaryRay && !pathState.LastRayWasDiracDelta)
+        if (FEAT_CORE(NEE) && envMapInLSD && !isPrimaryRay && !lastRayDiracDelta)
         {
             float pdf_lsd;
             EvaluateLSD(0, pdf_lsd);
@@ -34,7 +34,7 @@ float3 Miss(inout PathState pathState)
             if (FEAT_DBG(FixedMisNeeManual))
                 m = 1 - gDebugSettings.FixedMisNee;
             else
-                m = PowerHeuristic(pathState.LastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
+                m = PowerHeuristic(lastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
             Le *= m;
         }
 
@@ -46,7 +46,7 @@ float3 Miss(inout PathState pathState)
 
     if (FEAT_CORE(DirectionalLight))
     {
-        float sunCos = dot(pathState.Desc.Direction, -normalize(gSettings.DirLightDirection));
+        float sunCos = dot(wi, -normalize(gSettings.DirLightDirection));
         if (FEAT_CORE(DirectionalLightDistant))
             Li += gSettings.DirLightColor * gSettings.DirLightIntensity * saturate(sunCos);
         if (sunCos > gSettings.DirLightCosAngularRadius)

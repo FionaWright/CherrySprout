@@ -47,7 +47,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         if (isMiss)
         {
-            float3 L_miss = Miss(pathState);
+            float3 L_miss = Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, pathState.IsPrimaryRay, pathState.LastRayWasDiracDelta);
             float3 L_direct = pathState.Beta * L_miss;
             pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 
@@ -116,6 +116,13 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, bxdf, Y, L_gi);
             pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
 
+            /*
+                TODO:
+                Consider how this contribution should fit into the path-tracer
+                Do I need MIS? Or randomly select one estimator? Or fixed weights (0.5,0.5)?
+                How does it interact with ReSTIR DI? Is that another estimator to keep track of?
+            */
+
             DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
         }
 
@@ -164,21 +171,23 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     DBG_OUTPUT1(i == gSettings.MaxRayDepth, KilledByMaxDepth);
 
     DBG_OUTPUT_DUMP_DISABLE();
-    DBG_OUTPUT1(0.0f, KilledByBetaLoss);
-    DBG_OUTPUT1(0.0f, KilledByRR);
-    DBG_OUTPUT1(0.0f, KilledByMiss);
-    DBG_OUTPUT1(0.0f, KilledByEmission);
-    DBG_OUTPUT1(0.0f,          RESTIR_ReservoirIdx);
-    DBG_OUTPUT1(0.0f,            RESTIR_ReservoirWeightSum);
-    DBG_OUTPUT1(0.0f,      RESTIR_ReservoirConfidence);
-    DBG_OUTPUT1(0.0f, RESTIR_NdL);
-    DBG_OUTPUT1(0.0f,                  RESTIR_W_Y);
-    DBG_OUTPUT1(0.0f,                             RESTIRGI_Dir);
-    DBG_OUTPUT1(0.0f,           RESTIRGI_DirectContrib);
-    DBG_OUTPUT1(0.0f,            RESTIRGI_BxdfRadiance);
-    DBG_OUTPUT1(0.0f,                 RESTIRGI_BxdfPDF);
-    DBG_OUTPUT1(0.0f,                     RESTIRGI_Jacobian);
-    DBG_OUTPUT1(0.0f,                     RESTIRGI_GiLo);
+    {
+        DBG_OUTPUT1(0.0f, KilledByBetaLoss);
+        DBG_OUTPUT1(0.0f, KilledByRR);
+        DBG_OUTPUT1(0.0f, KilledByMiss);
+        DBG_OUTPUT1(0.0f, KilledByEmission);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirIdx);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirWeightSum);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirConfidence);
+        DBG_OUTPUT1(0.0f, RESTIR_NdL);
+        DBG_OUTPUT1(0.0f, RESTIR_W_Y);
+        DBG_OUTPUT1(0.0f, RESTIRGI_Dir);
+        DBG_OUTPUT1(0.0f, RESTIRGI_DirectContrib);
+        DBG_OUTPUT1(0.0f, RESTIRGI_BxdfRadiance);
+        DBG_OUTPUT1(0.0f, RESTIRGI_BxdfPDF);
+        DBG_OUTPUT1(0.0f, RESTIRGI_Jacobian);
+        DBG_OUTPUT1(0.0f, RESTIRGI_GiLo);
+    }
     DBG_OUTPUT_DUMP_ENABLE();
 
     PathSample pathSample;

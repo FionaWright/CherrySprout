@@ -258,7 +258,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
         if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
         {
-            RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(renderInfo.FrameIndex,renderInfo.FrameIndex), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
+            RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(0,0), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
             settings.JitterPerFrame = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);
         }
         else
