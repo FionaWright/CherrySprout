@@ -8,6 +8,7 @@
 #include "Utils/Random.h"
 
 #define BXDF_MODE BXDF_PBR
+//#define BXDF_MODE BXDF_LAMBERTIAN
 #include "BxDFs/GetBxDF.hlsli"
 
 struct VsIn
@@ -37,7 +38,9 @@ StructuredBuffer<Material> gMaterials : register(t0, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
-SamplerState gSampler : register(s0, space0);
+SamplerState gSamplerLinearWrap : register(s0, space0);
+
+#include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
 
 VsOut VSMain(VsIn input)
 {
@@ -56,66 +59,48 @@ VsOut VSMain(VsIn input)
 
 float4 PSMain(VsOut input) : SV_TARGET
 {
-    return float4(1,0,0,1);
-
-/*
-
-    float3 Ng = normalize(input.normal);
+    float3 Ns = normalize(input.normal);
     float2 uv = input.uv;
-    uv.y *= gCbvObject.ScaleY;
-
-    Material mat = gMaterials[gCbvObject.MaterialIdx];
-    mat.Roughness = 0.0f;
-    mat.Metallic = 0.1f;
+    uv.y = 1 - uv.y;
 
     float3 worldPos = input.worldPos.xyz / input.worldPos.w;
 
-    float3 albedoSample = gSceneTextures[mat.TexIdxAlbedo].Sample(gSampler, uv).rgb;
-
-    if (Ng.y >= 0.9f)
-        albedoSample.rgb = float3(0.3, 0.3, 0.3);
-
-    mat.Albedo.rgb = albedoSample;
-
     HitInfo hitInfo;
-    hitInfo.Mat = mat;
-    hitInfo.Ng_ff = Ng;
-    hitInfo.Ns_ff = Ng;
-    hitInfo.SFrame = CreateShadingFrame(Ng);
+    hitInfo.Mat = gMaterials[gCbvObject.MaterialIdx];;
+    hitInfo.Ng_ff = Ns;
+    hitInfo.Ns_ff = Ns;
+    hitInfo.SFrame = CreateShadingFrame(Ns);
     hitInfo.Emission = 0.0f;
     hitInfo.UV = uv;
     hitInfo.IsEntering = true;
     hitInfo.RayT = 0.0f; // TODO
     hitInfo.HitPos = worldPos;
 
-    float3 wo = normalize(gSettings.CameraPosition - worldPos);
-    float3 wi = normalize(-gSettings.DirLightDir);
+    ApplyMaterialTextures(hitInfo);
 
-    //float3 irradianceIblSample = gIrradiance.SampleLevel(gSampler, Ng, 0).rgb;
+    float3 wo = normalize(gSettings.CameraPosition - worldPos);
+    float3 wi = -gSettings.DirLightDir;
+
+    //float3 irradianceIblSample = gIrradiance.SampleLevel(gSamplerLinearWrap, Ns, 0).rgb;
 
     float3 Li = 5.0f;
 
-    float3 E_direct_sum = 0.0f;
-
     BxDF bxdf;
-    float3 f_bxdf;
-    float pdf_bxdf;
-    bxdf.Evaluate(hitInfo, wo, wi, f_bxdf, pdf_bxdf);
+    BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
 
     //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
-    float NdLCenter = dot(Ng, wi);
+    float NdL = max(1e-6f, dot(Ns, wi));
 
-    float3 E_direct = E_direct_sum / float(NUM_SHADOW_SAMPLES);
+    float3 E_direct = NdL * Li * bxdfEval.Radiance / max(1e-6f, bxdfEval.PDF);
 
-    E_direct *= f_bxdf;
+    // TODO: Sample env map and irradiance map
 
-    // TODO: E_indirect
+    // TODO: Shadow map
 
-    float3 E_ambient = mat.Albedo.rgb * 0.2f;
+    float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.2f;
 
     float3 E = E_direct + E_ambient;
 
-    return float4(E, mat.Albedo.a);
-*/
+    return float4(E, hitInfo.Mat.Albedo.a);
 }

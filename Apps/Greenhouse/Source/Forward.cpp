@@ -79,6 +79,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     Heap* heap = renderInfo.Heap;
 
     {
+        SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 0);
+
         RTV->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
@@ -112,6 +114,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
+
+        heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
     }
 
     CbvMatrices_VP matricesVP = {};
@@ -119,9 +123,18 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     XMStoreFloat4x4(&matricesVP.P, renderInfo.P);
     m_descriptorSet.UpdateCBV(0, &matricesVP);
 
+    CbvForward cbvForward{};
+    cbvForward.CameraPosition = renderInfo.Camera->GetPosition();
+    cbvForward.FrameIdx = renderInfo.FrameIndex;
+    cbvForward.DirLightDir = normalize(XMFLOAT3(0.5f, -1, 0.5));
+    cbvForward.MaxCubemapMipMaps = 1;
+    m_descriptorSet.UpdateCBV(1, &cbvForward);
+
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
 
     CbvForward_PerInstance matricesM = {};
+
+    // TODO: Sort objects
 
     for (int i = 0; i < scene->CPU.ObjectCount; ++i)
     {

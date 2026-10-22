@@ -39,8 +39,8 @@ struct SettingsRender
     uint32_t MsaaSampleCount = 1;
 
     float FoV = 60.0f;
-    float NearPlane = 0.1f;
-    float FarPlane = 100.0f;
+    float NearPlane = 0.01f;
+    float FarPlane = 500.0f;
     DepthBufferType DepthBufferType = DepthBufferType::eForward;
 };
 
