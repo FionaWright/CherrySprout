@@ -226,9 +226,10 @@ inline D3D12_GRAPHICS_PIPELINE_STATE_DESC CreateGraphicsPipelineDesc(ID3D12RootS
     desc.SampleDesc.Quality = 0;
 
     desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    desc.DSVFormat = Config::GetRender().DsvFormat;
     desc.DepthStencilState.DepthEnable = dsvEnabled ? TRUE : FALSE;
-    desc.DepthStencilState.StencilEnable = dsvEnabled ? TRUE : FALSE;
+    //desc.DepthStencilState.StencilEnable = dsvEnabled ? TRUE : FALSE;
+    desc.DepthStencilState.StencilEnable = dsvEnabled ? FALSE : FALSE;
     desc.DepthStencilState.DepthFunc = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? D3D12_COMPARISON_FUNC_LESS_EQUAL : D3D12_COMPARISON_FUNC_GREATER_EQUAL;
 
     desc.NumRenderTargets = numRTVs;

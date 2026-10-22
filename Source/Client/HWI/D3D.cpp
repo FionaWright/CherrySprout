@@ -367,7 +367,7 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
 
         const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
         D3D12_CLEAR_VALUE clearValue = {};
-        clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+        clearValue.Format = Config::GetRender().DsvFormat;
         clearValue.DepthStencil = {depthClearValue, 0};
         auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, width, height, 1, 1, msaaSamples, 0,
                                                             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
@@ -377,7 +377,7 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
                                                 D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue,
                                                 IID_PPV_ARGS(&m_depthStencilBuffer)));
         D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-        dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+        dsvDesc.Format = Config::GetRender().DsvFormat;
         dsvDesc.ViewDimension = msaaSamples > 1 ? D3D12_DSV_DIMENSION_TEXTURE2DMS : D3D12_DSV_DIMENSION_TEXTURE2D;
         m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc, dsvHandle);
         dsvHandle.Offset(1, m_dsvDescriptorSize);

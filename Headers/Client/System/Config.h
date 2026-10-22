@@ -33,6 +33,7 @@ enum class DepthBufferType : uint32_t
 struct SettingsRender
 {
     DXGI_FORMAT RtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    DXGI_FORMAT DsvFormat = DXGI_FORMAT_D32_FLOAT; // No stencil
     float RtvClearColor[4] = {0.3f, 0.3f, 0.5f, 1.0f};
 
     uint32_t MsaaSampleCount = 1;
