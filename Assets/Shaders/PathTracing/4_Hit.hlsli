@@ -65,11 +65,11 @@ void Hit(inout PathState pathState,
         currentVertexInfo.Type = VertexType::eStandard;
         currentVertexInfo.Lobe = lobe;
         currentVertexInfo.Position = hitInfo.HitPos;
-        currentVertexInfo.SFrame = hitInfo.SFrame;
         currentVertexInfo.Ng_ff = hitInfo.Ng_ff;
         currentVertexInfo.Wo = wo;
         currentVertexInfo.Wi = wi;
         currentVertexInfo.Eta = eta;
+        currentVertexInfo.Roughness = hitInfo.Mat.Roughness;
         currentVertexInfo.IndirectContribution = E_indirect;
         currentVertexInfo.DirectContribution = E_direct;
         currentVertexInfo.PDF *= pdf_bxdf;

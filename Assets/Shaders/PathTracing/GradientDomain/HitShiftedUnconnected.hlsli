@@ -20,7 +20,7 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    if (false && IsGlossy(v2.Lobe))
+    if (false && IsGlossy(v2.Lobe, v2.Roughness))
     {
         isSymmetric = false;
         contrib = 1.0f;
@@ -31,13 +31,13 @@ void HitShiftedUnconnected(
 
     ShiftResult shiftResult = (ShiftResult)0;
 
-    if (IsGlossy(v1.Lobe))
+    if (IsGlossy(v1.Lobe, v1.Roughness))
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
         float eta = iorNCurrent / iorNNext;
 
-        shiftResult = ShiftHalfVector(v1.SFrame, hitInfo.SFrame, v1.Wi, v1.Wo, wo, v1.Eta, eta);
+        shiftResult = ShiftHalfVector(v1.Ng_ff, hitInfo.Ng_ff, v1.Wi, v1.Wo, wo, v1.Eta, eta);
     }
     else
     {

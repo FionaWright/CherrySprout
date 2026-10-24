@@ -25,12 +25,15 @@ inline bool CoversLobe(const LobeTag state, const LobeTag tag)
     return (hlsl::uint)state & (hlsl::uint)tag;
 }
 
-inline bool IsGlossy(const LobeTag lobe)
+#define ROUGHNESS_IS_GLOSSY_THRESHOLD 0.001f
+inline bool IsGlossy(const LobeTag lobe, const float roughness)
 {
-    return CoversLobe(lobe, LobeTag::eSpecular) ||
+    return roughness < ROUGHNESS_IS_GLOSSY_THRESHOLD && (
+            CoversLobe(lobe, LobeTag::eSpecular) ||
             CoversLobe(lobe, LobeTag::eTranmissiveReflect) ||
             CoversLobe(lobe, LobeTag::eTransmissiveRefract) ||
-            CoversLobe(lobe, LobeTag::eClearcoat);
+            CoversLobe(lobe, LobeTag::eClearcoat)
+        );
 }
 
 struct BxdfSample

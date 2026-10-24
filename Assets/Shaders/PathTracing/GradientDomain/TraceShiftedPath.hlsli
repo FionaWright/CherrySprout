@@ -158,8 +158,6 @@ void TraceShiftedPath(
 
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
-        DBG_FORCE_OUTPUT3(pdfShifted.xxx);
-
         pathState.Desc.Direction = wi;
         pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;
 

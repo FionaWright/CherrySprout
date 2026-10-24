@@ -69,10 +69,14 @@ void dbgOutput3Force(float value_x, float value_y, float value_z)
     } \
 } \
 
-#    define DBG_OUTPUT3(value, label) dbgOutput3(value.x, value.y, value.z, (uint)DebugOutputIndex::eDebugOutput_##label);
-#    define DBG_OUTPUT2(value, label) DBG_OUTPUT3(float3(value.xy, 0), label)
-#    define DBG_OUTPUT1(value, label) DBG_OUTPUT3(value.xxx, label)
-#    define DBG_FORCE_OUTPUT3(value) { dbgOutput3Force(value.x, value.y, value.z); }
+#    define _DBG_OUTPUT3(value, label) dbgOutput3(value.x, value.y, value.z, (uint)DebugOutputIndex::eDebugOutput_##label);
+#    define DBG_OUTPUT3(value, label) _DBG_OUTPUT3(float3(value), label)
+#    define DBG_OUTPUT2(value, label) _DBG_OUTPUT3(float3(value.xy, 0), label)
+#    define DBG_OUTPUT1(value, label) _DBG_OUTPUT3(float3(value.xxx), label)
+#    define _DBG_FORCE_OUTPUT3(value) { dbgOutput3Force(value.x, value.y, value.z); }
+#    define DBG_FORCE_OUTPUT3(value) _DBG_FORCE_OUTPUT3(float3(value))
+#    define DBG_FORCE_OUTPUT2(value) _DBG_FORCE_OUTPUT3(float3(value.xy, 0))
+#    define DBG_FORCE_OUTPUT1(value) _DBG_FORCE_OUTPUT3(float3(value.xxx))
 
 #    define DBG_OUTPUT_SET_IF_FOUND(output) DBG_OUTPUT_SET_INTERNAL(output, false);
 #    define DBG_OUTPUT_SET(output) DBG_OUTPUT_SET_INTERNAL(output, true);

@@ -21,11 +21,11 @@ struct PathVertexInfo
     LobeTag Lobe;
     hlsl::float3 Position;
 
-    ShadingFrame SFrame; // TODO: Only normal is needed from this, just use that
     hlsl::float3 Ng_ff;
     hlsl::float3 Wo;
     hlsl::float3 Wi;
     float Eta;
+    float Roughness;
 
     hlsl::float3 IndirectContribution;
     hlsl::float3 DirectContribution;
