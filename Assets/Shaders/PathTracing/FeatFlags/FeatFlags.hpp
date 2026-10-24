@@ -38,6 +38,7 @@ static constexpr auto s_defaultFeatFlagsDbg = static_cast<FeatFlagsDbg>(
         eDebug_ForceLightIndex |
         eDebug_GeometricNormalOnly |
         //eDebug_PathDumper |
+        eDebug_OutputColor |
         eDebug_Asserts
     );
 

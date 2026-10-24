@@ -63,7 +63,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT3(Lo, GD_Lo);
 
         DBG_OUTPUT_DUMP_DISABLE();
-        DBG_OUTPUT1(0.0f, GD_RejectionUninit);
+        DBG_OUTPUT1(0.0f, GD_GlossyV2Lobe);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
         DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
         DBG_OUTPUT1(0.0f, GD_RejectionEmission);
@@ -74,9 +74,9 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMappingRecNdL);
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMappingEnvOcc);
         DBG_OUTPUT1(0.0f, GD_RejectionShiftMappingEnvNdL);
-        DBG_OUTPUT1(0.0f, GD_RejectionVertexMismatch);
         DBG_OUTPUT1(0.0f, GD_FinalReconnectionState);
         DBG_OUTPUT1(0.0f, GD_V2Type);
+        DBG_OUTPUT1(0.0f, GD_V2Lobe);
         DBG_OUTPUT1(0.0f, GD_PdfShifted);
         DBG_OUTPUT1(0.0f, GD_L_w);
         DBG_OUTPUT1(0.0f, GD_L_s);

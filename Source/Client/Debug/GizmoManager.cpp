@@ -147,5 +147,5 @@ void GizmoManager::initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     };
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), {ildDesc, _countof(ildDesc)}, true);
-    m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GizmoVSPS.hlsl", "Raster/GizmoVSPS.hlsl", desc);
+    V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GizmoVSPS.hlsl", "Raster/GizmoVSPS.hlsl", desc));
 }

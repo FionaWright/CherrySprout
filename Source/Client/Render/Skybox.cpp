@@ -31,7 +31,7 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
         compileArgs.emplace_back("-DUSING_REVERSED_Z");
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
-    m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc, compileArgs);
+    V(m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc, compileArgs));
 
     constexpr XMFLOAT3 vertexBuffer[8] = {
         {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
@@ -76,7 +76,7 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
     // Init Generate Irradiance
     {
         m_rootSigGenIrr.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
-        m_pipelineGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get());
+        V(m_pipelineGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get()));
 
         if (!m_texIrradianceIBL.IsInitialized())
             m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", d3d->GetDevice(), cubemap->GetDesc().Width, cubemap->GetDesc().Height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

@@ -500,19 +500,19 @@ void LightImportanceSampler::initializeResources(const D3D* d3d, const D12Resour
     m_rootSigCbvUav3.                           SmartInit(d3d->GetDevice(), 1, 0, 3);
 
     // Pipelines
-    m_pipelineEnvMapSumLum.                     InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/SumLumReductionSearchCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineEnvMapPdf.                        InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/PdfCS.hlsl", m_rootSigCbvSrvUav.Get());
-    m_pipelineEnvMapCdfConditional.             InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfConditionalCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineEnvMapCdfMarginal.                InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfMarginalCS.hlsl", m_rootSigSrvUav.Get());
-    m_pipelineEnvMapCdfConditionalNormalize.    InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfConditionalNormalizeCS.hlsl", m_rootSigUav.Get());
+    V(m_pipelineEnvMapSumLum.                     InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/SumLumReductionSearchCS.hlsl", m_rootSigSrvUav.Get()));
+    V(m_pipelineEnvMapPdf.                        InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/PdfCS.hlsl", m_rootSigCbvSrvUav.Get()));
+    V(m_pipelineEnvMapCdfConditional.             InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfConditionalCS.hlsl", m_rootSigSrvUav.Get()));
+    V(m_pipelineEnvMapCdfMarginal.                InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfMarginalCS.hlsl", m_rootSigSrvUav.Get()));
+    V(m_pipelineEnvMapCdfConditionalNormalize.    InitCompute(d3d->GetDevice(), "Compute/NEE/EnvironmentMap/CdfConditionalNormalizeCS.hlsl", m_rootSigUav.Get()));
 
-    m_pipelineCdfNormalize1D.                   InitCompute(d3d->GetDevice(), "Compute/NEE/CdfNormalize1DCS.hlsl", m_rootSigUav.Get());
-    m_pipelinePunctualPdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/PunctualPdfCS.hlsl", m_rootSigSrvUav.Get());
+    V(m_pipelineCdfNormalize1D.                   InitCompute(d3d->GetDevice(), "Compute/NEE/CdfNormalize1DCS.hlsl", m_rootSigUav.Get()));
+    V(m_pipelinePunctualPdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/PunctualPdfCS.hlsl", m_rootSigSrvUav.Get()));
 
-    m_pipelineEmissivePdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/EmissivePdfCS.hlsl", m_rootSigCbvSrv5Uav.Get());
+    V(m_pipelineEmissivePdf.                      InitCompute(d3d->GetDevice(), "Compute/NEE/EmissivePdfCS.hlsl", m_rootSigCbvSrv5Uav.Get()));
 
-    m_pipelineLsdCdf.                           InitCompute(d3d->GetDevice(), "Compute/NEE/LightCdfCS.hlsl", m_rootSigCbvUav3.Get());
-    m_pipelineLsdAlias.                         InitCompute(d3d->GetDevice(), "Compute/NEE/LightAliasCS.hlsl", m_rootSigCbvUav3.Get(), {ALIAS_TABLE_BUILD_MAX_STACK_SIZE_DEFINE});
+    V(m_pipelineLsdCdf.                           InitCompute(d3d->GetDevice(), "Compute/NEE/LightCdfCS.hlsl", m_rootSigCbvUav3.Get()));
+    V(m_pipelineLsdAlias.                         InitCompute(d3d->GetDevice(), "Compute/NEE/LightAliasCS.hlsl", m_rootSigCbvUav3.Get(), {ALIAS_TABLE_BUILD_MAX_STACK_SIZE_DEFINE}));
 
     const size_t w = envMap->GetDesc().Width;
     const size_t h = envMap->GetDesc().Height;

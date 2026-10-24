@@ -21,6 +21,7 @@ void Core(uint2 pixelCoord)
 {
     DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
     DBG_PATH_DUMP_CLEAR();
+    DBG_OUTPUT1(0.0f, Black);
 
     if (gSettings.IsMaxFramesReached)
     {

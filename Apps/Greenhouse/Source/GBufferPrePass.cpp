@@ -71,7 +71,7 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     desc.RTVFormats[0] = GBUFFER_FORMAT_MAT_IDX;
     desc.RTVFormats[1] = GBUFFER_FORMAT_NORMALS_UV;
     desc.RTVFormats[2] = GBUFFER_FORMAT_MV;
-    m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GBufferPrePassVS.hlsl", "Raster/GBufferPrePassPS.hlsl", desc);
+    V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GBufferPrePassVS.hlsl", "Raster/GBufferPrePassPS.hlsl", desc));
 }
 
 void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)

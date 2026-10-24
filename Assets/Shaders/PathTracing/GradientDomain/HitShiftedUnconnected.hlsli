@@ -20,13 +20,12 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    if (IsGlossy(v2.Lobe))
+    if (false && IsGlossy(v2.Lobe))
     {
         isSymmetric = false;
         contrib = 1.0f;
         wi = NAN;
-        DBG_OUTPUT1(1.0f, GD_RejectionUninit);
-        DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch); // TODO: Remove
+        DBG_OUTPUT1(1.0f, GD_GlossyV2Lobe);
         return;
     }
 

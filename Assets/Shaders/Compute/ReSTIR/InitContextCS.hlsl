@@ -18,8 +18,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     uint contextIdx = GetContextBufferIndex(pixelCoord);
 
-    // TODO: Jitter GBuffers. Requires per-frame jitter option instead of per-pixel
-
     // TODO: Option to trace primary ray?
 
     // TODO: Option to re-use context in core PT instead of primary ray

@@ -153,10 +153,10 @@ void EnvironmentMap::initResources(ID3D12Device* device)
     InitializeSamplerLinearClamp(&sampler);
 
     m_rootSigPanoToEA.SmartInit(device, 1, 1, 1, false, &sampler, 1);
-    m_pipelinePanoToEA.InitCompute(device, "Compute/PanoToEaCS.hlsl", m_rootSigPanoToEA.Get());
+    V(m_pipelinePanoToEA.InitCompute(device, "Compute/PanoToEaCS.hlsl", m_rootSigPanoToEA.Get()));
 
     m_rootSigPanoToCM.SmartInit(device, 1, 1, 1, false, &sampler, 1);
-    m_pipelinePanoToCM.InitCompute(device, "Compute/PanoToCubemapCS.hlsl", m_rootSigPanoToCM.Get());
+    V(m_pipelinePanoToCM.InitCompute(device, "Compute/PanoToCubemapCS.hlsl", m_rootSigPanoToCM.Get()));
 
     m_resourcesInitialized = true;
 }

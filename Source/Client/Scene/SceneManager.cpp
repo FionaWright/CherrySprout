@@ -232,7 +232,7 @@ void SceneManager::GenerateMipMaps(D3D* d3d, Heap* heap)
 
         m_rootSigMipMaps.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
 
-        m_pipelineMipMaps.InitCompute(d3d->GetDevice(), "Compute/MipMapsCS.hlsl", m_rootSigMipMaps.Get());
+        V(m_pipelineMipMaps.InitCompute(d3d->GetDevice(), "Compute/MipMapsCS.hlsl", m_rootSigMipMaps.Get()));
     }
 
     m_setMipMaps.Init(heap);

@@ -126,16 +126,23 @@ inline ComPtr<IDxcBlob> CompileShaderDXC(
     if (errors && errors->GetStringLength() > 0)
     {
         CherryPrint("Shader compile warnings/errors:\n" << errors->GetStringPointer());
+        return nullptr;
     }
 
-    ComPtr<IDxcBlob> vertexShaderBlob;
-    if (FAILED(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&vertexShaderBlob), nullptr)))
+    HRESULT compileStatus = E_FAIL;
+    if (FAILED(result->GetStatus(&compileStatus)) || FAILED(compileStatus))
+    {
+        return nullptr;
+    }
+
+    ComPtr<IDxcBlob> blob;
+    if (FAILED(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&blob), nullptr)))
     {
         CherryPrint("Failed to get compiled shader");
         return nullptr;
     }
 
-    return vertexShaderBlob;
+    return blob;
 }
 
 #endif

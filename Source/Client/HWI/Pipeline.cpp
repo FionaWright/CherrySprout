@@ -16,7 +16,7 @@
 #   include "Debug/HotReloader.h"
 #endif
 
-void Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps,
+HRESULT Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps,
                             D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<std::string>& compileArgs)
 {
 #if !NDEBUG
@@ -33,24 +33,31 @@ void Pipeline::InitGraphics(ID3D12Device* device, const char* vs, const char* ps
     const ComPtr<IDxcBlob> blobV = CompileShaderDXC(vsPath, "VSMain", "vs_6_6", compileFlags, compileArgs);
     const ComPtr<IDxcBlob> blobP = CompileShaderDXC(psPath, "PSMain", "ps_6_6", compileFlags, compileArgs);
 
+    if (!blobV || !blobP)
+        return E_FAIL;
+
     desc.VS = {blobV->GetBufferPointer(), blobV->GetBufferSize()};
     desc.PS = {blobP->GetBufferPointer(), blobP->GetBufferSize()};
 
-    V(device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_pso)));
-
+    const HRESULT hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_pso));
+    if (!FAILED(hr))
+    {
 #if !NDEBUG
-    HotReloader::TrackGraphicsPipeline(vs, ps, this, desc, compileArgs);
+        HotReloader::TrackGraphicsPipeline(vs, ps, this, desc, compileArgs);
 #endif
+    }
+
+    return hr;
 }
 
-void Pipeline::InitCompute(ID3D12Device* device, const char* cs, ID3D12RootSignature* rootSig,
+HRESULT Pipeline::InitCompute(ID3D12Device* device, const char* cs, ID3D12RootSignature* rootSig,
                            const std::vector<std::string>& compileArgs)
 {
     auto desc = CreateComputePipelineDesc(rootSig);
-    InitCompute(device, cs, desc, compileArgs);
+    return InitCompute(device, cs, desc, compileArgs);
 }
 
-void Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_PIPELINE_STATE_DESC& desc,
+HRESULT Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_PIPELINE_STATE_DESC& desc,
                            const std::vector<std::string>& compileArgs)
 {
 #if defined(_DEBUG)
@@ -61,12 +68,20 @@ void Pipeline::InitCompute(ID3D12Device* device, const char* cs, D3D12_COMPUTE_P
 #endif
 
     const std::string csPath = FileHelper::GetAssetShaderFullPath(cs);
-    ComPtr<IDxcBlob> blobC = CompileShaderDXC(csPath, "CSMain", "cs_6_6", compileFlags, compileArgs);
+    const ComPtr<IDxcBlob> blobC = CompileShaderDXC(csPath, "CSMain", "cs_6_6", compileFlags, compileArgs);
+
+    if (!blobC)
+        return E_FAIL;
 
     desc.CS = {blobC->GetBufferPointer(), blobC->GetBufferSize()};
-    V(device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_pso)));
+    const HRESULT hr = device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_pso));
 
+    if (!FAILED(hr))
+    {
 #if !NDEBUG
-    HotReloader::TrackComputePipeline(cs, this, desc, compileArgs);
+        HotReloader::TrackComputePipeline(cs, this, desc, compileArgs);
 #endif
+    }
+
+    return hr;
 }

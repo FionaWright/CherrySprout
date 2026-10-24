@@ -31,6 +31,7 @@ void TraceShiftedPath(
         DBG_SET_CURRENT_RAY_DEPTH(i);
         DBG_PATH_DUMP_MARK_EXPLORED();
         DBG_OUTPUT3(Palette((uint)v1.Type), GD_V1Type);
+        DBG_OUTPUT3(Palette((uint)v1.Lobe), GD_V1Lobe);
 
         pathState.RaySegmentIdx = i;
 
@@ -130,6 +131,7 @@ void TraceShiftedPath(
 
             PathVertexInfo v2 = mainVertices.Array[i+1];
             DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
+            DBG_OUTPUT3(Palette((uint)v2.Lobe), GD_V2Lobe);
 
             float3 E_indirect;
             HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, wi, E_indirect, jacobian, pdfShifted);
@@ -155,6 +157,8 @@ void TraceShiftedPath(
 		pdfRatio *= (pdfShifted / pdfMain);
 
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+
+        DBG_FORCE_OUTPUT3(pdfShifted.xxx);
 
         pathState.Desc.Direction = wi;
         pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;

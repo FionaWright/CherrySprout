@@ -11,7 +11,7 @@ void TextureConverter::Init(const D3D* d3d)
 
     m_rootSig.SmartInit(d3d->GetDevice(), 0, 1, 2, false, nullptr, 0, &m_rootConstants);
 
-    m_pipeline.InitCompute(d3d->GetDevice(), "Compute/TextureConvertCS.hlsl", m_rootSig.Get());
+    V(m_pipeline.InitCompute(d3d->GetDevice(), "Compute/TextureConvertCS.hlsl", m_rootSig.Get()));
 }
 
 void TextureConverter::Convert(const D3D* d3d, Heap* heap, ID3D12GraphicsCommandList* cmdList, D12Resource* source, TextureConvertMode mode, D12Resource* dest4, D12Resource* dest1)

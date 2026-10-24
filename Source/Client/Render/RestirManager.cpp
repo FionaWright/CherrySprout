@@ -30,16 +30,16 @@ void RestirManager::initResources(ID3D12Device* device)
 
 void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs)
 {
-    m_pipelineInitContext.InitCompute(device, "Compute/ReSTIR/InitContextCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineClear.InitCompute(device, "Compute/ReSTIR/ClearCS.hlsl", rootSig->Get(), compileArgs);
+    V(m_pipelineInitContext.InitCompute(device, "Compute/ReSTIR/InitContextCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelineClear.InitCompute(device, "Compute/ReSTIR/ClearCS.hlsl", rootSig->Get(), compileArgs));
 
-    m_pipelineDiGen.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineDiSpatio.InitCompute(device, "Compute/ReSTIR/DI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs);
+    V(m_pipelineDiGen.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelineDiSpatio.InitCompute(device, "Compute/ReSTIR/DI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs));
 
-    m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs);
-    m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs);
+    V(m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs));
 
     if (!m_initialisedResources)
     {

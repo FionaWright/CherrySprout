@@ -471,7 +471,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         Profiler::AddToStack("Path-Tracer Update Pipeline");
 #endif
 
-        m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", m_rootSig.Get(), compileArgs);
+        V(m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", m_rootSig.Get(), compileArgs));
 
 #if !NDEBUG
         Profiler::PopAndPrint();
@@ -484,7 +484,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         std::vector<std::string> compileArgs = compileArgsCommon;
         compileArgs.emplace_back("-DDFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags & eCore_GammaCorrectionFast));
 
-        m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs);
+        V(m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs));
     }
 
     Reset();

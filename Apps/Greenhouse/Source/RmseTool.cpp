@@ -33,7 +33,7 @@ void RmseTool::StoreTextureToSlot(D3D* d3d, Heap* heap, D12Resource* texture, co
     {
         m_setBlit.Init(heap);
         m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
-        m_pipelineBlit.InitCompute(d3d->GetDevice(), "Compute/TexBlitCS.hlsl", m_rootSigBlit.Get());
+        V(m_pipelineBlit.InitCompute(d3d->GetDevice(), "Compute/TexBlitCS.hlsl", m_rootSigBlit.Get()));
     }
 
     D12Resource* slot = &m_slots[slotIdx];
@@ -242,7 +242,7 @@ void RmseTool::ComputeSingleRMSE(D3D* d3d, Heap* heap)
     {
         m_rootSigSumSquaredErr.SmartInit(d3d->GetDevice(), 0, 2, 1);
 
-        m_pipelineSumSquaredErr.InitCompute(d3d->GetDevice(), "Compute/SumSquaredErrorCS.hlsl", m_rootSigSumSquaredErr.Get());
+        V(m_pipelineSumSquaredErr.InitCompute(d3d->GetDevice(), "Compute/SumSquaredErrorCS.hlsl", m_rootSigSumSquaredErr.Get()));
 
         m_bufferSumSqrErrRW.Init_Buffer("SumSquaredErr StructuredBuffer", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_bufferSumSqrErrReadback.Init_Buffer("SumSquaredErr ReadbackBuffer", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true);

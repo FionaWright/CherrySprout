@@ -40,7 +40,6 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                              GBuffer_Depth);
             DBG_OUTPUT2(gGBufferNormalsUv[pixelCoord].zw,                         GBuffer_Uv);
             DBG_OUTPUT2(gGBufferMv[pixelCoord].xy,                                GBuffer_Mv);
-            DBG_OUTPUT3(gGBufferMaterialIdx[MotionVectorToPixelCoord(pixelCoord, gGBufferMv[pixelCoord].xy, gSettings.FrameDimensions)] == 0 ? float3(1,0,0) : SampleSceneTexture3(hitInfo.UV, gMegaBufferMaterials[gGBufferMaterialIdx[MotionVectorToPixelCoord(pixelCoord, gGBufferMv[pixelCoord].xy, gSettings.FrameDimensions)] - 1].TexIdxAlbedo, 1), GBuffer_PrevAlbedo);
         }
 
         DBG_PATH_DUMP_PATH_STATE(pathState);

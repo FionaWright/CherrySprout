@@ -61,7 +61,7 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
             m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 3, &m_gradientYBSS, m_gradientYBSS.GetDesc().Format);
 
             m_rootSigGradientsSS.SmartInit(d3d->GetDevice(), 0, 1, 4);
-            m_pipelineGradientsSS.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/TexGradientsCS.hlsl", m_rootSigGradientsSS.Get());
+            V(m_pipelineGradientsSS.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/TexGradientsCS.hlsl", m_rootSigGradientsSS.Get()));
         }
 
         primal->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -114,7 +114,7 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
             m_setGradientsCombine.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_debugGradientY, m_debugGradientY.GetDesc().Format);
 
             m_rootSigGradientsCombine.SmartInit(d3d->GetDevice(), 0, 4, 2);
-            m_pipelineGradientsCombine.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/CombineGradientsCS.hlsl", m_rootSigGradientsCombine.Get());
+            V(m_pipelineGradientsCombine.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/CombineGradientsCS.hlsl", m_rootSigGradientsCombine.Get()));
         }
 
         m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, gXF, gXF->GetDesc().Format);

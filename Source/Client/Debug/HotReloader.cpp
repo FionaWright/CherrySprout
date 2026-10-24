@@ -128,8 +128,13 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
 
         entry.Desc.InputLayout.pInputElementDescs = entry.InputLayout.data();
 
-        entry.Ptr->InitGraphics(d3d->GetDevice(), entry.VertexEntry.ID.c_str(),
-                                entry.PixelEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
+        const HRESULT hr = entry.Ptr->InitGraphics(d3d->GetDevice(), entry.VertexEntry.ID.c_str(), entry.PixelEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
+        if (FAILED(hr))
+        {
+            CherryPrint("[ERROR]: " + HrToString(hr));
+            MessageBeep(MB_ICONERROR);
+            return;
+        }
     }
 
     for (int i = 0; i < dirtyComputePipelines.size(); i++)
@@ -142,6 +147,14 @@ void HotReloader::ReloadPipelines(D3D* d3d, const bool onlyModified, const Reloa
 
         CherryPrint("Hot Reloading Compute Pipeline: " << entry.ComputeEntry.ID);
 
-        entry.Ptr->InitCompute(d3d->GetDevice(), entry.ComputeEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
+        const HRESULT hr = entry.Ptr->InitCompute(d3d->GetDevice(), entry.ComputeEntry.ID.c_str(), entry.Desc, entry.CompileArgs);
+        if (FAILED(hr))
+        {
+            CherryPrint("[ERROR]: " + HrToString(hr));
+            MessageBeep(MB_ICONERROR);
+            return;
+        }
     }
+
+    MessageBeep(MB_OK);
 }
