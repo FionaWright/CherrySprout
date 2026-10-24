@@ -21,6 +21,8 @@ BxdfSample BxDF::Sample(
 
     BxdfSample sample;
     sample.Wi = hitInfo.SFrame.ToWorld(L_s);
+    sample.IsDirac = false;
+    sample.Lobe = LobeTag::eLambertian;
 
     DBG_OUTPUT3(L_s,        BxDF_L_s);
 
@@ -30,9 +32,16 @@ BxdfSample BxDF::Sample(
 BxdfEval BxDF::Evaluate(
     HitInfo hitInfo,
     float3 wo,
-    float3 wi)
+    float3 wi,
+    LobeTag lobe)
 {
     BxdfEval eval;
+
+    if (!CoversLobe(lobe, LobeTag::eLambertian))
+    {
+        eval.Radiance = 0.0f;
+        return eval;
+    }
 
     float3 L_s = hitInfo.SFrame.ToLocal(wi);
     DBG_OUTPUT3(L_s,        Eval_L_s);

@@ -1,8 +1,8 @@
 #ifndef H_GRADIENT_DOMAIN_STRUCTS_H
 #define H_GRADIENT_DOMAIN_STRUCTS_H
 
+#include "BxDFs/Structs.h"
 #include "Utils/HlslGlue.h"
-#include "Utils/Random.h"
 #include "Utils/Math/ShadingFrame.h"
 
 #include "PathTracing/NEE/Structs.h"
@@ -10,8 +10,7 @@
 enum class VertexType : hlsl::uint
 {
     eUninitialized,
-    eGlossy,
-    eDiffuse,
+    eStandard,
     eEnvironment,
     eEmission,
 };
@@ -19,6 +18,7 @@ enum class VertexType : hlsl::uint
 struct PathVertexInfo
 {
     VertexType Type;
+    LobeTag Lobe;
     hlsl::float3 Position;
 
     ShadingFrame SFrame; // TODO: Only normal is needed from this, just use that
@@ -50,12 +50,6 @@ struct Gradients
     hlsl::float3 YForward;
     hlsl::float3 YBackward;
 };
-
-#define GDPT_VERTEX_DIFFUSE_THRESHOLD 0.001f
-inline bool GetIsVertexDiffuse(const float roughness)
-{
-    return (roughness >= GDPT_VERTEX_DIFFUSE_THRESHOLD);
-}
 
 enum class ReconnectionState : hlsl::uint
 {

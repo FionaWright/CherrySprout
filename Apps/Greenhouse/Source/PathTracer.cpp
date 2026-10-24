@@ -17,6 +17,7 @@
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/MathUtils.h"
+#include "Utils/Random.h"
 
 #if !NDEBUG
 #include "Debug/Profiler.h"

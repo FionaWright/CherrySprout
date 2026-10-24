@@ -58,4 +58,9 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
     return Li;
 }
 
+float3 Miss(PathState pathState)
+{
+    return Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, pathState.IsPrimaryRay, pathState.LastRayWasDiracDelta);
+}
+
 #endif

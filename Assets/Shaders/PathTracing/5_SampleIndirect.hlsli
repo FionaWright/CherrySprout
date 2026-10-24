@@ -10,7 +10,7 @@ float3 SampleIndirectLighting(
     out float3 wi,
     out float pdf,
     out bool isDirac,
-    out bool isGlossy
+    out LobeTag lobe
 )
 {
     BxdfSample bxdfSample;
@@ -22,7 +22,7 @@ float3 SampleIndirectLighting(
         float u2 = Rand01(rngInfo);
         wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
 
-        bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
+        bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
         float NdL = dot(hitInfo.Ns_ff, wi);
         bxdfEval.PDF = NdL / PI;
@@ -37,7 +37,7 @@ float3 SampleIndirectLighting(
         else
         {
             DBG_OUTPUT_RESET();
-            bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi);
+            bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi, bxdfSample.Lobe);
         }
 
         DBG_ASSERT_APPROX(bxdfEvalFromSample.Radiance/bxdfEvalFromSample.PDF, bxdfEval.Radiance/bxdfEval.PDF, 5, REVALUATE_TEST);
@@ -49,7 +49,7 @@ float3 SampleIndirectLighting(
 
     wi = bxdfSample.Wi;
     isDirac = bxdfSample.IsDirac;
-    isGlossy = bxdfSample.IsGlossy;
+    lobe = bxdfSample.Lobe;
 
     pdf = bxdfEval.PDF;
 

@@ -75,7 +75,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
 
     BxDF bxdf;
-    X_i.BxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, wi);
+    X_i.BxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
 
     float3 v1PosMain = X_i.SourcePositionBiased;
     float3 v1PosShift = context.HitInfo.HitPosBiased;

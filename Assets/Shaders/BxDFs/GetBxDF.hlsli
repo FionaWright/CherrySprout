@@ -9,22 +9,7 @@
 
 struct RngInfo;
 
-struct BxDF
-{
-    BxdfSample Sample(
-        inout RngInfo rngInfo,
-        HitInfo hitInfo,
-        float3 wo,
-
-        out BxdfEval eval
-    );
-
-    BxdfEval Evaluate(
-        HitInfo hitInfo,
-        float3 wo,
-        float3 wi
-    );
-};
+#include "BxDFs/Interface.hlsli"
 
 #if   (BXDF_ENABLED(LAMBERTIAN))
 #    include "BxDFs/BRDF_Lambertian.hlsli"

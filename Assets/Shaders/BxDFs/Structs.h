@@ -2,12 +2,42 @@
 #define H_BXDF_STRUCTS_H
 
 #include "Utils/HlslGlue.h"
+#include "Utils/Constants.h"
+
+enum class LobeTag : hlsl::uint
+{
+    eNone = 0,
+
+    eLambertian = 1 << 0,
+    eSpecular = 1 << 2,
+    eTranmissiveReflect = 1 << 3,
+    eTransmissiveRefract = 1 << 4,
+    eClearcoat = 1 << 5,
+    eSheen = 1 << 6,
+
+    eNEE = 1 << 7,
+
+    eAll = UINT_MAX
+};
+
+inline bool CoversLobe(const LobeTag state, const LobeTag tag)
+{
+    return (hlsl::uint)state & (hlsl::uint)tag;
+}
+
+inline bool IsGlossy(const LobeTag lobe)
+{
+    return CoversLobe(lobe, LobeTag::eSpecular) ||
+            CoversLobe(lobe, LobeTag::eTranmissiveReflect) ||
+            CoversLobe(lobe, LobeTag::eTransmissiveRefract) ||
+            CoversLobe(lobe, LobeTag::eClearcoat);
+}
 
 struct BxdfSample
 {
     hlsl::float3 Wi;
     bool IsDirac;
-    bool IsGlossy; // TODO: Lobe Index?
+    LobeTag Lobe;
 };
 
 struct BxdfEval

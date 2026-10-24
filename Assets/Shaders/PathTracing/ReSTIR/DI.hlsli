@@ -60,7 +60,7 @@ float Target(CandidateDI X_i, ContextPrimaryRay context)
     else
     {
         BxDF bxdf;
-        BxdfEval bxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, X_i.LightEval.Direction);
+        BxdfEval bxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, X_i.LightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
@@ -133,7 +133,7 @@ bool TrySampleReservoirDI(
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
 

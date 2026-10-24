@@ -47,7 +47,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         if (isMiss)
         {
-            float3 L_miss = Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, pathState.IsPrimaryRay, pathState.LastRayWasDiracDelta);
+            float3 L_miss = Miss(pathState);
             float3 L_direct = pathState.Beta * L_miss;
             pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 

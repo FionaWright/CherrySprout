@@ -102,11 +102,11 @@ BxdfSample BxDF::Sample(
         DBG_OUTPUT1(iorNNext,                         BxDF_iorNNext);
         DBG_OUTPUT1(iorNCurrent/iorNNext,             BxDF_eta);
 
-        sample.IsGlossy = true;
-
         if (isReflect)
         {
             SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, eval.Radiance, eval.PDF, sample.IsDirac);
+
+            sample.Lobe = LobeTag::eTranmissiveReflect;
 
             eval.PDF *= reflectProb;
 
@@ -117,6 +117,8 @@ BxdfSample BxDF::Sample(
         else
         {
             TransmissiveLobe_Sample(hitInfo, mm, V_s, N_s, H_s, iorNCurrent, iorNNext, L_s, eval.Radiance, eval.PDF);
+
+            sample.Lobe = LobeTag::eTransmissiveRefract;
 
             eval.PDF *= 1.0f - reflectProb;
 
@@ -146,9 +148,9 @@ BxdfSample BxDF::Sample(
     {
         SpecularLobe_Sample(hitInfo, mm, V_s, N_s, H_s, F0, L_s, eval.Radiance, eval.PDF, sample.IsDirac);
 
-        eval.PDF *= specProb;
+        sample.Lobe = LobeTag::eSpecular;
 
-        sample.IsGlossy = true;
+        eval.PDF *= specProb;
 
         DBG_ASSERT_VALUE(eval.Radiance,           BxDF_PBR_SPEC_F);
         DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_SPEC_PDF);
@@ -158,9 +160,9 @@ BxdfSample BxDF::Sample(
     {
         LambertianDisneyLobe_Sample(hitInfo, u1, u2, L_s, eval.Radiance, eval.PDF);
 
-        eval.PDF *= 1.0f - specProb;
+        sample.Lobe = LobeTag::eLambertian;
 
-        sample.IsGlossy = false;
+        eval.PDF *= 1.0f - specProb;
 
         DBG_ASSERT_VALUE(eval.Radiance,    BxDF_PBR_DIFF_F);
         DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_Diff_PDF);
@@ -183,7 +185,8 @@ BxdfSample BxDF::Sample(
 BxdfEval BxDF::Evaluate(
     HitInfo hitInfo,
     float3 wo,
-    float3 wi)
+    float3 wi,
+    LobeTag lobe)
 {
     BxdfEval eval;
 
@@ -232,6 +235,7 @@ BxdfEval BxDF::Evaluate(
         float3 f_trans = 0;
         float pdf_trans = 0;
 
+        if (CoversLobe(lobe, LobeTag::eTranmissiveReflect))
         {
             float3 f_reflect;
             float pdf_reflect;
@@ -251,6 +255,7 @@ BxdfEval BxDF::Evaluate(
             DBG_OUTPUT1(pdf_reflect,              Eval_PDF_reflect);
         }
 
+        if (CoversLobe(lobe, LobeTag::eTransmissiveRefract))
         {
             float3 f_refract;
             float pdf_refract;
@@ -286,7 +291,9 @@ BxdfEval BxDF::Evaluate(
 
     float3 f_opaque = 0;
     float pdf_opaque = 0;
+
     {
+        if (CoversLobe(lobe, LobeTag::eSpecular))
         {
             float3 f_spec;
             float pdf_spec;
@@ -305,6 +312,7 @@ BxdfEval BxDF::Evaluate(
             DBG_OUTPUT1(pdf_spec,              Eval_PDF_spec);
         }
 
+        if (CoversLobe(lobe, LobeTag::eLambertian))
         {
             float3 f_diff;
             float pdf_diff;

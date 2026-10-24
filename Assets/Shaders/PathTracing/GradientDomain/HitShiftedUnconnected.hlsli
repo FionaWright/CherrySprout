@@ -20,39 +20,19 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    if (v2.Type == VertexType::eUninitialized)
+    if (IsGlossy(v2.Lobe))
     {
         isSymmetric = false;
         contrib = 1.0f;
         wi = NAN;
         DBG_OUTPUT1(1.0f, GD_RejectionUninit);
-        return;
-    }
-
-    VertexType shiftedType = GetIsVertexDiffuse(hitInfo.Mat.Roughness) ? VertexType::eDiffuse : VertexType::eGlossy;
-    if (v1.Type != shiftedType || v2.Type == VertexType::eGlossy)
-    {
-        isSymmetric = false;
-        contrib = 1.0f;
-        wi = NAN;
-        DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch);
+        DBG_OUTPUT1(1.0f, GD_RejectionVertexMismatch); // TODO: Remove
         return;
     }
 
     ShiftResult shiftResult = (ShiftResult)0;
 
-    if (v1.Type == VertexType::eDiffuse)
-    {
-        if (v2.Type == VertexType::eDiffuse || v2.Type == VertexType::eEmission)
-            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);
-        else if (v2.Type == VertexType::eEnvironment)
-            shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ng_ff, v1.Wi);
-		else
-        	DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
-
-        reconnectionState = ReconnectionState::eSemiConnected;
-    }
-    else if (v1.Type == VertexType::eGlossy)
+    if (IsGlossy(v1.Lobe))
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -61,7 +41,16 @@ void HitShiftedUnconnected(
         shiftResult = ShiftHalfVector(v1.SFrame, hitInfo.SFrame, v1.Wi, v1.Wo, wo, v1.Eta, eta);
     }
     else
-        DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
+    {
+        if (v2.Type == VertexType::eStandard || v2.Type == VertexType::eEmission)
+            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);
+        else if (v2.Type == VertexType::eEnvironment)
+            shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ng_ff, v1.Wi);
+		else
+        	DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
+
+        reconnectionState = ReconnectionState::eSemiConnected;
+    }
 
     if (!shiftResult.IsSuccessful)
     {
@@ -79,7 +68,7 @@ void HitShiftedUnconnected(
     float NdL = dot(hitInfo.Ns_ff, wi);
 
     BxDF bxdf;
-    BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi);
+    BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, v1.Lobe);
 
     contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
 

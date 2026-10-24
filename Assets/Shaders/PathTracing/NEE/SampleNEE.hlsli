@@ -43,7 +43,7 @@ float3 SampleNEE(
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
@@ -103,7 +103,7 @@ float3 EvaluateNEE(
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction);
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
