@@ -7,6 +7,6 @@
 - [x] Get working 
 - [ ] Get working with ReSTIR DI
 - [ ] Separate settings per ReSTIR type. Use common struct?
-- [ ] Env map support
+- [x] Env map support
 - [ ] Emissive support
 - [ ] Multiple bounce support

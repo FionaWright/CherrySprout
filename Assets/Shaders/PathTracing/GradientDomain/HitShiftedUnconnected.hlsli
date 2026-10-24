@@ -20,7 +20,13 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    if (false && IsGlossy(v2.Lobe, v2.Roughness))
+    bool v1Glossy = IsGlossy(v1.Lobe, v1.Roughness);
+    bool isGlossy = MaterialIsGlossy(hitInfo.Mat.Roughness);
+
+    DBG_OUTPUT1(isGlossy, GD_IsGlossy);
+
+    //if ((v1Glossy != isGlossy) || (hitInfo.Mat.Roughness != v1.Roughness) || IsGlossy(v2.Lobe, v2.Roughness))
+    if ((v1Glossy != isGlossy) || IsGlossy(v2.Lobe, v2.Roughness))
     {
         isSymmetric = false;
         contrib = 1.0f;
@@ -31,7 +37,7 @@ void HitShiftedUnconnected(
 
     ShiftResult shiftResult = (ShiftResult)0;
 
-    if (IsGlossy(v1.Lobe, v1.Roughness))
+    if (v1Glossy)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;

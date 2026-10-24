@@ -25,10 +25,15 @@ inline bool CoversLobe(const LobeTag state, const LobeTag tag)
     return (hlsl::uint)state & (hlsl::uint)tag;
 }
 
-#define ROUGHNESS_IS_GLOSSY_THRESHOLD 0.001f
+#define ROUGHNESS_IS_GLOSSY_THRESHOLD (1000*EPSILON)
+inline bool MaterialIsGlossy(const float roughness)
+{
+    return roughness < ROUGHNESS_IS_GLOSSY_THRESHOLD;
+}
+
 inline bool IsGlossy(const LobeTag lobe, const float roughness)
 {
-    return roughness < ROUGHNESS_IS_GLOSSY_THRESHOLD && (
+    return MaterialIsGlossy(roughness) && (
             CoversLobe(lobe, LobeTag::eSpecular) ||
             CoversLobe(lobe, LobeTag::eTranmissiveReflect) ||
             CoversLobe(lobe, LobeTag::eTransmissiveRefract) ||

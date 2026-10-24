@@ -174,6 +174,14 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPitchYaw = {0.061300, -7.874362},
         .SceneScale = 0.1f
     },
+
+    {
+        .Name = "RoughTest",
+        .Filepath = "Scenes/USD/RoughTest/RoughTest.usdc",
+        .CameraPosition = {-0.114393, 0.159540, -0.291603},
+        .CameraPitchYaw = {0.251301, 0.375632},
+        .SceneScale = 0.1f
+    },
 };
 
 #endif

@@ -140,7 +140,6 @@ void TraceShiftedPath(
         }
 
         DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
-        DBG_OUTPUT1(0.0f, GD_NeeContrib);
 
         if (pdfMain <= 0.0f || pdfShifted <= 0.0f)
             isSymmetric = false;
@@ -172,7 +171,6 @@ void TraceShiftedPath(
     Lo = pathState.Lo;
 
     DBG_OUTPUT3(Palette((uint)reconnectionState), GD_FinalReconnectionState);
-    DBG_OUTPUT1(0.0f, GD_NeeContrib);
 }
 
 #endif

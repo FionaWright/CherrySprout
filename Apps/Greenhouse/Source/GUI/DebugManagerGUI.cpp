@@ -355,7 +355,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                         {
                             RowInt("Type", static_cast<int>(m_cpuPathDump[i].PathVertex.Type));
                             RowFloat3("Position", m_cpuPathDump[i].PathVertex.Position, true);
-                            RowFloat3("Normal", m_cpuPathDump[i].PathVertex.SFrame.N, true);
+                            RowFloat3("Normal", m_cpuPathDump[i].PathVertex.Ng_ff, true);
                             RowFloat3("Wo", m_cpuPathDump[i].PathVertex.Wo, true);
                             RowFloat3("Wi", m_cpuPathDump[i].PathVertex.Wi, true);
                             RowFloat("Eta", m_cpuPathDump[i].PathVertex.Eta, true);

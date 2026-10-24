@@ -80,6 +80,8 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(0.0f, GD_PdfShifted);
         DBG_OUTPUT1(0.0f, GD_L_w);
         DBG_OUTPUT1(0.0f, GD_L_s);
+        DBG_OUTPUT1(0.0f, GD_IsGlossy);
+        DBG_OUTPUT1(0.0f, GD_NeeContrib);
         DBG_OUTPUT1(1.0f, GD_Jacobian);
         DBG_OUTPUT_DUMP_ENABLE();
     }
