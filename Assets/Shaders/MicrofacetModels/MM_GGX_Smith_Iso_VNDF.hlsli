@@ -23,7 +23,6 @@ struct MicrofacetModel
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
     float m_alpha;
-    float m_u3;
     float3 m_V;
 
     float3 m_H;
@@ -32,14 +31,12 @@ struct MicrofacetModel
 void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
-    //m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
     m_V = V;
 }
 
 void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
-    //m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
     m_V = V;
 }
 
@@ -50,57 +47,24 @@ float MicrofacetModel::RoughnessToAlpha(float roughness)
     return roughness * roughness;
 }
 
-// V and N are in world space
-float3 SampleP22(float u1, float u2, float3 V, float alpha, float3 N)
-{
-    //if (alpha == 0.0f) // ?
-    //    return N;
-
-    // decompose the floattor in parallel and perpendicular components
-    float3 wi_z = -N * dot(V, N);
-    float3 wi_xy = V + wi_z;
-
-    // warp to the hemisphere configuration
-    float3 wiStd = -normalize(alpha * wi_xy + wi_z);
-
-    // sample a spherical cap in (-wiStd.z, 1]
-    float wiStd_z = dot(wiStd, N);
-    float z = 1.0 - u2 * (1.0 + wiStd_z);
-    float sinTheta = sqrt(saturate(1.0f - z * z));
-    float phi = 2.0f * PI * u1 - PI;
-    float x = sinTheta * cos(phi);
-    float y = sinTheta * sin(phi);
-    float3 cStd = float3(x, y, z);
-
-    // reflect sample to align with normal
-    float3 up = float3(0, 0, 1.000001); // Used for the singularity
-    float3 wr = N + up;
-
-    //float3 c = dot(wr, cStd) * wr / wr.z - cStd;
-    float wrz_safe = max(wr.z, 1e-6f);
-    float3 c = dot(wr, cStd) * wr / wrz_safe - cStd;
-
-    // compute halfway direction as standard normal
-    float3 wmStd = c + wiStd;
-    float3 wmStd_z = N * dot(N, wmStd);
-    float3 wmStd_xy = wmStd_z - wmStd;
-
-    // return final normal
-    return normalize(alpha * wmStd_xy + wmStd_z);
-}
-
-// https://inria.hal.science/hal-00996995v2
 float3 MicrofacetModel::Sample(float u1, float u2)
 {
-    // 1. Aniso Stretch (Ignored)
+    float3 Vh = normalize(float3(m_alpha * m_V.xy, m_V.z));
 
-    // 2. Sample P22
-    float3 N = float3(0, 0, 1);
-    float3 H = SampleP22(u1, u2, m_V, m_alpha, N); // V and N are in shading space, problem?
+    float l = LengthSquared(Vh.xy);
+    float3 T1 = l <= 0.0f ? float3(1,0,0) : float3(-Vh.y, Vh.x, 0) * rsqrt(max(0.0f, l));
+    float3 T2 = cross(Vh, T1);
 
-    // 3. Aniso Unstretch (Ignored)
+    float r = sqrt(u1);
+    float phi = 2 * PI * u2;
+    float t1 = r * cos(phi);
+    float t2 = r * sin(phi);
+    float s = 0.5f * (1 + Vh.z);
 
-    return H;
+    t2 = (1 - s) * sqrt(max(0.0f, 1.0f - t1*t1)) + s * t2;
+
+    float3 Nh = t1*T1 + t2*T2 + sqrt(max(0.0f, 1.0f - t1*t1 - t2*t2)) * Vh;
+    return NormalizeSafe(float3(m_alpha * Nh.xy, max(0.0f, Nh.z)), float3(0,0,1));
 }
 
 float MicrofacetModel::D(float3 H)
@@ -109,7 +73,7 @@ float MicrofacetModel::D(float3 H)
     float NdH = H.z;
 
     float denominator = (NdH * NdH * (a2 - 1.0f) + 1.0f);
-    return a2 / max(0.001f, PI * denominator * denominator);
+    return a2 / max(1e-6f, PI * denominator * denominator);
 }
 
 float MicrofacetModel::G1(float NdW)
@@ -117,7 +81,7 @@ float MicrofacetModel::G1(float NdW)
     float a2 = m_alpha * m_alpha;
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
-    return saturate(2 * NdW / max(0.001f, denom));
+    return saturate(2 * NdW / max(1e-6f, denom));
 }
 
 float MicrofacetModel::G2(float NdL, float NdV)
@@ -127,19 +91,15 @@ float MicrofacetModel::G2(float NdL, float NdV)
 
 float MicrofacetModel::PDF(float D, float3 H, float3 V)
 {
-    float a2 = m_alpha * m_alpha;
     float NdV = V.z;
     float NdH = H.z;
     float VdH = dot(V, H);
 
-    float Dv = D * G1(V) * VdH / max(1e-6f, NdV);
-    return Dv / (4.0f * max(0.001f, VdH));
+    if (NdH <= 0.0f)
+        return 0.0f;
 
-    //float nrm = rsqrt((NdV * NdV) * (1.0f - a2) + a2);
-    //float sigmaStd = (NdV * nrm) * 0.5f + 0.5f;
-    //float sigmaI = sigmaStd / max(nrm, 1e-6f);
-    //float nrmN = (NdH * NdH) * (a2 - 1.0f) + 1.0f;
-    //return a2 / max(1e-6f, PI * 4.0f * nrmN * nrmN * sigmaI);
+    float Dv = D * G1(NdV) * max(0.0f, VdH) / max(1e-6f, NdV);
+    return Dv;
 }
 
 #endif

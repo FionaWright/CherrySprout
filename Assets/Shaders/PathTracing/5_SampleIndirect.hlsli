@@ -44,7 +44,8 @@ float3 SampleIndirectLighting(
     }
     else if (FEAT_DBG(BxdfTestLobe))
     {
-#define ROUGH_1 0.3f
+//#define ROUGH_1 0.8f
+#define ROUGH_1 max(0.1f, hitInfo.Mat.Roughness)
 #define ROUGH_2 0.1f
         if (gRunBxdfTestForPixel)
             hitInfo.Mat.Roughness = ROUGH_1;
@@ -57,8 +58,6 @@ float3 SampleIndirectLighting(
         if (bxdfEval.PDF > 0.0f && !bxdfSample.IsDirac)
         {
             float samplingPDF = bxdfEval.PDF;
-
-            DBG_OUTPUT_RESET();
 
             hitInfo.Mat.Roughness = ROUGH_2;
             bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi, bxdfSample.Lobe);

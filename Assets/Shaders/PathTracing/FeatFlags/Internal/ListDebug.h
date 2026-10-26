@@ -30,3 +30,5 @@ FLAG_PROCESS(FixedMisNeeManual, true)
 
 FLAG_PROCESS(GeometricNormalOnly, true)
 FLAG_PROCESS(BxdfTestCore, true)
+
+FLAG_PROCESS(BxdfTestFullMode, true)

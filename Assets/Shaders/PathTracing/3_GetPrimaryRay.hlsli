@@ -42,10 +42,19 @@ void GetPrimaryRay(
 
     pixelUV *= texelSize;
 
-    if ((FEAT_DBG(BxdfTestRevaluate) || FEAT_DBG(BxdfTestHemisphere) || FEAT_DBG(BxdfTestLobe)) && pixelUV.x < 0.5f)
+    if ((FEAT_DBG(BxdfTestRevaluate) || FEAT_DBG(BxdfTestHemisphere) || FEAT_DBG(BxdfTestLobe)))
     {
-        pixelUV.x = 1 - pixelUV.x;
-        gRunBxdfTestForPixel = true;
+        bool runTest = true;
+        if (!FEAT_DBG(BxdfTestFullMode))
+        {
+            if (pixelUV.x < 0.5f)
+                pixelUV.x = 1 - pixelUV.x;
+            else
+                runTest = false;
+        }
+
+        if (runTest)
+            gRunBxdfTestForPixel = true;
     }
 
     float2 ndc = RemapUtoS(pixelUV);
