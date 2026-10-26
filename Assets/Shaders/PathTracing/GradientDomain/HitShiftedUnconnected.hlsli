@@ -1,7 +1,7 @@
 #ifndef H_HIT_SHIFTED_UNCONNECTED_H
 #define H_HIT_SHIFTED_UNCONNECTED_H
 
-#include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
+#include "PathTracing/ShiftMapping/HR.hlsli"
 
 void HitShiftedUnconnected(
     inout ReconnectionState reconnectionState,
@@ -20,41 +20,7 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    bool v1Dirac = IsDirac(v1.Lobe, v1.Roughness);
-    bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
-
-    DBG_OUTPUT1(isDirac, GD_IsLobeDirac);
-
-    if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || IsDirac(v2.Lobe, v2.Roughness))
-    {
-        isSymmetric = false;
-        contrib = 1.0f;
-        wi = NAN;
-        DBG_OUTPUT1(1.0f, GD_RejectionDirac);
-        return;
-    }
-
-    ShiftResult shiftResult = (ShiftResult)0;
-
-    if (isDirac)
-    {
-        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
-        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
-        float eta = iorNCurrent / iorNNext;
-
-        shiftResult = ShiftHalfVector(v1.Ng_ff, hitInfo.Ng_ff, v1.Wi, v1.Wo, wo, v1.Eta, eta);
-    }
-    else
-    {
-        if (v2.Type == VertexType::eStandard || v2.Type == VertexType::eEmission)
-            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);
-        else if (v2.Type == VertexType::eEnvironment)
-            shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ng_ff, v1.Wi);
-		else
-        	DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
-
-        reconnectionState = ReconnectionState::eSemiConnected;
-    }
+    ShiftResult shiftResult = ShiftMapHPlusR(reconnectionState, hitInfo, v1, v2, wo);
 
     if (!shiftResult.IsSuccessful)
     {
@@ -75,7 +41,6 @@ void HitShiftedUnconnected(
     BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, v1.Lobe);
 
     contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
-    //contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, bxdfEval.PDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= bxdfEval.PDF;
 
