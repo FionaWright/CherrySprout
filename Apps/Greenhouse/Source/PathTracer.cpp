@@ -136,6 +136,7 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 9, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 10, m_debugManager.GetBufferPathDumpRW(), PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
     m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 11, m_debugManager.GetBufferPathDumpOCRW(), PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 12, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -429,7 +430,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 {
     constexpr uint32_t numCBV = 3;
     constexpr uint32_t numSRV = 17;
-    constexpr uint32_t numUAV = 10;
+    constexpr uint32_t numUAV = 13;
 
     D3D12_STATIC_SAMPLER_DESC samplers[2] = {};
     InitializeSamplerLinearClamp(&samplers[0], 0);
@@ -471,11 +472,18 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         Profiler::AddToStack("Path-Tracer Update Pipeline");
 #endif
 
-        V(m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", m_rootSig.Get(), compileArgs));
+        const HRESULT hr = m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", m_rootSig.Get(), compileArgs);
 
 #if !NDEBUG
         Profiler::PopAndPrint();
 #endif
+
+        if (FAILED(hr))
+        {
+            CherryPrint("[ERROR]: " + HrToString(hr));
+            MessageBeep(MB_ICONERROR);
+            return;
+        }
 
         m_restirManager.Init(device, &m_rootSig, compileArgs);
     }

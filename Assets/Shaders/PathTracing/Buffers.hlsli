@@ -78,6 +78,7 @@ RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : re
 RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u9, REGISTER_SPACE_DEFAULT);
 RWStructuredBuffer<RayDump>                         gPathDump               : register(u10, REGISTER_SPACE_DEFAULT);
 RWByteAddressBuffer                                 gPathDumpDebugOutput    : register(u11, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<uint>                            gPerPixelMutex          : register(u12, REGISTER_SPACE_DEFAULT);
 
 // =================== S Registers ===============================================================================
 

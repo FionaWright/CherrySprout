@@ -13,6 +13,7 @@
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
+#include "PathTracing/Debug/Tests/BxdfCore.hlsli"
 
 #include "Utils/Random.h"
 #include "Utils/HlslUtils.hlsli"
@@ -22,6 +23,12 @@ void Core(uint2 pixelCoord)
     DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
     DBG_PATH_DUMP_CLEAR();
     DBG_OUTPUT1(0.0f, Black);
+
+    if (FEAT_DBG(BxdfTestCore))
+    {
+        Test_BxdfCore(pixelCoord);
+        return;
+    }
 
     if (gSettings.IsMaxFramesReached)
     {

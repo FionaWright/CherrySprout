@@ -7,8 +7,9 @@ struct DebugWindow
     void Init(float2 topLeft, float2 bottomRight);
     void Init(float top, float left, float bottom, float right);
     bool Select(float2 uv);
+    float2 Invert(float2 uv);
 
-    float2 m_UV;
+    float2 UV;
 
 // private:
     float2 m_topLeft, m_bottomRight;
@@ -49,8 +50,14 @@ bool DebugWindow::Select(float2 uv)
         return false;
 
     float2 range = m_bottomRight - m_topLeft;
-    m_UV = (uv - m_topLeft) / range;
+    UV = (uv - m_topLeft) / range;
     return true;
+}
+
+float2 DebugWindow::Invert(float2 uv)
+{
+    float2 range = m_bottomRight - m_topLeft;
+    return (uv * range) + m_topLeft;
 }
 
 // Usage:
@@ -62,9 +69,9 @@ bool DebugWindow::Select(float2 uv)
 DebugWindow w1(0.2, 0, 0.5, 0.3);
 DebugWindow w2(0.5, 0, 0.8, 0.3);
 if (w1.Select(input.uv))
-    return tex.Sample(sampler, w1.m_UV);
+    return tex.Sample(sampler, w1.UV);
 else if (w2.Select(input.uv))
-    return Foo(tex.Sample(sampler, w2.m_UV));
+    return Foo(tex.Sample(sampler, w2.UV));
 */
 
 // Recursive Window:
@@ -74,7 +81,7 @@ else if (w2.Select(input.uv))
 DebugWindow w1(0, 0, 0.5, 0.5);
 DebugWindow w2(0, 0, 0.25, 0.25);
 if (w1.Select(input.uv))
-    if (w2.Select(w1.m_UV))
+    if (w2.Select(w1.UV))
         return Foo();
     else
         return Bar();

@@ -34,6 +34,7 @@ public:
     D12Resource* GetBufferGPUErrorInfoRW() { return &m_gpuErrorInfoRW; }
     D12Resource* GetBufferPathDumpRW() { return &m_pathDumpBufferRW; }
     D12Resource* GetBufferPathDumpOCRW() { return &m_pathDumpOCBufferRW; }
+    D12Resource* GetBufferPerPixelMutex() { return &m_gpuPerPixelMutex; }
 
     bool IsScheduledRunState(const ScheduledRunState state) const { return m_scheduledRunState == state; }
     hlsl::uint2 GetScheduledRunPixelCoords() const { return m_scheduledRunPixelCoords; }
@@ -66,6 +67,8 @@ private:
     ScheduledRunState m_scheduledRunState = ScheduledRunState::eIdle;
 
     RmseTool m_rmseTool;
+
+    D12Resource m_gpuPerPixelMutex;
 };
 
 #endif

@@ -44,7 +44,7 @@ void dbgOutput3Force(float value_x, float value_y, float value_z)
 {
     float3 value = float3(value_x, value_y, value_z);
 
-    DBG_PATH_DUMP_DEBUG_OUTPUT(value, index);
+    DBG_PATH_DUMP_FORCED_OUTPUT(value);
 
     if (!FEAT_DBG(OutputColor))
         return;

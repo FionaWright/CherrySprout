@@ -20,24 +20,23 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    bool v1Glossy = IsGlossy(v1.Lobe, v1.Roughness);
-    bool isGlossy = MaterialIsGlossy(hitInfo.Mat.Roughness);
+    bool v1Dirac = IsDirac(v1.Lobe, v1.Roughness);
+    bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
 
-    DBG_OUTPUT1(isGlossy, GD_IsGlossy);
+    DBG_OUTPUT1(isDirac, GD_IsLobeDirac);
 
-    //if ((v1Glossy != isGlossy) || (hitInfo.Mat.Roughness != v1.Roughness) || IsGlossy(v2.Lobe, v2.Roughness))
-    if ((v1Glossy != isGlossy) || IsGlossy(v2.Lobe, v2.Roughness))
+    if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || IsDirac(v2.Lobe, v2.Roughness))
     {
         isSymmetric = false;
         contrib = 1.0f;
         wi = NAN;
-        DBG_OUTPUT1(1.0f, GD_GlossyV2Lobe);
+        DBG_OUTPUT1(1.0f, GD_RejectionDirac);
         return;
     }
 
     ShiftResult shiftResult = (ShiftResult)0;
 
-    if (v1Glossy)
+    if (isDirac)
     {
         float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
@@ -76,6 +75,7 @@ void HitShiftedUnconnected(
     BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, v1.Lobe);
 
     contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
+    //contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, bxdfEval.PDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= bxdfEval.PDF;
 

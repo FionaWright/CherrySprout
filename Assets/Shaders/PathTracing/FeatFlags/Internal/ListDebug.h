@@ -13,6 +13,9 @@ FLAG_PROCESS(ForceRefract, true)
 FLAG_PROCESS(BxdfTestRevaluate, true)
 FLAG_PROCESS(BxdfTestHemisphere, true)
 
+FLAG_PROCESS(BxdfTestLobe, true)
+FLAG_PROCESS(NeeTestRevaluate, true)
+
 FLAG_PROCESS(FurnaceTestHHE, true)
 FLAG_PROCESS(FurnaceTestHDR, true)
 
@@ -22,8 +25,8 @@ FLAG_PROCESS(ForceLightIndex, true)
 FLAG_PROCESS(Checkerboard, true)
 FLAG_PROCESS(PathDumper, true)
 
-FLAG_PROCESS(NeeTestRevaluate, true)
-FLAG_PROCESS(GeometricNormalOnly, true)
-
 FLAG_PROCESS(FixedMisHalf, true)
 FLAG_PROCESS(FixedMisNeeManual, true)
+
+FLAG_PROCESS(GeometricNormalOnly, true)
+FLAG_PROCESS(BxdfTestCore, true)

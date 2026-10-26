@@ -25,15 +25,14 @@ inline bool CoversLobe(const LobeTag state, const LobeTag tag)
     return (hlsl::uint)state & (hlsl::uint)tag;
 }
 
-#define ROUGHNESS_IS_GLOSSY_THRESHOLD (1000*EPSILON)
-inline bool MaterialIsGlossy(const float roughness)
+inline bool MaterialIsDirac(const float roughness)
 {
-    return roughness < ROUGHNESS_IS_GLOSSY_THRESHOLD;
+    return roughness < ROUGHNESS_DIRAC_THRESHOLD;
 }
 
-inline bool IsGlossy(const LobeTag lobe, const float roughness)
+inline bool IsDirac(const LobeTag lobe, const float roughness)
 {
-    return MaterialIsGlossy(roughness) && (
+    return MaterialIsDirac(roughness) && (
             CoversLobe(lobe, LobeTag::eSpecular) ||
             CoversLobe(lobe, LobeTag::eTranmissiveReflect) ||
             CoversLobe(lobe, LobeTag::eTransmissiveRefract) ||

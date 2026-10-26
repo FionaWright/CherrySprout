@@ -175,6 +175,25 @@ inline void CubemapSphereToCube(hlsl::float3 d, GLUE_OUT(hlsl::uint) face, GLUE_
     }
 }
 
+inline hlsl::float3 CylinderToSphere(const float cosTheta, const float phi)
+{
+    const float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+    return hlsl::float3(
+        sinTheta * cos(phi),
+        sinTheta * sin(phi),
+        cosTheta
+    );
+}
+
+inline hlsl::float2 SphereToCylinder(const hlsl::float3 dir)
+{
+    const float cosTheta = dir.z;
+    const float phi = atan2(dir.y, dir.x);
+
+    return hlsl::float2(cosTheta, phi);
+}
+
 inline float Luminance(const hlsl::float3 color)
 {
     return dot(color, hlsl::float3(0.2126,0.7152,0.0722));

@@ -3,8 +3,6 @@
 
 #include "PathTracing/Structs.h"
 
-#define ROUGHNESS_DIRAC_THRESHOLD EPSILON
-
 void SpecularLobe_Sample(
         HitInfo hitInfo,       MicrofacetModel mm,
         float3 V_s,             float3 N_s,            float3 H_s,
@@ -17,37 +15,13 @@ void SpecularLobe_Sample(
         out bool isDiracDelta
     )
 {
-    L_s = NormalizeSafe(reflect(-V_s, H_s), N_s);
-
-    // Terminate ray if wi ends up inside surface
-    if (L_s.z <= 0.0f)
-    {
-        f = 0.0f;
-        pdf = 1.0f;
-        isDiracDelta = false;
-
-        DBG_OUTPUT_DUMP_DISABLE();
-        DBG_OUTPUT1(0,                BxDF_F);
-        DBG_OUTPUT1(0,                BxDF_G);
-        DBG_OUTPUT_DUMP_ENABLE();
-        return;
-    }
+    isDiracDelta = false;
 
     float NdV = SSpaceCosTheta(V_s);
-    float NdL = SSpaceCosTheta(L_s);
+    float NdH = SSpaceCosTheta(H_s);
     float VdH = dot(H_s, V_s);
-
     float3 F = F_Schlick(VdH, F0);
-    float D = mm.D(H_s);
-    float G = mm.G2(NdL, NdV);
-    pdf = mm.PDF(D, H_s, V_s);
 
-    pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
-
-    DBG_OUTPUT3(F,                BxDF_F);
-    DBG_OUTPUT1(G,                BxDF_G);
-
-    // Dirac Delta
     if (hitInfo.Mat.Roughness < ROUGHNESS_DIRAC_THRESHOLD)
     {
         L_s = reflect(-V_s, N_s);
@@ -57,10 +31,32 @@ void SpecularLobe_Sample(
         return;
     }
 
-    float3 specularBrdf = (D * G * F) / max(1e-6, 4 * NdV * NdL);
-    f = specularBrdf;
+    L_s = NormalizeSafe(reflect(-V_s, H_s), N_s);
+    float NdL = SSpaceCosTheta(L_s);
 
-    isDiracDelta = false;
+    // Terminate ray if wi ends up inside surface
+    if (NdV <= 0.0f || NdH <= 0.0f || VdH <= 0.0f || NdL <= 0.0f)
+    {
+        f = 0.0f;
+        pdf = 1.0f;
+
+        DBG_OUTPUT_DUMP_DISABLE();
+        DBG_OUTPUT1(0,                BxDF_F);
+        DBG_OUTPUT1(0,                BxDF_G);
+        DBG_OUTPUT_DUMP_ENABLE();
+        return;
+    }
+
+    float D = mm.D(H_s);
+    float G = mm.G2(NdL, NdV);
+    pdf = mm.PDF(D, H_s, V_s);
+
+    pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
+
+    DBG_OUTPUT3(F,                BxDF_F);
+    DBG_OUTPUT1(G,                BxDF_G);
+
+    f = (D * G * F) / max(1e-6, 4 * NdV * NdL);
 }
 
 void SpecularLobe_Evaluate(
@@ -74,10 +70,22 @@ void SpecularLobe_Evaluate(
     )
 {
     float NdV = SSpaceCosTheta(V_s);
+    float NdH = SSpaceCosTheta(H_s);
     float NdL = SSpaceCosTheta(L_s);
     float VdH = dot(H_s, V_s);
 
-    if (L_s.z <= 0.0f || VdH >= 1.0f)
+    if (hitInfo.Mat.Roughness < ROUGHNESS_DIRAC_THRESHOLD)
+    {
+        float3 expectedL = reflect(-V_s, N_s);
+        float alignment = dot(normalize(L_s), normalize(expectedL));
+        bool isAligned = alignment > 1.0f - 1e-5f;
+
+        f = isAligned ? 1.0f : 0.0f;
+        pdf = 1;
+        return;
+    }
+
+    if (NdH <= 0.0f || VdH <= 0.0f || NdL <= 0.0f)
     {
         f = 0.0f;
         pdf = 1.0f;
@@ -99,20 +107,7 @@ void SpecularLobe_Evaluate(
     DBG_OUTPUT3(F,                Eval_F);
     DBG_OUTPUT1(G,                Eval_G);
 
-    // Dirac Delta
-    if (hitInfo.Mat.Roughness < ROUGHNESS_DIRAC_THRESHOLD)
-    {
-        float3 expectedL = reflect(-V_s, N_s);
-        float alignment = dot(normalize(L_s), normalize(expectedL));
-        bool isAligned = alignment > 1.0f - 1e-5f;
-
-        f = isAligned ? 1.0f : 0.0f;
-        pdf = 1;
-        return;
-    }
-
-    float3 specularBrdf = (D * G * F) / max(1e-6, 4 * NdV * NdL);
-    f = specularBrdf;
+    f = (D * G * F) / max(1e-6, 4 * NdV * NdL);
 }
 
 void SpecularLobe_Pdf(

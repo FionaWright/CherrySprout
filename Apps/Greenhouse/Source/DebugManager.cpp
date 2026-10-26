@@ -31,6 +31,12 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
         m_pathDumpOCBufferReadback.Init_Buffer("Path Dump OC Buffer (Readback)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true, D3D12_RESOURCE_STATE_COPY_DEST);
     }
 
+    {
+        const size_t bufferSize = sizeof(uint32_t) * Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth;
+        m_gpuPerPixelMutex.Release();
+        m_gpuPerPixelMutex.Init_Buffer("Per-Pixel Mutex", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    }
+
     m_rmseTool.Init(d3d, heap);
 }
 

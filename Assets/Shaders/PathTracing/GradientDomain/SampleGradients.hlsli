@@ -51,8 +51,10 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
     misWeight = 1.0f;
     if (isSymmetric)
     {
-        // Two estimators, forward + backward
-        misWeight = BalanceHeuristicRatio(pdfRatio, 1, 1);
+        if (FEAT_DBG(FixedMisHalf))
+            misWeight = 0.5f;
+        else
+            misWeight = BalanceHeuristicRatio(pdfRatio, 1, 1);
     }
 
     // Debug
@@ -63,7 +65,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT3(Lo, GD_Lo);
 
         DBG_OUTPUT_DUMP_DISABLE();
-        DBG_OUTPUT1(0.0f, GD_GlossyV2Lobe);
+        DBG_OUTPUT1(0.0f, GD_RejectionDirac);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
         DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);
         DBG_OUTPUT1(0.0f, GD_RejectionEmission);
@@ -80,7 +82,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
         DBG_OUTPUT1(0.0f, GD_PdfShifted);
         DBG_OUTPUT1(0.0f, GD_L_w);
         DBG_OUTPUT1(0.0f, GD_L_s);
-        DBG_OUTPUT1(0.0f, GD_IsGlossy);
+        DBG_OUTPUT1(0.0f, GD_IsLobeDirac);
         DBG_OUTPUT1(0.0f, GD_NeeContrib);
         DBG_OUTPUT1(1.0f, GD_Jacobian);
         DBG_OUTPUT_DUMP_ENABLE();

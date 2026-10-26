@@ -71,6 +71,7 @@ static const char* s_debugIdList[] = {
 
     CREATE_ID(GD_INVALID_VERTEX_TYPE   , "GD: Invalid vertex type")
 
+    CREATE_ID(eCount, "eCount")
 };
 
 #endif

@@ -42,6 +42,30 @@ float3 SampleIndirectLighting(
 
         DBG_ASSERT_APPROX(bxdfEvalFromSample.Radiance/bxdfEvalFromSample.PDF, bxdfEval.Radiance/bxdfEval.PDF, 5, REVALUATE_TEST);
     }
+    else if (FEAT_DBG(BxdfTestLobe))
+    {
+#define ROUGH_1 0.3f
+#define ROUGH_2 0.1f
+        if (gRunBxdfTestForPixel)
+            hitInfo.Mat.Roughness = ROUGH_1;
+        else
+            hitInfo.Mat.Roughness = ROUGH_2;
+
+        bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEval);
+        bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi, bxdfSample.Lobe);
+
+        if (bxdfEval.PDF > 0.0f && !bxdfSample.IsDirac)
+        {
+            float samplingPDF = bxdfEval.PDF;
+
+            DBG_OUTPUT_RESET();
+
+            hitInfo.Mat.Roughness = ROUGH_2;
+            bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi, bxdfSample.Lobe);
+
+            bxdfEval.PDF = samplingPDF;
+        }
+    }
     else
     {
         bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEval);

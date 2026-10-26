@@ -25,6 +25,10 @@
 
 #define ONE_MINUS_EPSILON   0x1.fffffep-1
 
+// ============ THRESHOLDS ===========
+
+#define ROUGHNESS_DIRAC_THRESHOLD (0.01f)
+
 // ============ PHYSICS ========
 
 #define IOR_N_AIR                                   1.0f
