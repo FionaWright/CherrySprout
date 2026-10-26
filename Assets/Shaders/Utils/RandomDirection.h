@@ -26,7 +26,7 @@ inline hlsl::float3 RandDirectionUniform(GLUE_INOUT(hlsl::uint) state)
 
 inline hlsl::float3 RandHemisphereUniformSSpace(const float u1, const float u2)
 {
-    const float z = u1;                 // glueCos(theta)
+    const float z = u1;                 // cos(theta)
     const float r = sqrt(max(0.0f, 1.0f - z*z));
     const float phi = 2 * PI * u2;
 
