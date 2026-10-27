@@ -74,6 +74,9 @@ void Hit(inout PathState pathState,
         currentVertexInfo.IndirectContribution = E_indirect;
         currentVertexInfo.DirectContribution = E_direct;
         currentVertexInfo.PDF *= pdf_bxdf;
+
+        if (FEAT_CORE(GdptHybridShift))
+            currentVertexInfo.RNG = rng;
     }
 }
 

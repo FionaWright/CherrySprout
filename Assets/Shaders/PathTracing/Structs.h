@@ -67,6 +67,8 @@ struct PathSample
 {
     hlsl::float3 Lo;
     PathVertexList VertexList;
+    RngValuesPrimary RngPrimary;
+    hlsl::uint HybridReconnectionRaySegmentIdx;
 };
 
 struct ProbabilityDistributionSample

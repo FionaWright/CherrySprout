@@ -38,7 +38,7 @@ void SpecularLobe_Sample(
     if (NdV <= 0.0f || NdH <= 0.0f || VdH <= 0.0f || NdL <= 0.0f)
     {
         f = 0.0f;
-        pdf = 1.0f;
+        pdf = 0.0f;
 
         DBG_OUTPUT_DUMP_DISABLE();
         DBG_OUTPUT1(0,                BxDF_F);
@@ -88,7 +88,7 @@ void SpecularLobe_Evaluate(
     if (NdH <= 0.0f || VdH <= 0.0f || NdL <= 0.0f)
     {
         f = 0.0f;
-        pdf = 1.0f;
+        pdf = 0.0f;
 
         DBG_OUTPUT_DUMP_DISABLE();
         DBG_OUTPUT1(0,                Eval_F);

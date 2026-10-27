@@ -7,7 +7,7 @@
 #include "PathTracing/GradientDomain/TraceShiftedPath.hlsli"
 #include "PathTracing/MIS.hlsli"
 
-void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
+void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
 {
     if (shiftedCoord.x < 0 ||
         shiftedCoord.y < 0 ||
@@ -24,10 +24,8 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
     float3 shiftedRayOrigin;
     float3 shiftedRayDirection;
 
-    RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
-
     GetPrimaryRay(
-        rngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        rng, gSettings.CameraPositionWorld, gSettings.TexelSize,
         shiftedCoord, gSettings.InvV, gSettings.InvP,
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         shiftedRayOrigin, shiftedRayDirection);
@@ -91,7 +89,7 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
     }
 }
 
-Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath)
+Gradients SampleGradients(int2 mainCoord, PathSample mainPath)
 {
     // XF, XB, YF, YB
     int2 offsets[4] = {
@@ -112,7 +110,7 @@ Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath)
         else
             { DBG_OUTPUT_DISABLE(); }
 
-        sampleShiftedPath(rngInfo, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
+        sampleShiftedPath(mainPath.RngPrimary, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
     }
     DBG_OUTPUT_ENABLE()
 
@@ -127,7 +125,7 @@ Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath)
 
 #else
 
-Gradients SampleGradients(RngInfo rngInfo, int2 mainCoord, PathSample mainPath) { return (Gradients)0; }
+Gradients SampleGradients(int2 mainCoord, PathSample mainPath) { return (Gradients)0; }
 
 #endif
 

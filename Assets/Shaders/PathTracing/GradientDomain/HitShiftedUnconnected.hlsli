@@ -20,7 +20,10 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    ShiftResult shiftResult = ShiftMapHPlusR(reconnectionState, hitInfo, v1, v2, wo);
+    uint hybridIdx = UINT_MAX; // TODO
+
+    BxdfEval bxdfEval;
+    ShiftResult shiftResult = ShiftMapHPlusR(reconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, hybridIdx, bxdfEval);
 
     if (!shiftResult.IsSuccessful)
     {
@@ -37,9 +40,6 @@ void HitShiftedUnconnected(
 
     float NdL = dot(hitInfo.Ns_ff, wi);
 
-    BxDF bxdf;
-    BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, v1.Lobe);
-
     contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= bxdfEval.PDF;
@@ -53,10 +53,11 @@ void HitShiftedUnconnected(
         // TODO: Emissive Jacobian
 
         float shadowFactor;
-        float3 L_nee = EvaluateNEE(hitInfo, bxdf, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
+        float3 L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
 
         DBG_OUTPUT3(L_nee, GD_NeeContrib);
 
+        // TODO: Should this even be trying NEE samples if they failed for main path? Just going to reject anyways
         if (v1.ShadowFactor > 0.99f != shadowFactor > 0.99f)
         {
             isSymmetric = false;

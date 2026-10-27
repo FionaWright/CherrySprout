@@ -38,11 +38,11 @@ float3 SampleDirectLighting(
     }
     else
     {
-        float3 L_nee = SampleNEE(rng, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor);
+        float3 L_nee = SampleNEE(rng, hitInfo, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            L_nee = EvaluateNEE(hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
+            L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
         }
 
         E_direct += L_nee;

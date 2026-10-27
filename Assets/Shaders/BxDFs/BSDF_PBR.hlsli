@@ -134,15 +134,15 @@ BxdfSample BxDF::Sample(
         DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
         DBG_ASSERT_APPROX(length(sample.Wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
         DBG_ASSERT_GE(eval.PDF, 0.0f, NON_POSITIVE_PDF);
-        DBG_OUTPUT3(L_s,        BxDF_L_s);
+        DBG_OUTPUT3(L_s, BxDF_L_s);
         return sample;
     }
 
     float specProb = GetSpecularProb(NdV, F0);
     bool isSpecular = specProb > 0 && rngLobeSpec <= specProb;
 
-    DBG_OUTPUT1(specProb,                      BxDF_SpecProb);
-    DBG_OUTPUT1(isSpecular,                    BxDF_IsSpecular);
+    DBG_OUTPUT1(specProb, BxDF_SpecProb);
+    DBG_OUTPUT1(isSpecular, BxDF_IsSpecular);
 
     if (isSpecular)
     {
@@ -152,9 +152,9 @@ BxdfSample BxDF::Sample(
 
         eval.PDF *= specProb;
 
-        DBG_ASSERT_VALUE(eval.Radiance,           BxDF_PBR_SPEC_F);
+        DBG_ASSERT_VALUE(eval.Radiance,    BxDF_PBR_SPEC_F);
         DBG_ASSERT_VALUE(eval.PDF,         BxDF_PBR_SPEC_PDF);
-        DBG_ASSERT_VALUE(L_s,         BxDF_PBR_SPEC_L_S);
+        DBG_ASSERT_VALUE(L_s,              BxDF_PBR_SPEC_L_S);
     }
     else
     {
@@ -177,7 +177,7 @@ BxdfSample BxDF::Sample(
     DBG_ASSERT_APPROX(length(L_s), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
     DBG_ASSERT_APPROX(length(sample.Wi), 1.0f, 0.02f, UNNORMALIZED_VECTOR);
     DBG_ASSERT_GE(eval.PDF, 0.0f, NON_POSITIVE_PDF);
-    DBG_OUTPUT3(L_s,        BxDF_L_s);
+    DBG_OUTPUT3(L_s, BxDF_L_s);
 
     return sample;
 }

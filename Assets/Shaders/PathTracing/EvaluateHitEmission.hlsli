@@ -24,6 +24,9 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo)
     if (pathState.IsPrimaryRay || pathState.LastRayWasDiracDelta)
         return L_emission;
 
+    if (pathState.LastBxdfPdf <= 0.0f)
+        return 0.0f;
+
     int emissiveIdx = gInstanceToEmissiveInstanceMap[hitInfo.InstanceIdx];
     DBG_ASSERT_NEQ(emissiveIdx, -1, EMISSIVE_NOT_MAPPED);
 

@@ -53,7 +53,7 @@ void Core(uint2 pixelCoord)
 
 		if (FEAT_CORE(GradientDomain))
 		{
-            Gradients gradients = SampleGradients(rngInfo, pixelCoord, pathSample);
+            Gradients gradients = SampleGradients(pixelCoord, pathSample);
 
             gradientsSum.XForward += gradients.XForward;
             gradientsSum.XBackward += gradients.XBackward;

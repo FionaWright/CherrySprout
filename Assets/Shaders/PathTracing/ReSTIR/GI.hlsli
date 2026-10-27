@@ -56,7 +56,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
         RngValuesAncillary::RngValuesNEE rngNEE = SampleRngNEE(rngInfo);
 
         float3 wo = -bxdfSample.Wi;
-        E_direct = SampleNEE(rngNEE, secondaryHitInfo, bxdf, 1, wo);
+        E_direct = SampleNEE(rngNEE, secondaryHitInfo, 1, wo);
     }
 
     // TODO: Extension: More bounces

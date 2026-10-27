@@ -3,8 +3,8 @@
 
 #include "BxDFs/Structs.h"
 #include "Utils/HlslGlue.h"
-#include "Utils/Math/ShadingFrame.h"
 
+#include "PathTracing/RandomSampleStructs.h"
 #include "PathTracing/NEE/Structs.h"
 
 enum class VertexType : hlsl::uint
@@ -33,13 +33,13 @@ struct PathVertexInfo
 
     LightSample LightSample; // TODO: Multiple NEE samples
     float ShadowFactor;
-};
 
-#define PATH_MAX_VERTICES 16 // TODO
+    RngValuesAncillary RNG;
+};
 
 struct PathVertexList
 {
-    PathVertexInfo Array[PATH_MAX_VERTICES];
+    PathVertexInfo Array[MAX_RAY_DEPTH];
     hlsl::uint NumVertices;
 };
 

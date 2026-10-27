@@ -31,6 +31,9 @@ FLAG_PROCESS(GdptShiftRec, true)
 FLAG_PROCESS(GdptShiftRecEnv, true)
 FLAG_PROCESS(GdptShiftHalf, true)
 
+FLAG_PROCESS(GdptHybridShift, true)
+FLAG_PROCESS(AlphaTesting, true)
+
 FLAG_PROCESS(RestirDI, true)
 FLAG_PROCESS(RestirGI, true)
 
@@ -40,6 +43,4 @@ FLAG_PROCESS(RestirPG, true)
 FLAG_PROCESS(RestirTargetVisibility, true)
 FLAG_PROCESS(Transient, true)
 
-FLAG_PROCESS(AlphaTesting, true)
-
-// 3 flag slots remaining
+// 2 flag slots remaining

@@ -8,7 +8,6 @@
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
-    BxDF bxdf,
 
     uint numSamples,
     float3 wo,
@@ -17,6 +16,8 @@ float3 SampleNEE(
     out float lightDistance,
     out float shadowFactor)
 {
+    BxDF bxdf;
+
     LightEval lightEval;
     lightSample = SampleLight(rng, hitInfo.HitPos, bxdf, wo, lightEval);
 
@@ -56,7 +57,6 @@ float3 SampleNEE(
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
-    BxDF bxdf,
 
     uint numSamples,
     float3 wo)
@@ -64,12 +64,11 @@ float3 SampleNEE(
     LightSample _1;
     float _2;
     float _3;
-    return SampleNEE(rng, hitInfo, bxdf, numSamples, wo, _1, _2, _3);
+    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3);
 }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
-    BxDF bxdf,
 
     uint numSamples,
     float3 wo,
@@ -79,6 +78,7 @@ float3 EvaluateNEE(
 {
     shadowFactor = 0.0f;
 
+    BxDF bxdf;
     LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, lightSample);
 
     float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
@@ -116,7 +116,6 @@ float3 EvaluateNEE(
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
-    BxDF bxdf,
 
     uint numSamples,
     float3 wo,
@@ -128,14 +127,12 @@ float3 SampleNEE(
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
-    BxDF bxdf,
 
     uint numSamples,
     float3 wo) { return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
-    BxDF bxdf,
 
     uint numSamples,
     float3 wo,

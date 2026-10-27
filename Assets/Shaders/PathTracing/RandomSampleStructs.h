@@ -1,33 +1,36 @@
 #ifndef H_RANDOM_SAMPLE_STRUCTS_H
 #define H_RANDOM_SAMPLE_STRUCTS_H
 
+#include "Utils/HlslGlue.h"
 #include "Utils/Constants.h"
 
 struct RngValuesPrimary
 {
-    float2 Jitter;
-    float2 DoF;
+    hlsl::float2 Jitter;
+    hlsl::float2 DoF;
 };
 
 struct RngValuesAncillary
 {
-    // Batch 1
+    // === Batch 1 ===
     float AlphaTest;
 
     struct RngValuesNEE
     {
         float LSD;
-        float2 Light;
+        hlsl::float2 Light;
     } NEE[MAX_DIRECT_SAMPLES];
 
     struct RngValuesBxDF
     {
-        float3 Microfacet;
-        float2 LobeSelect;
+        hlsl::float3 Microfacet;
+        hlsl::float2 LobeSelect;
     } BxDF;
+    // ===============
 
-    // Batch 2
+    // === Batch 2 ===
     float RussianRoulette;
+    // ===============
 
     // Note: ReSTIR generates other RNG values that aren't included here
 };

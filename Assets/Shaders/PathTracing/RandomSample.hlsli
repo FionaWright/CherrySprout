@@ -1,7 +1,7 @@
 #ifndef H_RANDOM_SAMPLE_H
 #define H_RANDOM_SAMPLE_H
 
-#include "PathTracing/RandomSampleStructs.hlsli"
+#include "PathTracing/RandomSampleStructs.h"
 #include "Utils/Random.h"
 #include "BxDFs/GetBxDF.hlsli"
 

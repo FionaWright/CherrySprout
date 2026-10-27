@@ -21,6 +21,8 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
     PathSample pathSample = TracePath(rayOrigin, rayDirection, rngInfo, pixelCoord);
     DBG_SCALE_INTENSITY_GLOBAL(pathSample.Lo);
 
+    pathSample.RngPrimary = rngPrimary;
+
     return pathSample;
 }
 

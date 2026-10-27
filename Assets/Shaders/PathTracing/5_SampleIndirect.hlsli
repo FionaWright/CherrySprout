@@ -82,6 +82,9 @@ float3 SampleIndirectLighting(
     DBG_OUTPUT1(bxdfEval.PDF,                      BxDF_PDF);
     DBG_OUTPUT3(bxdfSample.Wi,                     BxDF_L_w);
 
+    if (bxdfEval.PDF == 0.0f)
+        return 0.0f;
+
     return bxdfEval.Radiance * abs(NdL) / max(1e-6, bxdfEval.PDF);
 }
 
