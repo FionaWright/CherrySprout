@@ -65,6 +65,7 @@ void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainP
         DBG_OUTPUT3(Lo, GD_Lo);
 
         DBG_OUTPUT_DUMP_DISABLE();
+        DBG_OUTPUT1(0.0f, GD_RejectionUninit);
         DBG_OUTPUT1(0.0f, GD_RejectionDirac);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
         DBG_OUTPUT1(0.0f, GD_RejectionEnvMap);

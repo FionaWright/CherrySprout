@@ -4,6 +4,7 @@
 #include "PathTracing/ShiftMapping/Structs.hlsli"
 #include "PathTracing/ShiftMapping/Components/Reconnect.hlsli"
 #include "PathTracing/ShiftMapping/Components/ReconnectEnv.hlsli"
+#include "PathTracing/ShiftMapping/Components/RandomReplay.hlsli"
 
 ShiftResult ShiftMapHybrid(
     inout ReconnectionState reconnectionState,
@@ -12,15 +13,24 @@ ShiftResult ShiftMapHybrid(
     PathVertexInfo v2,
     float3 wo,
     uint raySegmentIdx,
-    hlsl::uint recIdx,
     out BxdfEval bxdfEval)
 {
     bool v1Dirac = MaterialIsDirac(v1.Roughness);
+    bool v2Dirac = MaterialIsDirac(v2.Roughness);
     bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
 
     DBG_OUTPUT1(isDirac, GD_IsLobeDirac);
 
-    if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || (MaterialIsDirac(v2.Roughness) && v2.Type == VertexType::eStandard))
+    if (v2.Type == VertexType::eUninitialized)
+    {
+        DBG_OUTPUT1(1.0f, GD_RejectionUninit);
+
+        ShiftResult shiftResult = (ShiftResult)0;
+        shiftResult.IsSuccessful = false;
+        return shiftResult;
+    }
+
+    if (v1.PDF <= 0.0f || (v1Dirac != isDirac))
     {
         DBG_OUTPUT1(1.0f, GD_RejectionDirac);
 
@@ -29,8 +39,18 @@ ShiftResult ShiftMapHybrid(
         return shiftResult;
     }
 
-    bool isV2Reconnection = raySegmentIdx == recIdx;
-    if (isV2Reconnection)
+    // TODO: Some of these conditions can be computed earlier on the main path to avoid work
+    // TODO: Jacobian denominator can also be computed earlier
+
+#define DISTANCE_THRESHOLD 1.0f // TODO
+
+    bool isValidReconnection = true;
+    isValidReconnection &= v2.Type == VertexType::eEnvironment || LengthSquared(v2.Position - v1.Position) >= DISTANCE_THRESHOLD;
+    isValidReconnection &= v2.Type == VertexType::eEnvironment || LengthSquared(v2.Position - hitInfo.HitPos) >= DISTANCE_THRESHOLD;
+    //isValidReconnection &= !isDirac && !v1Dirac && !v2Dirac; // TODO: Assuming dirac is the threshold they're looking for
+    isValidReconnection &= !isDirac && !v1Dirac;
+
+    if (isValidReconnection)
     {
         reconnectionState = ReconnectionState::eSemiConnected;
 
@@ -49,7 +69,7 @@ ShiftResult ShiftMapHybrid(
         return shiftResult;
     }
 
-    return ShiftRandomReplay(v1.RNG, hitInfo, wo, bxdfEval);
+    return ShiftRandomReplay(v1.RNG.BxDF, hitInfo, wo, bxdfEval);
 }
 
 

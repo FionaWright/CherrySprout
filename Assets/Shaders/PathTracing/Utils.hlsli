@@ -56,4 +56,11 @@ float3 ApplyFireflyThreshold(float3 radiance, float fireflyThreshold)
     return radiance;
 }
 
+float ComputeEtaAir(bool isEntering, float iorN)
+{
+    float iorNCurrent =  isEntering ? IOR_N_AIR     : iorN;
+    float iorNNext =     isEntering ? iorN          : IOR_N_AIR;
+    return iorNCurrent / iorNNext;
+}
+
 #endif

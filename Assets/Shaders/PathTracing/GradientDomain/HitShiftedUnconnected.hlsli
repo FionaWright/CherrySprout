@@ -2,6 +2,7 @@
 #define H_HIT_SHIFTED_UNCONNECTED_H
 
 #include "PathTracing/ShiftMapping/HR.hlsli"
+#include "PathTracing/ShiftMapping/Hybrid.hlsli"
 
 void HitShiftedUnconnected(
     inout ReconnectionState reconnectionState,
@@ -20,12 +21,14 @@ void HitShiftedUnconnected(
 {
     pdf = 1.0f;
 
-    uint hybridIdx = UINT_MAX; // TODO
-
     BxdfEval bxdfEval;
-    ShiftResult shiftResult = ShiftMapHPlusR(reconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, hybridIdx, bxdfEval);
+    ShiftResult shiftResult;
+    if (FEAT_CORE(GdptHybridShift))
+        shiftResult = ShiftMapHybrid(reconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
+    else
+        shiftResult = ShiftMapHPlusR(reconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
 
-    if (!shiftResult.IsSuccessful)
+    if (!shiftResult.IsSuccessful || bxdfEval.PDF <= 0.0f)
     {
         isSymmetric = false;
         contrib = 0.0f;
@@ -43,6 +46,8 @@ void HitShiftedUnconnected(
     contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= bxdfEval.PDF;
+
+    // TODO: Hybrid shift re-uses light sample RNG?
 
     if (FEAT_CORE(NEE))
     {

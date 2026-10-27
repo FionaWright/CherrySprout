@@ -3,7 +3,7 @@
 
 #include "PathTracing/ShiftMapping/Structs.hlsli"
 
-ShiftResult ShiftRandomReplay(RngValuesAncillary rng, HitInfo hitInfo, float3 wo, out BxdfEval bxdfEval)
+ShiftResult ShiftRandomReplay(RngValuesAncillary::RngValuesBxDF rng, HitInfo hitInfo, float3 wo, out BxdfEval bxdfEval)
 {
     BxdfSample bxdfSample = BxDF::Sample(rng, hitInfo, wo, bxdfEval);
 

@@ -14,7 +14,6 @@ ShiftResult ShiftMapHPlusR(
     PathVertexInfo v2,
     float3 wo,
     uint raySegmentIdx,
-    hlsl::uint recIdx,
     out BxdfEval bxdfEval)
 {
     bool v1Dirac = MaterialIsDirac(v1.Roughness);
@@ -22,7 +21,16 @@ ShiftResult ShiftMapHPlusR(
 
     DBG_OUTPUT1(isDirac, GD_IsLobeDirac);
 
-    if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || (MaterialIsDirac(v2.Roughness) && v2.Type == VertexType::eStandard))
+    if (v2.Type == VertexType::eUninitialized)
+    {
+        DBG_OUTPUT1(1.0f, GD_RejectionUninit);
+
+        ShiftResult shiftResult = (ShiftResult)0;
+        shiftResult.IsSuccessful = false;
+        return shiftResult;
+    }
+
+    if (v1.PDF <= 0.0f || (v1Dirac != isDirac))
     {
         DBG_OUTPUT1(1.0f, GD_RejectionDirac);
 
@@ -35,9 +43,7 @@ ShiftResult ShiftMapHPlusR(
 
     if (isDirac)
     {
-        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
-        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
-        float eta = iorNCurrent / iorNNext;
+        float eta = ComputeEtaAir(hitInfo.IsEntering, hitInfo.Mat.IOR_N);
 
         shiftResult = ShiftHalfVector(v1.Ng_ff, hitInfo.Ng_ff, v1.Wi, v1.Wo, wo, v1.Eta, eta);
     }

@@ -21,7 +21,7 @@ void Hit(inout PathState pathState,
         uint2 pixelCoord,
 
         out float3 L_sample,
-        inout PathVertexInfo currentVertexInfo)
+        inout PathVertexInfo vInfo)
 {
     L_sample = 0.0f;
 
@@ -32,7 +32,7 @@ void Hit(inout PathState pathState,
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            E_direct += SampleDirectLighting(rng.NEE[i], hitInfo, pathState, pixelCoord, wo, currentVertexInfo);
+            E_direct += SampleDirectLighting(rng.NEE[i], hitInfo, pathState, pixelCoord, wo, vInfo);
         }
 
         DBG_SCALE_INTENSITY_DIRECT(E_direct);
@@ -57,24 +57,20 @@ void Hit(inout PathState pathState,
 
     if (FEAT_CORE(GradientDomain))
     {
-        float iorNCurrent =  hitInfo.IsEntering ? IOR_N_AIR          : hitInfo.Mat.IOR_N;
-        float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
-        float eta = iorNCurrent / iorNNext;
-
-        currentVertexInfo.Type = VertexType::eStandard;
-        currentVertexInfo.Lobe = lobe;
-        currentVertexInfo.Position = hitInfo.HitPos;
-        currentVertexInfo.Ng_ff = hitInfo.Ng_ff;
-        currentVertexInfo.Wo = wo;
-        currentVertexInfo.Wi = wi;
-        currentVertexInfo.Eta = eta;
-        currentVertexInfo.Roughness = hitInfo.Mat.Roughness;
-        currentVertexInfo.IndirectContribution = E_indirect;
-        currentVertexInfo.DirectContribution = E_direct;
-        currentVertexInfo.PDF *= pdf_bxdf;
+        vInfo.Type = VertexType::eStandard;
+        vInfo.Lobe = lobe;
+        vInfo.Position = hitInfo.HitPos;
+        vInfo.Ng_ff = hitInfo.Ng_ff;
+        vInfo.Wo = wo;
+        vInfo.Wi = wi;
+        vInfo.Eta = ComputeEtaAir(hitInfo.IsEntering, hitInfo.Mat.IOR_N);
+        vInfo.Roughness = hitInfo.Mat.Roughness;
+        vInfo.IndirectContribution = E_indirect;
+        vInfo.DirectContribution = E_direct;
+        vInfo.PDF *= pdf_bxdf;
 
         if (FEAT_CORE(GdptHybridShift))
-            currentVertexInfo.RNG = rng;
+            vInfo.RNG = rng;
     }
 }
 

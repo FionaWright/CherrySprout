@@ -9,6 +9,7 @@
 #include "PathTracing/Debug/PathDumper.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
+#include "PathTracing/GradientDomain/Utils.hlsli"
 
 #include "PathTracing/RandomSample.hlsli"
 #include "Utils/HlslUtils.hlsli"
@@ -35,14 +36,13 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         {
             DBG_SET_CURRENT_RAY_DEPTH(i);
             DBG_PATH_DUMP_MARK_EXPLORED();
+            DBG_PATH_DUMP_PATH_STATE(pathState);
             DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),             GBuffer_MatIdx);
             DBG_OUTPUT3(DecodeNormalOctahedral(gGBufferNormalsUv[pixelCoord].xy), GBuffer_NormalsUnorm);
             DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                              GBuffer_Depth);
             DBG_OUTPUT2(gGBufferNormalsUv[pixelCoord].zw,                         GBuffer_Uv);
             DBG_OUTPUT2(gGBufferMv[pixelCoord].xy,                                GBuffer_Mv);
         }
-
-        DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (isMiss)
         {
@@ -54,15 +54,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             DBG_OUTPUT1(1.0f, KilledByMiss);
 
             if (FEAT_CORE(GradientDomain))
-            {
-                PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
-                currentVertexInfo.Type = VertexType::eEnvironment;
-                currentVertexInfo.DirectContribution = L_miss;
+                AddVertexEnvMap(vertexList, L_miss);
 
-                vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
-                vertexList.NumVertices++;
-                DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);
-            }
             break;
         }
 
@@ -77,20 +70,12 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             DBG_OUTPUT1(1.0f, KilledByEmission);
 
             if (FEAT_CORE(GradientDomain))
-            {
-                PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
-                currentVertexInfo.Type = VertexType::eEmission;
-                currentVertexInfo.Position = hitInfo.HitPos;
-                currentVertexInfo.Ng_ff = hitInfo.Ng_ff;
-                currentVertexInfo.Roughness = hitInfo.Mat.Roughness;
+                AddVertexEmissive(vertexList, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
-                vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
-                vertexList.NumVertices++;
-                DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);
-            }
             break;
         }
 
+        // TODO: Alpha test should be in its own batch
         RngValuesAncillary rng = SampleRngAncillaryBatch1(rngInfo);
 
         if (FEAT_CORE(AlphaTesting))
@@ -126,20 +111,16 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         }
 
         float3 L_sample;
-        PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
-        currentVertexInfo.PDF = 1.0f;
-        Hit(pathState, rng, hitInfo, pixelCoord, L_sample, currentVertexInfo);
+        PathVertexInfo vInfo = (PathVertexInfo)0;
+        vInfo.PDF = 1.0f;
+        Hit(pathState, rng, hitInfo, pixelCoord, L_sample, vInfo);
 
         if (FEAT_CORE(GradientDomain))
-        {
-            vertexList.Array[vertexList.NumVertices] = currentVertexInfo;
-            vertexList.NumVertices++;
-            DBG_PATH_DUMP_PATH_VERTEX_INFO(currentVertexInfo);
-        }
-
-        DBG_PATH_DUMP_PATH_STATE(pathState);
+            AddVertex(vertexList, vInfo);
 
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+
+        DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
         {
@@ -148,8 +129,6 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         }
 
         SampleRngAncillaryBatch2(rngInfo, rng);
-
-        DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (FEAT_CORE(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
         {
@@ -163,9 +142,9 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             pathState.Beta /= p;
         }
 
-        pathState.IsPrimaryRay = false;
-
         DBG_PATH_DUMP_PATH_STATE(pathState);
+
+        pathState.IsPrimaryRay = false;
     }
 
     DBG_OUTPUT1(i == gSettings.MaxRayDepth, KilledByMaxDepth);
