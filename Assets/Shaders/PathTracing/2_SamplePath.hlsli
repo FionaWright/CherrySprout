@@ -9,7 +9,6 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
     float3 rayOrigin;
     float3 rayDirection;
 
-    // TODO: Primary Ray PDF for GradientDomain. Disable Jitter for now
     GetPrimaryRay(
         rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
         pixelCoord, gSettings.InvV, gSettings.InvP,

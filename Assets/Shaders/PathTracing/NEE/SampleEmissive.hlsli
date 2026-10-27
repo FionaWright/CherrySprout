@@ -10,20 +10,6 @@
 
 // TODO: Option to disable NEE when ray segment idx == max depth
 
-float3 SampleEmissiveBary(inout RngInfo rngInfo)
-{
-    float u = Rand01(rngInfo);
-    float v = Rand01(rngInfo);
-
-    if (u + v > 1.0)
-    {
-        u = 1.0 - u;
-        v = 1.0 - v;
-    }
-
-    return float3(1.0 - u - v, u, v);
-}
-
 // Note: Ng, wo from perspective of the light
 float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, float3 wo, float distance)
 {
@@ -48,9 +34,19 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
     Material material = gMegaBufferMaterials[instance.MaterialIndex];
 
     uint primitiveCount = instance.MegaBufferCountIndex / 3;
-    uint primitiveIdx = RandRangeUInt(rngInfo, 0, primitiveCount-1);
-
     uint primitiveOffset = instance.MegaBufferOffsetIndex / 3;
+
+    float xi = Rand01Ex(rngInfo) * primitiveCount;
+    uint primitiveIdx = floor(xi);
+    float u = frac(xi);
+    float v = Rand01(rngInfo);
+    if (u + v > 1.0)
+    {
+        u = 1.0 - u;
+        v = 1.0 - v;
+    }
+    float3 bary = float3(1.0 - u - v, u, v);
+
     uint3 tri = gMegaBufferIndex[primitiveOffset + primitiveIdx];
 
     Vertex v0 = gMegaBufferVertex[instance.MegaBufferOffsetVertex + tri.x];
@@ -62,8 +58,6 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
     float3 p2 = mul(instance.M, float4(v2.Position,1)).xyz;
 
     float3 Ng = normalize( cross(p1 - p0, p2 - p0) );
-
-    float3 bary = SampleEmissiveBary(rngInfo);
 
     float2 uv = v0.UV * bary.x + v1.UV * bary.y + v2.UV * bary.z;
     uv.y = 1 - uv.y;
