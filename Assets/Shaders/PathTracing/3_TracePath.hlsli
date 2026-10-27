@@ -110,10 +110,9 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         if (FEAT_CORE(RestirGI) && pathState.RaySegmentIdx == 0)
         {
-            BxDF bxdf;
             CandidateGI Y;
             float3 L_gi;
-            TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, bxdf, Y, L_gi);
+            TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi);
             pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
 
             /*

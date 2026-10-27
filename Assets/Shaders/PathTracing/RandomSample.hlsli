@@ -43,9 +43,8 @@ RngValuesAncillary::RngValuesBxDF SampleRngBxDF(inout RngInfo rngInfo)
 {
     RngValuesAncillary::RngValuesBxDF r = (RngValuesAncillary::RngValuesBxDF)0;
 
-    BxDF bxdf;
-    uint mmCount = bxdf.MicrofacetModelRngCount();
-    uint lobeSelectCount = bxdf.LobeSelectRngCount();
+    uint mmCount = BxDF::MicrofacetModelRngCount();
+    uint lobeSelectCount = BxDF::LobeSelectRngCount();
 
     if (mmCount >= 1)
         r.Microfacet.x = Rand01(rngInfo);

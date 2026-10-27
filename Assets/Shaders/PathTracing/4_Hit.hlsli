@@ -27,14 +27,12 @@ void Hit(inout PathState pathState,
 
     float3 wo = -pathState.Desc.Direction;
 
-    BxDF bxdf;
-
     float3 E_direct = 0;
     if (FEAT_CORE(NEE))
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            E_direct += SampleDirectLighting(rng.NEE[i], hitInfo, pathState, bxdf, pixelCoord, wo, currentVertexInfo);
+            E_direct += SampleDirectLighting(rng.NEE[i], hitInfo, pathState, pixelCoord, wo, currentVertexInfo);
         }
 
         DBG_SCALE_INTENSITY_DIRECT(E_direct);
@@ -46,7 +44,7 @@ void Hit(inout PathState pathState,
     float pdf_bxdf;
     bool isDirac;
     LobeTag lobe;
-    float3 E_indirect = SampleIndirectLighting(rng.BxDF, hitInfo, bxdf, wo, wi, pdf_bxdf, isDirac, lobe);
+    float3 E_indirect = SampleIndirectLighting(rng.BxDF, hitInfo, wo, wi, pdf_bxdf, isDirac, lobe);
     DBG_SCALE_INTENSITY_INDIRECT(E_indirect);
 
     pathState.Beta *= E_indirect;

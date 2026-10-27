@@ -17,12 +17,10 @@
 
 void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI X_i)
 {
-    BxDF bxdf;
-
     RngValuesAncillary::RngValuesNEE rng = SampleRngNEE(rngInfo);
 
     LightEval lightEval;
-    LightSample lightSample = SampleLight(rng, context.HitInfo.HitPos, bxdf, context.Wo, lightEval);
+    LightSample lightSample = SampleLight(rng, context.HitInfo.HitPos, context.Wo, lightEval);
 
     X_i.LightSample = lightSample;
     X_i.LightEval = lightEval;
@@ -30,8 +28,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI 
 
 void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context)
 {
-    BxDF bxdf;
-    X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, bxdf, context.Wo, X_i.LightSample);
+    X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, context.Wo, X_i.LightSample);
 }
 
 float Target(CandidateDI X_i, ContextPrimaryRay context)
@@ -62,8 +59,7 @@ float Target(CandidateDI X_i, ContextPrimaryRay context)
     }
     else
     {
-        BxDF bxdf;
-        BxdfEval bxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, X_i.LightEval.Direction, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, X_i.LightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
@@ -81,7 +77,6 @@ bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,
-    BxDF bxdf,
     uint numSamples,
     out CandidateDI Y,
     out float lightDistance,
@@ -136,7 +131,7 @@ bool TrySampleReservoirDI(
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
 
@@ -158,7 +153,6 @@ bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,
-    BxDF bxdf,
     uint numSamples,
     out CandidateDI Y,
     out float lightDistance,

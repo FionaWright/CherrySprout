@@ -16,10 +16,8 @@ float3 SampleNEE(
     out float lightDistance,
     out float shadowFactor)
 {
-    BxDF bxdf;
-
     LightEval lightEval;
-    lightSample = SampleLight(rng, hitInfo.HitPos, bxdf, wo, lightEval);
+    lightSample = SampleLight(rng, hitInfo.HitPos, wo, lightEval);
 
     lightDistance = lightEval.Distance;
 
@@ -44,7 +42,7 @@ float3 SampleNEE(
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
@@ -78,8 +76,7 @@ float3 EvaluateNEE(
 {
     shadowFactor = 0.0f;
 
-    BxDF bxdf;
-    LightEval lightEval = EvaluateLight(hitInfo.HitPos, bxdf, wo, lightSample);
+    LightEval lightEval = EvaluateLight(hitInfo.HitPos, wo, lightSample);
 
     float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
     if (NdL <= 0.0f)
@@ -103,7 +100,7 @@ float3 EvaluateNEE(
     }
     else
     {
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }

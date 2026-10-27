@@ -23,9 +23,8 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
 {
     RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
 
-    BxDF bxdf;
     BxdfEval bxdfEval;
-    BxdfSample bxdfSample = bxdf.Sample(rngBxDF, context.HitInfo, context.Wo, bxdfEval);
+    BxdfSample bxdfSample = BxDF::Sample(rngBxDF, context.HitInfo, context.Wo, bxdfEval);
 
     // TODO: Simpler function that doesn't extract everything?
     bool isMiss;
@@ -80,8 +79,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 
     float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
 
-    BxDF bxdf;
-    X_i.BxdfEval = bxdf.Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
+    X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
 
     float3 v1PosMain = X_i.SourcePositionBiased;
     float3 v1PosShift = context.HitInfo.HitPosBiased;
@@ -161,7 +159,6 @@ bool TrySampleReservoirGI(
     float3 beta,
     uint2 pixelCoord,
     float3 wo,
-    BxDF bxdf,
     out CandidateGI Y,
     out float3 Lo)
 {
@@ -229,7 +226,6 @@ bool TrySampleReservoirGI(
     float3 beta,
     uint2 pixelCoord,
     float3 wo,
-    BxDF bxdf,
     out CandidateGI Y,
     out float3 Lo) { Y = (CandidateGI)0; Lo = NAN; return NAN; }
 

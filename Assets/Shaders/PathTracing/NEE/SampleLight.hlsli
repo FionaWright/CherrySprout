@@ -14,7 +14,6 @@
 LightSample SampleLight(
     RngValuesAncillary::RngValuesNEE rng,
     float3 hitPos,
-    BxDF bxdf,
     float3 wo,
 
     out LightEval lightEval)
@@ -96,7 +95,6 @@ LightSample SampleLight(
 
 LightEval EvaluateLight(
     float3 hitPos,
-    BxDF bxdf,
     float3 wo,
 
     LightSample lightSample)

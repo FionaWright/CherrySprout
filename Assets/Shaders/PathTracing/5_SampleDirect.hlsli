@@ -11,7 +11,6 @@ float3 SampleDirectLighting(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
     PathState pathState,
-    BxDF bxdf,
 
     uint2 pixelCoord,
     float3 wo,
@@ -29,7 +28,7 @@ float3 SampleDirectLighting(
     {
         CandidateDI lightSE;
         float3 L_restir;
-        bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, bxdf, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
+        bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
 
         DBG_OUTPUT1(validReservoir, RESTIRDI_ValidReservoir);
 

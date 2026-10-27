@@ -103,8 +103,7 @@ void TraceShiftedPath(
         {
             wi = v1.Wi;
 
-            BxDF bxdf;
-            BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, v1.Lobe);
+            BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, v1.Lobe);
 
             if (FEAT_CORE(NEE))
             {

@@ -5,8 +5,7 @@
 
 ShiftResult ShiftRandomReplay(RngValuesAncillary rng, HitInfo hitInfo, float3 wo, out BxdfEval bxdfEval)
 {
-    BxDF bxdf;
-    BxdfSample bxdfSample = bxdf.Sample(rng, hitInfo, wo, bxdfEval);
+    BxdfSample bxdfSample = BxDF::Sample(rng, hitInfo, wo, bxdfEval);
 
     ShiftResult shiftResult = (ShiftResult)0;
 

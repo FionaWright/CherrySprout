@@ -38,8 +38,6 @@ void Test_BxdfCore(uint2 pixelCoord)
 
     float3 wo = normalize(float3(1, 0, 1));
 
-    BxDF bxdf;
-
     float threshold = 1e-6f;
 
     if (w1.Select(pixelUV))
@@ -50,7 +48,7 @@ void Test_BxdfCore(uint2 pixelCoord)
         float phi = w1.UV.x * 2 * PI;
         float3 wi = CylinderToSphere(cosTheta, phi);
 
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
         gTexPrimal[pixelCoord].rgb = bxdfEval.PDF > threshold ? bxdfEval.PDF : float3(1,0,0);
     }
@@ -63,7 +61,7 @@ void Test_BxdfCore(uint2 pixelCoord)
         float phi = w2.UV.x * 2 * PI;
         float3 wi = CylinderToSphere(cosTheta, phi);
 
-        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
         gTexPrimal[pixelCoord].rgb = bxdfEval.PDF > threshold ? bxdfEval.PDF : float3(1,0,0);
     }
@@ -78,11 +76,11 @@ void Test_BxdfCore(uint2 pixelCoord)
         BxdfEval bxdfEval1;
         {
             hitInfo.Mat.Roughness = 0.3f;
-            bxdfEval3 = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+            bxdfEval3 = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
         }
         {
             hitInfo.Mat.Roughness = 0.1f;
-            bxdfEval1 = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+            bxdfEval1 = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
         }
 
         bool overlap = (bxdfEval1.PDF <= threshold) == (bxdfEval3.PDF <= threshold);

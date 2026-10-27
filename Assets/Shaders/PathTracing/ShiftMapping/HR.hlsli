@@ -53,9 +53,8 @@ ShiftResult ShiftMapHPlusR(
             shiftResult = ShiftFail();
     }
 
-    BxDF bxdf;
     if (shiftResult.IsSuccessful)
-        bxdfEval = bxdf.Evaluate(hitInfo, wo, shiftResult.Wi, v1.Lobe);
+        bxdfEval = BxDF::Evaluate(hitInfo, wo, shiftResult.Wi, v1.Lobe);
 
     return shiftResult;
 }

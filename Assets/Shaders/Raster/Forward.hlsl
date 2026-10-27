@@ -85,8 +85,7 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     float3 Li = 5.0f;
 
-    BxDF bxdf;
-    BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
     //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
