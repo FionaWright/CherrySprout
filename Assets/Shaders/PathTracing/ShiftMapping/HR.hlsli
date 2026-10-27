@@ -19,7 +19,7 @@ ShiftResult ShiftMapHPlusR(
 
     DBG_OUTPUT1(isDirac, GD_IsLobeDirac);
 
-    if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || IsDirac(v2.Lobe, v2.Roughness))
+    if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || (MaterialIsDirac(v2.Roughness) && v2.Type == VertexType::eStandard))
     {
         DBG_OUTPUT1(1.0f, GD_RejectionDirac);
 

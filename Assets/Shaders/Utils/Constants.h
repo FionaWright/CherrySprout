@@ -27,7 +27,7 @@
 
 // ============ THRESHOLDS ===========
 
-#define ROUGHNESS_DIRAC_THRESHOLD (0.1f)
+#define ROUGHNESS_DIRAC_THRESHOLD (0.15f)
 
 // ============ PHYSICS ========
 
