@@ -56,13 +56,14 @@ BxdfSample BxDF::Sample(
 
     float u1 = Rand01(rngInfo);
     float u2 = Rand01(rngInfo);
+    float u3 = Rand01(rngInfo);
 
     MicrofacetModel mm;
-    mm.Init(hitInfo.Mat.Roughness, rngInfo, V_s);
+    mm.Init(hitInfo.Mat.Roughness, V_s);
     if (FEAT_CORE(Anisotropy))
         mm.InitAniso(hitInfo);
 
-    float3 H_s = mm.Sample(u1, u2);
+    float3 H_s = mm.Sample(float3(u1,u2,u3));
     float VdH = dot(H_s, V_s);
 
     float3 L_s = 0.0f;
@@ -348,6 +349,20 @@ BxdfEval BxDF::Evaluate(
     DBG_OUTPUT1(pdf_opaque,                 Eval_PDF_opaque);
 
     return eval;
+}
+
+uint BxDF::MicrofacetModelRngCount()
+{
+    MicrofacetModel mm;
+    return mm.GetRngCount();
+}
+
+uint BxDF::LobeSelectRngCount()
+{
+    if (FEAT_CORE(Transmission))
+        return 2;
+    else
+        return 1;
 }
 
 #endif

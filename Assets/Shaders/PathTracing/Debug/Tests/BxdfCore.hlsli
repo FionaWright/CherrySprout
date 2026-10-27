@@ -14,76 +14,80 @@ void Test_BxdfCore(uint2 pixelCoord)
     float width = gSettings.FrameDimensions.x;
     float height = gSettings.FrameDimensions.y;
 
-    DebugWindow w = CreateDebugWindow(float2(0,0), float2(height/width,1));
-    //DebugWindow w = CreateDebugWindow(float2(0,0), float2(1,1));
+    //DebugWindow w = CreateDebugWindow(float2(0,0), float2(height/width,1));
+    DebugWindow w1 = CreateDebugWindow(float2(0,0), float2(0.333,1));
+    DebugWindow w2 = CreateDebugWindow(float2(0.333,0), float2(0.666,1));
+    DebugWindow w3 = CreateDebugWindow(float2(0.666,0), float2(1,1));
     float2 pixelUV = float2(pixelCoord) / float2(gSettings.FrameDimensions);
 
     gTexPrimal[pixelCoord].rgb = 0.0f;
 
-    if (w.Select(pixelUV))
+    RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
+
+    HitInfo hitInfo;
+    hitInfo.Mat.Albedo = 1.0f;
+    hitInfo.Mat.TransmissionColor = 1.0f;
+    hitInfo.Emission = 0.0f;
+    hitInfo.Mat.Metallic = 1.0f;
+    hitInfo.Mat.TransmissionFactor = 0.0f;
+    hitInfo.Mat.IOR_N = 1.5f;
+    hitInfo.Ns_ff = float3(0,0,1);
+
+    hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
+    hitInfo.IsEntering = true;
+
+    float3 wo = normalize(float3(1, 0, 1));
+
+    BxDF bxdf;
+
+    float threshold = 1e-6f;
+
+    if (w1.Select(pixelUV))
     {
-        RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
+        hitInfo.Mat.Roughness = 0.3f;
 
-        HitInfo hitInfo;
-        hitInfo.Mat.Albedo = 1.0f;
-        hitInfo.Mat.TransmissionColor = 1.0f;
-        hitInfo.Emission = 0.0f;
-        hitInfo.Mat.Roughness = 0.5f;
-        hitInfo.Mat.Metallic = 1.0f;
-        hitInfo.Mat.TransmissionFactor = 1.0f;
-        hitInfo.Mat.IOR_N = 1.5f;
-        hitInfo.Ns_ff = float3(0,0,1);
-        hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);
-        hitInfo.IsEntering = true;
+        float cosTheta = RemapUtoS(w1.UV.y);
+        float phi = w1.UV.x * 2 * PI;
+        float3 wi = CylinderToSphere(cosTheta, phi);
 
-        float3 wo = normalize(float3(1, 0, 1));
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
-        BxDF bxdf;
+        gTexPrimal[pixelCoord].rgb = bxdfEval.PDF > threshold ? bxdfEval.PDF : float3(1,0,0);
+    }
 
-        DebugWindow wConstant = CreateDebugWindow(float2(0,0), float2(0.5,1));
-        DebugWindow wRand = CreateDebugWindow(float2(0.5,0), float2(1,1));
-        if (wConstant.Select(w.UV))
+    if (w2.Select(pixelUV))
+    {
+        hitInfo.Mat.Roughness = 0.1f;
+
+        float cosTheta = RemapUtoS(w2.UV.y);
+        float phi = w2.UV.x * 2 * PI;
+        float3 wi = CylinderToSphere(cosTheta, phi);
+
+        BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+
+        gTexPrimal[pixelCoord].rgb = bxdfEval.PDF > threshold ? bxdfEval.PDF : float3(1,0,0);
+    }
+
+    if (w3.Select(pixelUV))
+    {
+        float cosTheta = RemapUtoS(w3.UV.y);
+        float phi = w3.UV.x * 2 * PI;
+        float3 wi = CylinderToSphere(cosTheta, phi);
+
+        BxdfEval bxdfEval3;
+        BxdfEval bxdfEval1;
         {
-            float cosTheta = RemapUtoS(wConstant.UV.y);
-            float phi = wConstant.UV.x * 2 * PI;
-            float3 wi = CylinderToSphere(cosTheta, phi);
-
-            BxdfEval bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
-
-            //gTexPrimal[pixelCoord].rgb = wi;
-            gTexPrimal[pixelCoord].rgb = bxdfEval.PDF;
+            hitInfo.Mat.Roughness = 0.3f;
+            bxdfEval3 = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
         }
-        else if (false && wRand.Select(w.UV))
         {
-            BxdfEval bxdfEval;
-            BxdfSample bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEval);
-            float3 wi = bxdfSample.Wi;
-
-            float u1 = Rand01(rngInfo);
-            float u2 = Rand01(rngInfo);
-            wi = RandHemisphereUniformSSpace(u1, u2);
-
-            float2 cy = SphereToCylinder(wi);
-            float2 uv = float2(
-                cy.y / (2.0 * PI),
-                cy.x
-            );
-
-            uv = float2(Rand01(rngInfo), Rand01(rngInfo));
-
-            uint2 realCoord = w.Invert(wRand.Invert(uv)) * gSettings.FrameDimensions;
-            //uint2 realCoord = pixelCoord;
-            //uint2 realCoord = w.Invert(wRand.Invert(wRand.UV)) * gSettings.FrameDimensions;
-
-            uint mutexId = realCoord.x + realCoord.y * gSettings.FrameDimensions.x;
-            if (TryAcquireSpinLockPixel(mutexId))
-            {
-                //gTexPrimal[realCoord].rgb = bxdfEval.PDF;
-                //gTexPrimal[realCoord].rgb = float3(wRand.Invert(wRand.UV), 0);
-                gTexPrimal[realCoord].rgb = float3(uv, 0);
-                ReleaseMutexPixel(mutexId);
-            }
+            hitInfo.Mat.Roughness = 0.1f;
+            bxdfEval1 = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
         }
+
+        bool overlap = (bxdfEval1.PDF <= threshold) == (bxdfEval3.PDF <= threshold);
+
+        gTexPrimal[pixelCoord].rgb = overlap ? float3(0,1,0) : float3(1,0,0);
     }
 }
 

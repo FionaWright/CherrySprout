@@ -17,6 +17,9 @@ struct BxDF
         float3 wi,
         LobeTag lobe
     );
+
+    uint LobeSelectRngCount();
+    uint MicrofacetModelRngCount();
 };
 
 #endif

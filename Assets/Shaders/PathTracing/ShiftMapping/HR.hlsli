@@ -19,6 +19,7 @@ ShiftResult ShiftMapHPlusR(
 
     DBG_OUTPUT1(isDirac, GD_IsLobeDirac);
 
+    // TODO: When wi invalid, PDF is set to 1. Maybe should output 0 instead for stuff like this?
     if (v1.PDF <= 0.0f || (v1Dirac != isDirac) || (MaterialIsDirac(v2.Roughness) && v2.Type == VertexType::eStandard))
     {
         DBG_OUTPUT1(1.0f, GD_RejectionDirac);

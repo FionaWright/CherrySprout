@@ -28,17 +28,13 @@ struct MicrofacetModel
     float3 m_H;
 };
 
-void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
-{
-    m_alpha = RoughnessToAlpha(roughness);
-    m_V = V;
-}
-
 void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
     m_V = V;
 }
+
+uint GetRngCount() { return 2; }
 
 void MicrofacetModel::InitAniso(HitInfo _) { }
 
@@ -47,7 +43,7 @@ float MicrofacetModel::RoughnessToAlpha(float roughness)
     return roughness * roughness;
 }
 
-float3 MicrofacetModel::Sample(float u1, float u2)
+float3 MicrofacetModel::Sample(float3 rng)
 {
     float3 Vh = normalize(float3(m_alpha * m_V.xy, m_V.z));
 
@@ -55,8 +51,8 @@ float3 MicrofacetModel::Sample(float u1, float u2)
     float3 T1 = l <= 0.0f ? float3(1,0,0) : float3(-Vh.y, Vh.x, 0) * rsqrt(max(0.0f, l));
     float3 T2 = cross(Vh, T1);
 
-    float r = sqrt(u1);
-    float phi = 2 * PI * u2;
+    float r = sqrt(rng.x);
+    float phi = 2 * PI * rng.y;
     float t1 = r * cos(phi);
     float t2 = r * sin(phi);
     float s = 0.5f * (1 + Vh.z);

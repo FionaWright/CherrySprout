@@ -23,7 +23,7 @@ enum class MicrofacetModelType : int
 
 #ifdef __cplusplus
 
-static constexpr MicrofacetModelType s_defaultMMType = MicrofacetModelType::eGGX_Smith;
+static constexpr MicrofacetModelType s_defaultMMType = MicrofacetModelType::eGGX_Smith_VNDF;
 
 static const char* s_mmNames[static_cast<hlsl::uint>(MicrofacetModelType::eCount)] =
 {

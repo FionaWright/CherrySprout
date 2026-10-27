@@ -482,6 +482,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         {
             CherryPrint("[ERROR]: " + HrToString(hr));
             MessageBeep(MB_ICONERROR);
+            __debugbreak();
             return;
         }
 

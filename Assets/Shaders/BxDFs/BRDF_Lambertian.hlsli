@@ -51,4 +51,14 @@ BxdfEval BxDF::Evaluate(
     return eval;
 }
 
+uint BxDF::MicrofacetModelRngCount()
+{
+    return 2;
+}
+
+uint BxDF::LobeSelectRngCount()
+{
+    return 0;
+}
+
 #endif

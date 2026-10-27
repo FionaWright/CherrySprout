@@ -39,7 +39,7 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
     float xi = Rand01Ex(rngInfo) * primitiveCount;
     uint primitiveIdx = floor(xi);
     float u = frac(xi);
-    float v = Rand01(rngInfo);
+    float v = Rand01Ex(rngInfo);
     if (u + v > 1.0)
     {
         u = 1.0 - u;

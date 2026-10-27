@@ -31,17 +31,13 @@ struct MicrofacetModel
     float3 m_anisoT, m_anisoB, m_anisoN;
 };
 
-void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
-{
-    m_alpha = RoughnessToAlpha(roughness);
-    m_V = V;
-}
-
 void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
     m_V = V;
 }
+
+uint GetRngCount() { return 2; }
 
 void MicrofacetModel::InitAniso(float3 anisoDirStrength)
 {
@@ -115,7 +111,7 @@ float2 MicrofacetModel::Sample11(float cosTheta, float u1, float u2)
 }
 
 // https://inria.hal.science/hal-00996995v2
-float3 MicrofacetModel::Sample(float u1, float u2)
+float3 MicrofacetModel::Sample(float3 rng)
 {
     bool flip = m_V.z < 0;
     if (flip)
@@ -126,7 +122,7 @@ float3 MicrofacetModel::Sample(float u1, float u2)
 
     // 2. simulate P22_{wi}(x_slope, y_slope, 1, 1)
     float cosT = SSpaceCosTheta(wiStretched);
-    float2 slope = Sample11(cosT, u1, u2);
+    float2 slope = Sample11(cosT, rng.x, rng.y);
 
     // 3. rotate
     float tmp = SSpaceCosPhi(wiStretched) * slope.x - SSpaceSinPhi(wiStretched) * slope.y;

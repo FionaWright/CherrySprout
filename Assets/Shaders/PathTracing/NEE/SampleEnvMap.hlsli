@@ -3,8 +3,8 @@
 
 LightSample SampleEnvMap(inout RngInfo rngInfo, out LightEval lightEval)
 {
-    float xi1 = Rand01(rngInfo);
-    float xi2 = Rand01(rngInfo);
+    float xi1 = Rand01Ex(rngInfo);
+    float xi2 = Rand01Ex(rngInfo);
 
     float2 uv_env;
     float pdf_env;

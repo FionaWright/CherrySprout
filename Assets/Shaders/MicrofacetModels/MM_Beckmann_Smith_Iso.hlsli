@@ -19,15 +19,12 @@ struct MicrofacetModel
     float m_alpha;
 };
 
-void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
-{
-    m_alpha = RoughnessToAlpha(roughness);
-}
-
 void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
 }
+
+uint GetRngCount() { return 2; }
 
 void MicrofacetModel::InitAniso(HitInfo _) { }
 
@@ -40,12 +37,12 @@ float MicrofacetModel::RoughnessToAlpha(float roughness)
            0.0171201f * x * x * x + 0.000640711f * x * x * x * x;
 }
 
-float3 MicrofacetModel::Sample(float u1, float u2)
+float3 MicrofacetModel::Sample(float3 rng)
 {
     float a2 = m_alpha * m_alpha;
 
-    float phi = 2.0 * PI * u2;
-    float tan2Theta = -a2 * log(1.0 - u1);
+    float phi = 2.0 * PI * rng.y;
+    float tan2Theta = -a2 * log(1.0 - rng.x);
     float cosTheta = 1.0 / sqrt(1.0 + tan2Theta);
     float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
 

@@ -18,15 +18,12 @@ struct MicrofacetModel
     float3 m_anisoT, m_anisoB, m_anisoN;
 };
 
-void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
-{
-    m_alpha = RoughnessToAlpha(roughness);
-}
-
 void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
 }
+
+uint GetRngCount() { return 2; }
 
 void MicrofacetModel::InitAniso(HitInfo hitInfo)
 {
@@ -57,12 +54,12 @@ float MicrofacetModel::RoughnessToAlpha(float roughness)
     //return 0.5f * roughness * roughness + 0.5f * roughness;
 }
 
-float3 MicrofacetModel::Sample(float u1, float u2)
+float3 MicrofacetModel::Sample(float3 rng)
 {
     if (!m_isAniso)
-        return SampleH_GGX(m_alpha * m_alpha, u1, u2);
+        return SampleH_GGX(m_alpha * m_alpha, rng.x, rng.y);
 
-    float phi = atan(m_alphaY / m_alphaX * tan(2.0 * PI * u1));
+    float phi = atan(m_alphaY / m_alphaX * tan(2.0 * PI * rng.x));
     float sinPhi = sin(phi);
     float cosPhi = cos(phi);
 
@@ -70,7 +67,7 @@ float3 MicrofacetModel::Sample(float u1, float u2)
         1.0 / (cosPhi*cosPhi / (m_alphaX*m_alphaX) +
                sinPhi*sinPhi / (m_alphaY*m_alphaY));
 
-    float cosTheta = sqrt((1.0 - u2) / (1.0 + (alpha2 - 1.0) * u2));
+    float cosTheta = sqrt((1.0 - rng.y) / (1.0 + (alpha2 - 1.0) * rng.y));
     float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
 
     return normalize(

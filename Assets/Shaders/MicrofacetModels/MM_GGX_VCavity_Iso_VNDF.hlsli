@@ -8,25 +8,18 @@ struct MicrofacetModel
 #include "MicrofacetModels/IMicrofacetModel.hlsli"
 
     float m_alpha;
-    float m_u3;
     float3 m_V;
 
     float3 m_H;
 };
 
-void MicrofacetModel::Init(float roughness, RngInfo rngInfo, float3 V)
-{
-    m_alpha = RoughnessToAlpha(roughness);
-    m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
-    m_V = V;
-}
-
 void MicrofacetModel::Init(float roughness, float3 V)
 {
     m_alpha = RoughnessToAlpha(roughness);
-    m_u3 = Rand01_Bounce(DIM_D_BSDF_U3, rngInfo);
     m_V = V;
 }
+
+uint GetRngCount() { return 3; }
 
 void MicrofacetModel::InitAniso(HitInfo _) { }
 
@@ -36,11 +29,11 @@ float MicrofacetModel::RoughnessToAlpha(float roughness)
 }
 
 // https://inria.hal.science/hal-00996995v2
-float3 MicrofacetModel::Sample(float u1, float u2)
+float3 MicrofacetModel::Sample(float3 rng)
 {
     float a2 = m_alpha * m_alpha;
 
-    float3 H = SampleH_GGX(a2, u1, u2);
+    float3 H = SampleH_GGX(a2, rng.x, rng.y);
     float3 Hp = normalize(float3(-H.x, -H.y, H.z));
 
     float3 L = NormalizeSafe(reflect(-m_V, H), float3(0,0,1));
@@ -48,7 +41,7 @@ float3 MicrofacetModel::Sample(float u1, float u2)
     float cHdL = saturate(dot(H, L));
     float cHpdL = saturate(dot(Hp, L));
 
-    if (m_u3 > cHdL / max(0.001f, cHdL + cHpdL))
+    if (rng.z > cHdL / max(0.001f, cHdL + cHpdL))
         m_H = Hp;
     else
         m_H = H;
