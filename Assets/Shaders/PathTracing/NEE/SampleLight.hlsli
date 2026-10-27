@@ -12,7 +12,7 @@
 #include "PathTracing/NEE/SampleEmissive.hlsli"
 
 LightSample SampleLight(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesNEE rng,
     float3 hitPos,
     BxDF bxdf,
     float3 wo,
@@ -33,14 +33,14 @@ LightSample SampleLight(
 
     uint lightIdx;
     float pdf_lsd;
-    SampleLSD(rngInfo, lightIdx, pdf_lsd);
+    SampleLSD(rng.LSD, lightIdx, pdf_lsd);
 
     if (lightIdx < gSettings.LsdBasePunctuals)
     {
         DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(1,0,0),  NEE_LightSampleType);
 
-        lightSample = SampleEnvMap(rngInfo, lightEval);
+        lightSample = SampleEnvMap(rng.Light, lightEval);
         DBG_SCALE_INTENSITY_ENV_MAP(lightEval.Radiance);
     }
     else if (lightIdx < gSettings.LsdBaseEmissives)
@@ -69,7 +69,7 @@ LightSample SampleLight(
 
         uint emissiveIdx = lightIdx - gSettings.LsdBaseEmissives;
 
-        lightSample = SampleEmissive(rngInfo, emissiveIdx, hitPos, lightEval);
+        lightSample = SampleEmissive(rng.Light, emissiveIdx, hitPos, lightEval);
         DBG_SCALE_INTENSITY_EMISSION(lightEval.Radiance);
     }
     else
@@ -82,6 +82,7 @@ LightSample SampleLight(
     lightSample.Index = lightIdx;
     lightEval.PDF *= pdf_lsd;
 
+    DBG_OUTPUT1(rng.LSD,               NEE_xi);
     DBG_OUTPUT1(pdf_lsd,               NEE_LsdPdf);
     DBG_OUTPUT1(lightSample.Index,     NEE_LightSampleIdx);
 

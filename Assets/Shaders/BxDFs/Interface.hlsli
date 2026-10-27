@@ -1,10 +1,12 @@
 #ifndef H_BXDF_INTERFACE_H
 #define H_BXDF_INTERFACE_H
 
+#include "PathTracing/RandomSampleStructs.hlsli"
+
 struct BxDF
 {
     BxdfSample Sample(
-        inout RngInfo rngInfo,
+        RngValuesAncillary::RngValuesBxDF rng,
         HitInfo hitInfo,
         float3 wo,
 

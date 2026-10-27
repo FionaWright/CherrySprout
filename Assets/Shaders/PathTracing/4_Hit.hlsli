@@ -7,6 +7,7 @@
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"
 #include "BxDFs/GetBxDF.hlsli"
 
+#include "PathTracing/RandomSample.hlsli"
 #include "Utils/RandomDirection.h"
 
 #include "PathTracing/5_SampleDirect.hlsli"
@@ -14,7 +15,7 @@
 #include "PathTracing/EvaluateHitEmission.hlsli"
 
 void Hit(inout PathState pathState,
-        inout RngInfo rngInfo,
+        RngValuesAncillary rng,
 
         HitInfo hitInfo,
         uint2 pixelCoord,
@@ -33,7 +34,7 @@ void Hit(inout PathState pathState,
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
-            E_direct += SampleDirectLighting(rngInfo, hitInfo, pathState, bxdf, pixelCoord, wo, currentVertexInfo);
+            E_direct += SampleDirectLighting(rng.NEE[i], hitInfo, pathState, bxdf, pixelCoord, wo, currentVertexInfo);
         }
 
         DBG_SCALE_INTENSITY_DIRECT(E_direct);
@@ -45,7 +46,7 @@ void Hit(inout PathState pathState,
     float pdf_bxdf;
     bool isDirac;
     LobeTag lobe;
-    float3 E_indirect = SampleIndirectLighting(rngInfo, hitInfo, bxdf, wo, wi, pdf_bxdf, isDirac, lobe);
+    float3 E_indirect = SampleIndirectLighting(rng.BxDF, hitInfo, bxdf, wo, wi, pdf_bxdf, isDirac, lobe);
     DBG_SCALE_INTENSITY_INDIRECT(E_indirect);
 
     pathState.Beta *= E_indirect;

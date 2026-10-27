@@ -5,6 +5,7 @@
 
 #if FEAT_CORE_D(RestirDI)
 
+#include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/NEE/SampleLight.hlsli"
 #include "PathTracing/VisibilityRays.hlsli"
 
@@ -18,8 +19,10 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI 
 {
     BxDF bxdf;
 
+    RngValuesAncillary::RngValuesNEE rng = SampleRngNEE(rngInfo);
+
     LightEval lightEval;
-    LightSample lightSample = SampleLight(rngInfo, context.HitInfo.HitPos, bxdf, context.Wo, lightEval);
+    LightSample lightSample = SampleLight(rng, context.HitInfo.HitPos, bxdf, context.Wo, lightEval);
 
     X_i.LightSample = lightSample;
     X_i.LightEval = lightEval;

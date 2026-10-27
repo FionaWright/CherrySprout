@@ -23,7 +23,7 @@ void MicrofacetModel::Init(float roughness, float3 V)
     m_alpha = RoughnessToAlpha(roughness);
 }
 
-uint GetRngCount() { return 2; }
+uint MicrofacetModel::GetRngCount() { return 2; }
 
 void MicrofacetModel::InitAniso(HitInfo hitInfo)
 {

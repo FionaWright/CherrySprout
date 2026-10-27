@@ -10,7 +10,7 @@
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
 
-#include "Utils/Random.h"
+#include "PathTracing/RandomSample.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
 PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoord)
@@ -91,11 +91,12 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
         }
 
+        RngValuesAncillary rng = SampleRngAncillaryBatch1(rngInfo);
+
         if (FEAT_CORE(AlphaTesting))
         {
-            float xi = Rand01(rngInfo);
             float alpha = hitInfo.Mat.Albedo.a;
-            bool cutout = alpha < EPSILON || xi > alpha;
+            bool cutout = alpha < EPSILON || rng.AlphaTest > alpha;
             if (cutout)
             {
                 float NdV = dot(hitInfo.Ng_ff, pathState.Desc.Direction);
@@ -128,7 +129,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         float3 L_sample;
         PathVertexInfo currentVertexInfo = (PathVertexInfo)0;
         currentVertexInfo.PDF = 1.0f;
-        Hit(pathState, rngInfo, hitInfo, pixelCoord, L_sample, currentVertexInfo);
+        Hit(pathState, rng, hitInfo, pixelCoord, L_sample, currentVertexInfo);
 
         if (FEAT_CORE(GradientDomain))
         {
@@ -147,14 +148,15 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
         }
 
+        SampleRngAncillaryBatch2(rngInfo, rng);
+
         DBG_PATH_DUMP_PATH_STATE(pathState);
 
         if (FEAT_CORE(RussianRoulette) && i >= gSettings.RussianRouletteMinBounces)
         {
             float p = saturate(max(pathState.Beta.r, max(pathState.Beta.g, pathState.Beta.b)));
             p = max(p, 0.05f);
-            float rRR = Rand01(rngInfo);
-            if (rRR > p)
+            if (rng.RussianRoulette > p)
             {
                 DBG_OUTPUT1(1.0f, KilledByRR);
                 break;

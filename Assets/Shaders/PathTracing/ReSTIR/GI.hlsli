@@ -5,11 +5,13 @@
 
 #if FEAT_CORE_D(RestirGI)
 
+#include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/NEE/SampleNEE.hlsli"
 #include "PathTracing/VisibilityRays.hlsli"
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"
 #include "PathTracing/4_Miss.hlsli"
-#include "PathTracing/ShiftMapping/ShiftMapping.hlsli"
+#include "PathTracing/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/ShiftMapping/Components/ReconnectEnv.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
@@ -19,9 +21,11 @@
 
 void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i)
 {
+    RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
+
     BxDF bxdf;
     BxdfEval bxdfEval;
-    BxdfSample bxdfSample = bxdf.Sample(rngInfo, context.HitInfo, context.Wo, bxdfEval);
+    BxdfSample bxdfSample = bxdf.Sample(rngBxDF, context.HitInfo, context.Wo, bxdfEval);
 
     // TODO: Simpler function that doesn't extract everything?
     bool isMiss;
@@ -49,8 +53,10 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
     }
     else
     {
+        RngValuesAncillary::RngValuesNEE rngNEE = SampleRngNEE(rngInfo);
+
         float3 wo = -bxdfSample.Wi;
-        E_direct = SampleNEE(rngInfo, secondaryHitInfo, bxdf, 1, wo);
+        E_direct = SampleNEE(rngNEE, secondaryHitInfo, bxdf, 1, wo);
     }
 
     // TODO: Extension: More bounces

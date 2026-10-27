@@ -1,8 +1,10 @@
 #ifndef H_SAMPLE_INDIRECT_H
 #define H_SAMPLE_INDIRECT_H
 
+#include "PathTracing/RandomSample.hlsli"
+
 float3 SampleIndirectLighting(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesBxDF rng,
     HitInfo hitInfo,
     BxDF bxdf,
     float3 wo,
@@ -18,9 +20,7 @@ float3 SampleIndirectLighting(
 
     if (FEAT_DBG(BxdfTestHemisphere) && gRunBxdfTestForPixel)
     {
-        float u1 = Rand01(rngInfo);
-        float u2 = Rand01(rngInfo);
-        wi = RandHemisphereCosineWorld(u1, u2, hitInfo.SFrame);
+        wi = RandHemisphereCosineWorld(rng.Microfacet.x, rng.Microfacet.y, hitInfo.SFrame);
 
         bxdfEval = bxdf.Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
@@ -30,7 +30,7 @@ float3 SampleIndirectLighting(
     else if (FEAT_DBG(BxdfTestRevaluate) && gRunBxdfTestForPixel)
     {
         BxdfEval bxdfEvalFromSample;
-        bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEvalFromSample);
+        bxdfSample = bxdf.Sample(rng, hitInfo, wo, bxdfEvalFromSample);
 
         if (bxdfSample.IsDirac)
             bxdfEval = bxdfEvalFromSample;
@@ -52,7 +52,7 @@ float3 SampleIndirectLighting(
         else
             hitInfo.Mat.Roughness = ROUGH_2;
 
-        bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEval);
+        bxdfSample = bxdf.Sample(rng, hitInfo, wo, bxdfEval);
         bxdfEval = bxdf.Evaluate(hitInfo, wo, bxdfSample.Wi, bxdfSample.Lobe);
 
         if (bxdfEval.PDF > 0.0f && !bxdfSample.IsDirac)
@@ -67,7 +67,7 @@ float3 SampleIndirectLighting(
     }
     else
     {
-        bxdfSample = bxdf.Sample(rngInfo, hitInfo, wo, bxdfEval);
+        bxdfSample = bxdf.Sample(rng, hitInfo, wo, bxdfEval);
     }
 
     wi = bxdfSample.Wi;

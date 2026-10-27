@@ -39,7 +39,7 @@ float GetSpecularProb(float WdV, float3 F0)
 }
 
 BxdfSample BxDF::Sample(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesBxDF rng,
     HitInfo hitInfo,
     float3 wo,
 
@@ -54,21 +54,20 @@ BxdfSample BxDF::Sample(
 
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
 
-    float u1 = Rand01(rngInfo);
-    float u2 = Rand01(rngInfo);
-    float u3 = Rand01(rngInfo);
-
     MicrofacetModel mm;
     mm.Init(hitInfo.Mat.Roughness, V_s);
     if (FEAT_CORE(Anisotropy))
         mm.InitAniso(hitInfo);
 
-    float3 H_s = mm.Sample(float3(u1,u2,u3));
+    float3 H_s = mm.Sample(rng.Microfacet);
     float VdH = dot(H_s, V_s);
 
     float3 L_s = 0.0f;
 
-    bool isTransmission = hitInfo.Mat.TransmissionFactor > 0 && Rand01(rngInfo) <= hitInfo.Mat.TransmissionFactor;
+    float rngLobeSpec = rng.LobeSelect.x;
+    float rngLobeTrans = rng.LobeSelect.y;
+
+    bool isTransmission = hitInfo.Mat.TransmissionFactor > 0 && rngLobeTrans <= hitInfo.Mat.TransmissionFactor;
 
     DBG_ASSERT_APPROX(length(V_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
     DBG_ASSERT_APPROX(length(H_s), 1.0f, 0.02f,  UNNORMALIZED_VECTOR);
@@ -81,8 +80,8 @@ BxdfSample BxDF::Sample(
     DBG_OUTPUT1(NdV,                             BxDF_NdV);
     DBG_OUTPUT1(VdH,                             BxDF_VdH);
     DBG_OUTPUT3(F0,                              BxDF_F0);
-    DBG_OUTPUT1(u1,                              BxDF_u1);
-    DBG_OUTPUT1(u2,                              BxDF_u2);
+    DBG_OUTPUT1(rng.Microfacet.x,                BxDF_u1);
+    DBG_OUTPUT1(rng.Microfacet.y,                BxDF_u2);
     DBG_OUTPUT3(hitInfo.SFrame.ToWorld(H_s),     BxDF_H_w);
     DBG_OUTPUT1(mm.m_alpha,                      BxDF_Alpha);
     DBG_OUTPUT1(mm.D(H_s),                       BxDF_D);
@@ -93,7 +92,7 @@ BxdfSample BxDF::Sample(
         float iorNNext =     hitInfo.IsEntering ? hitInfo.Mat.IOR_N  : IOR_N_AIR;
 
         float reflectProb = GetReflectProb(iorNCurrent, iorNNext, VdH);
-        bool isReflect = reflectProb > 0 && Rand01(rngInfo) <= reflectProb;
+        bool isReflect = reflectProb > 0 && rngLobeSpec <= reflectProb;
 
         DBG_ASSERT_ZERO(hitInfo.Mat.Metallic,         NO_METAL_GLASS);
         DBG_ASSERT_ZERO(hitInfo.Emission,             NO_EMISSIVE_GLASS);
@@ -140,7 +139,7 @@ BxdfSample BxDF::Sample(
     }
 
     float specProb = GetSpecularProb(NdV, F0);
-    bool isSpecular = specProb > 0 && Rand01(rngInfo) <= specProb;
+    bool isSpecular = specProb > 0 && rngLobeSpec <= specProb;
 
     DBG_OUTPUT1(specProb,                      BxDF_SpecProb);
     DBG_OUTPUT1(isSpecular,                    BxDF_IsSpecular);
@@ -159,7 +158,7 @@ BxdfSample BxDF::Sample(
     }
     else
     {
-        LambertianDisneyLobe_Sample(hitInfo, u1, u2, L_s, eval.Radiance, eval.PDF);
+        LambertianDisneyLobe_Sample(hitInfo, rng.Microfacet.x, rng.Microfacet.y, L_s, eval.Radiance, eval.PDF);
 
         sample.Lobe = LobeTag::eLambertian;
 

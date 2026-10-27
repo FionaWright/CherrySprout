@@ -24,8 +24,10 @@ void sampleShiftedPath(RngInfo rngInfo, int2 shiftedCoord, PathSample mainPath, 
     float3 shiftedRayOrigin;
     float3 shiftedRayDirection;
 
+    RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
+
     GetPrimaryRay(
-        rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        rngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
         shiftedCoord, gSettings.InvV, gSettings.InvP,
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         shiftedRayOrigin, shiftedRayDirection);

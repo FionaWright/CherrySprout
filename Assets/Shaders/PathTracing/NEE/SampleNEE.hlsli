@@ -6,7 +6,7 @@
 #include "PathTracing/NEE/SampleLight.hlsli"
 
 float3 SampleNEE(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
     BxDF bxdf,
 
@@ -18,7 +18,7 @@ float3 SampleNEE(
     out float shadowFactor)
 {
     LightEval lightEval;
-    lightSample = SampleLight(rngInfo, hitInfo.HitPos, bxdf, wo, lightEval);
+    lightSample = SampleLight(rng, hitInfo.HitPos, bxdf, wo, lightEval);
 
     lightDistance = lightEval.Distance;
 
@@ -54,7 +54,7 @@ float3 SampleNEE(
 }
 
 float3 SampleNEE(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
     BxDF bxdf,
 
@@ -64,7 +64,7 @@ float3 SampleNEE(
     LightSample _1;
     float _2;
     float _3;
-    return SampleNEE(rngInfo, hitInfo, bxdf, numSamples, wo, _1, _2, _3);
+    return SampleNEE(rng, hitInfo, bxdf, numSamples, wo, _1, _2, _3);
 }
 
 float3 EvaluateNEE(
@@ -114,7 +114,7 @@ float3 EvaluateNEE(
 #else
 
 float3 SampleNEE(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
     BxDF bxdf,
 
@@ -126,7 +126,7 @@ float3 SampleNEE(
     out float shadowFactor) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; return NAN; }
 
 float3 SampleNEE(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
     BxDF bxdf,
 

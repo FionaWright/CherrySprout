@@ -134,8 +134,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 9, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 10, m_debugManager.GetBufferPathDumpRW(), PATH_DUMP_MAX_RAY_DEPTH, sizeof(RayDump));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 11, m_debugManager.GetBufferPathDumpOCRW(), PATH_DUMP_MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 10, m_debugManager.GetBufferPathDumpRW(), MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 11, m_debugManager.GetBufferPathDumpOCRW(), MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
     m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 12, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
 #endif
 

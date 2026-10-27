@@ -1,14 +1,14 @@
 #ifndef H_GET_PRIMARY_RAY_H
 #define H_GET_PRIMARY_RAY_H
 
-#include "Utils/Random.h"
+#include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
 void GetPrimaryRay(
-    inout RngInfo rngInfo,
+    RngValuesPrimary rng,
     float3 cameraPos,
     float2 texelSize,
     uint2 pixelCoord,
@@ -29,11 +29,7 @@ void GetPrimaryRay(
 
     float2 jitter = 0.0f;
     if (FEAT_CORE(JitterPerPixel))
-    {
-        float rJitterX = Rand01(rngInfo);
-        float rJitterY = Rand01(rngInfo);
-        jitter = float2(rJitterX, rJitterY) - 0.5f;
-    }
+        jitter = rng.Jitter - 0.5f;
     else if (FEAT_CORE(JitterPerFrame))
         jitter = gSettings.JitterPerFrame;
     pixelUV += jitter;
@@ -72,10 +68,8 @@ void GetPrimaryRay(
     float3 camUp = normalize(float3(invV[0][1], invV[1][1], invV[2][1]));
     float3 focalPoint = origin + direction * dofFocalDist;
 
-    float rLensU = Rand01(rngInfo);
-    float rLensV = Rand01(rngInfo);
-    float r = sqrt(rLensU) * dofLensRadius;
-    float theta = 2.0 * PI * rLensV;
+    float r = sqrt(rng.DoF.x) * dofLensRadius;
+    float theta = 2.0 * PI * rng.DoF.y;
     float3 lensOffset = r * (camRight * cos(theta) + camUp * sin(theta));
 
     origin += lensOffset;

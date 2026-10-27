@@ -7,17 +7,14 @@
 #include "BxDFs/Lobes/LambertianLobe.hlsli"
 
 BxdfSample BxDF::Sample(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesBxDF rng,
     HitInfo hitInfo,
     float3 wo,
 
     out BxdfEval eval)
 {
-    float u1 = Rand01(rngInfo);
-    float u2 = Rand01(rngInfo);
-
     float3 L_s;
-    LambertianLobe_Sample(hitInfo, u1, u2, L_s, eval.Radiance, eval.PDF);
+    LambertianLobe_Sample(hitInfo, rng.Microfacet.x, rng.Microfacet.y, L_s, eval.Radiance, eval.PDF);
 
     BxdfSample sample;
     sample.Wi = hitInfo.SFrame.ToWorld(L_s);

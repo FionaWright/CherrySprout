@@ -213,7 +213,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
             }
 
             uint32_t rowIncrementer = 0;
-            for (int i = 0; i < static_cast<uint32_t>(PATH_DUMP_MAX_RAY_DEPTH); i++)
+            for (int i = 0; i < static_cast<uint32_t>(MAX_RAY_DEPTH); i++)
             {
                 if (!m_cpuPathDump[i].Explored)
                     break;

@@ -34,7 +34,7 @@ void MicrofacetModel::Init(float roughness, float3 V)
     m_V = V;
 }
 
-uint GetRngCount() { return 2; }
+uint MicrofacetModel::GetRngCount() { return 2; }
 
 void MicrofacetModel::InitAniso(HitInfo _) { }
 

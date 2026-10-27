@@ -49,11 +49,12 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     // Note: No seed decorrelator used, will have same jitter / DoF as core PT
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
+    RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
 
     float3 rayOrigin;
     float3 rayDirection;
     GetPrimaryRay(
-        rngInfo, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        rngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
         pixelCoord, gSettings.InvV, gSettings.InvP,
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         rayOrigin, rayDirection);

@@ -5,9 +5,10 @@
 
 #include "PathTracing/ReSTIR/DI.hlsli"
 #include "PathTracing/Transient.hlsli"
+#include "PathTracing/RandomSample.hlsli"
 
 float3 SampleDirectLighting(
-    inout RngInfo rngInfo,
+    RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
     PathState pathState,
     BxDF bxdf,
@@ -37,7 +38,7 @@ float3 SampleDirectLighting(
     }
     else
     {
-        float3 L_nee = SampleNEE(rngInfo, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor);
+        float3 L_nee = SampleNEE(rng, hitInfo, bxdf, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {

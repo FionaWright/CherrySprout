@@ -6,8 +6,15 @@
 
 #if FEAT_CORE_D(AliasTables)
 
-void sampleLSD(float xi, out uint lightIdx, out float pdf)
+void SampleLSD(float xi, out uint lightIdx, out float pdf)
 {
+    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    {
+        lightIdx = gDebugSettings.ForcedLightIndex;
+        pdf = 1.0f;
+        return;
+    }
+
     xi *= (float)gSettings.LsdCount;
     uint xiIdx = floor(xi);
     float xi01 = frac(xi);
@@ -20,25 +27,18 @@ void sampleLSD(float xi, out uint lightIdx, out float pdf)
 
 void EvaluateLSD(uint lightIdx, out float pdf)
 {
+    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    {
+        pdf = 1.0f;
+        return;
+    }
+
     pdf = gLightAliasTable[lightIdx].PDF;
 }
 
 #else
 
-void sampleLSD(float xi, out uint lightIdx, out float pdf)
-{
-    lightIdx = BinarySearch(gLightCDF, gSettings.LsdCount, xi);
-    pdf = gLightCDF[lightIdx].PDF;
-}
-
-void EvaluateLSD(uint lightIdx, out float pdf)
-{
-    pdf = gLightCDF[lightIdx].PDF;
-}
-
-#endif
-
-void SampleLSD(inout RngInfo rngInfo, out uint lightIdx, out float pdf)
+void SampleLSD(float xi, out uint lightIdx, out float pdf)
 {
     if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
     {
@@ -47,10 +47,21 @@ void SampleLSD(inout RngInfo rngInfo, out uint lightIdx, out float pdf)
         return;
     }
 
-    float xi = Rand01Ex(rngInfo);
-    sampleLSD(xi, lightIdx, pdf);
-
-    DBG_OUTPUT1(xi, NEE_xi);
+    lightIdx = BinarySearch(gLightCDF, gSettings.LsdCount, xi);
+    pdf = gLightCDF[lightIdx].PDF;
 }
+
+void EvaluateLSD(uint lightIdx, out float pdf)
+{
+    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    {
+        pdf = 1.0f;
+        return;
+    }
+
+    pdf = gLightCDF[lightIdx].PDF;
+}
+
+#endif
 
 #endif

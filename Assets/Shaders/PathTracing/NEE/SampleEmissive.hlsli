@@ -27,7 +27,7 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, fl
     return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
 
-LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPos, out LightEval lightEval)
+LightSample SampleEmissive(float2 rng, uint emissiveIdx, float3 hitPos, out LightEval lightEval)
 {
     uint instanceIdx = gEmissiveInstanceToInstanceMap[emissiveIdx];
     InstanceData instance = gMegaBufferInstanceData[instanceIdx];
@@ -36,10 +36,10 @@ LightSample SampleEmissive(inout RngInfo rngInfo, uint emissiveIdx, float3 hitPo
     uint primitiveCount = instance.MegaBufferCountIndex / 3;
     uint primitiveOffset = instance.MegaBufferOffsetIndex / 3;
 
-    float xi = Rand01Ex(rngInfo) * primitiveCount;
+    float xi = rng.x * primitiveCount;
     uint primitiveIdx = floor(xi);
     float u = frac(xi);
-    float v = Rand01Ex(rngInfo);
+    float v = rng.y;
     if (u + v > 1.0)
     {
         u = 1.0 - u;

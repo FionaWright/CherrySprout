@@ -16,7 +16,7 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
     }
 
     {
-        constexpr size_t bufferSize = sizeof(RayDump) * PATH_DUMP_MAX_RAY_DEPTH;
+        constexpr size_t bufferSize = sizeof(RayDump) * MAX_RAY_DEPTH;
         m_pathDumpBufferRW.Release();
         m_pathDumpBufferReadback.Release();
         m_pathDumpBufferRW.Init_Buffer("Path Dump Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -24,7 +24,7 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
     }
 
     {
-        constexpr size_t bufferSize = sizeof(DebugOutputStruct) * PATH_DUMP_MAX_RAY_DEPTH;
+        constexpr size_t bufferSize = sizeof(DebugOutputStruct) * MAX_RAY_DEPTH;
         m_pathDumpOCBufferRW.Release();
         m_pathDumpOCBufferReadback.Release();
         m_pathDumpOCBufferRW.Init_Buffer("Path Dump OC Buffer (RW)", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -102,7 +102,7 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
         m_pathDumpOCBufferRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
         m_pathDumpOCBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        constexpr size_t bufferSize = PATH_DUMP_MAX_RAY_DEPTH * sizeof(RayDump);
+        constexpr size_t bufferSize = MAX_RAY_DEPTH * sizeof(RayDump);
         cmdList->CopyBufferRegion(m_pathDumpBufferReadback.GetResource(), 0, m_pathDumpBufferRW.GetResource(), 0, bufferSize);
         cmdList->CopyBufferRegion(m_pathDumpOCBufferReadback.GetResource(), 0, m_pathDumpOCBufferRW.GetResource(), 0, bufferSize);
 

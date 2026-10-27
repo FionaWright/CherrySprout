@@ -9,8 +9,6 @@
 #include "Utils/Debug/DebugID.h"
 #include "Utils/Debug/DebugStructs.h"
 
-#define PATH_DUMP_MAX_RAY_DEPTH 32
-
 struct PathTracerConfig;
 struct CbvPathTracingSettings;
 struct GreenHouseRenderInfo;
@@ -49,8 +47,8 @@ private:
     DebugErrorInfo m_cpuErrorInfo[_countof(s_debugIdList)] = {};
     bool m_scheduleClearErrors = false;
 
-    RayDump m_cpuPathDump[PATH_DUMP_MAX_RAY_DEPTH] = {};
-    DebugOutputStruct m_cpuPathDumpOutputColor[PATH_DUMP_MAX_RAY_DEPTH] = {};
+    RayDump m_cpuPathDump[MAX_RAY_DEPTH] = {};
+    DebugOutputStruct m_cpuPathDumpOutputColor[MAX_RAY_DEPTH] = {};
     hlsl::uint2 m_dumpedPathPixelCoords = {};
     uint32_t m_dumpedPathFrameIdx = 0;
     XMFLOAT3 m_dumpedPathCameraPosition = {};

@@ -3,6 +3,7 @@
 
 // https://github.com/gradientpm/gradient-mts/blob/master/src/integrators/gradient/gpt/shift_mapping/shiftmapping.h
 
+#include "PathTracing/ShiftMapping/Structs.hlsli"
 #include "PathTracing/VisibilityRays.hlsli"
 
 ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3 x2_Ng)
