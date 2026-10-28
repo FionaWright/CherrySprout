@@ -154,7 +154,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     cbvForward.CameraPosition = renderInfo.Camera->GetPosition();
     cbvForward.FrameIdx = renderInfo.FrameIndex;
     cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
-    cbvForward.MaxCubemapMipMaps = 1;
+    cbvForward.MaxCubemapMipMaps = renderInfo.EnvironmentMap->GetCubemap()->GetDesc().MipLevels;
     m_descriptorSet.UpdateCBV(1, &cbvForward);
 
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);

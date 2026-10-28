@@ -104,8 +104,12 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
     float3 F = F_Schlick(VdH, F0);
 
+    //float lod = hitInfo.Mat.Roughness * (9 - 1);
     float lod = hitInfo.Mat.Roughness * (gSettings.MaxCubemapMipMaps - 1);
     float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi_R, lod).rgb;
+    //float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi_R, 5).rgb;
+    //return float4(lod/9.0f, 0,0,1);
+    //return float4(envSample, 1);
 
     float2 uv_brdfInt = saturate(float2(max(NdV, 0), hitInfo.Mat.Roughness));
     float2 brdfIntSample = gBrdfInt.SampleLevel(gSamplerLinearWrap, uv_brdfInt, 0).rg;

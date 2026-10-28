@@ -123,6 +123,13 @@ struct CbvForward
     hlsl::float3 CameraPosition;
 };
 
+struct CbvMipMapCubemap
+{
+    hlsl::uint2 FaceResolution;
+    float Roughness;
+    float p;
+};
+
 struct CbvForward_PerInstance
 {
     hlsl::float4x4 M, MTI;

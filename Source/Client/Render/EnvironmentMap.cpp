@@ -55,16 +55,16 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::wstring& filePath, co
         uploadHeap.Init(d3d->GetDevice(), maxRequiredUploadHeapSize);
 
     {
-        m_dsPanoToEA.Init(heap);
-        m_dsPanoToEA.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToEA), &uploadHeap, "CBV Pano To EA");
-        m_dsPanoToEA.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
-        m_dsPanoToEA.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_ea, m_ea.GetDesc().Format);
+        m_setPanoToEA.Init(heap);
+        m_setPanoToEA.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToEA), &uploadHeap, "CBV Pano To EA");
+        m_setPanoToEA.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
+        m_setPanoToEA.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_ea, m_ea.GetDesc().Format);
 
         CbvPanoToEA cbv = {};
         cbv.OutputDimensions = hlsl::uint2(m_ea.GetDesc().Width, m_ea.GetDesc().Height);
         cbv.InputDimensions = hlsl::uint2(m_pano.GetDesc().Width, m_pano.GetDesc().Height);
         cbv.Rotation = rotation / 360.0f;
-        m_dsPanoToEA.UpdateCBV(0, &cbv);
+        m_setPanoToEA.UpdateCBV(0, &cbv);
     }
 
     {
@@ -76,7 +76,7 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::wstring& filePath, co
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigPanoToEA.Get());
         cmdList->SetPipelineState(m_pipelinePanoToEA.GetPSO());
-        m_dsPanoToEA.SetDescriptorTables_Compute(cmdList);
+        m_setPanoToEA.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
 
@@ -95,13 +95,13 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
     UploadHeap uploadHeapCBV = {};
     uploadHeapCBV.Init(d3d->GetDevice(), Align(sizeof(CbvPanoToCM), 256));
 
-    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
     const auto cmdList = cmdListPtr.Get();
 
     assert(m_pano.IsInitialized());
 
     if (!m_cubemap.IsInitialized())
-        m_cubemap.Init_Tex2D("Cubemap", d3d->GetDevice(), 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_cubemap.Init_Tex2D("Cubemap", d3d->GetDevice(), 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON, nullptr, true);
 
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -111,16 +111,16 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
         uavDesc.Texture2DArray.MipSlice = 0;
         uavDesc.Texture2DArray.FirstArraySlice = 0;
 
-        m_dsPanoToCM.Init(heap);
-        m_dsPanoToCM.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToCM), &uploadHeapCBV, "CBV Cubemap");
-        m_dsPanoToCM.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
-        m_dsPanoToCM.SetUAV(d3d->GetDevice(), 0, &m_cubemap, uavDesc);
+        m_setPanoToCM.Init(heap);
+        m_setPanoToCM.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToCM), &uploadHeapCBV, "CBV Cubemap");
+        m_setPanoToCM.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
+        m_setPanoToCM.SetUAV(d3d->GetDevice(), 0, &m_cubemap, uavDesc);
 
         CbvPanoToCM cbv = {};
         cbv.OutputWidth = m_cubemap.GetDesc().Width;
         cbv.InputDimensions = hlsl::uint2(m_pano.GetDesc().Width, m_pano.GetDesc().Height);
         cbv.Rotation = m_rotation / 360.0f;
-        m_dsPanoToCM.UpdateCBV(0, &cbv);
+        m_setPanoToCM.UpdateCBV(0, &cbv);
     }
 
     {
@@ -132,13 +132,15 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
         heap->Bind(cmdList);
         cmdList->SetComputeRootSignature(m_rootSigPanoToCM.Get());
         cmdList->SetPipelineState(m_pipelinePanoToCM.GetPSO());
-        m_dsPanoToCM.SetDescriptorTables_Compute(cmdList);
+        m_setPanoToCM.SetDescriptorTables_Compute(cmdList);
     }
 
     const uint32_t groupSizeXY = (m_cubemap.GetDesc().Width + 15) / 16;
     cmdList->Dispatch(groupSizeXY, groupSizeXY, 6);
 
-    //TextureLoader::CreateMipMapsCubemap(device, cmdList, m_cubemap.GetD12Resource());
+    m_cubemap.UavBarrier(cmdList);
+
+    ComputeMipMapsCubemap(d3d->GetDevice(), cmdList, heap);
 
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
@@ -159,6 +161,88 @@ void EnvironmentMap::initResources(ID3D12Device* device)
     V(m_pipelinePanoToCM.InitCompute(device, "Compute/PanoToCubemapCS.hlsl", m_rootSigPanoToCM.Get()));
 
     m_resourcesInitialized = true;
+}
+
+// TODO: Might have minor issues
+void EnvironmentMap::ComputeMipMapsCubemap(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap)
+{
+    if (!m_pipelineMipMapCubemap.GetPSO())
+    {
+        m_rootConstantsMipMapCubemap.Init(0, 0, sizeof(CbvMipMapCubemap));
+
+        D3D12_STATIC_SAMPLER_DESC sampler;
+        InitializeSamplerLinearClamp(&sampler, 0);
+        m_rootSigMipMapCubemap.SmartInit(device, 0, 1, 1, false, &sampler, 1, &m_rootConstantsMipMapCubemap);
+
+        V(m_pipelineMipMapCubemap.InitCompute(device, "Compute/MipMapsCubemapCS.hlsl", m_rootSigMipMapCubemap.Get()));
+    }
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srcSRVDesc = {};
+    srcSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srcSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    srcSRVDesc.TextureCube.MipLevels = 1;
+    srcSRVDesc.Format = m_cubemap.GetDesc().Format;
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC dstUAVDesc = {};
+    dstUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+    dstUAVDesc.Texture2DArray.ArraySize = 6;
+    dstUAVDesc.Texture2DArray.FirstArraySlice = 0;
+    dstUAVDesc.Format = m_cubemap.GetDesc().Format;
+
+    heap->Bind(cmdList);
+    cmdList->SetComputeRootSignature(m_rootSigMipMapCubemap.Get());
+    cmdList->SetPipelineState(m_pipelineMipMapCubemap.GetPSO());
+
+    int width = static_cast<int>(m_cubemap.GetDesc().Width);
+    int height = static_cast<int>(m_cubemap.GetDesc().Height);
+
+    m_cubemap.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+    for (int srcMip = 0; srcMip < m_cubemap.GetDesc().MipLevels - 1; srcMip++)
+    {
+        int dstMip = srcMip + 1;
+
+        DescriptorSet set;
+        set.Init(heap, false, true);
+
+        int dstWidth = std::max<int>(width >> (dstMip), 1);
+        int dstHeight = std::max<int>(height >> (dstMip), 1);
+
+        CbvMipMapCubemap cbv;
+        cbv.FaceResolution.x = static_cast<uint32_t>(dstWidth);
+        cbv.FaceResolution.y = static_cast<uint32_t>(dstHeight);
+        cbv.Roughness = static_cast<float>(dstMip) / static_cast<float>(m_cubemap.GetDesc().MipLevels - 1);
+        m_rootConstantsMipMapCubemap.Bind_Compute(cmdList, &cbv);
+
+        srcSRVDesc.TextureCube.MostDetailedMip = srcMip;
+        dstUAVDesc.Texture2DArray.MipSlice = dstMip;
+
+        set.SetSRV(device, 0, &m_cubemap, srcSRVDesc);
+        set.SetUAV(device, 0, &m_cubemap, dstUAVDesc);
+
+        if (srcMip > 0)
+        {
+            const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, srcMip);
+            cmdList->ResourceBarrier(1, &barrier);
+        }
+
+        {
+            const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.GetResource(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, srcMip+1);
+            cmdList->ResourceBarrier(1, &barrier);
+        }
+
+        set.SetDescriptorTables_Compute(cmdList);
+
+        DispatchOverTexture(cmdList, 8, dstWidth, dstHeight, 1);
+
+        m_cubemap.UavBarrier(cmdList);
+    }
+
+    if (m_cubemap.GetDesc().MipLevels > 1)
+    {
+        const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_cubemap.GetDesc().MipLevels-1);
+        cmdList->ResourceBarrier(1, &barrier);
+    }
 }
 
 // TODO : Should be pre-proc?

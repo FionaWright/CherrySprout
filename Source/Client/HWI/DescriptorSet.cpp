@@ -64,6 +64,11 @@ void DescriptorSet::UpdateCBV(const uint32_t cbvIdx, const void* data) const
     std::memcpy(cbv.MappedGpuPtr, data, cbv.Size);
 }
 
+void DescriptorSet::ReleaseCBVs()
+{
+    m_cbvs.clear();
+}
+
 void DescriptorSet::AddSRV(ID3D12Device* device, D12Resource* d12Resource,
                            const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName)
 {

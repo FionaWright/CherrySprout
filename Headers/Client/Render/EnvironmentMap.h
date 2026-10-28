@@ -25,7 +25,7 @@ public:
     void Init(D3D* d3d, Heap* heap, const std::wstring& filePath, float rotation);
     void InitCubemap(D3D* d3d, Heap* heap);
 
-    DirectX::XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
+    XMFLOAT3 GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap);
     static size_t GetCbvRequiredSize() { return Align(sizeof(CbvPanoToEA), 256) + Align(sizeof(CbvPanoToCM), 256); }
 
     D12Resource* GetPano() { return &m_pano; }
@@ -34,6 +34,7 @@ public:
 
 private:
     void initResources(ID3D12Device* device);
+    void ComputeMipMapsCubemap(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Heap* heap);
 
     D12Resource m_pano, m_ea, m_cubemap;
     float m_rotation = 0.0f;
@@ -42,7 +43,11 @@ private:
 
     RootSig m_rootSigPanoToEA, m_rootSigPanoToCM;
     Pipeline m_pipelinePanoToEA, m_pipelinePanoToCM;
-    DescriptorSet m_dsPanoToEA, m_dsPanoToCM;
+    DescriptorSet m_setPanoToEA, m_setPanoToCM;
+
+    RootSig m_rootSigMipMapCubemap;
+    Pipeline m_pipelineMipMapCubemap;
+    RootConstants m_rootConstantsMipMapCubemap;
 
     //RootSig m_rootSigMaxLumRedSearch;
     //Shader m_shaderMaxLumRedSearch;

@@ -80,7 +80,7 @@ inline hlsl::float2 PanoSphereToSquare(hlsl::float3 d)
     return hlsl::float2(u, v);
 }
 
-inline hlsl::float3 CubemapCubeToSphere(hlsl::uint face, hlsl::float2 uv)
+inline hlsl::float3 CubemapCubeToSphere(const hlsl::uint face, const hlsl::float2 uv)
 {
     hlsl::float3 d;
     switch (face)

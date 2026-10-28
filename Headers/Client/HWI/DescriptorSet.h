@@ -45,6 +45,7 @@ public:
 
     void AddCBV(ID3D12Device* device, size_t size, UploadHeap* uploadHeap, const char* debugName = nullptr);
     void UpdateCBV(uint32_t cbvIdx, const void* data) const;
+    void ReleaseCBVs();
 
     void AddSRV(ID3D12Device* device, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName);
     void SetSRV(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName = nullptr);
