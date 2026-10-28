@@ -43,18 +43,19 @@ float3 SampleIndirectLighting(
     }
     else if (FEAT_DBG(BxdfTestLobe))
     {
-#define ROUGH_1 0.3f
+        float roughStore = hitInfo.Mat.Roughness;
+
+#define ROUGH_1 0.8f
 //#define ROUGH_1 max(0.1f, hitInfo.Mat.Roughness)
-#define ROUGH_2 0.1f
+#define ROUGH_2 0.03f
         if (gRunBxdfTestForPixel)
             hitInfo.Mat.Roughness = ROUGH_1;
         else
             hitInfo.Mat.Roughness = ROUGH_2;
 
         bxdfSample = BxDF::Sample(rng, hitInfo, wo, bxdfEval);
-        bxdfEval = BxDF::Evaluate(hitInfo, wo, bxdfSample.Wi, bxdfSample.Lobe);
 
-        if (bxdfEval.PDF > 0.0f && !bxdfSample.IsDirac)
+        if (!bxdfSample.IsDirac)
         {
             float samplingPDF = bxdfEval.PDF;
 
@@ -63,6 +64,8 @@ float3 SampleIndirectLighting(
 
             bxdfEval.PDF = samplingPDF;
         }
+
+        hitInfo.Mat.Roughness = roughStore;
     }
     else
     {
