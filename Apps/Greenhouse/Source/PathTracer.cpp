@@ -376,34 +376,34 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_GradientDomain))
         m_finalHdrOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
 
+    {
+        GPU_SCOPE(cmdList, "Post Process");
+
+        m_finalHdrOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_outputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        cmdList->SetPipelineState(m_pipelinePostProcess.GetPSO());
+        cmdList->SetComputeRootSignature(m_rootSigPostProcess.Get());
+
+        if (m_setPostProcess.GetSRV(0) != m_finalHdrOutput)
+        {
+            d3d->Flush();
+            m_setPostProcess.SetSRV_Tex2D(d3d->GetDevice(), 0, m_finalHdrOutput, m_finalHdrOutput->GetDesc().Format);
+        }
+
+        CbvPostProcessing cbv;
+        cbv.ToneMapWhitePoint = renderInfo.PathTracerConfig->PostProcessWhitePoint;
+        cbv.Exposure = renderInfo.PathTracerConfig->PostProcessExposure;
+        m_setPostProcess.UpdateCBV(0, &cbv);
+
+        m_setPostProcess.SetDescriptorTables_Compute(cmdList);
+
+        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+    }
+
     // Copy to RTV
     {
         GPU_SCOPE(cmdList, "Copy Output to RTV");
-
-        {
-            GPU_SCOPE(cmdList, "Blit to Rgba8Unorm");
-
-            m_finalHdrOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-            m_outputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-            cmdList->SetPipelineState(m_pipelinePostProcess.GetPSO());
-            cmdList->SetComputeRootSignature(m_rootSigPostProcess.Get());
-
-            if (m_setPostProcess.GetSRV(0) != m_finalHdrOutput)
-            {
-                d3d->Flush();
-                m_setPostProcess.SetSRV_Tex2D(d3d->GetDevice(), 0, m_finalHdrOutput, m_finalHdrOutput->GetDesc().Format);
-            }
-
-            CbvPostProcessing cbv;
-            cbv.Exposure = renderInfo.PathTracerConfig->PostProcessExposure;
-            cbv.ToneMapWhitePoint = renderInfo.PathTracerConfig->PostProcessWhitePoint;
-            m_setPostProcess.UpdateCBV(0, &cbv);
-
-            m_setPostProcess.SetDescriptorTables_Compute(cmdList);
-
-            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
-        }
 
         {
             GPU_SCOPE(cmdList, "Copy to RTV");
@@ -473,6 +473,8 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
         compileArgs.emplace_back("-DFEAT_FLAGS_COMP_DBG=" + std::to_string(debugInfo.FlagsDebug));
+#else
+        compileArgs.emplace_back("-DFEAT_FLAGS_COMP_DBG=0");
 #endif
 
 #if !NDEBUG
@@ -497,7 +499,10 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     }
 
     {
-        V(m_pipelinePostProcess.InitCompute(device, "PathTracing/Entry/PostProcessCS.hlsl", m_rootSigPostProcess.Get(), compileArgsCommon));
+        std::vector<std::string> compileArgs = compileArgsCommon;
+        compileArgs.emplace_back("-DFEAT_FLAGS_COMP_DBG=0");
+
+        V(m_pipelinePostProcess.InitCompute(device, "PathTracing/Entry/PostProcessCS.hlsl", m_rootSigPostProcess.Get(), compileArgs));
     }
 
     Reset();

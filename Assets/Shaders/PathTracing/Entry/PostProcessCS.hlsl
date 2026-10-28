@@ -30,10 +30,10 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     {
         TMO_ReinhardExt tmo;
         tmo.MaxWhite = gCBV.ToneMapWhitePoint;
-        ToneMapJodie(v, tmo);
+        v = ToneMapJodie(v, tmo);
 
         //TMO_Aces tmo;
-        //ToneMap(v, tmo);
+        //v = ToneMap(v, tmo);
     }
 
     // Gamma-Correct
