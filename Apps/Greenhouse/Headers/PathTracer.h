@@ -42,6 +42,7 @@ public:
         return Align(sizeof(CbvPathTracingSettings), 256) +
             Align(sizeof(CbvPathTracingDebugSettings), 256) +
             Align(sizeof(CbvRestirSettings), 256) +
+            Align(sizeof(CbvPostProcessing), 256) +
             RestirManager::TotalCbvRequiredSize();
     }
 
@@ -65,9 +66,9 @@ private:
     D12Resource m_outputRgba8Unorm;
     D12Resource* m_finalHdrOutput = nullptr;
 
-    Pipeline m_pipelineBlit;
-    RootSig m_rootSigBlit;
-    DescriptorSet m_setBlit;
+    Pipeline m_pipelinePostProcess;
+    RootSig m_rootSigPostProcess;
+    DescriptorSet m_setPostProcess;
 
     bool m_restirClearScheduled = false;
 

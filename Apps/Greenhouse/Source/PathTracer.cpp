@@ -78,9 +78,10 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 #endif
 
     {
-        m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
-        m_setBlit.Init(heap);
-        m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_outputRgba8Unorm, m_outputRgba8Unorm.GetDesc().Format);
+        m_rootSigPostProcess.SmartInit(d3d->GetDevice(), 1, 1, 1);
+        m_setPostProcess.Init(heap);
+        m_setPostProcess.AddCBV(d3d->GetDevice(), sizeof(CbvPostProcessing), uploadHeapCBV);
+        m_setPostProcess.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_outputRgba8Unorm, m_outputRgba8Unorm.GetDesc().Format);
     }
 
     auto featureFlags = s_defaultFeatFlagsCore;
@@ -385,16 +386,21 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             m_finalHdrOutput->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
             m_outputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-            cmdList->SetPipelineState(m_pipelineBlit.GetPSO());
-            cmdList->SetComputeRootSignature(m_rootSigBlit.Get());
+            cmdList->SetPipelineState(m_pipelinePostProcess.GetPSO());
+            cmdList->SetComputeRootSignature(m_rootSigPostProcess.Get());
 
-            if (m_setBlit.GetSRV(0) != m_finalHdrOutput)
+            if (m_setPostProcess.GetSRV(0) != m_finalHdrOutput)
             {
                 d3d->Flush();
-                m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, m_finalHdrOutput, m_finalHdrOutput->GetDesc().Format);
+                m_setPostProcess.SetSRV_Tex2D(d3d->GetDevice(), 0, m_finalHdrOutput, m_finalHdrOutput->GetDesc().Format);
             }
 
-            m_setBlit.SetDescriptorTables_Compute(cmdList);
+            CbvPostProcessing cbv;
+            cbv.Exposure = renderInfo.PathTracerConfig->PostProcessExposure;
+            cbv.ToneMapWhitePoint = renderInfo.PathTracerConfig->PostProcessWhitePoint;
+            m_setPostProcess.UpdateCBV(0, &cbv);
+
+            m_setPostProcess.SetDescriptorTables_Compute(cmdList);
 
             DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
         }
@@ -453,6 +459,8 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_DBG_" + std::string(s_featFlagNamesDbg[i]) + "=" + std::to_string(flagValue));
     }
 
+    compileArgsCommon.emplace_back("-DFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags));
+
 #if CHERRY_DEBUG_FEATURES_ENABLED
     if (debugInfo.FeatFlagQuickSwitchEnabled)
         compileArgsCommon.emplace_back("-DFF_QUICK_SWITCH_ENABLED=1");
@@ -460,7 +468,6 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
     {
         std::vector<std::string> compileArgs = compileArgsCommon;
-        compileArgs.emplace_back("-DFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags));
         compileArgs.emplace_back("-DBXDF_MODE=" + std::to_string(static_cast<uint32_t>(bxdfMode)));
         compileArgs.emplace_back("-DMICROFACET_MODEL_TYPE=" + std::to_string(static_cast<uint32_t>(microfacetModelType)));
 
@@ -472,7 +479,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         Profiler::AddToStack("Path-Tracer Update Pipeline");
 #endif
 
-        const HRESULT hr = m_pipeline.InitCompute(device, "PathTracing/0_PathTracerCS.hlsl", m_rootSig.Get(), compileArgs);
+        const HRESULT hr = m_pipeline.InitCompute(device, "PathTracing/Entry/PathTracerCS.hlsl", m_rootSig.Get(), compileArgs);
 
 #if !NDEBUG
         Profiler::PopAndPrint();
@@ -490,10 +497,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     }
 
     {
-        std::vector<std::string> compileArgs = compileArgsCommon;
-        compileArgs.emplace_back("-DDFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags & eCore_GammaCorrectionFast));
-
-        V(m_pipelineBlit.InitCompute(device, "Compute/TexBlitGCCS.hlsl", m_rootSigBlit.Get(), compileArgs));
+        V(m_pipelinePostProcess.InitCompute(device, "PathTracing/Entry/PostProcessCS.hlsl", m_rootSigPostProcess.Get(), compileArgsCommon));
     }
 
     Reset();

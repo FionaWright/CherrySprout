@@ -1,7 +1,6 @@
 #ifndef H_PATH_TRACING_STRUCTS_H
 #define H_PATH_TRACING_STRUCTS_H
 
-#include "GradientDomain/Structs.h"
 #include "PathTracing/NEE/Structs.h"
 #include "Utils/HlslGlue.h"
 
@@ -35,6 +34,37 @@ struct HitInfo
     hlsl::float3 p;
 };
 
+struct RngValuesPrimary
+{
+    hlsl::float2 Jitter;
+    hlsl::float2 DoF;
+};
+
+struct RngValuesAncillary
+{
+    // === Batch 1 ===
+    float AlphaTest;
+
+    struct RngValuesNEE
+    {
+        float LSD;
+        hlsl::float2 Light;
+    } NEE[MAX_DIRECT_SAMPLES];
+
+    struct RngValuesBxDF
+    {
+        hlsl::float3 Microfacet;
+        hlsl::float2 LobeSelect;
+    } BxDF;
+    // ===============
+
+    // === Batch 2 ===
+    float RussianRoulette;
+    // ===============
+
+    // Note: ReSTIR generates other RNG values that aren't included here
+};
+
 #ifdef __cplusplus
 struct RayDesc
 {
@@ -61,6 +91,8 @@ struct PathState
     hlsl::uint IsPrimaryRay;
     float p;
 };
+
+#include "GradientDomain/Structs.h"
 
 // Note: Unaligned, do not use in C++
 struct PathSample

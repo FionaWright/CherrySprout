@@ -72,42 +72,6 @@ bool Approx(float2 a, float2 b, float epsilon = 1e-5f)
     return dot(d, d) <= epsilon * epsilon;
 }
 
-// https://github.com/geometrian/simple-spectral/blob/master/src/util/color.hpp
-// More exact gamma correction, less error
-float3 LRGB_to_SRGB_Exact(float3 lrgb)
-{
-    float3 low  = 12.92 * lrgb;
-    float3 high = 1.055 * pow(lrgb, 1.0 / 2.4) - 0.055;
-
-    return float3(
-        lrgb.r < 0.0031308 ? low.r  : high.r,
-        lrgb.g < 0.0031308 ? low.g  : high.g,
-        lrgb.b < 0.0031308 ? low.b  : high.b
-    );
-}
-
-float3 LRGB_to_SRGB_Fast(float3 lrgb)
-{
-    return pow(lrgb, 1.0f/2.2f);
-}
-
-float3 SRGB_to_LRGB_Exact(float3 srgb)
-{
-    float3 low  = srgb / 12.92;
-    float3 high = pow((srgb + 0.055) / 1.055, 2.4);
-
-    return float3(
-        srgb.r < 0.04045 ? low.r  : high.r,
-        srgb.g < 0.04045 ? low.g  : high.g,
-        srgb.b < 0.04045 ? low.b  : high.b
-    );
-}
-
-float3 SRGB_to_LRGB_Fast(float3 lrgb)
-{
-    return pow(lrgb, 2.2f);
-}
-
 float  RemapUtoS(float v)  { return (v * 2.0f) - 1.0f; }
 float2 RemapUtoS(float2 v) { return (v * 2.0f) - 1.0f; }
 float3 RemapUtoS(float3 v) { return (v * 2.0f) - 1.0f; }

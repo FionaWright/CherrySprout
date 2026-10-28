@@ -38,12 +38,12 @@ struct TMO_Hable
     template <typename T>
     T Partial(T x)
     {
-        float A = 0.15f;
-        float B = 0.50f;
-        float C = 0.10f;
-        float D = 0.20f;
-        float E = 0.02f;
-        float F = 0.30f;
+        static const float A = 0.15f;
+        static const float B = 0.50f;
+        static const float C = 0.10f;
+        static const float D = 0.20f;
+        static const float E = 0.02f;
+        static const float F = 0.30f;
         return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
     }
 
@@ -58,7 +58,7 @@ struct TMO_Hable
 };
 
 // Note: float3 only
-struct TMO_ACES
+struct TMO_Aces
 {
     float3 Fit(float3 v)
     {
@@ -87,6 +87,22 @@ struct TMO_ACES
     }
 };
 
+struct TMO_AcesApprox
+{
+    template <typename T>
+    T Apply(T v)
+    {
+        static const float a = 2.51f;
+        static const float b = 0.03f;
+        static const float c = 2.43f;
+        static const float d = 0.59f;
+        static const float e = 0.14f;
+
+        v *= 0.6f;
+        return clamp((v*(a*v+b))/(v*(c*v+d)+e), 0.0f, 1.0f);
+    }
+};
+
 template <typename TMO>
 float3 ToneMap(float3 v, TMO tmo)
 {
@@ -97,7 +113,7 @@ template <typename TMO>
 float3 ToneMapLum(float3 v, TMO tmo)
 {
     float inLum = Luminance(v);
-    float outLum =  tmo.Apply(inLum);
+    float outLum = tmo.Apply(inLum);
 
     return v * (outLum / max(1e-6f, inLum));
 }

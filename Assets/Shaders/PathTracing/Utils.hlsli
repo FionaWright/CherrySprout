@@ -7,6 +7,7 @@
 #include "PathTracing/Debug/Internal/OutputColorMacros.hlsli"
 #include "PathTracing/Structs.h"
 #include "Utils/HlslUtils.hlsli"
+#include "PostProcessing/GammaCorrect.hlsli"
 
 PathState CreatePathState(float3 origin, float3 dir)
 {

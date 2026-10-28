@@ -346,6 +346,19 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
+        {
+            ImGui::Text("Post Processing:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_ToneMapping))
+                    GuiUtils::FwInputFloat("White Point", &m_config.PathTracerConfig.PostProcessWhitePoint);
+
+                GuiUtils::FwInputFloat("Exposure##PP", &m_config.PathTracerConfig.PostProcessExposure);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
+        }
+
         const bool restirDiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirDI);
         const bool restirGiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirGI);
         if (restirDiEnabled || restirGiEnabled)

@@ -43,4 +43,6 @@ FLAG_PROCESS(RestirPG, true)
 FLAG_PROCESS(RestirTargetVisibility, true)
 FLAG_PROCESS(Transient, true)
 
-// 2 flag slots remaining
+FLAG_PROCESS(ToneMapping, true)
+
+// 1 flag slots remaining

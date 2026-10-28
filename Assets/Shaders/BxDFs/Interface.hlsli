@@ -1,7 +1,7 @@
 #ifndef H_BXDF_INTERFACE_H
 #define H_BXDF_INTERFACE_H
 
-#include "PathTracing/RandomSampleStructs.h"
+#include "PathTracing/Structs.h"
 
 struct BxDF
 {

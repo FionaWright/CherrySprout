@@ -220,4 +220,11 @@ struct CbvEmissivePdf
     float p[3];
 };
 
+struct CbvPostProcessing
+{
+    float ToneMapWhitePoint;
+    float Exposure;
+    hlsl::float2 p;
+};
+
 #endif

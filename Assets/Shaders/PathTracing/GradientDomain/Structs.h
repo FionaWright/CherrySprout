@@ -4,7 +4,7 @@
 #include "BxDFs/Structs.h"
 #include "Utils/HlslGlue.h"
 
-#include "PathTracing/RandomSampleStructs.h"
+#include "PathTracing/Structs.h"
 #include "PathTracing/NEE/Structs.h"
 
 enum class VertexType : hlsl::uint

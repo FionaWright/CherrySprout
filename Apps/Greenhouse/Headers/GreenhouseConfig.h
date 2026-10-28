@@ -108,6 +108,9 @@ struct PathTracerConfig
 
     int TransientLightIndex = -1;
 
+    float PostProcessExposure = 1.0f;
+    float PostProcessWhitePoint = 1.0f;
+
     float TransientTimeSinceStart = 0.0f;
     float TransientPulseDuration = 1.0f;
     float TransientSpeedOfLight = 1.0f;
