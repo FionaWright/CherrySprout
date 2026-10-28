@@ -37,19 +37,24 @@ D12Resource TextureLoader::LoadTexture2DLDR(ID3D12Device* device, const wchar_t*
 {
     TexMetadata texMetadata{};
 
+    const bool extensionDDS = std::filesystem::path(path).extension().string() == ".dds";
+
+    constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;
+
     if (tryOverloadDDS)
     {
-        const std::wstring ddsPath = AssetPathToDDS(path);
+        const std::wstring ddsPath = extensionDDS ? path : AssetPathToDDS(path);
         CherryAssert(std::filesystem::exists(ddsPath));
         CherryAssert(std::filesystem::path(ddsPath).extension().string() == ".dds");
-
-        constexpr DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES | DDS_FLAGS_IGNORE_MIPS;
 
         V(LoadFromDDSFile(ddsPath.c_str(), ddsFlags, &texMetadata, scratchImage));
     }
     else
     {
-        V(LoadFromWICFile(path, WIC_FLAGS_NONE, &texMetadata, scratchImage));
+        if (extensionDDS)
+            V(LoadFromDDSFile(path, ddsFlags, &texMetadata, scratchImage));
+        else
+            V(LoadFromWICFile(path, WIC_FLAGS_NONE, &texMetadata, scratchImage));
     }
 
     DXGI_FORMAT format = texMetadata.format;

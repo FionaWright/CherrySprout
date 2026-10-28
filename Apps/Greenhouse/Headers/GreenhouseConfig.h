@@ -187,7 +187,7 @@ enum class RenderBackendMode : uint32_t
 
 struct RenderBackendConfig
 {
-    XMFLOAT3 DirLightDirection = { -1, -1, -1 };
+    XMFLOAT3 DirLightDirection = { -1, -0.7, -0.7 };
     XMFLOAT3 DirLightColor = { 1, 1, 1 };
     float DirLightIntensity = 1.0f;
     float DirLightCosAngularRadius = 0.00465f;

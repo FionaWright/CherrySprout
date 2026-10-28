@@ -289,7 +289,7 @@ void Greenhouse::renderGuiCore()
 
         ImGui::PopStyleVar();
 
-        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_DirectionalLight))
+        if (m_config.RenderBackend == RenderBackendMode::eForward || m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_DirectionalLight))
         {
             ImGui::Text("Directional Light:");
             ImGui::Indent(IM_GUI_INDENTATION);
@@ -303,7 +303,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_EnvironmentMap))
+        if (m_config.RenderBackend == RenderBackendMode::eForward || m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_EnvironmentMap))
         {
             ImGui::Text("Environment Map:");
             ImGui::Indent(IM_GUI_INDENTATION);

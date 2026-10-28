@@ -9,7 +9,9 @@
 #include "Debug/GPUEventScoped.h"
 #include "HWI/Heap.h"
 #include "Scene/Scene.h"
+#include "System/FileHelper.h"
 #include "System/HighResolutionClock.h"
+#include "System/TextureLoader.h"
 #include "Utils/D3DUtils.h"
 
 void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
@@ -21,7 +23,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 2, 1, 0, true, &sampler, 1, &m_rootConstants);
+    m_rootSig.SmartInit(d3d->GetDevice(), 2, 3, 0, true, &sampler, 1, &m_rootConstants);
 
     m_descriptorSet.Init(heap, true, true);
     m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), uploadHeapCBV);
@@ -46,6 +48,23 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true);
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/Forward.hlsl", "Raster/Forward.hlsl", desc));
+
+    UploadHeap uploadHeap;
+
+    const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    const auto cmdList = cmdListPtr.Get();
+    {
+        const std::wstring brdfIntPath = FileHelper::GetAssetTextureFullPath(L"BrdfIntMap.dds");
+
+        ScratchImage scratch;
+        m_brdfIntMap = TextureLoader::LoadTexture2D(d3d->GetDevice(), brdfIntPath.c_str(), scratch, D3D12_RESOURCE_FLAG_NONE, false);
+        uploadHeap.Init(d3d->GetDevice(), m_brdfIntMap.GetIntermediateSize());
+
+        TextureLoader::UploadTexture(cmdList, &uploadHeap, scratch, &m_brdfIntMap);
+    }
+    V(cmdList->Close());
+    d3d->ExecuteCommandList(cmdList);
+    d3d->Flush();
 }
 
 void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
@@ -59,7 +78,15 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
         m_skybox.UpdateDescriptorSet(d3d->GetDevice(), envMap->GetCubemap(), heap, uploadHeapCBV);
     }
 
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.Format = envMap->GetCubemap()->GetDesc().Format;
+    srvDesc.TextureCube.MipLevels = envMap->GetCubemap()->GetDesc().MipLevels;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
     m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
+    m_descriptorSet.SetSRV(d3d->GetDevice(), 2, envMap->GetCubemap(), srvDesc);
 }
 
 void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -126,7 +153,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     CbvForward cbvForward{};
     cbvForward.CameraPosition = renderInfo.Camera->GetPosition();
     cbvForward.FrameIdx = renderInfo.FrameIndex;
-    cbvForward.DirLightDir = normalize(XMFLOAT3(0.5f, -1, 0.5));
+    cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
     cbvForward.MaxCubemapMipMaps = 1;
     m_descriptorSet.UpdateCBV(1, &cbvForward);
 

@@ -31,10 +31,9 @@ ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1, space0);
 ConstantBuffer<CbvForward> gSettings : register(b2, space0);
 
 StructuredBuffer<Material> gMaterials : register(t0, space0);
+Texture2D<float2> gBrdfInt : register(t1, space0);
+TextureCube gSkyBox : register(t2, space0);
 //TextureCube gIrradiance : register(t1, space0);
-
-//Texture2D<float2> gBrdfInt : register(t0, space0);
-//TextureCube gEnvMap : register(t0, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
@@ -66,32 +65,47 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 worldPos = input.worldPos.xyz / input.worldPos.w;
 
     HitInfo hitInfo;
-    hitInfo.Mat = gMaterials[gCbvObject.MaterialIdx];;
+    hitInfo.Mat = gMaterials[gCbvObject.MaterialIdx];
+
+    ApplyNormalMap(uv, hitInfo.Mat.TexIdxNormal, Ns);
+
     hitInfo.Ng_ff = Ns;
     hitInfo.Ns_ff = Ns;
     hitInfo.SFrame = CreateShadingFrame(Ns);
-    hitInfo.Emission = 0.0f;
     hitInfo.UV = uv;
     hitInfo.IsEntering = true;
-    hitInfo.RayT = 0.0f; // TODO
+    hitInfo.RayT = length(worldPos - gSettings.CameraPosition);
     hitInfo.HitPos = worldPos;
 
     ApplyMaterialTextures(hitInfo);
 
     float3 wo = normalize(gSettings.CameraPosition - worldPos);
     float3 wi = -gSettings.DirLightDir;
+    //float3 wi = reflect(-wo, Ns);
+
+    float lod = hitInfo.Mat.Roughness * (gSettings.MaxCubemapMipMaps - 1);
+    float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi, lod).rgb;
 
     //float3 irradianceIblSample = gIrradiance.SampleLevel(gSamplerLinearWrap, Ns, 0).rgb;
-
-    float3 Li = 1.0f;
 
     BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
     //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
     float NdL = max(1e-6f, dot(Ns, wi));
+    float NdV = dot(Ns, wo);
 
-    float3 E_direct = NdL * Li * bxdfEval.Radiance / max(1e-6f, bxdfEval.PDF);
+    float3 E_direct = NdL * envSample * bxdfEval.Radiance / max(1e-6f, bxdfEval.PDF);
+
+    float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
+    float3 H = normalize(wo + wi);
+    float HdV = dot(H, wo);
+    float3 F = F_Schlick(HdV, F0);
+
+    float2 uv_brdfInt = saturate(float2(max(NdV, 0), hitInfo.Mat.Roughness));
+    float2 brdfIntSample = gBrdfInt.SampleLevel(gSamplerLinearWrap, uv_brdfInt, 0).rg;
+    float3 E_indirect = envSample * (F * brdfIntSample.r + brdfIntSample.g) * max(0.0f, F);
+    E_indirect = max(0, E_indirect);
 
     // TODO: Sample env map and irradiance map
 
@@ -99,7 +113,9 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.2f;
 
-    float3 E = E_direct + E_ambient;
+    float3 E = E_direct;
+    //float3 E = E_direct + E_indirect + E_ambient;
+    //float3 E = E_indirect;
 
     return float4(E, hitInfo.Mat.Albedo.a);
 }

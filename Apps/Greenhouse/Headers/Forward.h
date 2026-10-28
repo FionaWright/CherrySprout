@@ -41,6 +41,8 @@ private:
     DescriptorSet m_descriptorSet;
     Skybox m_skybox;
     RootConstants m_rootConstants;
+
+    D12Resource m_brdfIntMap;
 };
 
 
