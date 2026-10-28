@@ -42,7 +42,7 @@ void TransmissiveLobe_Sample(
 
     float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, saturate(abs(VdH)));
     float D = mm.D(H_s);
-    float G = mm.G2(abs(NdL), abs(NdV));
+    float G = mm.G2(abs(L_s), abs(V_s));
     float mmPdf = mm.PDF(D, H_s, V_s);
 
     DBG_OUTPUT1(F,                BxDF_F);
@@ -107,7 +107,7 @@ void TransmissiveLobe_Evaluate(
 
     float F = Fresnel_Dielectric_Unpolarized(nCurrent, nNext, abs(VdH));
     float D = mm.D(H_s);
-    float G = mm.G2(abs(NdL), abs(NdV));
+    float G = mm.G2(abs(L_s), abs(V_s));
     float mmPdf = mm.PDF(D, H_s, V_s);
 
     DBG_OUTPUT1(F,                Eval_F);

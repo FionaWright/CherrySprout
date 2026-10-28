@@ -48,7 +48,7 @@ void SpecularLobe_Sample(
     }
 
     float D = mm.D(H_s);
-    float G = mm.G2(NdL, NdV);
+    float G = mm.G2(L_s, V_s);
     pdf = mm.PDF(D, H_s, V_s);
 
     pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF
@@ -99,7 +99,7 @@ void SpecularLobe_Evaluate(
 
     float3 F = F_Schlick(VdH, F0);
     float D = mm.D(H_s);
-    float G = mm.G2(NdL, NdV);
+    float G = mm.G2(L_s, V_s);
 
     pdf = mm.PDF(D, H_s, V_s);
     pdf /= (4.0f * max(1e-6, VdH)); // Reflection PDF

@@ -8,6 +8,7 @@
 enum class BxdfMode : hlsl::uint
 {
     eLambertian,
+    eGlossy,
     ePBR,
     ePrincipled,
 
@@ -17,6 +18,7 @@ enum class BxdfMode : hlsl::uint
 static const char* s_bxdfNames[static_cast<hlsl::uint>(BxdfMode::eCount)] =
 {
     "Lambertian",
+    "Glossy",
     "PBR",
     "Principled"
 };
@@ -26,8 +28,9 @@ static constexpr BxdfMode s_defaultBxdfMode = BxdfMode::ePBR;
 #else
 
 #define BXDF_LAMBERTIAN     0
-#define BXDF_PBR            1
-#define BXDF_PRINCIPLED     2
+#define BXDF_GLOSSY         1
+#define BXDF_PBR            2
+#define BXDF_PRINCIPLED     3
 
 #   ifndef BXDF_MODE
 #       define BXDF_MODE BXDF_LAMBERTIAN

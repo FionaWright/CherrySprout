@@ -68,21 +68,32 @@ float MicrofacetModel::D(float3 H)
     float a2 = m_alpha * m_alpha;
     float NdH = H.z;
 
-    float denominator = (NdH * NdH * (a2 - 1.0f) + 1.0f);
-    return a2 / max(1e-6f, PI * denominator * denominator);
+    float sx = -H.x / (NdH * m_alpha);
+    float sy = -H.y / (NdH * m_alpha);
+    float sl = 1.0f + sx * sx + sy * sy;
+    float NdH4 = NdH * NdH * NdH * NdH;
+    return 1.0f / ((sl * sl) * PI * a2 * NdH4);
 }
 
-float MicrofacetModel::G1(float NdW)
+float MicrofacetModel::G1(float3 W)
 {
-    float a2 = m_alpha * m_alpha;
+    // Un-Correlated:
+    //float a2 = m_alpha * m_alpha;
+    //float NdW = W.z;
+    //float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
+    //return saturate(2 * NdW / max(1e-6f, denom));
 
-    float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
-    return saturate(2 * NdW / max(1e-6f, denom));
+    // Height-Correlated:
+    return 1.0f / (1.0f + Lambda(W, m_alpha));
 }
 
-float MicrofacetModel::G2(float NdL, float NdV)
+float MicrofacetModel::G2(float3 L, float3 V)
 {
-    return G1(NdL) * G1(NdV);
+    // Un-Correlated:
+    //return G1(NdL) * G1(NdV);
+
+    // Height-Correlated:
+    return 1.0f / (1.0f + Lambda(L, m_alpha) + Lambda(V, m_alpha));
 }
 
 float MicrofacetModel::PDF(float D, float3 H, float3 V)

@@ -178,6 +178,25 @@ float3 F_Schlick(float VdH, float3 F0)
 //  Geometry Masking Functions
 // ================================
 
+float Lambda(float3 W, float alpha)
+{
+    float a2 = alpha * alpha;
+    float Wx = a2 * W.x * W.x;
+    float Wy = a2 * W.y * W.y;
+    float Wz = max(1e-6f, W.z * W.z);
+    return 0.5f * (-1 + sqrt(max(0.0f, 1 + (Wx + Wy) / Wz)));
+}
+
+float Lambda(float3 W, float alphaX, float alphaY)
+{
+    float aX2 = alphaX * alphaX;
+    float aY2 = alphaY * alphaY;
+    float Wx = aX2 * W.x * W.x;
+    float Wy = aY2 * W.y * W.y;
+    float Wz = max(1e-6f, W.z * W.z);
+    return 0.5f * (-1 + sqrt(max(0.0f, 1 + (Wx + Wy) / Wz)));
+}
+
 // Schlick-GGX Approximation. Faster but less accurate
 float G_SmithFast(float NdL, float NdV, float roughness)
 {
@@ -202,16 +221,6 @@ float Lambda_Beckmann(float3 W, float alpha)
 
     return (1 - 1.259f * a + 0.396f * a * a) /
            (3.535f * a + 2.181f * a * a);
-}
-
-float G1_Beckmann(float3 W, float alpha)
-{
-    return 1.0f / (1.0f + Lambda_Beckmann(W, alpha));
-}
-
-float G_Beckmann(float3 V, float3 L, float alpha)
-{
-    return 1.0f / (1.0f + Lambda_Beckmann(V, alpha) + Lambda_Beckmann(L, alpha));
 }
 
 #endif

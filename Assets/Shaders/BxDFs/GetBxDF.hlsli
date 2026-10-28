@@ -14,6 +14,9 @@ struct RngInfo;
 #if   (BXDF_ENABLED(LAMBERTIAN))
 #    include "BxDFs/BRDF_Lambertian.hlsli"
 
+#elif   (BXDF_ENABLED(GLOSSY))
+#    include "BxDFs/BRDF_Glossy.hlsli"
+
 #elif (BXDF_ENABLED(PBR))
 #    include "BxDFs/BSDF_PBR.hlsli"
 

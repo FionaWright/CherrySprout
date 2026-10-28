@@ -100,14 +100,6 @@ float G1CustomAlpha(float NdW, float alpha)
     return saturate(2 * NdW / max(0.001f, denom));
 }
 
-float Lambda(float3 W, float alphaX, float alphaY)
-{
-    float aX2 = alphaX * alphaX;
-    float aY2 = alphaY * alphaY;
-    float k = (aX2 * W.x * W.x + aY2 * W.y * W.y) / max(0.0001f, W.z * W.z);
-    return 0.5f * (-1 + sqrt(1 + k));
-}
-
 float MicrofacetModel::G1(float NdW)
 {
     //return 1.0f / max(0.001f, 1 + Lambda(W, alphaX, alphaY));

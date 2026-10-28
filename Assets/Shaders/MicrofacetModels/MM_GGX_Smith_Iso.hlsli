@@ -45,17 +45,19 @@ float MicrofacetModel::D(float3 H)
     return a2 / max(1e-6, PI * denominator * denominator);
 }
 
-float MicrofacetModel::G1(float NdW)
+float MicrofacetModel::G1(float3 W)
 {
     float a2 = m_alpha * m_alpha;
+
+    float NdW = W.z;
 
     float denom = NdW + sqrt(max(0.0f, a2 + (1-a2) * NdW * NdW));
     return saturate(2 * NdW / max(1e-6, denom));
 }
 
-float MicrofacetModel::G2(float NdL, float NdV)
+float MicrofacetModel::G2(float3 L, float3 V)
 {
-    return G1(NdL) * G1(NdV);
+    return G1(L) * G1(V);
 }
 
 float MicrofacetModel::PDF(float D, float3 H, float3 V)

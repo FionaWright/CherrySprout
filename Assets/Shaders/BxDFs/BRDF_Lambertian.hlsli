@@ -37,6 +37,7 @@ BxdfEval BxDF::Evaluate(
     if (!CoversLobe(lobe, LobeTag::eLambertian))
     {
         eval.Radiance = 0.0f;
+        eval.PDF = 0.0f;
         return eval;
     }
 

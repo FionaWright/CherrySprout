@@ -19,11 +19,13 @@ float3 SampleIndirectLighting(
 
     if (FEAT_DBG(BxdfTestHemisphere) && gRunBxdfTestForPixel)
     {
-        wi = RandHemisphereCosineWorld(rng.Microfacet.x, rng.Microfacet.y, hitInfo.SFrame);
+        bxdfSample.Wi = RandHemisphereCosineWorld(rng.Microfacet.x, rng.Microfacet.y, hitInfo.SFrame);
+        bxdfSample.IsDirac = false;
+        bxdfSample.Lobe = LobeTag::eLambertian;
 
-        bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+        bxdfEval = BxDF::Evaluate(hitInfo, wo, bxdfSample.Wi, LobeTag::eAll);
 
-        float NdL = dot(hitInfo.Ns_ff, wi);
+        float NdL = dot(hitInfo.Ns_ff, bxdfSample.Wi);
         bxdfEval.PDF = NdL / PI;
     }
     else if (FEAT_DBG(BxdfTestRevaluate) && gRunBxdfTestForPixel)
@@ -45,9 +47,9 @@ float3 SampleIndirectLighting(
     {
         float roughStore = hitInfo.Mat.Roughness;
 
-#define ROUGH_1 0.8f
+#define ROUGH_1 0.3f
 //#define ROUGH_1 max(0.1f, hitInfo.Mat.Roughness)
-#define ROUGH_2 0.03f
+#define ROUGH_2 0.1f
         if (gRunBxdfTestForPixel)
             hitInfo.Mat.Roughness = ROUGH_1;
         else
