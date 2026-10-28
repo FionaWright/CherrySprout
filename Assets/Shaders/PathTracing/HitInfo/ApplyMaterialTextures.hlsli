@@ -53,9 +53,9 @@ void ApplyMaterialTextures(inout HitInfo hitInfo)
         hitInfo.Emission = 0.0f;
 }
 
-void ApplyNormalMap(float2 uv, uint texIdxNormal, inout float3 Ns)
+void ApplyNormalMap(float2 uv, uint texIdxNormal, inout float3 Ns, bool skipFeatFlags = false)
 {
-    if (!FEAT_CORE(NormalMaps))
+    if (!skipFeatFlags && !FEAT_CORE(NormalMaps))
         return;
 
     if (texIdxNormal == NO_TEXTURE)
