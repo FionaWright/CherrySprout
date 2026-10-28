@@ -185,7 +185,7 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 #endif
 }
 
-void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle)
+void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle)
 {
     GPU_SCOPE(cmdList, "Path-Trace");
 
@@ -405,7 +405,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             m_outputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
             RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-            RTV->CopyTextureInto(cmdList, m_outputRgba8Unorm.GetResource());
+            RTV->CopyTextureInto(cmdList, m_outputRgba8Unorm.GetResource(), Config::GetSystem().WindowAppGuiWidth);
         }
     }
 }

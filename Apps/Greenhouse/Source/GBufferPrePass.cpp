@@ -126,7 +126,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
             m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxMv),
         };
 
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth);
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth);
         cmdList->OMSetRenderTargets(_countof(rtvs), rtvs, FALSE, &dsvHandle);
 
         for (int i = 0; i < _countof(rtvs); i++)

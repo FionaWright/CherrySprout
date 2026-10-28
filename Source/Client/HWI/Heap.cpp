@@ -38,7 +38,7 @@ void Heap::Init(const char* name, ID3D12Device* device, const size_t numDescript
 #endif
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Heap::GetDescriptorHandleAtIndex(const uint32_t idx) const
+D3D12_CPU_DESCRIPTOR_HANDLE Heap::GetDescriptorHandleAtIndex(const uint32_t idx) const
 {
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_heapResource->GetCPUDescriptorHandleForHeapStart(), idx, m_descriptorIncSize);
 }

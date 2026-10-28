@@ -71,7 +71,7 @@ void Forward::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 
 }
 
-void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle)
+void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
 
@@ -79,7 +79,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     Heap* heap = renderInfo.Heap;
 
     {
-        SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 0);
+        SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, Config::GetSystem().WindowAppGuiWidth);
 
         RTV->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 

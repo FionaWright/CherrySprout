@@ -35,10 +35,4 @@ struct RngValuesAncillary
     // Note: ReSTIR generates other RNG values that aren't included here
 };
 
-struct RngValues
-{
-    RngValuesPrimary Primary;
-    RngValuesAncillary Ancillaries[MAX_RAY_DEPTH];
-};
-
 #endif

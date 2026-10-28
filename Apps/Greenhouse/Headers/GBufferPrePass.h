@@ -33,7 +33,7 @@ public:
     [[nodiscard]] D12Resource* GetGBufferDepth() { return &m_gbufferTexDepth; }
     [[nodiscard]] D12Resource* GetGBufferMv() { return &m_gbufferTexMv; }
 
-    [[nodiscard]] CD3DX12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const { return m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth); }
+    [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const { return m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth); }
 
 private:
     Heap m_heapRTV;

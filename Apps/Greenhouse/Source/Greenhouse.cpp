@@ -21,10 +21,6 @@ void Greenhouse::Init(D3D* d3d)
 
     CherryPrint("Initializing Greenhouse...");
 
-    m_frameBuffer.Init_Tex2D("Frame Buffer", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-    m_heapRTV.Init("Greenhouse Heap RTV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    m_heapIdxFrameBuffer = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_frameBuffer);
-
     for (int i = static_cast<int>(s_sceneConfigs.size()) - 1; i >= 0; i--)
     {
         const std::string fullpath = FileHelper::GetAssetFullPath(s_sceneConfigs[i].Filepath.c_str());
@@ -295,16 +291,17 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_gbufferPrePass.GetGBufferMv()->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-    const auto rtvHandle = m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxFrameBuffer);
+    D12Resource* rtv = d3d->GetRtv();
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = d3d->GetRtvHandle();
 
     // Forward/Path-Tracing Pass
-    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo, &m_frameBuffer, rtvHandle);
+    m_currRenderBackend->Render(d3d, cmdList, m_renderInfo, rtv, rtvHandle);
 
 #if !NDEBUG
-    // Gizmos Pass
-    if (m_gizmosEnabled)
+    // Gizmos Pass (PT-only)
+    if (m_gizmosEnabled && m_config.RenderBackend == RenderBackendMode::ePathTracer)
     {
-        m_frameBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        rtv->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_gbufferPrePass.GetGBufferDepth()->Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
         const auto& dsvHandle = m_gbufferPrePass.GetDsvHandle();
         cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -312,16 +309,6 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_gizmoManager.Render(d3d, &m_heap, cmdList, m_renderInfo.V, m_renderInfo.P);
     }
 #endif
-
-    // Copy to swapchain
-    {
-        GPU_SCOPE(cmdList, "Copy final output to swapchain");
-
-        m_frameBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        d3d->GetRtv()->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        d3d->GetRtv()->CopyTextureInto(cmdList, m_frameBuffer.GetResource(), Config::GetSystem().WindowAppGuiWidth, 0, 0);
-    }
 }
 
 void Greenhouse::PostUpdate(D3D* d3d)

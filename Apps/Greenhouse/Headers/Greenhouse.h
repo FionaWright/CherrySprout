@@ -81,10 +81,6 @@ private:
     bool m_gizmosSceneLoaded = false;
 #endif
 
-    D12Resource m_frameBuffer;
-    Heap m_heapRTV;
-    uint32_t m_heapIdxFrameBuffer = 0;
-
     SceneManager m_sceneManager;
     EnvironmentMap m_envMap;
     LightImportanceSampler m_lightImportanceSampler;

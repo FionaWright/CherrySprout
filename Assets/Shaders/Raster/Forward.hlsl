@@ -83,7 +83,7 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     //float3 irradianceIblSample = gIrradiance.SampleLevel(gSamplerLinearWrap, Ns, 0).rgb;
 
-    float3 Li = 5.0f;
+    float3 Li = 1.0f;
 
     BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
