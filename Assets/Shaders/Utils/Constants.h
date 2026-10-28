@@ -27,8 +27,7 @@
 
 // ============ THRESHOLDS ===========
 
-//#define ROUGHNESS_DIRAC_THRESHOLD (0.15f)
-#define ROUGHNESS_DIRAC_THRESHOLD (0.01f)
+#define ROUGHNESS_DIRAC_THRESHOLD (0.15f)
 
 #define MAX_RAY_DEPTH (32)
 

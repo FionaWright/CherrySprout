@@ -1,6 +1,8 @@
 #ifndef H_PT_DEBUG_GLOBALS_H
 #define H_PT_DEBUG_GLOBALS_H
 
+static bool gRunBxdfTestForPixel = false;
+
 #if FEAT_DBG_D(OutputColor) || FEAT_DBG_D(PathDumper) || FEAT_DBG_D(Asserts) || FEAT_DBG_D(BxdfTestRevaluate) || FEAT_DBG_D(BxdfTestHemisphere)
 
 #include "Utils/Constants.h"
@@ -9,7 +11,6 @@ static bool gDebugValueFound = false;
 static float3 gDebugValue = NAN;
 static bool gDebugOutputEnabled = true;
 static bool gDebugDumpOutputsEnabled = true;
-static bool gRunBxdfTestForPixel = false;
 
 static int gDebugCurrentRayDepth = 0;
 static uint2 gDebugPixelCoord = uint2(UINT_MAX, UINT_MAX);

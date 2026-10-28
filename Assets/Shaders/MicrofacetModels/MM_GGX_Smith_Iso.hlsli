@@ -38,11 +38,18 @@ float3 MicrofacetModel::Sample(float3 rng)
 
 float MicrofacetModel::D(float3 H)
 {
-    float a2 = m_alpha * m_alpha;
     float NdH = H.z;
 
-    float denominator = (NdH * NdH * (a2 - 1.0f) + 1.0f);
-    return a2 / max(1e-6, PI * denominator * denominator);
+    if (NdH <= 0.0f || m_alpha <= 0.0f)
+        return 0.0f;
+
+    float a2 = m_alpha * m_alpha;
+
+    float sx = -H.x / (NdH * m_alpha);
+    float sy = -H.y / (NdH * m_alpha);
+    float sl = 1.0f + sx * sx + sy * sy;
+    float NdH4 = NdH * NdH * NdH * NdH;
+    return 1.0f / ((sl * sl) * PI * a2 * NdH4);
 }
 
 float MicrofacetModel::G1(float3 W)
