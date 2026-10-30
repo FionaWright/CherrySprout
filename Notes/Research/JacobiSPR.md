@@ -135,6 +135,7 @@ $\alpha (u-f) - \Delta u + \nabla \cdot g = 0$
 ## Linear System
 
 All operators are linear, can be put into form:  
+
 $Ax + b = 0$  
 
 $\alpha u- \alpha f - \Delta u + \nabla \cdot g = 0$  

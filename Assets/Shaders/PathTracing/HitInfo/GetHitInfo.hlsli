@@ -47,6 +47,7 @@ void GetHitInfo(inout RayQuery<RAY_FLAGS> q, out HitInfo hitInfo)
 
     ApplyNormalMap(hitInfo.UV, hitInfo.Mat.TexIdxNormal, Ns);
 
+    hitInfo.Ng = Ng;
     hitInfo.Ng_ff = hitInfo.IsEntering ? Ng : -Ng;
     hitInfo.Ns_ff = hitInfo.IsEntering ? Ns : -Ns;
     hitInfo.SFrame = CreateShadingFrame(hitInfo.Ns_ff);

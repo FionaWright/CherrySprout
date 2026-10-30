@@ -11,6 +11,7 @@ struct HitInfo
 {
     Material Mat;
 
+    hlsl::float3 Ng;
     hlsl::float3 Ng_ff;
     hlsl::float3 Ns_ff;
     ShadingFrame SFrame;

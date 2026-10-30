@@ -45,7 +45,6 @@ void TraceShiftedPath(
             isSymmetric = false;
             Lo = 0.0f;
             DBG_OUTPUT1(1.0f, GD_RejectionEnvMap);
-            DBG_DUMP_PATH();
             break;
         }
 

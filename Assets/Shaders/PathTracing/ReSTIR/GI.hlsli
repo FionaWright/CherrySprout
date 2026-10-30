@@ -62,7 +62,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
 
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
     X_i.DestPosition = isMiss ? bxdfSample.Wi : secondaryHitInfo.HitPos;
-    X_i.DestNg_ff = isMiss ? 0 : secondaryHitInfo.Ng_ff;
+    X_i.DestNg = isMiss ? 0 : secondaryHitInfo.Ng;
     X_i.IsMiss = isMiss;
     X_i.DirectContribution = E_direct;
     X_i.BxdfEval = bxdfEval;
@@ -78,6 +78,14 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     }
 
     float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
+
+    bool swappedSidesOfSurface = dot(X_i.DestNg, wi) >= 0.0f;
+    if (swappedSidesOfSurface)
+    {
+        X_i.BxdfEval.Radiance = 0.0f;
+        // TODO: Could possibly allow this to still be valid, but would need NEE re-evaluation which is annoying
+        return;
+    }
 
     X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
 
@@ -100,7 +108,8 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     else
     {
         float3 v2Pos = X_i.DestPosition;
-        float3 v2Normal = X_i.DestNg_ff;
+        float3 v2Normal = dot(X_i.DestNg, wi) >= 0.0f ? -X_i.DestNg : X_i.DestNg; // Recompute face-forward
+
         shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
     }
 
@@ -201,7 +210,13 @@ bool TrySampleReservoirGI(
     if (NdL <= 0 || length(Y.BxdfEval.Radiance) <= 0.0f || Y.Jacobian <= 0.0f || length(Y.DirectContribution) <= 0.0f)
         return false;
 
-    // TODO: Visibility test?
+    bool occluded;
+    if (Y.IsMiss)
+        TestVisibilityDirection(hitInfo.HitPosBiased, Y.DestPosition, occluded);
+    else
+        TestVisibilityPoints(hitInfo.HitPosBiased, Y.DestPosition, occluded);
+    if (occluded)
+        return 0.0f;
 
     // TODO: Do I need to recompute this rather than just use reservoir.PHat?
 

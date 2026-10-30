@@ -58,6 +58,7 @@ void ReconstructPrimaryRayHit(
     hitInfo.UV = gbufferNormalsUv[pixelCoord].zw;
     hitInfo.Ns_ff = DecodeNormalOctahedral(normal_oct);
     hitInfo.Ng_ff = hitInfo.Ns_ff;
+    hitInfo.Ng = hitInfo.Ns_ff; // TODO: Could cause issues?
 
     depthNonLinear = gbufferDepth[pixelCoord];
     hitInfo.HitPos = DepthToWorldPos(pixelCoord, depthNonLinear);

@@ -19,7 +19,7 @@ void LambertianLobe_Sample(
     if (NdL <= 0.0f)
     {
         f = 0.0f;
-        pdf = 1.0f;
+        pdf = 0.0f;
         return;
     }
 
@@ -43,7 +43,7 @@ void LambertianLobe_Evaluate(
     if (NdL <= 0.0f)
     {
         f = 0.0f;
-        pdf = 1.0f;
+        pdf = 0.0f;
         return;
     }
 
@@ -61,7 +61,7 @@ void LambertianLobe_Pdf(
 
     if (NdL <= 0.0f)
     {
-        pdf = 1.0f;
+        pdf = 0.0f;
         return;
     }
 

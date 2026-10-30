@@ -119,11 +119,11 @@ uint GetContextBufferIndex_Pong(uint2 pixelCoord)
 
 uint GetContextBufferIndex(uint2 pixelCoord)
 {
-    return gSettings.FrameIdx % 2 == 0 ? GetContextBufferIndex_Ping(pixelCoord) : GetContextBufferIndex_Pong(pixelCoord);
+    return (gSettings.FrameIdx & 1) == 0 ? GetContextBufferIndex_Ping(pixelCoord) : GetContextBufferIndex_Pong(pixelCoord);
 }
 uint GetContextBufferIndex_Prev(uint2 pixelCoord)
 {
-    return gSettings.FrameIdx % 2 == 0 ? GetContextBufferIndex_Pong(pixelCoord) : GetContextBufferIndex_Ping(pixelCoord);
+    return (gSettings.FrameIdx & 1) == 0 ? GetContextBufferIndex_Pong(pixelCoord) : GetContextBufferIndex_Ping(pixelCoord);
 }
 
 #endif

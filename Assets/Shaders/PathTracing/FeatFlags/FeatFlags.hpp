@@ -23,10 +23,10 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_GdptShiftRecEnv |
         eCore_GdptShiftRec |
         eCore_GdptShiftHalf |
-        eCore_AliasTables
+        eCore_AliasTables |
         //eCore_RestirDI |
         //eCore_RestirGI |
-        //eCore_RussianRoulette
+        eCore_RussianRoulette
     );
 
 static constexpr auto s_defaultFeatFlagsCoreQS = static_cast<FeatFlagsCore>(~0);
@@ -37,7 +37,7 @@ static constexpr auto s_defaultFeatFlagsDbg = static_cast<FeatFlagsDbg>(
         eDebug_Scales |
         eDebug_ForceLightIndex |
         eDebug_GeometricNormalOnly |
-        eDebug_PathDumper |
+        //eDebug_PathDumper |
         eDebug_OutputColor |
         eDebug_Asserts
     );

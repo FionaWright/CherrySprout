@@ -26,7 +26,7 @@ struct CandidateGI
 {
     hlsl::float3 SourcePositionBiased; // For Jacobian
     hlsl::float3 DestPosition;
-    hlsl::float3 DestNg_ff;
+    hlsl::float3 DestNg;
 
     hlsl::uint IsMiss;
     hlsl::float3 DirectContribution;
