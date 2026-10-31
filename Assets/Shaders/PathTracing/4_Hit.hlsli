@@ -50,7 +50,10 @@ void Hit(inout PathState pathState,
     pathState.Beta *= E_indirect;
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = hitInfo.HitPosBiased;
+
     pathState.LastRayWasDiracDelta = isDirac;
+
+    DBG_FORCE_OUTPUT1(isDirac);
 
     if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;

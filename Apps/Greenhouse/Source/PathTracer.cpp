@@ -177,7 +177,9 @@ void PathTracer::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
 void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.PostUpdate(d3d, renderInfo, renderInfo.FrameIndex, &m_outputRgba8Unorm);
+    const bool isMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameCount != 0 && renderInfo.FrameIndex >= renderInfo.PathTracerConfig->MaxFrameCount;
+    uint32_t frameIdx = isMaxFramesReached ? renderInfo.FrameIndex - 1 : renderInfo.FrameIndex;
+    m_debugManager.PostUpdate(d3d, renderInfo, frameIdx, &m_outputRgba8Unorm);
 
     if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI))
     {
@@ -236,7 +238,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.RussianRouletteMinBounces = renderInfo.PathTracerConfig->RussianRouletteMinBounces;
         settings.SPP = renderInfo.PathTracerConfig->SPP;
         settings.FireflyThreshold = renderInfo.PathTracerConfig->FireFlyThreshold;
-        settings.IsMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameNumber != 0 && renderInfo.FrameIndex > renderInfo.PathTracerConfig->MaxFrameNumber;
         settings.DirectNumSamples = renderInfo.PathTracerConfig->DirectNumSamples;
 
         float speedOfLight = renderInfo.PathTracerConfig->TransientSpeedOfLight;
@@ -357,10 +358,16 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         m_restirClearScheduled = false;
     }
 
-    // Main Pass
+    const bool isMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameCount != 0 && renderInfo.FrameIndex >= renderInfo.PathTracerConfig->MaxFrameCount;
+    bool runPT = !isMaxFramesReached;
+
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (!m_debugManager.IsScheduledRunState(ScheduledRunState::eDisplay))
+    runPT &= !m_debugManager.IsScheduledRunState(ScheduledRunState::eDisplay);
+    runPT |= m_debugManager.IsScheduledRunState(ScheduledRunState::eReadbackPathDump);
 #endif
+
+    // Main Pass
+    if (runPT)
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());

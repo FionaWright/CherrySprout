@@ -30,12 +30,6 @@ void Core(uint2 pixelCoord)
         return;
     }
 
-    if (gSettings.IsMaxFramesReached)
-    {
-        gTexPrimal[pixelCoord].rgb = gTexAccumulation[pixelCoord].rgb;
-        return;
-    }
-
     float3 origin = gSettings.CameraPositionWorld;
 
     float3 primalSum = float3(0,0,0);
@@ -43,6 +37,7 @@ void Core(uint2 pixelCoord)
 
     for (uint i = 0; i < gSettings.SPP; i++)
     {
+        DBG_FORCE_OUTPUT1(gSettings.FrameIdx);
         const RngInfo rngInfo = InitializeRngInfo(pixelCoord, i, gSettings.FrameIdx, gSettings.Seed);
         DBG_OUTPUT1(Rand01_Const(rngInfo), RNG);
 

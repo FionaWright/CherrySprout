@@ -394,7 +394,10 @@ void Greenhouse::PostUpdate(D3D* d3d)
     }
 #endif
 
-    m_renderInfo.FrameIndex++;
+    if (m_renderInfo.PathTracerConfig->MaxFrameCount != 0)
+        m_renderInfo.FrameIndex = std::min(m_renderInfo.FrameIndex + 1, m_renderInfo.PathTracerConfig->MaxFrameCount);
+    else
+        m_renderInfo.FrameIndex++;
 }
 
 void Greenhouse::OnResize(uint32_t width, uint32_t height)

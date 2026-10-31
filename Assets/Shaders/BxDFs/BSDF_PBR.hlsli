@@ -45,7 +45,7 @@ BxdfSample BxDF::Sample(
 
     out BxdfEval eval)
 {
-    BxdfSample sample;
+    BxdfSample sample = (BxdfSample)0;
 
     float3 N_s = float3(0, 0, 1);
     float3 V_s = hitInfo.SFrame.ToLocal(wo);

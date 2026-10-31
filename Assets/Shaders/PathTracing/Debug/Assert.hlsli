@@ -13,7 +13,7 @@
 #include "Utils/Debug/DebugStructs.h"
 #include "Utils/Constants.h"
 
-#define MAX_ASSERTS_PER_PATH 3
+#define MAX_ASSERTS_PER_PATH 1
 
 // Note: Using scalar inputs to avoid DXC bug with [noinline]
 [noinline]
@@ -135,24 +135,24 @@ void dbgAssert(float3 v1, float3 v2, float3 v3, bool3 expr, uint dbgID)         
 void dbgAssert(float2 v1, float2 v2, float2 v3, bool2 expr, uint dbgID)          { dbgAssert(v1.x, v1.y, 0, 0, v2.x, v2.y, 0, 0, v3.x, v3.y, 0, 0, expr.x, expr.y, 1, 1, dbgID); }
 void dbgAssert(float  v1, float  v2, float  v3, bool  expr, uint dbgID)          { dbgAssert(v1.x, 0, 0, 0, v2.x, 0, 0, 0, v3.x, 0, 0, 0, expr.x, 1, 1, 1, dbgID); }
 
-#define DBG_ASSERT_EXPR(expr, dbgID)                  dbgAssert(0, 0, 0, expr, dbgID);
-#define DBG_ASSERT_VALUE(v,    dbgID)                 dbgAssert(v, 0, 0, 1, dbgID);
-#define DBG_ASSERT_FAIL(dbgID)                        dbgAssert(0, 0, 0, 0, dbgID);
+#define DBG_ASSERT_EXPR(expr, dbgID)                  { dbgAssert(0, 0, 0, expr, dbgID); }
+#define DBG_ASSERT_VALUE(v,    dbgID)                 { dbgAssert(v, 0, 0, 1, dbgID); }
+#define DBG_ASSERT_FAIL(dbgID)                        { dbgAssert(0, 0, 0, 0, dbgID); }
 
-#define DBG_ASSERT_EQ(v1, v2, dbgID)                  dbgAssert(v1, v2, 0, v1 == v2, dbgID);
-#define DBG_ASSERT_NEQ(v1, v2, dbgID)                 dbgAssert(v1, v2, 0, v1 != v2, dbgID);
-#define DBG_ASSERT_LT(v1, v2, dbgID)                  dbgAssert(v1, v2, 0, v1 <  v2, dbgID);
-#define DBG_ASSERT_LE(v1, v2, dbgID)                  dbgAssert(v1, v2, 0, v1 <= v2, dbgID);
-#define DBG_ASSERT_GT(v1, v2, dbgID)                  dbgAssert(v1, v2, 0, v1 >  v2, dbgID);
-#define DBG_ASSERT_GE(v1, v2, dbgID)                  dbgAssert(v1, v2, 0, v1 >= v2, dbgID);
+#define DBG_ASSERT_EQ(v1, v2, dbgID)                  { dbgAssert(v1, v2, 0, v1 == v2, dbgID); }
+#define DBG_ASSERT_NEQ(v1, v2, dbgID)                 { dbgAssert(v1, v2, 0, v1 != v2, dbgID); }
+#define DBG_ASSERT_LT(v1, v2, dbgID)                  { dbgAssert(v1, v2, 0, v1 <  v2, dbgID); }
+#define DBG_ASSERT_LE(v1, v2, dbgID)                  { dbgAssert(v1, v2, 0, v1 <= v2, dbgID); }
+#define DBG_ASSERT_GT(v1, v2, dbgID)                  { dbgAssert(v1, v2, 0, v1 >  v2, dbgID); }
+#define DBG_ASSERT_GE(v1, v2, dbgID)                  { dbgAssert(v1, v2, 0, v1 >= v2, dbgID); }
 
-#define DBG_ASSERT_ZERO(v, dbgID)                     dbgAssert(v, 0, 0, abs(v) < EPSILON, dbgID);
+#define DBG_ASSERT_ZERO(v, dbgID)                     { dbgAssert(v, 0, 0, abs(v) < EPSILON, dbgID); }
 
-#define DBG_ASSERT_RANGE(min, v, max, dbgID)          dbgAssert(min, v, max, min <= v && v <= max, dbgID);
+#define DBG_ASSERT_RANGE(min, v, max, dbgID)          { dbgAssert(min, v, max, min <= v && v <= max, dbgID); }
 
-#define DBG_ASSERT_APPROX(v1, v2, threshold, dbgID)       dbgAssert(v1, v2, 0, all(abs(v1 - v2) <= threshold), dbgID);
+#define DBG_ASSERT_APPROX(v1, v2, threshold, dbgID)   { dbgAssert(v1, v2, 0, all(abs(v1 - v2) <= threshold), dbgID); }
 
-#define DBG_DUMP_PATH() dbgMarkForDump();
+#define DBG_DUMP_PATH() { dbgMarkForDump(); }
 
 #else
 
