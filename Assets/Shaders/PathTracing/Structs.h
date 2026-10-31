@@ -45,7 +45,9 @@ struct RngValuesAncillary
 {
     // === Batch 1 ===
     float AlphaTest;
+    // ===============
 
+    // === Batch 2 ===
     struct RngValuesNEE
     {
         float LSD;
@@ -59,7 +61,7 @@ struct RngValuesAncillary
     } BxDF;
     // ===============
 
-    // === Batch 2 ===
+    // === Batch 3 ===
     float RussianRoulette;
     // ===============
 

@@ -24,7 +24,7 @@ float3 SampleDirectLighting(
 
     float lightDistance = INF;
 
-    if (FEAT_CORE(RestirDI) && pathState.RaySegmentIdx == 0)
+    if (FEAT_CORE(RestirDI) && pathState.IsPrimaryRay)
     {
         CandidateDI lightSE;
         float3 L_restir;

@@ -57,6 +57,8 @@ void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList*
 {
     GPU_SCOPE(cmdList, "Gizmos");
 
+    return; // TODO: Currently disabled due to regressions, fix soon
+
     if (!m_initializedResources)
     {
         initResources(d3d, cmdList);
@@ -64,7 +66,7 @@ void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList*
     }
 
     {
-        SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, Config::GetSystem().WindowAppGuiWidth);
     }
 
     {
@@ -87,10 +89,8 @@ void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList*
     XMStoreFloat4x4(&matrices.V, V);
     XMStoreFloat4x4(&matrices.P, P);
 
-    for (int i = 0; i < m_gizmos.size(); ++i)
+    for (const auto & gizmo : m_gizmos)
     {
-        const Gizmo& gizmo = m_gizmos[i];
-
         gizmo.DescSet.TransitionAllSRVToShaderResource(cmdList);
         gizmo.DescSet.SetDescriptorTables_Graphics(cmdList);
 
@@ -103,7 +103,7 @@ void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList*
     }
 }
 
-void GizmoManager::initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
+void GizmoManager::initResources(const D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
     const Vertex quadVertices[] =
     {

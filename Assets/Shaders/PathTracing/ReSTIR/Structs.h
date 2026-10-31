@@ -36,6 +36,13 @@ struct CandidateGI
     float Jacobian;
 };
 
+// TODO: Storing all RNG values rather than initial rng state may not be worth it
+struct CandidatePT
+{
+    PathSample Path;
+    float Jacobian;
+};
+
 typedef Reservoir<CandidateDI> ReservoirDI;
 typedef Reservoir<CandidateGI> ReservoirGI;
 

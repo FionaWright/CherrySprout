@@ -61,15 +61,16 @@ RngValuesAncillary::RngValuesBxDF SampleRngBxDF(inout RngInfo rngInfo)
     return r;
 }
 
-RngValuesAncillary SampleRngAncillaryBatch1(inout RngInfo rngInfo)
+void SampleRngAncillaryBatch1(inout RngInfo rngInfo, inout RngValuesAncillary r)
 {
-    RngValuesAncillary r = (RngValuesAncillary)0;
-
     if (FEAT_CORE(AlphaTesting))
     {
         r.AlphaTest = Rand01(rngInfo);
     }
+}
 
+void SampleRngAncillaryBatch2(inout RngInfo rngInfo, inout RngValuesAncillary r)
+{
     if (FEAT_CORE(NEE))
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
@@ -79,11 +80,9 @@ RngValuesAncillary SampleRngAncillaryBatch1(inout RngInfo rngInfo)
     }
 
     r.BxDF = SampleRngBxDF(rngInfo);
-
-    return r;
 }
 
-void SampleRngAncillaryBatch2(inout RngInfo rngInfo, inout RngValuesAncillary r)
+void SampleRngAncillaryBatch3(inout RngInfo rngInfo, inout RngValuesAncillary r)
 {
     if (FEAT_CORE(RussianRoulette))
     {

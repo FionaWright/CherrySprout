@@ -35,7 +35,7 @@ public:
     void ClearGizmos() { m_uploadHeap.FreeAssignedData(); m_gizmos.clear(); }
 
 private:
-    void initResources(D3D* d3d, ID3D12GraphicsCommandList* cmdList);
+    void initResources(const D3D* d3d, ID3D12GraphicsCommandList* cmdList);
 
     std::vector<Gizmo> m_gizmos;
     std::unordered_map<std::wstring, D12Resource> m_textureCache;

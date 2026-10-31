@@ -32,7 +32,7 @@ float EvaluateEnvMapPdf(float2 uv)
     gTexEnvMap.GetDimensions(dim.x, dim.y);
     float N = dim.x * dim.y;
 
-    uint2 xy = uv * dim;
+    uint2 xy = saturate(uv) * dim;
 
     float pixelArea = 4 * PI / N;
     return gEnvMapPmfConditional[xy] / pixelArea;
