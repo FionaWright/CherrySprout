@@ -3,7 +3,7 @@
 
 #include "PathTracing/HitInfo/ReconstructPrimaryRay.hlsli"
 
-void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState pathState, out bool isMiss, out HitInfo hitInfo)
+void ComputeRayHit(uint2 pixelCoord, inout PathState pathState, out bool isMiss, out HitInfo hitInfo)
 {
     if (FEAT_CORE(ReconstructPrimaryRay) && pathState.RaySegmentIdx == 0)
     {
@@ -22,6 +22,7 @@ void ComputeRayHit(RayQuery<RAY_FLAGS> q, uint2 pixelCoord, inout PathState path
         return;
     }
 
+    RayQuery<RAY_FLAGS> q;
     q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, pathState.Desc);
     while (q.Proceed()) {}
 

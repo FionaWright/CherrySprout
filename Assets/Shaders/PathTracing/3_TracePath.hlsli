@@ -131,11 +131,9 @@ bool ResolvePathAncillaryVertex(
 
 bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexList, inout RngInfo rngInfo, uint2 pixelCoord)
 {
-    RayQuery<RAY_FLAGS> q;
-
     bool isMiss;
     HitInfo hitInfo;
-    ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
+    ComputeRayHit(pixelCoord, pathState, isMiss, hitInfo);
 
     // Debug
     {
