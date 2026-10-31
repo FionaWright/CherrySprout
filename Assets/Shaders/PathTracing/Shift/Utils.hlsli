@@ -1,7 +1,7 @@
 #ifndef H_GDPT_UTILS_H
 #define H_GDPT_UTILS_H
 
-#include "PathTracing/GradientDomain/Structs.h"
+#include "PathTracing/Shift/Structs.h"
 
 void AddVertex(inout PathVertexList vList, PathVertexInfo vInfo)
 {

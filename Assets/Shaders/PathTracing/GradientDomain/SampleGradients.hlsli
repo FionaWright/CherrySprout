@@ -4,7 +4,7 @@
 #if FEAT_CORE_D(GradientDomain)
 
 #include "PathTracing/3_GetPrimaryRay.hlsli"
-#include "PathTracing/GradientDomain/TraceShiftedPath.hlsli"
+#include "PathTracing/Shift/TraceShiftedPath.hlsli"
 #include "PathTracing/MIS.hlsli"
 
 void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)

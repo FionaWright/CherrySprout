@@ -1,8 +1,8 @@
 #ifndef H_HIT_SHIFTED_UNCONNECTED_H
 #define H_HIT_SHIFTED_UNCONNECTED_H
 
-#include "PathTracing/ShiftMapping/HR.hlsli"
-#include "PathTracing/ShiftMapping/Hybrid.hlsli"
+#include "PathTracing/Shift/ShiftMapping/HR.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Hybrid.hlsli"
 
 void HitShiftedUnconnected(
     inout ReconnectionState reconnectionState,

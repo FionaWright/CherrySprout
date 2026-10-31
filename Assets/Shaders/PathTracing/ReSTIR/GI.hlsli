@@ -218,8 +218,6 @@ bool TrySampleReservoirGI(
     if (occluded)
         return 0.0f;
 
-    // TODO: Do I need to recompute this rather than just use reservoir.PHat?
-
     // Primary Hit BxDF Sample
     float3 E_indirect = Y.BxdfEval.Radiance * abs(NdL) * reservoir.W_Y;
     beta *= E_indirect;

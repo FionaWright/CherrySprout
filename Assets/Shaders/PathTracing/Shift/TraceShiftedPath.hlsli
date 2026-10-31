@@ -1,8 +1,8 @@
 #ifndef H_TRACE_SHIFTED_RAY_H
 #define H_TRACE_SHIFTED_RAY_H
 
-#include "PathTracing/GradientDomain/HitShiftedUnconnected.hlsli"
-#include "PathTracing/GradientDomain/MissShifted.hlsli"
+#include "PathTracing/Shift/HitShiftedUnconnected.hlsli"
+#include "PathTracing/Shift/MissShifted.hlsli"
 #include "Utils/Debug/Palette.h"
 
 void TraceShiftedPath(

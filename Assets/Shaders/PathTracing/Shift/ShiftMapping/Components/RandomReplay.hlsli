@@ -1,7 +1,7 @@
 #ifndef H_SHIFT_MAPS_RANDOM_REPLAY_H
 #define H_SHIFT_MAPS_RANDOM_REPLAY_H
 
-#include "PathTracing/ShiftMapping/Structs.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Structs.hlsli"
 
 ShiftResult ShiftRandomReplay(RngValuesAncillary::RngValuesBxDF rng, HitInfo hitInfo, float3 wo, out BxdfEval bxdfEval)
 {

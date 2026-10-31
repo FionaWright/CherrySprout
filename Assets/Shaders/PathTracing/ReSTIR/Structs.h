@@ -9,7 +9,7 @@
 
 struct ContextPrimaryRay
 {
-    HitInfo HitInfo;
+    HitInfo HitInfo; // TODO: Very heavy, use material index?
 
     hlsl::float3 Wo;
     hlsl::uint IsMiss;
@@ -39,11 +39,14 @@ struct CandidateGI
 // TODO: Storing all RNG values rather than initial rng state may not be worth it
 struct CandidatePT
 {
-    PathSample Path;
+    PathVertexList VertexList;
+
+    hlsl::float3 Lo;
     float Jacobian;
 };
 
 typedef Reservoir<CandidateDI> ReservoirDI;
 typedef Reservoir<CandidateGI> ReservoirGI;
+typedef Reservoir<CandidatePT> ReservoirPT;
 
 #endif

@@ -21,166 +21,93 @@
 
 void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i)
 {
-    X_i.Path = SamplePath(rngInfo, context.
+    float3 origin = NAN;
+    PathState pathState = CreatePathState(origin, -context.Wo);
+    PathVertexList vertexList = CreatePathVertexList();
+
+    uint2 pixelCoord = (0,0); // TODO: Needed to combine ReSTIR types, ignore for now
+
+    // Primary Ray
+    {
+        ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, hitInfo, isMiss, pixelCoord);
+    }
+
+    for (uint i = 1; i < gSettings.MaxRayDepth; i++)
+    {
+        pathState.RaySegmentIdx = i;
+
+        if (!TracePathAncillary(pathState, vertexList, rngInfo, pixelCoord))
+            break;
+    }
+
+    X_i.VertexList = vertexList;
+    X_i.Lo = pathState.Lo;
+    X_i.Jacobian = 1.0f;
 }
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 {
-    if (all(X_i.DestPosition == context.HitInfo.HitPos))
-    {
-        X_i.BxdfEval.Radiance = 0.0f; // TODO: IsValid flag in reservoir?
-        return;
-    }
+    float3 origin = NAN; // TODO: TraceShifted refactor for ancillary only
 
-    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
+    int2 pixelCoord = int2(0,0);
 
-    bool swappedSidesOfSurface = dot(X_i.DestNg, wi) >= 0.0f;
-    if (swappedSidesOfSurface)
-    {
-        X_i.BxdfEval.Radiance = 0.0f;
-        // TODO: Could possibly allow this to still be valid, but would need NEE re-evaluation which is annoying
-        return;
-    }
+    float3 Lo;
+    float jacobian;
+    float pdfRatio; // TODO: Not useful
+    bool isSymmetric; // TODO: I don't think PT cares about this, it wants full path no matter what
+    TraceShiftedPath(X_i.VertexList, origin, -context.Wo, pixelCoord, Lo, jacobian, pdfRatio, isSymmetric);
 
-    X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
-
-    float3 v1PosMain = X_i.SourcePositionBiased;
-    float3 v1PosShift = context.HitInfo.HitPosBiased;
-
-    if (all(v1PosMain == v1PosShift))
-    {
-        X_i.Jacobian = 1.0f;
-        return;
-    }
-
-    float3 v1NormalShift = context.HitInfo.Ng_ff;
-
-    ShiftResult shiftResult;
-    if (X_i.IsMiss)
-    {
-        shiftResult = ShiftReconnectEnvironment(v1NormalShift, wi);
-    }
-    else
-    {
-        float3 v2Pos = X_i.DestPosition;
-        float3 v2Normal = dot(X_i.DestNg, wi) >= 0.0f ? -X_i.DestNg : X_i.DestNg; // Recompute face-forward
-
-        shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
-    }
-
-    if (!shiftResult.IsSuccessful)
-    {
-        X_i.BxdfEval.Radiance = 0.0f; // TODO: IsValid flag in reservoir?
-        return;
-    }
-
-    X_i.Jacobian = shiftResult.Jacobian;
+    X_i.Lo = Lo;
+    X_i.Jacobian = jacobian;
 }
 
 float Target(CandidatePT X_i, ContextPrimaryRay context)
 {
-    if (!X_i.IsMiss && all(X_i.DestPosition == context.HitInfo.HitPos))
-        return 0.0f;
-
-    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
-    float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, wi));
-    if (NdL <= 0 || X_i.Jacobian <= 0.0f)
-        return 0.0f;
-
-    if (X_i.BxdfEval.PDF < EPSILON || length(X_i.BxdfEval.Radiance) <= 0.0f || length(X_i.DirectContribution) <= 0.0f)
-        return 0.0f;
-
-    if (FEAT_CORE(RestirTargetVisibility))
-    {
-        bool occluded;
-        if (X_i.IsMiss)
-            TestVisibilityDirection(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
-        else
-            TestVisibilityPoints(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
-        if (occluded)
-            return 0.0f;
-    }
-
-    float3 beta = 1.0f;
-
-    // Primary Hit BxDF Sample
-    float3 E_indirect = X_i.BxdfEval.Radiance * abs(NdL);
-    beta *= E_indirect;
-
-    // NEE Sample
-    float3 Lo = beta * X_i.DirectContribution * X_i.Jacobian;
-
-    return Luminance(Lo);
+    return Luminance(X_i.Lo * X_i.Jacobian);
 }
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
 {
-    return X_i.BxdfEval.PDF;
+    // TODO: Not happy about this at all
+    // 1. Ignores primary RNG and NEE RNG
+    // 2. Prone to FP-Precision issues
+
+    float pdfPath = 1.0f;
+    for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
+    {
+        pdfPath *= X_i.VertexList.Array[i].PDF;
+    }
+    return pdfPath;
 }
 
-bool TrySampleReservoirGI(
+bool TrySampleReservoirPT(
     HitInfo hitInfo,
-    float3 beta,
     uint2 pixelCoord,
     float3 wo,
     out CandidatePT Y,
     out float3 Lo)
 {
-    Lo = 0.0f;
-
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
+    ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
     Y = reservoir.Y;
-
-    float3 wi = Y.IsMiss ? Y.DestPosition : normalize(Y.DestPosition - hitInfo.HitPos);
 
     // Debug
     {
         DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
         DBG_OUTPUT1(reservoir.WeightSum,            RESTIR_ReservoirWeightSum);
         DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
-        DBG_OUTPUT1(max(0, dot(wi, hitInfo.Ns_ff)), RESTIR_NdL);
         DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
 
-        DBG_OUTPUT3(wi,                             RESTIRGI_Dir);
-        DBG_OUTPUT3(Y.DirectContribution,           RESTIRGI_DirectContrib);
-        DBG_OUTPUT3(Y.BxdfEval.Radiance,            RESTIRGI_BxdfRadiance);
-        DBG_OUTPUT1(Y.BxdfEval.PDF,                 RESTIRGI_BxdfPDF);
-        DBG_OUTPUT1(Y.Jacobian,                     RESTIRGI_Jacobian);
+        DBG_OUTPUT1(Y.Jacobian,                     RESTIRGI_Jacobian); // TODO
 
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
 
-    if (!Y.IsMiss && all(Y.DestPosition == hitInfo.HitPos))
-        return false;
-
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    if (Y.IsMiss)
-        return false;
-
-    float NdL = max(0, dot(wi, hitInfo.Ns_ff));
-    if (NdL <= 0 || length(Y.BxdfEval.Radiance) <= 0.0f || Y.Jacobian <= 0.0f || length(Y.DirectContribution) <= 0.0f)
-        return false;
-
-    bool occluded;
-    if (Y.IsMiss)
-        TestVisibilityDirection(hitInfo.HitPosBiased, Y.DestPosition, occluded);
-    else
-        TestVisibilityPoints(hitInfo.HitPosBiased, Y.DestPosition, occluded);
-    if (occluded)
-        return 0.0f;
-
-    // TODO: Do I need to recompute this rather than just use reservoir.PHat?
-
-    // Primary Hit BxDF Sample
-    float3 E_indirect = Y.BxdfEval.Radiance * abs(NdL) * reservoir.W_Y;
-    beta *= E_indirect;
-
-    // NEE Sample
-    Lo = beta * Y.DirectContribution * Y.Jacobian;
+    Lo = Y.Lo * Y.Jacobian;
 
     return true;
 }

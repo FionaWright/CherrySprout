@@ -95,7 +95,7 @@ struct PathState
     float p;
 };
 
-#include "GradientDomain/Structs.h"
+#include "PathTracing/Shift/Structs.h"
 
 // Note: Unaligned, do not use in C++
 struct PathSample

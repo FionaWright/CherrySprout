@@ -9,31 +9,19 @@
 #include "PathTracing/Debug/PathDumper.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
-#include "PathTracing/GradientDomain/Utils.hlsli"
+#include "PathTracing/Shift/Utils.hlsli"
 
 #include "PathTracing/RandomSample.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
-bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexList, inout RngInfo rngInfo, uint2 pixelCoord)
+bool ResolvePathAncillaryVertex(
+    inout PathState pathState,
+    inout PathVertexList vertexList,
+    inout RngInfo rngInfo,
+    HitInfo hitInfo,
+    bool isMiss,
+    uint2 pixelCoord)
 {
-    RayQuery<RAY_FLAGS> q;
-
-    bool isMiss;
-    HitInfo hitInfo;
-    ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
-
-    // Debug
-    {
-        DBG_SET_CURRENT_RAY_DEPTH(pathState.RaySegmentIdx);
-        DBG_PATH_DUMP_MARK_EXPLORED();
-        DBG_PATH_DUMP_PATH_STATE(pathState);
-        DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),             GBuffer_MatIdx);
-        DBG_OUTPUT3(DecodeNormalOctahedral(gGBufferNormalsUv[pixelCoord].xy), GBuffer_NormalsUnorm);
-        DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                              GBuffer_Depth);
-        DBG_OUTPUT2(gGBufferNormalsUv[pixelCoord].zw,                         GBuffer_Uv);
-        DBG_OUTPUT2(gGBufferMv[pixelCoord].xy,                                GBuffer_Mv);
-    }
-
     if (isMiss)
     {
         float3 L_miss = Miss(pathState);
@@ -89,8 +77,11 @@ bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexLi
     {
         CandidateGI Y;
         float3 L_gi;
-        TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi);
-        pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
+        if (TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
+        {
+            pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
+            DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
+        }
 
         /*
             TODO:
@@ -98,8 +89,6 @@ bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexLi
             Do I need MIS? Or randomly select one estimator? Or fixed weights (0.5,0.5)?
             How does it interact with ReSTIR DI? Is that another estimator to keep track of?
         */
-
-        DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
     }
 
     float3 L_sample;
@@ -140,12 +129,33 @@ bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexLi
     return true;
 }
 
+bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexList, inout RngInfo rngInfo, uint2 pixelCoord)
+{
+    RayQuery<RAY_FLAGS> q;
+
+    bool isMiss;
+    HitInfo hitInfo;
+    ComputeRayHit(q, pixelCoord, pathState, isMiss, hitInfo);
+
+    // Debug
+    {
+        DBG_SET_CURRENT_RAY_DEPTH(pathState.RaySegmentIdx);
+        DBG_PATH_DUMP_MARK_EXPLORED();
+        DBG_PATH_DUMP_PATH_STATE(pathState);
+        DBG_OUTPUT3(Palette(gGBufferMaterialIdx[pixelCoord] - 1),             GBuffer_MatIdx);
+        DBG_OUTPUT3(DecodeNormalOctahedral(gGBufferNormalsUv[pixelCoord].xy), GBuffer_NormalsUnorm);
+        DBG_OUTPUT1(gGBufferDepth[pixelCoord].r,                              GBuffer_Depth);
+        DBG_OUTPUT2(gGBufferNormalsUv[pixelCoord].zw,                         GBuffer_Uv);
+        DBG_OUTPUT2(gGBufferMv[pixelCoord].xy,                                GBuffer_Mv);
+    }
+
+    return ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, hitInfo, isMiss, pixelCoord);
+}
+
 PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoord)
 {
     PathState pathState = CreatePathState(origin, dir);
-
-    PathVertexList vertexList = INIT0(PathVertexList);
-    vertexList.NumVertices = 0;
+    PathVertexList vertexList = CreatePathVertexList();
 
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
@@ -156,10 +166,12 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     }
 
     PathSample pathSample = INIT0(PathSample);
-    pathSample.Lo = pathState.Lo;
+    {
+        pathSample.Lo = pathState.Lo;
 
-    if (FEAT_CORE(GradientDomain))
-        pathSample.VertexList = vertexList;
+        if (FEAT_CORE(GradientDomain))
+            pathSample.VertexList = vertexList;
+    }
 
     DBG_OUTPUT1(pathState.RaySegmentIdx == gSettings.MaxRayDepth, KilledByMaxDepth);
     DBG_OUTPUT_DUMP_DISABLE();

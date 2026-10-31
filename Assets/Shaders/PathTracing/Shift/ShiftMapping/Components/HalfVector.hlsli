@@ -3,7 +3,7 @@
 
 // https://github.com/gradientpm/gradient-mts/blob/master/src/integrators/gradient/gpt/shift_mapping/shiftmapping.h
 
-#include "PathTracing/ShiftMapping/Structs.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Structs.hlsli"
 
 // Is this eta relative or n?
 ShiftResult ShiftHalfVector(float3 x1_Ng, float3 y1_Ng, float3 x1_wi, float3 x1_wo, float3 y1_wo, float etaMain, float etaShifted)

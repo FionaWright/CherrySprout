@@ -1,11 +1,11 @@
 #ifndef H_SHIFT_MAPS_HR_H
 #define H_SHIFT_MAPS_HR_H
 
-#include "PathTracing/ShiftMapping/Structs.hlsli"
-#include "PathTracing/ShiftMapping/Components/Fail.hlsli"
-#include "PathTracing/ShiftMapping/Components/HalfVector.hlsli"
-#include "PathTracing/ShiftMapping/Components/Reconnect.hlsli"
-#include "PathTracing/ShiftMapping/Components/ReconnectEnv.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Structs.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/Fail.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/HalfVector.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/ReconnectEnv.hlsli"
 
 ShiftResult ShiftMapHPlusR(
     inout ReconnectionState reconnectionState,

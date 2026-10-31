@@ -1,10 +1,10 @@
 #ifndef H_SHIFT_MAPS_HYBRID_H
 #define H_SHIFT_MAPS_HYBRID_H
 
-#include "PathTracing/ShiftMapping/Structs.hlsli"
-#include "PathTracing/ShiftMapping/Components/Reconnect.hlsli"
-#include "PathTracing/ShiftMapping/Components/ReconnectEnv.hlsli"
-#include "PathTracing/ShiftMapping/Components/RandomReplay.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Structs.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/ReconnectEnv.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/RandomReplay.hlsli"
 
 ShiftResult ShiftMapHybrid(
     inout ReconnectionState reconnectionState,

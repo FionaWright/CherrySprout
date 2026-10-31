@@ -1,7 +1,7 @@
 #ifndef H_SHIFT_MAPS_FAIL_H
 #define H_SHIFT_MAPS_FAIL_H
 
-#include "PathTracing/ShiftMapping/Structs.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Structs.hlsli"
 
 ShiftResult ShiftFail()
 {
