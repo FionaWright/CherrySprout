@@ -2,6 +2,7 @@
 #define H_PUNCTUAL_H
 
 #include "Utils/Constants.h"
+#include "Utils/HlslUtils.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
 #include "PathTracing/Structs.h"
@@ -82,7 +83,7 @@ float PunctualLightWeight(PunctualLight light)
 
 LightSample EvaluatePointLight(PunctualLight light, float3 position, out LightEval lightEval)
 {
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
 
     float3 L = light.Position - position;
 
@@ -113,7 +114,7 @@ LightSample EvaluatePointLight(PunctualLight light, float3 position, out LightEv
 
 LightSample EvaluateDistantLight(PunctualLight light, out LightEval lightEval)
 {
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
 
     lightEval.Direction = normalize(light.Position);
     lightEval.Distance = INF;
@@ -126,7 +127,7 @@ LightSample EvaluateDistantLight(PunctualLight light, out LightEval lightEval)
 
 LightSample EvaluateSpotLight(PunctualLight light, float3 position, out LightEval lightEval)
 {
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
 
     float3 L = light.Position - position;
     float distance2 = dot(L, L);
@@ -163,7 +164,7 @@ LightSample EvaluateSpotLight(PunctualLight light, float3 position, out LightEva
 // TODO: Rect area not taking into account scene scale
 LightSample EvaluateRectLight(PunctualLight light, float3 position, out LightEval lightEval)
 {
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
 
     float3 L = light.Position - position;
     float distance2 = dot(L, L);
@@ -188,7 +189,7 @@ LightSample EvaluateRectLight(PunctualLight light, float3 position, out LightEva
 
 LightSample EvaluatePunctualLight(PunctualLight light, float3 position, out LightEval lightEval)
 {
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
 
     switch (light.Type)
     {

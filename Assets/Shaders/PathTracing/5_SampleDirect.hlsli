@@ -19,7 +19,7 @@ float3 SampleDirectLighting(
 {
     float3 E_direct = 0;
 
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
     float shadowFactor = 0.0f;
 
     float lightDistance = INF;

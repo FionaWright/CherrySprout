@@ -148,4 +148,6 @@ float LinearizeDepth(float depth, float nearPlane, float farPlane)
 #endif
 }
 
+#define INIT0(Type) (Type)0
+
 #endif

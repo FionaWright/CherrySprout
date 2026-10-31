@@ -65,7 +65,7 @@ bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexLi
         return false;
     }
 
-    RngValuesAncillary rng = (RngValuesAncillary)0;
+    RngValuesAncillary rng = INIT0(RngValuesAncillary);
     SampleRngAncillaryBatch1(rngInfo, rng);
 
     if (FEAT_CORE(AlphaTesting))
@@ -103,7 +103,7 @@ bool TracePathAncillary(inout PathState pathState, inout PathVertexList vertexLi
     }
 
     float3 L_sample;
-    PathVertexInfo vInfo = (PathVertexInfo)0;
+    PathVertexInfo vInfo = INIT0(PathVertexInfo);
     vInfo.PDF = 1.0f;
     Hit(pathState, rng, hitInfo, pixelCoord, L_sample, vInfo);
 
@@ -144,7 +144,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 {
     PathState pathState = CreatePathState(origin, dir);
 
-    PathVertexList vertexList;
+    PathVertexList vertexList = INIT0(PathVertexList);
     vertexList.NumVertices = 0;
 
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
@@ -155,7 +155,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             break;
     }
 
-    PathSample pathSample;
+    PathSample pathSample = INIT0(PathSample);
     pathSample.Lo = pathState.Lo;
 
     if (FEAT_CORE(GradientDomain))

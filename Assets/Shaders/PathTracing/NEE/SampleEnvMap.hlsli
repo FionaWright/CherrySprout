@@ -8,6 +8,7 @@ LightSample SampleEnvMap(float2 rng, out LightEval lightEval)
     float3 wi_env;
     SampleEnvMapCdf(rng.x, rng.y, uv_env, wi_env, pdf_env);
 
+    lightEval = INIT0(LightEval);
     lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, uv_env).rgb;
     lightEval.PDF = pdf_env;
     lightEval.Direction = wi_env;
@@ -21,7 +22,7 @@ LightSample SampleEnvMap(float2 rng, out LightEval lightEval)
 
 LightEval EvaluateEnvMap(LightSample lightSample)
 {
-    LightEval lightEval;
+    LightEval lightEval = INIT0(LightEval);
     lightEval.Radiance = gTexEnvMap.Sample(gSamplerLinearClamp, lightSample.BaryOrUV.xy).rgb;
     lightEval.PDF = EvaluateEnvMapPdf(lightSample.BaryOrUV.xy);
     lightEval.Direction = EaSquareToSphere(lightSample.BaryOrUV.xy);

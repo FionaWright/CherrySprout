@@ -73,6 +73,7 @@ LightSample SampleEmissive(float2 rng, uint emissiveIdx, float3 hitPos, out Ligh
 
     float triangleArea = GetTriangleArea(p0, p1, p2);
 
+    lightEval = INIT0(LightEval);
     lightEval.Radiance = emission;
     lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
     lightEval.Direction = wi;
@@ -121,7 +122,7 @@ LightEval EvaluateEmissive(uint emissiveIdx, float3 hitPos, LightSample lightSam
 
     float triangleArea = GetTriangleArea(p0, p1, p2);
 
-    LightEval lightEval;
+    LightEval lightEval = INIT0(LightEval);
     lightEval.Radiance = emission;
     lightEval.PDF = EvaluateEmissivePdf(primitiveCount, triangleArea, Ng, -wi, dist);
     lightEval.Direction = wi;

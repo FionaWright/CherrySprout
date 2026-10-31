@@ -18,7 +18,8 @@ LightSample SampleLight(
 
     out LightEval lightEval)
 {
-    LightSample lightSample = (LightSample)0;
+    LightSample lightSample = INIT0(LightSample);
+    lightEval = INIT0(LightEval);
 
     if (gSettings.LsdCount == 0)
     {

@@ -11,7 +11,7 @@
 
 PathState CreatePathState(float3 origin, float3 dir)
 {
-    PathState pathState = (PathState)0;
+    PathState pathState = INIT0(PathState);
 
     pathState.LastBxdfPdf = 1.0f;
     pathState.IsPrimaryRay = true;

@@ -7,11 +7,10 @@
 
 PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 {
-    float3 rayOrigin;
-    float3 rayDirection;
-
     RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
 
+    float3 rayOrigin;
+    float3 rayDirection;
     GetPrimaryRay(
         rngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
         pixelCoord, gSettings.InvV, gSettings.InvP,

@@ -33,7 +33,7 @@ void Core(uint2 pixelCoord)
     float3 origin = gSettings.CameraPositionWorld;
 
     float3 primalSum = float3(0,0,0);
-	Gradients gradientsSum = (Gradients)0;
+	Gradients gradientsSum = INIT0(Gradients);
 
     for (uint i = 0; i < gSettings.SPP; i++)
     {
