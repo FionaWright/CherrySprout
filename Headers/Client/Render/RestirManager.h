@@ -5,8 +5,6 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
-#include "PathTracing/ReSTIR/Structs.h"
-#include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
 class D3D;
@@ -17,6 +15,7 @@ struct RestirConfig
 
     bool EnabledDI;
     bool EnabledGI;
+    bool EnabledPT;
     bool EnabledTemporal;
     bool EnabledSpatial;
 };
@@ -33,6 +32,7 @@ public:
 
     D12Resource* GetReservoirBufferDI() { return &m_reservoirBufferDi; }
     D12Resource* GetReservoirBufferGI() { return &m_reservoirBufferGi; }
+    D12Resource* GetReservoirBufferPT() { return &m_reservoirBufferPt; }
     D12Resource* GetContextsBuffer() { return &m_contextsPrimaryRay; }
 
     [[nodiscard]] size_t GetNumReservoirs() const { return m_numReservoirs; }
@@ -43,6 +43,7 @@ private:
 
     D12Resource m_reservoirBufferDi;
     D12Resource m_reservoirBufferGi;
+    D12Resource m_reservoirBufferPt;
     D12Resource m_contextsPrimaryRay;
     size_t m_numReservoirs = 0;
     size_t m_numContexts = 0;
@@ -57,6 +58,10 @@ private:
     Pipeline m_pipelineGiGen;
     Pipeline m_pipelineGiTemporal;
     Pipeline m_pipelineGiSpatio;
+
+    Pipeline m_pipelinePtGen;
+    Pipeline m_pipelinePtTemporal;
+    Pipeline m_pipelinePtSpatio;
 
     bool m_initialisedResources = false;
 };

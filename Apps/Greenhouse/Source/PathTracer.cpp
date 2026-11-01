@@ -131,13 +131,14 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), 5, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirDI));
     m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirGI));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 8, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirs(), sizeof(ReservoirPT));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 9, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 10, m_debugManager.GetBufferPathDumpRW(), MAX_RAY_DEPTH, sizeof(RayDump));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 11, m_debugManager.GetBufferPathDumpOCRW(), MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 12, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 10, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), 11, m_debugManager.GetBufferPathDumpRW(), MAX_RAY_DEPTH, sizeof(RayDump));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 12, m_debugManager.GetBufferPathDumpOCRW(), MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
+    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), 13, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
 #endif
 
     m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), 0, m_rtasBuilder.GetRtasResource());
@@ -340,7 +341,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI);
     const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirGI);
-    if (restirDiEnabled || restirGiEnabled)
+    const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirPT);
+    if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         heap->Bind(cmdList);
@@ -351,6 +353,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         restirConfig.ClearBuffers = m_restirClearScheduled;
         restirConfig.EnabledDI = restirDiEnabled;
         restirConfig.EnabledGI = restirGiEnabled;
+        restirConfig.EnabledPT = restirPtEnabled;
         restirConfig.EnabledTemporal = renderInfo.PathTracerConfig->RestirTemporalEnabled;
         restirConfig.EnabledSpatial = renderInfo.PathTracerConfig->RestirSpatialEnabled;
 

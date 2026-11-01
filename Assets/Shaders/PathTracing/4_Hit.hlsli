@@ -14,14 +14,15 @@
 #include "PathTracing/5_SampleIndirect.hlsli"
 #include "PathTracing/EvaluateHitEmission.hlsli"
 
-void Hit(inout PathState pathState,
-        RngValuesAncillary rng,
+void Hit(
+    inout PathState pathState,
+    RngValuesAncillary rng,
 
-        HitInfo hitInfo,
-        uint2 pixelCoord,
+    HitInfo hitInfo,
+    uint2 pixelCoord,
 
-        out float3 L_sample,
-        inout PathVertexInfo vInfo)
+    out float3 L_sample,
+    inout PathVertexInfo vInfo)
 {
     L_sample = 0.0f;
 
@@ -58,7 +59,7 @@ void Hit(inout PathState pathState,
     if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
 
-    if (FEAT_CORE(GradientDomain))
+    if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
     {
         vInfo.Type = VertexType::eStandard;
         vInfo.Lobe = lobe;
@@ -72,7 +73,7 @@ void Hit(inout PathState pathState,
         vInfo.DirectContribution = E_direct;
         vInfo.PDF *= pdf_bxdf;
 
-        if (FEAT_CORE(GdptHybridShift))
+        if (FEAT_CORE(HybridShift))
             vInfo.RNG = rng;
     }
 }

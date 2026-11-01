@@ -31,7 +31,7 @@ FLAG_PROCESS(GdptShiftRec, true)
 FLAG_PROCESS(GdptShiftRecEnv, true)
 FLAG_PROCESS(GdptShiftHalf, true)
 
-FLAG_PROCESS(GdptHybridShift, true)
+FLAG_PROCESS(HybridShift, true)
 FLAG_PROCESS(AlphaTesting, true)
 
 FLAG_PROCESS(RestirDI, true)

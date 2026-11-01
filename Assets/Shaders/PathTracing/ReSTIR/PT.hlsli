@@ -29,15 +29,18 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
 
     // Primary Ray
     {
-        ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, hitInfo, isMiss, pixelCoord);
+        bool proceed = ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, hitInfo, isMiss, pixelCoord);
     }
 
-    for (uint i = 1; i < gSettings.MaxRayDepth; i++)
+    if (proceed)
     {
-        pathState.RaySegmentIdx = i;
+        for (uint i = 1; i < gSettings.MaxRayDepth; i++)
+        {
+            pathState.RaySegmentIdx = i;
 
-        if (!TracePathAncillary(pathState, vertexList, rngInfo, pixelCoord))
-            break;
+            if (!TracePathAncillary(pathState, vertexList, rngInfo, pixelCoord))
+                break;
+        }
     }
 
     X_i.VertexList = vertexList;
@@ -47,18 +50,37 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 {
-    float3 origin = NAN; // TODO: TraceShifted refactor for ancillary only
-
+    float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
-    float3 Lo;
-    float jacobian;
-    float pdfRatio; // TODO: Not useful
-    bool isSymmetric; // TODO: I don't think PT cares about this, it wants full path no matter what
-    TraceShiftedPath(X_i.VertexList, origin, -context.Wo, pixelCoord, Lo, jacobian, pdfRatio, isSymmetric);
+    PathState pathState = CreatePathState(origin, dir);
+    PathStateShifted pathStateShifted = CreatePathStateShifted();
 
-    X_i.Lo = Lo;
-    X_i.Jacobian = jacobian;
+    // Primary Ray
+    {
+        bool proceed = ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, X_i.VertexList, context.IsMiss, context.HitInfo);
+    }
+
+    if (proceed)
+    {
+        for (uint i = 1; i < mainVertices.NumVertices; i++)
+        {
+            pathState.RaySegmentIdx = i;
+
+            if (!TraceShiftedPathAncillary(pathState, pathStateShifted, X_i.VertexList, pixelCoord))
+                break;
+        }
+    }
+
+    if (!pathStateShifted.IsSymmetric) // TODO
+    {
+        X_i.Lo = 0.0f;
+        X_i.Jacobian = 1.0f;
+        return;
+    }
+
+    X_i.Lo = pathState.Lo;
+    X_i.Jacobian = pathStateShifted.Jacobian;
 }
 
 float Target(CandidatePT X_i, ContextPrimaryRay context)
@@ -118,9 +140,8 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context) {}
 float Target(CandidatePT X_i, ContextPrimaryRay context) { return NAN; }
 float PDF(CandidatePT X_i, ContextPrimaryRay context) { return NAN; }
-bool TrySampleReservoirGI(
+bool TrySampleReservoirPT(
     HitInfo hitInfo,
-    float3 beta,
     uint2 pixelCoord,
     float3 wo,
     out CandidatePT Y,

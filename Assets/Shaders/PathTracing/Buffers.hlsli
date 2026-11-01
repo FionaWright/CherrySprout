@@ -69,16 +69,17 @@ RWTexture2D<float4>                                 gTexGradientYF          : re
 RWTexture2D<float4>                                 gTexGradientYB          : register(u5, REGISTER_SPACE_DEFAULT);
 RWStructuredBuffer<ReservoirDI>                     gReservoirBufferDI      : register(u6, REGISTER_SPACE_DEFAULT);
 RWStructuredBuffer<ReservoirGI>                     gReservoirBufferGI      : register(u7, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : register(u8, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ReservoirPT>                     gReservoirBufferPT      : register(u8, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : register(u9, REGISTER_SPACE_DEFAULT);
 //                                                  Note: Don't forget indices below!
 
 // =================== U Registers (Debug) =======================================================================
 
 // TODO: Handle register spaces properly in root sig. Then have all debug buffers dependent on _DEBUG
-RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u9, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<RayDump>                         gPathDump               : register(u10, REGISTER_SPACE_DEFAULT);
-RWByteAddressBuffer                                 gPathDumpDebugOutput    : register(u11, REGISTER_SPACE_DEFAULT);
-RWStructuredBuffer<uint>                            gPerPixelMutex          : register(u12, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<DebugErrorInfo>                  gDbgBufferErrorInfo     : register(u10, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<RayDump>                         gPathDump               : register(u11, REGISTER_SPACE_DEFAULT);
+RWByteAddressBuffer                                 gPathDumpDebugOutput    : register(u12, REGISTER_SPACE_DEFAULT);
+RWStructuredBuffer<uint>                            gPerPixelMutex          : register(u13, REGISTER_SPACE_DEFAULT);
 
 // =================== S Registers ===============================================================================
 

@@ -22,6 +22,9 @@ void RestirManager::initResources(ID3D12Device* device)
     const size_t reservoirBufferSizeGI = m_numReservoirs * sizeof(ReservoirGI);
     m_reservoirBufferGi.Init_Buffer("Reservoir GI", device, reservoirBufferSizeGI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
+    const size_t reservoirBufferSizePT = m_numReservoirs * sizeof(ReservoirPT);
+    m_reservoirBufferPt.Init_Buffer("Reservoir PT", device, reservoirBufferSizePT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
     const size_t contextBufferSize = m_numContexts * sizeof(ContextPrimaryRay);
     m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, contextBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
@@ -40,6 +43,10 @@ void RestirManager::Init(ID3D12Device* device, const RootSig* rootSig, const std
     V(m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs));
     V(m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs));
     V(m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs));
+
+    V(m_pipelinePtGen.InitCompute(device, "Compute/ReSTIR/PT/GenerateSamplesCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelinePtTemporal.InitCompute(device, "Compute/ReSTIR/PT/TemporalReuseCS.hlsl", rootSig->Get(), compileArgs));
+    V(m_pipelinePtSpatio.InitCompute(device, "Compute/ReSTIR/PT/SpatialReuseCS.hlsl", rootSig->Get(), compileArgs));
 
     if (!m_initialisedResources)
     {
@@ -60,6 +67,8 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
         return;
 
     m_reservoirBufferDi.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    m_reservoirBufferGi.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    m_reservoirBufferPt.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     m_contextsPrimaryRay.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     // Clear Pass
@@ -69,6 +78,8 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         m_reservoirBufferDi.UavBarrier(cmdList);
+        m_reservoirBufferGi.UavBarrier(cmdList);
+        m_reservoirBufferPt.UavBarrier(cmdList);
     }
 
     // Init Context
@@ -136,6 +147,36 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
             DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
             m_reservoirBufferGi.UavBarrier(cmdList);
+        }
+    }
+
+    // PT
+    if (config.EnabledPT)
+    {
+        // Generate Candidates Pass
+        {
+            cmdList->SetPipelineState(m_pipelinePtGen.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferPt.UavBarrier(cmdList);
+        }
+
+        // Temporal Merge Pass
+        if (config.EnabledTemporal)
+        {
+            cmdList->SetPipelineState(m_pipelinePtTemporal.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferPt.UavBarrier(cmdList);
+        }
+
+        // Spatial Merge Pass
+        if (config.EnabledSpatial)
+        {
+            cmdList->SetPipelineState(m_pipelinePtSpatio.GetPSO());
+            DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+
+            m_reservoirBufferPt.UavBarrier(cmdList);
         }
     }
 }

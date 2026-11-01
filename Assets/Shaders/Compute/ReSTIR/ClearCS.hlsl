@@ -19,11 +19,24 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxPong = GetReservoirBufferIndex_Pong(pixelCoord);
     uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
 
-    gReservoirBufferDI[reservoirIdxPing] = CreateReservoir<CandidateDI>();
-    gReservoirBufferDI[reservoirIdxPong] = CreateReservoir<CandidateDI>();
-    gReservoirBufferDI[reservoirIdxPrev] = CreateReservoir<CandidateDI>();
+    if (FEAT_CORE(RestirDI))
+    {
+        gReservoirBufferDI[reservoirIdxPing] = CreateReservoir<CandidateDI>();
+        gReservoirBufferDI[reservoirIdxPong] = CreateReservoir<CandidateDI>();
+        gReservoirBufferDI[reservoirIdxPrev] = CreateReservoir<CandidateDI>();
+    }
 
-    gReservoirBufferGI[reservoirIdxPing] = CreateReservoir<CandidateGI>();
-    gReservoirBufferGI[reservoirIdxPong] = CreateReservoir<CandidateGI>();
-    gReservoirBufferGI[reservoirIdxPrev] = CreateReservoir<CandidateGI>();
+    if (FEAT_CORE(RestirGI))
+    {
+        gReservoirBufferGI[reservoirIdxPing] = CreateReservoir<CandidateGI>();
+        gReservoirBufferGI[reservoirIdxPong] = CreateReservoir<CandidateGI>();
+        gReservoirBufferGI[reservoirIdxPrev] = CreateReservoir<CandidateGI>();
+    }
+
+    if (FEAT_CORE(RestirPT))
+    {
+        gReservoirBufferPT[reservoirIdxPing] = CreateReservoir<CandidatePT>();
+        gReservoirBufferPT[reservoirIdxPong] = CreateReservoir<CandidatePT>();
+        gReservoirBufferPT[reservoirIdxPrev] = CreateReservoir<CandidatePT>();
+    }
 }

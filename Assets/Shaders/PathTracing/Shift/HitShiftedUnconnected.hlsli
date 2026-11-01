@@ -23,7 +23,7 @@ void HitShiftedUnconnected(
 
     BxdfEval bxdfEval;
     ShiftResult shiftResult;
-    if (FEAT_CORE(GdptHybridShift))
+    if (FEAT_CORE(HybridShift))
         shiftResult = ShiftMapHybrid(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
     else
         shiftResult = ShiftMapHPlusR(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);

@@ -15,7 +15,7 @@ float3 SampleDirectLighting(
     uint2 pixelCoord,
     float3 wo,
 
-    inout PathVertexInfo currentVertexInfo)
+    inout PathVertexInfo vInfo)
 {
     float3 E_direct = 0;
 
@@ -52,10 +52,10 @@ float3 SampleDirectLighting(
 
     // TODO: Move shadow factor outside?
 
-	if (FEAT_CORE(GradientDomain))
+	if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
     {
-	    currentVertexInfo.LightSample = lightSample;
-	    currentVertexInfo.ShadowFactor = shadowFactor;
+	    vInfo.LightSample = lightSample;
+	    vInfo.ShadowFactor = shadowFactor;
     }
 
     if (FEAT_CORE(Transient))

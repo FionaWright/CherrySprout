@@ -31,7 +31,7 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT3(L_direct, MissContrib);
         DBG_OUTPUT1(1.0f, KilledByMiss);
 
-        if (FEAT_CORE(GradientDomain))
+        if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
             AddVertexEnvMap(vertexList, L_miss);
 
         return false;
@@ -47,7 +47,7 @@ bool ResolvePathAncillaryVertex(
 
         DBG_OUTPUT1(1.0f, KilledByEmission);
 
-        if (FEAT_CORE(GradientDomain))
+        if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
             AddVertexEmissive(vertexList, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
         return false;
@@ -96,7 +96,7 @@ bool ResolvePathAncillaryVertex(
     vInfo.PDF = 1.0f;
     Hit(pathState, rng, hitInfo, pixelCoord, L_sample, vInfo);
 
-    if (FEAT_CORE(GradientDomain))
+    if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
         AddVertex(vertexList, vInfo); // TODO: RNG Ancillary batch 3 not included, maybe never matters
 
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
@@ -167,7 +167,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     {
         pathSample.Lo = pathState.Lo;
 
-        if (FEAT_CORE(GradientDomain))
+        if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
             pathSample.VertexList = vertexList;
     }
 
