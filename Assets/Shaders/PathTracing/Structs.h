@@ -100,9 +100,12 @@ struct PathState
 // Note: Unaligned, do not use in C++
 struct PathSample
 {
-    hlsl::float3 Lo;
     PathVertexList VertexList;
+
     RngValuesPrimary RngPrimary;
+
+    hlsl::float3 Lo;
+    float p;
 };
 
 struct ProbabilityDistributionSample

@@ -19,6 +19,8 @@ Spatial (Pong -> Ping)
 
 */
 
+#if FEAT_CORE_D(RestirDI) || FEAT_CORE_D(RestirGI) || FEAT_CORE_D(RestirPT) || FEAT_CORE_D(RestirPG)
+
 uint GetReservoirBufferBase_Ping()
 {
     return 0;
@@ -125,5 +127,39 @@ uint GetContextBufferIndex_Prev(uint2 pixelCoord)
 {
     return (gSettings.FrameIdx & 1) == 0 ? GetContextBufferIndex_Pong(pixelCoord) : GetContextBufferIndex_Ping(pixelCoord);
 }
+
+#else
+
+uint GetReservoirBufferBase_Ping() { return 0; }
+uint GetReservoirBufferBase_Pong() { return 0; }
+uint GetReservoirBufferBase_Prev() { return 0; }
+uint GetReservoirBufferIndexLocal(uint2 pixelCoord) { return 0; }
+
+uint GetReservoirBufferIndex_Ping(uint2 pixelCoord) { return 0; }
+uint GetReservoirBufferIndex_Pong(uint2 pixelCoord) { return 0; }
+uint GetReservoirBufferIndex_Previous(uint2 pixelCoord) { return 0; }
+
+uint GetReservoirBufferIndex_InitialCandidatesOutput(uint2 pixelCoord) { return 0; }
+
+uint GetReservoirBufferIndex_TemporalInput(uint2 pixelCoord) { return 0; }
+uint GetReservoirBufferIndex_TemporalOutput(uint2 pixelCoord) { return 0; }
+
+uint GetReservoirBufferIndex_SpatialInput(uint2 pixelCoord) { return 0; }
+uint GetReservoirBufferIndex_SpatialOutput(uint2 pixelCoord) { return 0; }
+
+uint GetReservoirBufferIndex_Final(uint2 pixelCoord) { return 0; }
+
+uint GetContextBufferBase_Ping() { return 0; }
+uint GetContextBufferBase_Pong() { return 0; }
+
+uint GetContextBufferIndex_Local(uint2 pixelCoord) { return 0; }
+
+uint GetContextBufferIndex_Ping(uint2 pixelCoord) { return 0; }
+uint GetContextBufferIndex_Pong(uint2 pixelCoord) { return 0; }
+
+uint GetContextBufferIndex(uint2 pixelCoord) { return 0; }
+uint GetContextBufferIndex_Prev(uint2 pixelCoord) { return 0; }
+
+#endif
 
 #endif

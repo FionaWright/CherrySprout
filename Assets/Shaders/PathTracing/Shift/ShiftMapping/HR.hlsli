@@ -39,6 +39,17 @@ ShiftResult ShiftMapHPlusR(
         return shiftResult;
     }
 
+    float3 wi = normalize(v2.Position - hitInfo.HitPos);
+    bool swappedSidesOfSurface = dot(v2.Ng_ff, wi) >= 0.0f;
+    if (v2.Type != VertexType::eEnvironment && swappedSidesOfSurface)
+    {
+        // TODO: Could possibly allow this to still be valid, but would need NEE re-evaluation which is annoying
+
+        ShiftResult shiftResult = (ShiftResult)0;
+        shiftResult.IsSuccessful = false;
+        return shiftResult;
+    }
+
     ShiftResult shiftResult;
 
     if (isDirac)

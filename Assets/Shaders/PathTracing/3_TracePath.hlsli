@@ -53,6 +53,12 @@ bool ResolvePathAncillaryVertex(
         return false;
     }
 
+    PathVertexInfo vInfo = INIT0(PathVertexInfo);
+    vInfo.PDF = 1.0f;
+
+    if (FEAT_CORE(HybridShift))
+        vInfo.InitialRngAncillaryState = rngInfo.IndependentRngState;
+
     RngValuesAncillary rng = INIT0(RngValuesAncillary);
     SampleRngAncillaryBatch1(rngInfo, rng);
 
@@ -92,12 +98,10 @@ bool ResolvePathAncillaryVertex(
     }
 
     float3 L_sample;
-    PathVertexInfo vInfo = INIT0(PathVertexInfo);
-    vInfo.PDF = 1.0f;
     Hit(pathState, rng, hitInfo, pixelCoord, L_sample, vInfo);
 
     if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
-        AddVertex(vertexList, vInfo); // TODO: RNG Ancillary batch 3 not included, maybe never matters
+        AddVertex(vertexList, vInfo);
 
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 

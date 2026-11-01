@@ -70,6 +70,7 @@ static const char* s_debugIdList[] = {
     CREATE_ID(RESTIR_PDF   , "ReSTIR: Invalid PDF")
 
     CREATE_ID(GD_INVALID_VERTEX_TYPE   , "GD: Invalid vertex type")
+    CREATE_ID(MAX_RAY_DEPTH_SHIFT_ID   , "Max ray depth is higher than allowed")
 
     CREATE_ID(eCount, "eCount")
 };

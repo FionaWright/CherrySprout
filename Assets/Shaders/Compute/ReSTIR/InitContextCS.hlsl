@@ -37,16 +37,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         depthNonLinear
     );
 
-    ContextPrimaryRay context = (ContextPrimaryRay)0;
-    context.IsMiss = isMiss;
-    context.DepthNonLinear = depthNonLinear;
-
-    if (isMiss)
-    {
-        gContextsPrimaryRay[contextIdx] = context;
-        return;
-    }
-
     // Note: No seed decorrelator used, will have same jitter / DoF as core PT
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
@@ -59,7 +49,17 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         rayOrigin, rayDirection);
 
-    context.HitInfo = hitInfo;
+    ContextPrimaryRay context = (ContextPrimaryRay)0;
+    context.IsMiss = isMiss;
+    context.DepthNonLinear = depthNonLinear;
     context.Wo = -rayDirection;
+
+    if (isMiss)
+    {
+        gContextsPrimaryRay[contextIdx] = context;
+        return;
+    }
+
+    context.HitInfo = hitInfo;
     gContextsPrimaryRay[contextIdx] = context;
 }

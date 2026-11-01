@@ -29,9 +29,10 @@
 
 #define ROUGHNESS_DIRAC_THRESHOLD (0.01f)
 
-#define MAX_RAY_DEPTH (32)
+#define MAX_RAY_DEPTH (16)
+#define MAX_RAY_DEPTH_SHIFT (8)
 
-#define MAX_DIRECT_SAMPLES (16)
+#define MAX_DIRECT_SAMPLES (4)
 
 // ============ PHYSICS ========
 

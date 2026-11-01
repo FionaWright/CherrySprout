@@ -39,6 +39,17 @@ ShiftResult ShiftMapHybrid(
         return shiftResult;
     }
 
+    float3 wi = normalize(v2.Position - hitInfo.HitPos);
+    bool swappedSidesOfSurface = dot(v2.Ng_ff, wi) >= 0.0f;
+    if (v2.Type != VertexType::eEnvironment && swappedSidesOfSurface)
+    {
+        // TODO: Could possibly allow this to still be valid, but would need NEE re-evaluation which is annoying
+
+        ShiftResult shiftResult = (ShiftResult)0;
+        shiftResult.IsSuccessful = false;
+        return shiftResult;
+    }
+
     // TODO: Some of these conditions can be computed earlier on the main path to avoid work
     // TODO: Jacobian denominator can also be computed earlier
 
@@ -69,7 +80,16 @@ ShiftResult ShiftMapHybrid(
         return shiftResult;
     }
 
-    return ShiftRandomReplay(v1.RNG.BxDF, hitInfo, wo, bxdfEval);
+    RngValuesAncillary rng = INIT0(RngValuesAncillary);
+    {
+        RngInfo rngInfo = INIT0(RngInfo);
+        rngInfo.IndependentRngState = v1.InitialRngAncillaryState;
+
+        SampleRngAncillaryBatch1(rngInfo, rng);
+        SampleRngAncillaryBatch2(rngInfo, rng);
+    }
+
+    return ShiftRandomReplay(rng.BxDF, hitInfo, wo, bxdfEval);
 }
 
 

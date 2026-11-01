@@ -10,8 +10,8 @@
 #include "PathTracing/VisibilityRays.hlsli"
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"
 #include "PathTracing/4_Miss.hlsli"
-#include "PathTracing/ShiftMapping/Components/Reconnect.hlsli"
-#include "PathTracing/ShiftMapping/Components/ReconnectEnv.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/ReconnectEnv.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"

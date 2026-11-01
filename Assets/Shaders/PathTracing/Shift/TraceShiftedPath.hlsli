@@ -3,6 +3,8 @@
 
 #include "PathTracing/Shift/HitShiftedUnconnected.hlsli"
 #include "PathTracing/Shift/MissShifted.hlsli"
+#include "PathTracing/EvaluateHitEmission.hlsli"
+#include "PathTracing/4_ComputeRayHit.hlsli"
 #include "Utils/Debug/Palette.h"
 
 void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, out float3 wi, out float pdf)
@@ -170,6 +172,8 @@ void TraceShiftedPath(
 {
     PathState pathState = CreatePathState(origin, dir);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
+
+    DBG_ASSERT_LE(mainVertices.NumVertices, gSettings.MaxRayDepth, MAX_RAY_DEPTH_SHIFT_ID);
 
     for (uint i = 0; i < mainVertices.NumVertices; i++)
     {

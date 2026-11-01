@@ -17,29 +17,33 @@ enum class VertexType : hlsl::uint
 
 struct PathVertexInfo
 {
-    VertexType Type;
-    LobeTag Lobe;
     hlsl::float3 Position;
+    VertexType Type;
 
     hlsl::float3 Ng_ff;
+    LobeTag Lobe;
+
     hlsl::float3 Wo;
-    hlsl::float3 Wi;
     float Eta;
+
+    hlsl::float3 Wi;
     float Roughness;
 
     hlsl::float3 IndirectContribution;
-    hlsl::float3 DirectContribution;
     float PDF;
 
-    LightSample LightSample; // TODO: Multiple NEE samples
+    hlsl::float3 DirectContribution;
     float ShadowFactor;
 
-    RngValuesAncillary RNG;
+    LightSample LightSample; // TODO: Multiple NEE samples
+
+    hlsl::uint InitialRngAncillaryState;
+    hlsl::float3 p;
 };
 
 struct PathVertexList
 {
-    PathVertexInfo Array[MAX_RAY_DEPTH];
+    PathVertexInfo Array[MAX_RAY_DEPTH_SHIFT];
     hlsl::uint NumVertices;
 };
 

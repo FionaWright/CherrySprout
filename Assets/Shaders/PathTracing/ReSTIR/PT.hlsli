@@ -2,6 +2,7 @@
 #define H_RESTIR_PT_H
 
 #include "BxDFs/GetBxDF.hlsli"
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 
 #if FEAT_CORE_D(RestirPT)
 
@@ -10,11 +11,12 @@
 #include "PathTracing/VisibilityRays.hlsli"
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"
 #include "PathTracing/4_Miss.hlsli"
-#include "PathTracing/ShiftMapping/Components/Reconnect.hlsli"
-#include "PathTracing/ShiftMapping/Components/ReconnectEnv.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/Shift/ShiftMapping/Components/ReconnectEnv.hlsli"
+#include "PathTracing/Shift/TraceShiftedPath.hlsli"
+#include "PathTracing/3_TracePath.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
-#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
@@ -25,11 +27,12 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathVertexList vertexList = CreatePathVertexList();
 
-    uint2 pixelCoord = (0,0); // TODO: Needed to combine ReSTIR types, ignore for now
+    uint2 pixelCoord = uint2(0,0); // TODO: Needed to combine ReSTIR types, ignore for now
 
     // Primary Ray
+    bool proceed;
     {
-        bool proceed = ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, hitInfo, isMiss, pixelCoord);
+        proceed = ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, context.HitInfo, context.IsMiss, pixelCoord);
     }
 
     if (proceed)
@@ -53,17 +56,20 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
-    PathState pathState = CreatePathState(origin, dir);
+    PathState pathState = CreatePathState(origin, -context.Wo);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
     // Primary Ray
+    bool proceed;
     {
-        bool proceed = ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, X_i.VertexList, context.IsMiss, context.HitInfo);
+        proceed = ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, X_i.VertexList, context.IsMiss, context.HitInfo);
     }
 
     if (proceed)
     {
-        for (uint i = 1; i < mainVertices.NumVertices; i++)
+        DBG_ASSERT_LE(X_i.VertexList.NumVertices, gSettings.MaxRayDepth, MAX_RAY_DEPTH_SHIFT_ID);
+
+        for (uint i = 1; i < X_i.VertexList.NumVertices; i++)
         {
             pathState.RaySegmentIdx = i;
 

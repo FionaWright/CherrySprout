@@ -5,6 +5,9 @@
 
 void AddVertex(inout PathVertexList vList, PathVertexInfo vInfo)
 {
+    if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
+        return;
+
     vList.Array[vList.NumVertices] = vInfo;
     vList.NumVertices++;
 
@@ -13,6 +16,9 @@ void AddVertex(inout PathVertexList vList, PathVertexInfo vInfo)
 
 void AddVertexEnvMap(inout PathVertexList vList, float3 contrib)
 {
+    if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
+        return;
+
     PathVertexInfo vInfo = (PathVertexInfo)0;
     vInfo.Type = VertexType::eEnvironment;
     vInfo.DirectContribution = contrib;
@@ -22,6 +28,9 @@ void AddVertexEnvMap(inout PathVertexList vList, float3 contrib)
 
 void AddVertexEmissive(inout PathVertexList vList, float3 hitPos, float3 Ng_ff, float roughness)
 {
+    if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
+        return;
+
     PathVertexInfo vInfo = (PathVertexInfo)0;
     vInfo.Type = VertexType::eEmission;
     vInfo.Position = hitPos;

@@ -72,9 +72,6 @@ void Hit(
         vInfo.IndirectContribution = E_indirect;
         vInfo.DirectContribution = E_direct;
         vInfo.PDF *= pdf_bxdf;
-
-        if (FEAT_CORE(HybridShift))
-            vInfo.RNG = rng;
     }
 }
 

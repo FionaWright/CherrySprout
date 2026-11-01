@@ -361,7 +361,8 @@ void Greenhouse::renderGuiCore()
 
         const bool restirDiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirDI);
         const bool restirGiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirGI);
-        if (restirDiEnabled || restirGiEnabled)
+        const bool restirPtEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_RestirPT);
+        if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
         {
             ImGui::Text("ReSTIR:");
             ImGui::Indent(IM_GUI_INDENTATION);
