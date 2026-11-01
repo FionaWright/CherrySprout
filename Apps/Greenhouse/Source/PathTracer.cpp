@@ -123,6 +123,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_descriptorSet.AddCBV       (d3d->GetDevice(), 0, sizeof(CbvRestirSettings), uploadHeapCBV);
 
     m_gradientManager.Init(d3d);
+    m_restirManager.Init(d3d->GetDevice());
 
     CherryPrint("Path-Tracer Initialized");
 }
@@ -508,7 +509,21 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
             return;
         }
 
-        m_restirManager.Init(device, &m_rootSig, compileArgs);
+        RestirConfig restirConfig;
+        restirConfig.EnabledDI = GetFeatFlagCore(featureFlags, eCore_RestirDI);
+        restirConfig.EnabledGI = GetFeatFlagCore(featureFlags, eCore_RestirGI);
+        restirConfig.EnabledPT = GetFeatFlagCore(featureFlags, eCore_RestirPT);
+        if (restirConfig.EnabledDI ||
+            restirConfig.EnabledGI ||
+            restirConfig.EnabledPT)
+        {
+            m_restirManager.UpdateBuffersAndPipelines(device, &m_rootSig, compileArgs, restirConfig);
+
+            m_descriptorSet.SetUAV_Buffer(device, 0, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
+            m_descriptorSet.SetUAV_Buffer(device, 0, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
+            m_descriptorSet.SetUAV_Buffer(device, 0, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
+            m_descriptorSet.SetUAV_Buffer(device, 0, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+        }
     }
 
     {

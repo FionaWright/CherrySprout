@@ -40,8 +40,7 @@ void Core(uint2 pixelCoord)
         ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
         if (context.IsMiss)
         {
-            float2 uv = EaSphereToSquare(-context.Wo);
-            primalSum = gTexEnvMap.Sample(gSamplerLinearClamp, uv).rgb;
+            primalSum = Miss(-context.Wo, 1.0f, true, false);
         }
         else
         {

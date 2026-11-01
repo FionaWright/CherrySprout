@@ -7,6 +7,9 @@
 
 void TextureConverter::Init(const D3D* d3d)
 {
+    if (m_rootSig.Get())
+        return;
+
     m_rootConstants.Init(0, 0, sizeof(CbvTextureConvert));
 
     m_rootSig.AddRootConstants(&m_rootConstants);

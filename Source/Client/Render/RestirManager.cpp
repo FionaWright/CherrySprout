@@ -11,11 +11,8 @@
 #define NUM_RESERVOIR_SUB_BUFFERS 3 // Ping, Pong, Prev
 #define NUM_CONTEXT_SUB_BUFFERS 2 // Curr, Prev
 
-void RestirManager::Init(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs)
+void RestirManager::Init(ID3D12Device* device)
 {
-    m_rootSigCached = rootSig;
-    m_compileArgsCached = compileArgs;
-
     if (!m_reservoirBufferDi.IsInitialized())
     {
         m_reservoirBufferDi.Init_Buffer("Reservoir DI", device, sizeof(ReservoirDI), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -28,9 +25,11 @@ void RestirManager::Init(ID3D12Device* device, RootSig* rootSig, const std::vect
     }
 }
 
-void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config)
+void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs, const RestirConfig& config)
 {
-    GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
+    m_rootSigCached = rootSig;
+    m_compileArgsCached = compileArgs;
+    m_pipelinesDirty = true;
 
     m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_RESERVOIR_SUB_BUFFERS;
     m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_CONTEXT_SUB_BUFFERS;
@@ -60,6 +59,13 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
         m_reservoirBufferPt.Reset();
         m_reservoirBufferPt.Init_Buffer("Reservoir PT", device, reservoirBufferSizePT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     }
+}
+
+void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config)
+{
+    GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
+
+    CherryAssert(m_contextsPrimaryRay.IsInitialized());
 
     m_contextsPrimaryRay.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     if (config.EnabledDI)
@@ -69,7 +75,7 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     if (config.EnabledPT)
         m_reservoirBufferPt.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-    if (!m_pipelineInitContext.GetPSO())
+    if (!m_pipelineInitContext.GetPSO() || m_pipelinesDirty)
     {
         V(m_pipelineInitContext.InitCompute(device, "Compute/ReSTIR/InitContextCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
         V(m_pipelineClear.InitCompute(device, "Compute/ReSTIR/ClearCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
@@ -96,7 +102,7 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     // DI
     if (config.EnabledDI)
     {
-        if (!m_pipelineDiGen.GetPSO())
+        if (!m_pipelineDiGen.GetPSO() || m_pipelinesDirty)
         {
             V(m_pipelineDiGen.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
             V(m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
@@ -121,7 +127,7 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     // GI
     if (config.EnabledGI)
     {
-        if (!m_pipelineGiGen.GetPSO())
+        if (!m_pipelineGiGen.GetPSO() || m_pipelinesDirty)
         {
             V(m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
             V(m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
@@ -146,7 +152,7 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     // PT
     if (config.EnabledPT)
     {
-        if (!m_pipelinePtGen.GetPSO())
+        if (!m_pipelinePtGen.GetPSO() || m_pipelinesDirty)
         {
             V(m_pipelinePtGen.InitCompute(device, "Compute/ReSTIR/PT/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
             V(m_pipelinePtTemporal.InitCompute(device, "Compute/ReSTIR/PT/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
@@ -167,6 +173,8 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
         if (config.EnabledSpatial)
             dispatchRestirPass(&m_pipelinePtSpatio, &m_reservoirBufferPt);
     }
+
+    m_pipelinesDirty = false;
 }
 
 void RestirManager::PostUpdate(D3D* d3d)

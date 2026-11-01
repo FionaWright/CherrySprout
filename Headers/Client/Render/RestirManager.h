@@ -24,7 +24,9 @@ struct RestirConfig
 class RestirManager
 {
 public:
-    void Init(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs);
+    void Init(ID3D12Device* device);
+    void UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs,
+                                   const RestirConfig& config);
 
     void PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config);
     void PostUpdate(D3D* d3d);
@@ -66,6 +68,7 @@ private:
 
     RootSig* m_rootSigCached = nullptr;
     std::vector<std::string> m_compileArgsCached;
+    bool m_pipelinesDirty = false;
 };
 
 #endif
