@@ -5,6 +5,7 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
+#include "PathTracing/ReSTIR/Structs.h"
 #include "Utils/D3DUtils.h"
 
 class D3D;
@@ -23,7 +24,7 @@ struct RestirConfig
 class RestirManager
 {
 public:
-    void Init(ID3D12Device* device, const RootSig* rootSig, const std::vector<std::string>& compileArgs);
+    void Init(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs);
 
     void PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config);
     void PostUpdate(D3D* d3d);
@@ -35,18 +36,18 @@ public:
     D12Resource* GetReservoirBufferPT() { return &m_reservoirBufferPt; }
     D12Resource* GetContextsBuffer() { return &m_contextsPrimaryRay; }
 
-    [[nodiscard]] size_t GetNumReservoirs() const { return m_numReservoirs; }
+    [[nodiscard]] size_t GetNumReservoirsDI() const { return m_reservoirBufferDi.GetDesc().Width > sizeof(ReservoirDI) ? m_numReservoirs : 1; }
+    [[nodiscard]] size_t GetNumReservoirsGI() const { return m_reservoirBufferGi.GetDesc().Width > sizeof(ReservoirGI) ? m_numReservoirs : 1; }
+    [[nodiscard]] size_t GetNumReservoirsPT() const { return m_reservoirBufferPt.GetDesc().Width > sizeof(ReservoirPT) ? m_numReservoirs : 1; }
     [[nodiscard]] size_t GetNumContexts() const { return m_numContexts; }
 
 private:
-    void initResources(ID3D12Device* device);
-
     D12Resource m_reservoirBufferDi;
     D12Resource m_reservoirBufferGi;
     D12Resource m_reservoirBufferPt;
     D12Resource m_contextsPrimaryRay;
     size_t m_numReservoirs = 0;
-    size_t m_numContexts = 0;
+    size_t m_numContexts = 1;
 
     Pipeline m_pipelineInitContext;
     Pipeline m_pipelineClear;
@@ -63,7 +64,8 @@ private:
     Pipeline m_pipelinePtTemporal;
     Pipeline m_pipelinePtSpatio;
 
-    bool m_initialisedResources = false;
+    RootSig* m_rootSigCached = nullptr;
+    std::vector<std::string> m_compileArgsCached;
 };
 
 #endif
