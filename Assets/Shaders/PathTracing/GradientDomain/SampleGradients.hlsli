@@ -30,10 +30,11 @@ void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainP
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         shiftedRayOrigin, shiftedRayDirection);
 
-	float pdfRatio = 1.0f; // Shifted / Main
-    DBG_OUTPUT1(pdfRatio, GD_PrimaryPdfRatio);
+	float pdfRatioPrimary = 1.0f;
+    DBG_OUTPUT1(pdfRatioPrimary, GD_PrimaryPdfRatio);
 
     float jacobian;
+    float pdfRatio;
     bool isSymmetric;
     TraceShiftedPath(
         mainPath.VertexList,
@@ -46,6 +47,7 @@ void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainP
         isSymmetric);
 
     Lo *= jacobian;
+    pdfRatio *= pdfRatioPrimary;
     pdfRatio *= jacobian;
 
     misWeight = 1.0f;

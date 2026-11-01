@@ -15,11 +15,4 @@ struct Gradients
     hlsl::float3 YBackward;
 };
 
-enum class ReconnectionState : hlsl::uint
-{
-    eUnconnected,
-    eSemiConnected,  // Connected but has different wo so needs BxDF evals
-    eConnected,      // Can reuse Hit contribution
-};
-
 #endif

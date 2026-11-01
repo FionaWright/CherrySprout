@@ -5,12 +5,38 @@
 #include "PathTracing/Shift/MissShifted.hlsli"
 #include "Utils/Debug/Palette.h"
 
+void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, out float3 wi, out float pdf)
+{
+    wi = v1.Wi;
+    pdf = v1.PDF;
+
+    if (FEAT_CORE(NEE))
+        L_sample += v1.DirectContribution * pathState.Beta;
+
+    pathState.Beta *= v1.IndirectContribution;
+}
+
+void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, HitInfo hitInfo, float3 wo, out float3 wi, out float pdf)
+{
+    wi = v1.Wi;
+
+    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, v1.Lobe);
+
+    pdf = bxdfEval.PDF;
+
+    if (FEAT_CORE(NEE))
+    {
+        L_sample += v1.DirectContribution * pathState.Beta;
+        pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
+    }
+
+    float NdL = dot(hitInfo.Ns_ff, wi);
+    pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6f, v1.PDF);
+}
+
 bool ResolveShiftedPathAncillaryVertex(
     inout PathState pathState,
-    inout float jacobian,
-    inout float pdfRatio,
-    inout bool isSymmetric,
-    inout ReconnectionState reconnectionState,
+    inout PathStateShifted pathStateShifted,
     PathVertexList mainVertices,
     bool isMiss,
     HitInfo hitInfo)
@@ -23,15 +49,14 @@ bool ResolveShiftedPathAncillaryVertex(
     bool mainIsMiss = v1.Type == VertexType::eEnvironment;
     if (isMiss != mainIsMiss)
     {
-        isSymmetric = false;
-        pathState.Lo = 0.0f;
+        pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionEnvMap);
         return false;
     }
 
     if (isMiss)
     {
-        MissShifted(pathState, v1, reconnectionState);
+        MissShifted(pathState, v1, pathStateShifted.ReconnectionState);
         return false;
     }
 
@@ -50,8 +75,7 @@ bool ResolveShiftedPathAncillaryVertex(
     bool mainIsEmissive = v1.Type == VertexType::eEmission;
     if (isEmissive != mainIsEmissive)
     {
-        isSymmetric = false;
-        pathState.Lo = 0.0f;
+        pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionEmission);
         return false;
     }
@@ -64,98 +88,65 @@ bool ResolveShiftedPathAncillaryVertex(
     }
 
     float3 wi;
-
-	float pdfMain = v1.PDF;
 	float pdfShifted;
 
-    if (reconnectionState == ReconnectionState::eConnected)
+    if (pathStateShifted.ReconnectionState == ReconnectionState::eConnected)
     {
-        wi = v1.Wi;
-
-        if (FEAT_CORE(NEE))
-        {
-            L_sample += v1.DirectContribution * pathState.Beta;
-        }
-
-        pathState.Beta *= v1.IndirectContribution;
-		pdfShifted = v1.PDF;
+        ResolveConnected(pathState, L_sample, v1, wi, pdfShifted);
     }
-    else if (reconnectionState == ReconnectionState::eSemiConnected)
+    else if (pathStateShifted.ReconnectionState == ReconnectionState::eSemiConnected)
     {
-        wi = v1.Wi;
-
-        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, v1.Lobe);
-
-        if (FEAT_CORE(NEE))
-        {
-            L_sample += v1.DirectContribution * pathState.Beta;
-            pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
-        }
-
-        float NdL = dot(hitInfo.Ns_ff, wi);
-        pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF);
-
-		pdfShifted = bxdfEval.PDF;
-
-        reconnectionState = ReconnectionState::eConnected;
+        ResolveSemiConnected(pathState, L_sample, v1, hitInfo, wo, wi, pdfShifted);
+        pathStateShifted.ReconnectionState = ReconnectionState::eConnected;
     }
-    else if (reconnectionState == ReconnectionState::eUnconnected)
+    else if (pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
     {
-        if (pathState.RaySegmentIdx == mainVertices.NumVertices - 1) // Note: Only happens due to beta loss deaths
+        bool mainPathBetaLoss = pathState.RaySegmentIdx == mainVertices.NumVertices - 1;
+        if (mainPathBetaLoss) // TODO: Allow symmetric?
         {
-            pathState.Lo = 0.0f;
-            isSymmetric = false;
+            pathStateShifted.IsSymmetric = false;
             DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
             return false;
         }
 
         PathVertexInfo v2 = mainVertices.Array[pathState.RaySegmentIdx + 1];
-        DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
-        DBG_OUTPUT3(Palette((uint)v2.Lobe), GD_V2Lobe);
 
         float3 E_indirect;
-        HitShiftedUnconnected(reconnectionState, isSymmetric, pathState, v1, v2, hitInfo, wo, wi, E_indirect, jacobian, pdfShifted);
+        HitShiftedUnconnected(pathState, pathStateShifted, v1, v2, hitInfo, wo, wi, E_indirect, pdfShifted);
 
         pathState.Beta *= E_indirect;
+
+        DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
+        DBG_OUTPUT3(Palette((uint)v2.Lobe), GD_V2Lobe);
     }
 
     DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
 
-    if (pdfMain <= 0.0f || pdfShifted <= 0.0f)
-        isSymmetric = false;
+    float pdfMain = v1.PDF;
 
-    if (pathState.Beta.x <= 0 && pathState.Beta.y <= 0 && pathState.Beta.z <= 0)
-        isSymmetric = false;
-
-    if (!isSymmetric)
-    {
-        pathState.Lo = 0.0f;
+    pathStateShifted.IsSymmetric &= pdfMain > 0.0f;
+    pathStateShifted.IsSymmetric &= pdfShifted > 0.0f;
+    pathStateShifted.IsSymmetric &= any(pathState.Beta > 0.0f);
+    if (!pathStateShifted.IsSymmetric)
         return false;
-    }
 
-	pdfRatio *= (pdfShifted / pdfMain);
+	pathStateShifted.PdfRatio *= (pdfShifted / pdfMain);
 
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
-
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;
+    pathState.IsPrimaryRay = false;
 
     DBG_OUTPUT3(wi, GD_L_w);
     DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi), GD_L_s);
     DBG_OUTPUT1(pdfShifted, GD_PdfShifted);
     DBG_OUTPUT1(0.0f, GD_V2Type);
-
-    pathState.IsPrimaryRay = false;
     return true;
 }
 
-// TODO: Put args in ShiftedPathState struct once finalized
 bool TraceShiftedPathAncillary(
     inout PathState pathState,
-    inout float jacobian,
-    inout float pdfRatio,
-    inout bool isSymmetric,
-    inout ReconnectionState reconnectionState,
+    inout PathStateShifted pathStateShifted,
     PathVertexList mainVertices,
     int2 pixelCoord)
 {
@@ -163,7 +154,7 @@ bool TraceShiftedPathAncillary(
     HitInfo hitInfo;
     ComputeRayHit(pixelCoord, pathState, isMiss, hitInfo);
 
-    return ResolveShiftedPathAncillaryVertex(pathState, jacobian, pdfRatio, isSymmetric, reconnectionState, mainVertices, isMiss, hitInfo);
+    return ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, mainVertices, isMiss, hitInfo);
 }
 
 void TraceShiftedPath(
@@ -174,14 +165,11 @@ void TraceShiftedPath(
 
     out float3 Lo,
     out float jacobian,
-    inout float pdfRatio,
+    out float pdfRatio,
     out bool isSymmetric)
 {
-    ReconnectionState reconnectionState = ReconnectionState::eUnconnected;
-    isSymmetric = true;
-    jacobian = 1.0f;
-
     PathState pathState = CreatePathState(origin, dir);
+    PathStateShifted pathStateShifted = CreatePathStateShifted();
 
     for (uint i = 0; i < mainVertices.NumVertices; i++)
     {
@@ -190,13 +178,16 @@ void TraceShiftedPath(
 
         pathState.RaySegmentIdx = i;
 
-        if (!TraceShiftedPathAncillary(pathState, jacobian, pdfRatio, isSymmetric, reconnectionState, mainVertices, pixelCoord))
+        if (!TraceShiftedPathAncillary(pathState, pathStateShifted, mainVertices, pixelCoord))
             break;
     }
 
-    Lo = pathState.Lo;
+    Lo = pathStateShifted.IsSymmetric ? pathState.Lo : 0.0f;
+    jacobian = pathStateShifted.Jacobian;
+    pdfRatio = pathStateShifted.PdfRatio;
+    isSymmetric = pathStateShifted.IsSymmetric;
 
-    DBG_OUTPUT3(Palette((uint)reconnectionState), GD_FinalReconnectionState);
+    DBG_OUTPUT3(Palette((uint)pathStateShifted.ReconnectionState), GD_FinalReconnectionState);
 }
 
 #endif

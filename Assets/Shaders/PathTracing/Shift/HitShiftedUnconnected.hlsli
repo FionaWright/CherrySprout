@@ -5,9 +5,8 @@
 #include "PathTracing/Shift/ShiftMapping/Hybrid.hlsli"
 
 void HitShiftedUnconnected(
-    inout ReconnectionState reconnectionState,
-    inout bool isSymmetric,
     inout PathState pathState,
+    inout PathStateShifted pathStateShifted,
 
     PathVertexInfo v1,
     PathVertexInfo v2,
@@ -16,33 +15,31 @@ void HitShiftedUnconnected(
 
     out float3 wi,
     out float3 contrib,
-    inout float jacobian,
 	out float pdf)
 {
     pdf = 1.0f;
+    contrib = NAN;
+    wi = NAN;
 
     BxdfEval bxdfEval;
     ShiftResult shiftResult;
     if (FEAT_CORE(GdptHybridShift))
-        shiftResult = ShiftMapHybrid(reconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
+        shiftResult = ShiftMapHybrid(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
     else
-        shiftResult = ShiftMapHPlusR(reconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
+        shiftResult = ShiftMapHPlusR(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
 
     if (!shiftResult.IsSuccessful || bxdfEval.PDF <= 0.0f)
     {
-        isSymmetric = false;
-        contrib = 0.0f;
-        wi = NAN;
+        pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMapping);
         return;
     }
 
     wi = shiftResult.Wi;
-    jacobian *= shiftResult.Jacobian;
+    pathStateShifted.Jacobian *= shiftResult.Jacobian;
     DBG_OUTPUT1(shiftResult.Jacobian, GD_Jacobian);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-
     contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= bxdfEval.PDF;
@@ -65,9 +62,7 @@ void HitShiftedUnconnected(
         // TODO: Should this even be trying NEE samples if they failed for main path? Just going to reject anyways
         if (v1.ShadowFactor > 0.99f != shadowFactor > 0.99f)
         {
-            isSymmetric = false;
-            contrib = 0.0f;
-            wi = NAN;
+            pathStateShifted.IsSymmetric = false;
             DBG_OUTPUT1(1.0f, GD_RejectionNEE);
             return;
         }

@@ -50,4 +50,31 @@ inline PathVertexList CreatePathVertexList()
     return vertexList;
 }
 
+enum class ReconnectionState : hlsl::uint
+{
+    eUnconnected,
+    eSemiConnected,  // Connected but has different wo so needs BxDF evals
+    eConnected,      // Can reuse Hit contribution
+};
+
+struct PathStateShifted
+{
+    float Jacobian;
+    float PdfRatio;
+    bool IsSymmetric;
+    ReconnectionState ReconnectionState;
+};
+
+inline PathStateShifted CreatePathStateShifted()
+{
+    PathStateShifted pathStateShifted = (PathStateShifted)0;
+
+    pathStateShifted.Jacobian = 1.0f;
+    pathStateShifted.PdfRatio = 1.0f;
+    pathStateShifted.IsSymmetric = true;
+    pathStateShifted.ReconnectionState = ReconnectionState::eUnconnected;
+
+    return pathStateShifted;
+}
+
 #endif
