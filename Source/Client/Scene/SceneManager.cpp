@@ -230,7 +230,9 @@ void SceneManager::GenerateMipMaps(D3D* d3d, Heap* heap)
         D3D12_STATIC_SAMPLER_DESC sampler = {};
         InitializeSamplerLinearClamp(&sampler);
 
-        m_rootSigMipMaps.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
+        m_rootSigMipMaps.AddSrvRange(0, 1);
+        m_rootSigMipMaps.AddUavRange(0, 1);
+        m_rootSigMipMaps.Init(d3d->GetDevice(), &sampler, 1);
 
         V(m_pipelineMipMaps.InitCompute(d3d->GetDevice(), "Compute/MipMapsCS.hlsl", m_rootSigMipMaps.Get()));
     }
@@ -280,8 +282,8 @@ void SceneManager::GenerateMipMaps(D3D* d3d, Heap* heap)
             DescriptorSet set;
             set.Init(heap);
 
-            set.SetSRV(d3d->GetDevice(), 0, resource, srcSRVDesc);
-            set.SetUAV(d3d->GetDevice(), 0, resource, dstUAVDesc);
+            set.SetSRV(d3d->GetDevice(), 0, 0, resource, srcSRVDesc);
+            set.SetUAV(d3d->GetDevice(), 0, 0, resource, dstUAVDesc);
 
             if (mip > 0)
             {

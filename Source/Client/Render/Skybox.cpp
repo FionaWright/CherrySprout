@@ -16,7 +16,9 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
     D3D12_STATIC_SAMPLER_DESC sampler;
     InitializeSamplerLinearClamp(&sampler);
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 1, 0, false, &sampler, 1);
+    m_rootSig.AddCbvRange(0, 1);
+    m_rootSig.AddSrvRange(0, 1);
+    m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
     D3D12_INPUT_ELEMENT_DESC rasterILD[] =
     {
@@ -75,7 +77,9 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
 
     // Init Generate Irradiance
     {
-        m_rootSigGenIrr.SmartInit(d3d->GetDevice(), 0, 1, 1, false, &sampler, 1);
+        m_rootSigGenIrr.AddSrvRange(0, 1);
+        m_rootSigGenIrr.AddUavRange(0, 1);
+        m_rootSigGenIrr.Init(d3d->GetDevice(), &sampler, 1);
         V(m_pipelineGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get()));
 
         if (!m_texIrradianceIBL.IsInitialized())
@@ -92,7 +96,7 @@ void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* v
     cmdList->SetGraphicsRootSignature(m_rootSig.Get());
     cmdList->SetPipelineState(m_pipelineForward.GetPSO());
 
-    m_setForwardRender.UpdateCBV(0, &matrices);
+    m_setForwardRender.UpdateCBV(0, 0, &matrices);
 
     m_setForwardRender.TransitionAllSRVToShaderResource(cmdList);
     m_setForwardRender.SetDescriptorTables_Graphics(cmdList);
@@ -117,8 +121,8 @@ void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Hea
 
     {
         m_setForwardRender.Init(heap);
-        m_setForwardRender.AddCBV(device, sizeof(CbvMatrices_MVP), uploadHeapCBV, "CBV Matrices (Skybox)");
-        m_setForwardRender.SetSRV(device, 0, cubemap, srvDesc);
+        m_setForwardRender.AddCBV(device, 0, sizeof(CbvMatrices_MVP), uploadHeapCBV, "CBV Matrices (Skybox)");
+        m_setForwardRender.SetSRV(device, 0, 0, cubemap, srvDesc);
     }
 
     {
@@ -130,8 +134,8 @@ void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Hea
         uavDesc.Texture2DArray.FirstArraySlice = 0;
 
         m_setGenIrr.Init(heap);
-        m_setGenIrr.AddUAV(device, &m_texIrradianceIBL, uavDesc);
-        m_setGenIrr.SetSRV(device, 0, cubemap, srvDesc);
+        m_setGenIrr.AddUAV(device, 0, &m_texIrradianceIBL, uavDesc);
+        m_setGenIrr.SetSRV(device, 0, 0, cubemap, srvDesc);
     }
 }
 

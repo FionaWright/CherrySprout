@@ -48,9 +48,9 @@ void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, XMFLO
     gizmo.TextureFilepath = fullPath;
 
     gizmo.DescSet.Init(heap, false, true);
-    gizmo.DescSet.AddCBV(d3d->GetDevice(), sizeof(CbvColor), &m_uploadHeap);
-    gizmo.DescSet.UpdateCBV(0, &color);
-    gizmo.DescSet.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_textureCache[fullPath], m_textureCache[fullPath].GetDesc().Format);
+    gizmo.DescSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvColor), &m_uploadHeap);
+    gizmo.DescSet.UpdateCBV(0, 0, &color);
+    gizmo.DescSet.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &m_textureCache[fullPath], m_textureCache[fullPath].GetDesc().Format);
 }
 
 void GizmoManager::Render(D3D* d3d, const Heap* heap, ID3D12GraphicsCommandList* cmdList, const XMMATRIX& V, const XMMATRIX& P)
@@ -128,7 +128,10 @@ void GizmoManager::initResources(const D3D* d3d, ID3D12GraphicsCommandList* cmdL
     InitializeSamplerLinearClamp(&sampler);
 
     m_rootConstants.Init(0, 0, sizeof(CbvMatrices_MVP_Lean));
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 1, 0, false, &sampler, 1, &m_rootConstants);
+    m_rootSig.AddRootConstants(&m_rootConstants);
+    m_rootSig.AddCbvRange(0, 1);
+    m_rootSig.AddSrvRange(0, 1);
+    m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {

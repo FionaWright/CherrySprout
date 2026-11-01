@@ -18,6 +18,8 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     RootConstants m_rootConstants;
+
+    D12Resource m_dummy;
 };
 
 #endif

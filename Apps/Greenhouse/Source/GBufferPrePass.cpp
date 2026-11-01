@@ -44,10 +44,14 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     InitializeSamplerLinearClamp(&sampler);
 
     m_rootConstants.Init(0, 0, sizeof(CbvGBufferPrePass_PerInstance));
-    m_rootSig.SmartInit(d3d->GetDevice(), 1, 2, 0, true, &sampler, 1, &m_rootConstants);
+    m_rootSig.AddRootConstants(&m_rootConstants);
+    m_rootSig.AddCbvRange(0, 1);
+    m_rootSig.AddSrvRange(0, 2);
+    m_rootSig.AddSceneTextures(1);
+    m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
     m_descriptorSet.Init(heap, true, true);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), uploadHeapCBV);
+    m_descriptorSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -79,8 +83,8 @@ void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
     CherryAssert(scene->GPU.MegaBufferInstanceData.GetResource());
     CherryAssert(scene->GPU.MegaBufferMaterials.GetResource());
 
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 }
 
 XMMATRIX ApplyProjectionJitter(const XMMATRIX& projection, const XMFLOAT2& jitterPixels, const float width, const float height)
@@ -167,7 +171,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
     XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
     XMStoreFloat4x4(&matricesVP.P, P);
     XMStoreFloat4x4(&matricesVP.PrevV, m_prevV);
-    m_descriptorSet.UpdateCBV(0, &matricesVP);
+    m_descriptorSet.UpdateCBV(0, 0, &matricesVP);
 
     m_prevV = renderInfo.V;
 

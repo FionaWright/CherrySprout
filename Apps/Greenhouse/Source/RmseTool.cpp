@@ -32,7 +32,9 @@ void RmseTool::StoreTextureToSlot(D3D* d3d, Heap* heap, D12Resource* texture, co
     if (!m_pipelineBlit.GetPSO())
     {
         m_setBlit.Init(heap);
-        m_rootSigBlit.SmartInit(d3d->GetDevice(), 0, 1, 1);
+        m_rootSigBlit.AddSrvRange(0, 1);
+        m_rootSigBlit.AddUavRange(0, 1);
+        m_rootSigBlit.Init(d3d->GetDevice());
         V(m_pipelineBlit.InitCompute(d3d->GetDevice(), "Compute/TexBlitCS.hlsl", m_rootSigBlit.Get()));
     }
 
@@ -53,8 +55,8 @@ void RmseTool::StoreTextureToSlot(D3D* d3d, Heap* heap, D12Resource* texture, co
         cmdList->SetPipelineState(m_pipelineBlit.GetPSO());
         cmdList->SetComputeRootSignature(m_rootSigBlit.Get());
 
-        m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, texture, texture->GetDesc().Format);
-        m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, slot, slot->GetDesc().Format);
+        m_setBlit.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, texture, texture->GetDesc().Format);
+        m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, slot, slot->GetDesc().Format);
         m_setBlit.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
@@ -240,7 +242,9 @@ void RmseTool::ComputeSingleRMSE(D3D* d3d, Heap* heap)
 
     if (!m_pipelineSumSquaredErr.GetPSO())
     {
-        m_rootSigSumSquaredErr.SmartInit(d3d->GetDevice(), 0, 2, 1);
+        m_rootSigSumSquaredErr.AddSrvRange(0, 2);
+        m_rootSigSumSquaredErr.AddUavRange(0, 1);
+        m_rootSigSumSquaredErr.Init(d3d->GetDevice());
 
         V(m_pipelineSumSquaredErr.InitCompute(d3d->GetDevice(), "Compute/SumSquaredErrorCS.hlsl", m_rootSigSumSquaredErr.Get()));
 
@@ -248,11 +252,11 @@ void RmseTool::ComputeSingleRMSE(D3D* d3d, Heap* heap)
         m_bufferSumSqrErrReadback.Init_Buffer("SumSquaredErr ReadbackBuffer", d3d->GetDevice(), bufferSize, D3D12_RESOURCE_FLAG_NONE, true);
 
         m_setSumSquaredErr.Init(heap);
-        m_setSumSquaredErr.SetUAV_Buffer(d3d->GetDevice(), 0, &m_bufferSumSqrErrRW, bufferNumElements, sizeof(SumSquaredErrorStruct));
+        m_setSumSquaredErr.SetUAV_Buffer(d3d->GetDevice(), 0, 0, &m_bufferSumSqrErrRW, bufferNumElements, sizeof(SumSquaredErrorStruct));
     }
 
-    m_setSumSquaredErr.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_slots[0], m_slots[0].GetDesc().Format);
-    m_setSumSquaredErr.SetSRV_Tex2D(d3d->GetDevice(), 1, &m_slots[1], m_slots[1].GetDesc().Format);
+    m_setSumSquaredErr.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &m_slots[0], m_slots[0].GetDesc().Format);
+    m_setSumSquaredErr.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_slots[1], m_slots[1].GetDesc().Format);
 
     d3d->Flush();
 

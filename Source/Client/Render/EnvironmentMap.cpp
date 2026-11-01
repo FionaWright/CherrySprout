@@ -56,15 +56,15 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::wstring& filePath, co
 
     {
         m_setPanoToEA.Init(heap);
-        m_setPanoToEA.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToEA), &uploadHeap, "CBV Pano To EA");
-        m_setPanoToEA.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
-        m_setPanoToEA.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_ea, m_ea.GetDesc().Format);
+        m_setPanoToEA.AddCBV(d3d->GetDevice(), 0, sizeof(CbvPanoToEA), &uploadHeap, "CBV Pano To EA");
+        m_setPanoToEA.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &m_pano, m_pano.GetDesc().Format);
+        m_setPanoToEA.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_ea, m_ea.GetDesc().Format);
 
         CbvPanoToEA cbv = {};
         cbv.OutputDimensions = hlsl::uint2(m_ea.GetDesc().Width, m_ea.GetDesc().Height);
         cbv.InputDimensions = hlsl::uint2(m_pano.GetDesc().Width, m_pano.GetDesc().Height);
         cbv.Rotation = rotation / 360.0f;
-        m_setPanoToEA.UpdateCBV(0, &cbv);
+        m_setPanoToEA.UpdateCBV(0, 0, &cbv);
     }
 
     {
@@ -112,15 +112,15 @@ void EnvironmentMap::InitCubemap(D3D* d3d, Heap* heap)
         uavDesc.Texture2DArray.FirstArraySlice = 0;
 
         m_setPanoToCM.Init(heap);
-        m_setPanoToCM.AddCBV(d3d->GetDevice(), sizeof(CbvPanoToCM), &uploadHeapCBV, "CBV Cubemap");
-        m_setPanoToCM.SetSRV_Tex2D(d3d->GetDevice(), 0, &m_pano, m_pano.GetDesc().Format);
-        m_setPanoToCM.SetUAV(d3d->GetDevice(), 0, &m_cubemap, uavDesc);
+        m_setPanoToCM.AddCBV(d3d->GetDevice(), 0, sizeof(CbvPanoToCM), &uploadHeapCBV, "CBV Cubemap");
+        m_setPanoToCM.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &m_pano, m_pano.GetDesc().Format);
+        m_setPanoToCM.SetUAV(d3d->GetDevice(), 0, 0, &m_cubemap, uavDesc);
 
         CbvPanoToCM cbv = {};
         cbv.OutputWidth = m_cubemap.GetDesc().Width;
         cbv.InputDimensions = hlsl::uint2(m_pano.GetDesc().Width, m_pano.GetDesc().Height);
         cbv.Rotation = m_rotation / 360.0f;
-        m_setPanoToCM.UpdateCBV(0, &cbv);
+        m_setPanoToCM.UpdateCBV(0, 0, &cbv);
     }
 
     {
@@ -154,10 +154,16 @@ void EnvironmentMap::initResources(ID3D12Device* device)
     D3D12_STATIC_SAMPLER_DESC sampler;
     InitializeSamplerLinearClamp(&sampler);
 
-    m_rootSigPanoToEA.SmartInit(device, 1, 1, 1, false, &sampler, 1);
+    m_rootSigPanoToEA.AddCbvRange(0, 1);
+    m_rootSigPanoToEA.AddSrvRange(0, 1);
+    m_rootSigPanoToEA.AddUavRange(0, 1);
+    m_rootSigPanoToEA.Init(device, &sampler, 1);
     V(m_pipelinePanoToEA.InitCompute(device, "Compute/PanoToEaCS.hlsl", m_rootSigPanoToEA.Get()));
 
-    m_rootSigPanoToCM.SmartInit(device, 1, 1, 1, false, &sampler, 1);
+    m_rootSigPanoToCM.AddCbvRange(0, 1);
+    m_rootSigPanoToCM.AddSrvRange(0, 1);
+    m_rootSigPanoToCM.AddUavRange(0, 1);
+    m_rootSigPanoToCM.Init(device, &sampler, 1);
     V(m_pipelinePanoToCM.InitCompute(device, "Compute/PanoToCubemapCS.hlsl", m_rootSigPanoToCM.Get()));
 
     m_resourcesInitialized = true;
@@ -172,7 +178,10 @@ void EnvironmentMap::ComputeMipMapsCubemap(ID3D12Device* device, ID3D12GraphicsC
 
         D3D12_STATIC_SAMPLER_DESC sampler;
         InitializeSamplerLinearClamp(&sampler, 0);
-        m_rootSigMipMapCubemap.SmartInit(device, 0, 1, 1, false, &sampler, 1, &m_rootConstantsMipMapCubemap);
+        m_rootSigMipMapCubemap.AddRootConstants(&m_rootConstantsMipMapCubemap);
+        m_rootSigMipMapCubemap.AddSrvRange(0, 1);
+        m_rootSigMipMapCubemap.AddUavRange(0, 1);
+        m_rootSigMipMapCubemap.Init(device, &sampler, 1);
 
         V(m_pipelineMipMapCubemap.InitCompute(device, "Compute/MipMapsCubemapCS.hlsl", m_rootSigMipMapCubemap.Get()));
     }
@@ -217,8 +226,8 @@ void EnvironmentMap::ComputeMipMapsCubemap(ID3D12Device* device, ID3D12GraphicsC
         srcSRVDesc.TextureCube.MostDetailedMip = srcMip;
         dstUAVDesc.Texture2DArray.MipSlice = dstMip;
 
-        set.SetSRV(device, 0, &m_cubemap, srcSRVDesc);
-        set.SetUAV(device, 0, &m_cubemap, dstUAVDesc);
+        set.SetSRV(device, 0, 0, &m_cubemap, srcSRVDesc);
+        set.SetUAV(device, 0, 0, &m_cubemap, dstUAVDesc);
 
         if (srcMip > 0)
         {
@@ -273,7 +282,7 @@ XMFLOAT3 EnvironmentMap::GetDirectionOfHighestIntensity(D3D* d3d, Heap* heap)
         samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
         samplers[0].ShaderRegister = 0;
 
-        m_rootSigMaxLumRedSearch.SmartInit(d3d->GetDevice(), 1, 1, 1, false, samplers, _countof(samplers));
+        m_rootSigMaxLumRedSearch.QuickInit(d3d->GetDevice(), 1, 1, 1, false, samplers, _countof(samplers));
 
         m_shaderMaxLumRedSearch.InitCs(L"Compute/MaxLumReductionSearchCS.hlsl", d3d->GetDevice(), m_rootSigMaxLumRedSearch.Get());
 

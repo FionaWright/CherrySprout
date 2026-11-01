@@ -23,11 +23,15 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
-    m_rootSig.SmartInit(d3d->GetDevice(), 2, 3, 0, true, &sampler, 1, &m_rootConstants);
+    m_rootSig.AddRootConstants(&m_rootConstants);
+    m_rootSig.AddCbvRange(0, 2);
+    m_rootSig.AddSrvRange(0, 3);
+    m_rootSig.AddSceneTextures(1);
+    m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
     m_descriptorSet.Init(heap, true, true);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvMatrices_VP), uploadHeapCBV);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), sizeof(CbvForward), uploadHeapCBV);
+    m_descriptorSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
+    m_descriptorSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvForward), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -84,9 +88,9 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     srvDesc.TextureCube.MipLevels = envMap->GetCubemap()->GetDesc().MipLevels;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
-    m_descriptorSet.SetSRV(d3d->GetDevice(), 2, envMap->GetCubemap(), srvDesc);
+    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
+    m_descriptorSet.SetSRV(d3d->GetDevice(), 0, 2, envMap->GetCubemap(), srvDesc);
 }
 
 void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -148,14 +152,14 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     CbvMatrices_VP matricesVP = {};
     XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
     XMStoreFloat4x4(&matricesVP.P, renderInfo.P);
-    m_descriptorSet.UpdateCBV(0, &matricesVP);
+    m_descriptorSet.UpdateCBV(0, 0, &matricesVP);
 
     CbvForward cbvForward{};
     cbvForward.CameraPosition = renderInfo.Camera->GetPosition();
     cbvForward.FrameIdx = renderInfo.FrameIndex;
     cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
     cbvForward.MaxCubemapMipMaps = renderInfo.EnvironmentMap->GetCubemap()->GetDesc().MipLevels;
-    m_descriptorSet.UpdateCBV(1, &cbvForward);
+    m_descriptorSet.UpdateCBV(0, 1, &cbvForward);
 
     m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
 

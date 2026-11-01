@@ -55,12 +55,14 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
         if (!m_rootSigGradientsSS.Get())
         {
             m_setGradientsSS.Init(renderInfo.Heap);
-            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_gradientXFSS, m_gradientXFSS.GetDesc().Format);
-            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_gradientXBSS, m_gradientXBSS.GetDesc().Format);
-            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 2, &m_gradientYFSS, m_gradientYFSS.GetDesc().Format);
-            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 3, &m_gradientYBSS, m_gradientYBSS.GetDesc().Format);
+            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_gradientXFSS, m_gradientXFSS.GetDesc().Format);
+            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, 1, &m_gradientXBSS, m_gradientXBSS.GetDesc().Format);
+            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, 2, &m_gradientYFSS, m_gradientYFSS.GetDesc().Format);
+            m_setGradientsSS.SetUAV_Tex2D(d3d->GetDevice(), 0, 3, &m_gradientYBSS, m_gradientYBSS.GetDesc().Format);
 
-            m_rootSigGradientsSS.SmartInit(d3d->GetDevice(), 0, 1, 4);
+            m_rootSigGradientsSS.AddSrvRange(0, 1);
+            m_rootSigGradientsSS.AddUavRange(0, 4);
+            m_rootSigGradientsSS.Init(d3d->GetDevice());
             V(m_pipelineGradientsSS.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/TexGradientsCS.hlsl", m_rootSigGradientsSS.Get()));
         }
 
@@ -73,7 +75,7 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
         cmdList->SetPipelineState(m_pipelineGradientsSS.GetPSO());
         cmdList->SetComputeRootSignature(m_rootSigGradientsSS.Get());
 
-        m_setGradientsSS.SetSRV_Tex2D(d3d->GetDevice(), 0, primal, primal->GetDesc().Format);
+        m_setGradientsSS.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, primal, primal->GetDesc().Format);
         m_setGradientsSS.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
@@ -106,21 +108,23 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
             m_debugGradientY.Init_Tex2D("Gradient Y (Debug)", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
             m_setGradientsCombine.Init(renderInfo.Heap);
-            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, gXF, gXF->GetDesc().Format);
-            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 1, gXB, gXB->GetDesc().Format);
-            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 2, gYF, gYF->GetDesc().Format);
-            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 3, gYB, gYB->GetDesc().Format);
-            m_setGradientsCombine.SetUAV_Tex2D(d3d->GetDevice(), 0, &m_debugGradientX, m_debugGradientX.GetDesc().Format);
-            m_setGradientsCombine.SetUAV_Tex2D(d3d->GetDevice(), 1, &m_debugGradientY, m_debugGradientY.GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, gXF, gXF->GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, gXB, gXB->GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 2, gYF, gYF->GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 3, gYB, gYB->GetDesc().Format);
+            m_setGradientsCombine.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_debugGradientX, m_debugGradientX.GetDesc().Format);
+            m_setGradientsCombine.SetUAV_Tex2D(d3d->GetDevice(), 0, 1, &m_debugGradientY, m_debugGradientY.GetDesc().Format);
 
-            m_rootSigGradientsCombine.SmartInit(d3d->GetDevice(), 0, 4, 2);
+            m_rootSigGradientsCombine.AddSrvRange(0, 4);
+            m_rootSigGradientsCombine.AddUavRange(0, 2);
+            m_rootSigGradientsCombine.Init(d3d->GetDevice());
             V(m_pipelineGradientsCombine.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/CombineGradientsCS.hlsl", m_rootSigGradientsCombine.Get()));
         }
 
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, gXF, gXF->GetDesc().Format);
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 1, gXB, gXB->GetDesc().Format);
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 2, gYF, gYF->GetDesc().Format);
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 3, gYB, gYB->GetDesc().Format);
+        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, gXF, gXF->GetDesc().Format);
+        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, gXB, gXB->GetDesc().Format);
+        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 2, gYF, gYF->GetDesc().Format);
+        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 3, gYB, gYB->GetDesc().Format);
 
         gXF->Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         gXB->Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);

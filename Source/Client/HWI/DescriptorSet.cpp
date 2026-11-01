@@ -30,11 +30,10 @@ void DescriptorSet::Init(Heap* heap, const bool hasBindlessParam, const bool has
 
     m_cbvs.clear();
     m_srvs.clear();
-    m_srvsTextures.clear();
     m_uavs.clear();
 }
 
-void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* uploadHeap, const char* debugName)
+void DescriptorSet::AddCBV(ID3D12Device* device, const uint32_t spaceIdx, const size_t size, UploadHeap* uploadHeap, const char* debugName)
 {
     CherryAssert(size <= 65536); // 64KB
 
@@ -52,15 +51,18 @@ void DescriptorSet::AddCBV(ID3D12Device* device, size_t size, UploadHeap* upload
     cbvDesc.SizeInBytes = static_cast<uint32_t>(Align(size, 256));
     device->CreateConstantBufferView(&cbvDesc, handle);
 
-    m_cbvs.emplace_back(cbv);
+    for (uint32_t i = m_cbvs.size(); i <= spaceIdx; i++)
+        m_cbvs.push_back({});
+
+    m_cbvs[spaceIdx].emplace_back(cbv);
 }
 
-void DescriptorSet::UpdateCBV(const uint32_t cbvIdx, const void* data) const
+void DescriptorSet::UpdateCBV(const uint32_t spaceIdx, const uint32_t cbvIdx, const void* data) const
 {
-    if (cbvIdx >= m_cbvs.size())
+    if (spaceIdx >= m_cbvs.size() || cbvIdx >= m_cbvs[spaceIdx].size())
         throw std::exception("You made a mistake :(");
 
-    const CBV& cbv = m_cbvs[cbvIdx];
+    const CBV& cbv = m_cbvs[spaceIdx][cbvIdx];
     std::memcpy(cbv.MappedGpuPtr, data, cbv.Size);
 }
 
@@ -69,14 +71,16 @@ void DescriptorSet::ReleaseCBVs()
     m_cbvs.clear();
 }
 
-void DescriptorSet::AddSRV(ID3D12Device* device, D12Resource* d12Resource,
-                           const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName)
+void DescriptorSet::AddSRV(ID3D12Device* device, const uint32_t spaceIdx, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName)
 {
+    for (uint32_t i = m_srvs.size(); i <= spaceIdx; i++)
+        m_srvs.push_back({});
+
     SRV srv;
     srv.HeapIndex = m_pHeap->GetNextDescriptorIdx(debugName);
 
-    if (m_srvs.size() > 0)
-        CherryAssert(srv.HeapIndex - m_srvs.back().HeapIndex == 1);
+    if (m_srvs[spaceIdx].size() > 0)
+        CherryAssert(srv.HeapIndex - m_srvs[spaceIdx].back().HeapIndex == 1);
 
     ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
@@ -85,24 +89,26 @@ void DescriptorSet::AddSRV(ID3D12Device* device, D12Resource* d12Resource,
 
     srv.D12Resource = d12Resource;
     srv.Resource = resource;
-    m_srvs.emplace_back(srv);
+    m_srvs[spaceIdx].emplace_back(srv);
 }
 
-void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource,
-                           const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName)
+void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t srvIdx, D12Resource* d12Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const char* debugName)
 {
-    if (srvIdx > m_srvs.size())
+    for (uint32_t i = m_srvs.size(); i <= spaceIdx; i++)
+        m_srvs.push_back({});
+
+    if (srvIdx > m_srvs[spaceIdx].size())
         throw std::exception("Invalid srv index");
 
-    if (srvIdx == m_srvs.size())
+    if (srvIdx == m_srvs[spaceIdx].size())
     {
-        AddSRV(device, d12Resource, desc, debugName);
+        AddSRV(device, spaceIdx, d12Resource, desc, debugName);
         return;
     }
 
     ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
-    SRV& srv = m_srvs.at(srvIdx);
+    SRV& srv = m_srvs[spaceIdx].at(srvIdx);
     if (resource && srv.Resource == resource)
         return;
 
@@ -112,7 +118,7 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t srvIdx, D12Resou
     device->CreateShaderResourceView(resource, &desc, handle);
 }
 
-void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format)
+void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -123,10 +129,10 @@ void DescriptorSet::SetSRV_Tex2D(ID3D12Device* device, const uint32_t srvIdx, D1
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     const char* debugName = d12Resource && Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
-    SetSRV(device, srvIdx, d12Resource, desc, debugName);
+    SetSRV(device, spaceIdx, srvIdx, d12Resource, desc, debugName);
 }
 
-void DescriptorSet::SetSRV_Tex1D(ID3D12Device* device, uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format)
+void DescriptorSet::SetSRV_Tex1D(ID3D12Device* device, const uint32_t spaceIdx, uint32_t srvIdx, D12Resource* d12Resource, DXGI_FORMAT format)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
@@ -137,11 +143,10 @@ void DescriptorSet::SetSRV_Tex1D(ID3D12Device* device, uint32_t srvIdx, D12Resou
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     const char* debugName = d12Resource && Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
-    SetSRV(device, srvIdx, d12Resource, desc, debugName);
+    SetSRV(device, spaceIdx, srvIdx, d12Resource, desc, debugName);
 }
 
-void DescriptorSet::SetSRV_Buffer(ID3D12Device* device, const uint32_t srvIdx, D12Resource* d12Resource,
-                                  const uint32_t numElements, const size_t stride)
+void DescriptorSet::SetSRV_Buffer(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t srvIdx, D12Resource* d12Resource, const uint32_t numElements, const size_t stride)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -151,10 +156,10 @@ void DescriptorSet::SetSRV_Buffer(ID3D12Device* device, const uint32_t srvIdx, D
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
-    SetSRV(device, srvIdx, d12Resource, desc, debugName);
+    SetSRV(device, spaceIdx, srvIdx, d12Resource, desc, debugName);
 }
 
-void DescriptorSet::SetSRV_RTAS(ID3D12Device* device, const uint32_t srvIdx, const D12Resource* d12Resource)
+void DescriptorSet::SetSRV_RTAS(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t srvIdx, const D12Resource* d12Resource)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
@@ -163,28 +168,34 @@ void DescriptorSet::SetSRV_RTAS(ID3D12Device* device, const uint32_t srvIdx, con
     desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     const char* debugName = Config::GetSystem().DebugHeapEnabled && d12Resource ? d12Resource->GetName() : nullptr;
-    SetSRV(device, srvIdx, nullptr, desc, debugName);
+    SetSRV(device, spaceIdx, srvIdx, nullptr, desc, debugName);
 }
 
 void DescriptorSet::TransitionAllSRVToShaderResource(ID3D12GraphicsCommandList* cmdList) const
 {
-    for (const auto & m_srv : m_srvs)
+    for (const auto& space : m_srvs)
     {
-        if (m_srv.D12Resource)
+        for (const auto& srv : space)
         {
-            m_srv.D12Resource->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            if (srv.D12Resource)
+            {
+                srv.D12Resource->Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            }
         }
     }
 }
 
-void DescriptorSet::AddUAV(ID3D12Device* device, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
+void DescriptorSet::AddUAV(ID3D12Device* device, const uint32_t spaceIdx, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
 {
+    for (uint32_t i = m_uavs.size(); i <= spaceIdx; i++)
+        m_uavs.push_back({});
+
     UAV uav;
 
     uav.HeapIndex = m_pHeap->GetNextDescriptorIdx("UAV");
 
-    if (m_uavs.size() > 0)
-        CherryAssert(uav.HeapIndex - m_uavs.back().HeapIndex == 1);
+    if (m_uavs[spaceIdx].size() > 0)
+        CherryAssert(uav.HeapIndex - m_uavs[spaceIdx].back().HeapIndex == 1);
 
     ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
@@ -194,18 +205,20 @@ void DescriptorSet::AddUAV(ID3D12Device* device, const D12Resource* d12Resource,
         device->CreateUnorderedAccessView(resource, nullptr, &desc, handle);
     }
 
-    m_uavs.emplace_back(uav);
+    m_uavs[spaceIdx].emplace_back(uav);
 }
 
-void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource,
-                           const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
+void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t uavIdx, const D12Resource* d12Resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
 {
-    if (uavIdx > m_uavs.size())
+    for (uint32_t i = m_uavs.size(); i <= spaceIdx; i++)
+        m_uavs.push_back({});
+
+    if (uavIdx > m_uavs[spaceIdx].size())
         throw std::exception("Invalid uav index");
 
-    if (uavIdx == m_uavs.size())
+    if (uavIdx == m_uavs[spaceIdx].size())
     {
-        AddUAV(device, d12Resource, desc);
+        AddUAV(device, spaceIdx, d12Resource, desc);
         return;
     }
 
@@ -213,14 +226,14 @@ void DescriptorSet::SetUAV(ID3D12Device* device, const uint32_t uavIdx, const D1
 
     if (resource)
     {
-        const UAV& uav = m_uavs.at(uavIdx);
+        const UAV& uav = m_uavs[spaceIdx].at(uavIdx);
 
         const auto handle = m_pHeap->GetDescriptorHandleAtIndex(uav.HeapIndex);
         device->CreateUnorderedAccessView(resource, nullptr, &desc, handle);
     }
 }
 
-void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, const DXGI_FORMAT format)
+void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t uavIdx, const D12Resource* d12Resource, const DXGI_FORMAT format)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -228,10 +241,10 @@ void DescriptorSet::SetUAV_Tex2D(ID3D12Device* device, const uint32_t uavIdx, co
     desc.Texture2D.MipSlice = 0;
     desc.Texture2D.PlaneSlice = 0;
 
-    SetUAV(device, uavIdx, d12Resource, desc);
+    SetUAV(device, spaceIdx, uavIdx, d12Resource, desc);
 }
 
-void DescriptorSet::SetUAV_Tex1D(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, const DXGI_FORMAT format)
+void DescriptorSet::SetUAV_Tex1D(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t uavIdx, const D12Resource* d12Resource, const DXGI_FORMAT format)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
@@ -239,11 +252,10 @@ void DescriptorSet::SetUAV_Tex1D(ID3D12Device* device, const uint32_t uavIdx, co
     desc.Texture2D.MipSlice = 0;
     desc.Texture2D.PlaneSlice = 0;
 
-    SetUAV(device, uavIdx, d12Resource, desc);
+    SetUAV(device, spaceIdx, uavIdx, d12Resource, desc);
 }
 
-void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource,
-                                  const uint32_t numElements, const size_t stride)
+void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t uavIdx, const D12Resource* d12Resource, const uint32_t numElements, const size_t stride)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -252,10 +264,10 @@ void DescriptorSet::SetUAV_Buffer(ID3D12Device* device, const uint32_t uavIdx, c
     desc.Buffer.StructureByteStride = stride;
 
     const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
-    SetUAV(device, uavIdx, d12Resource, desc);
+    SetUAV(device, spaceIdx, uavIdx, d12Resource, desc);
 }
 
-void DescriptorSet::SetUAV_ByteAddressBuffer(ID3D12Device* device, const uint32_t uavIdx, const D12Resource* d12Resource, const size_t size)
+void DescriptorSet::SetUAV_ByteAddressBuffer(ID3D12Device* device, const uint32_t spaceIdx, const uint32_t uavIdx, const D12Resource* d12Resource, const size_t size)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -266,7 +278,7 @@ void DescriptorSet::SetUAV_ByteAddressBuffer(ID3D12Device* device, const uint32_
     desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 
     const char* debugName = Config::GetSystem().DebugHeapEnabled ? d12Resource->GetName() : nullptr;
-    SetUAV(device, uavIdx, d12Resource, desc);
+    SetUAV(device, spaceIdx, uavIdx, d12Resource, desc);
 }
 
 void DescriptorSet::SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const
@@ -286,10 +298,11 @@ void DescriptorSet::setDescriptorTables(ID3D12GraphicsCommandList* cmdList, cons
     if (m_hasRootConstantsParam)
         paramIdx++;
 
-    if (m_cbvs.size() > 0)
+    for (int spaceIdx = 0; spaceIdx < m_cbvs.size(); spaceIdx++)
     {
-        const CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(m_gpuHandle, m_cbvs[0].HeapIndex,
-                                                      m_descriptorIncSize);
+        CherryAssert(!m_cbvs[spaceIdx].empty());
+
+        const CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(m_gpuHandle, m_cbvs[spaceIdx][0].HeapIndex, m_descriptorIncSize);
         if (isCompute)
             cmdList->SetComputeRootDescriptorTable(paramIdx, cbvHandle);
         else
@@ -297,10 +310,11 @@ void DescriptorSet::setDescriptorTables(ID3D12GraphicsCommandList* cmdList, cons
         paramIdx++;
     }
 
-    if (m_srvs.size() > 0)
+    for (int spaceIdx = 0; spaceIdx < m_srvs.size(); spaceIdx++)
     {
-        const CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_gpuHandle, m_srvs[0].HeapIndex,
-                                                      m_descriptorIncSize);
+        CherryAssert(!m_srvs[spaceIdx].empty());
+
+        const CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_gpuHandle, m_srvs[spaceIdx][0].HeapIndex, m_descriptorIncSize);
         if (isCompute)
             cmdList->SetComputeRootDescriptorTable(paramIdx, srvHandle);
         else
@@ -308,25 +322,26 @@ void DescriptorSet::setDescriptorTables(ID3D12GraphicsCommandList* cmdList, cons
         paramIdx++;
     }
 
-    if (m_hasBindlessParam)
-        paramIdx++;
-
-    if (m_uavs.size() > 0)
+    for (int spaceIdx = 0; spaceIdx < m_uavs.size(); spaceIdx++)
     {
-        const CD3DX12_GPU_DESCRIPTOR_HANDLE uavHandle(m_gpuHandle, m_uavs[0].HeapIndex,
-                                                      m_descriptorIncSize);
+        CherryAssert(!m_uavs[spaceIdx].empty());
+
+        const CD3DX12_GPU_DESCRIPTOR_HANDLE uavHandle(m_gpuHandle, m_uavs[spaceIdx][0].HeapIndex, m_descriptorIncSize);
         if (isCompute)
             cmdList->SetComputeRootDescriptorTable(paramIdx, uavHandle);
         else
             cmdList->SetGraphicsRootDescriptorTable(paramIdx, uavHandle);
         paramIdx++;
     }
+
+    if (m_hasBindlessParam)
+        paramIdx++;
 }
 
-D12Resource* DescriptorSet::GetSRV(const uint32_t idx) const
+D12Resource* DescriptorSet::GetSRV(const uint32_t spaceIdx, const uint32_t srvIdx) const
 {
-    if (m_srvs.size() <= idx)
+    if (m_srvs.size() <= spaceIdx || m_srvs[spaceIdx].size() <= srvIdx)
         return nullptr;
 
-    return m_srvs[idx].D12Resource;
+    return m_srvs[spaceIdx][srvIdx].D12Resource;
 }
