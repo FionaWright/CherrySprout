@@ -34,7 +34,7 @@ float3 SampleNEE(
     float3 m;
     if (FEAT_DBG(FixedMisNeeManual))
     {
-        m = gDebugSettings.FixedMisNee;
+        m = GetFixedMisNee();
     }
     else if (lightEval.IsDelta)
     {
@@ -92,7 +92,7 @@ float3 EvaluateNEE(
     float3 m;
     if (FEAT_DBG(FixedMisNeeManual))
     {
-        m = gDebugSettings.FixedMisNee;
+        m = GetFixedMisNee();
     }
     else if (lightEval.IsDelta)
     {

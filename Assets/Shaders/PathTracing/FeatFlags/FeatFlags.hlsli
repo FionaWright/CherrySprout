@@ -9,8 +9,8 @@
 
 #include "PathTracing/FeatFlags/Internal/Interpretations.h"
 
-#define FEAT_CORE_D(flag) (FEAT_FLAGS_COMP_CORE & FEAT_FLAG_VALUE_CORE_##flag)
-#define FEAT_DBG_D(flag)   (FEAT_FLAGS_COMP_DBG & FEAT_FLAG_VALUE_DBG_##flag)
+#define FEAT_CORE_D(flag)   (FEAT_FLAGS_COMP_CORE & FEAT_FLAG_VALUE_CORE_##flag)
+#define FEAT_DBG_D(flag)    (FEAT_FLAGS_COMP_DBG & FEAT_FLAG_VALUE_DBG_##flag)
 
 #define CHECK_RUNTIME_FLAGS (FF_QUICK_SWITCH_ENABLED && defined(PT_BUFFERS_DEFINED))
 

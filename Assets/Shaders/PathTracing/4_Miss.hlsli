@@ -5,6 +5,7 @@
 #include "PathTracing/NEE/LSD/SampleEnvMapCdf.hlsli"
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
+#include "PathTracing/Debug/SettingGuards.hlsli"
 
 float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDelta)
 {
@@ -32,7 +33,7 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
 
             float m = 0.0f;
             if (FEAT_DBG(FixedMisNeeManual))
-                m = 1 - gDebugSettings.FixedMisNee;
+                m = 1 - GetFixedMisNee();
             else if (lastBxdfPdf <= 0.0f)
                 m = 0.0f;
             else

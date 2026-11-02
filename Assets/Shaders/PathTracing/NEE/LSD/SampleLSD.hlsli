@@ -3,14 +3,15 @@
 
 #include "PathTracing/NEE/LSD/BinarySearch.hlsli"
 #include "PathTracing/NEE/LSD/SampleEnvMapCdf.hlsli"
+#include "PathTracing/Debug/SettingGuards.hlsli"
 
 #if FEAT_CORE_D(AliasTables)
 
 void SampleLSD(float xi, out uint lightIdx, out float pdf)
 {
-    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    if (FEAT_DBG(ForceLightIndex) && GetForcedLightIndex() >= 0)
     {
-        lightIdx = gDebugSettings.ForcedLightIndex;
+        lightIdx = GetForcedLightIndex();
         pdf = 1.0f;
         return;
     }
@@ -27,7 +28,7 @@ void SampleLSD(float xi, out uint lightIdx, out float pdf)
 
 void EvaluateLSD(uint lightIdx, out float pdf)
 {
-    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    if (FEAT_DBG(ForceLightIndex) && GetForcedLightIndex() >= 0)
     {
         pdf = 1.0f;
         return;
@@ -40,9 +41,9 @@ void EvaluateLSD(uint lightIdx, out float pdf)
 
 void SampleLSD(float xi, out uint lightIdx, out float pdf)
 {
-    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    if (FEAT_DBG(ForceLightIndex) && GetForcedLightIndex() >= 0)
     {
-        lightIdx = gDebugSettings.ForcedLightIndex;
+        lightIdx = GetForcedLightIndex();
         pdf = 1.0f;
         return;
     }
@@ -53,7 +54,7 @@ void SampleLSD(float xi, out uint lightIdx, out float pdf)
 
 void EvaluateLSD(uint lightIdx, out float pdf)
 {
-    if (FEAT_DBG(ForceLightIndex) && gDebugSettings.ForcedLightIndex >= 0)
+    if (FEAT_DBG(ForceLightIndex) && GetForcedLightIndex() >= 0)
     {
         pdf = 1.0f;
         return;

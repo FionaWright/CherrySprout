@@ -5,6 +5,7 @@
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/MIS.hlsli"
 #include "PathTracing/Debug/Scales.hlsli"
+#include "PathTracing/Debug/SettingGuards.hlsli"
 
 float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo)
 {
@@ -39,7 +40,7 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo)
 
     float m = 0.0f;
     if (FEAT_DBG(FixedMisNeeManual))
-        m = 1 - gDebugSettings.FixedMisNee;
+        m = 1 - GetFixedMisNee();
     else
         m = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
     L_emission *= m;

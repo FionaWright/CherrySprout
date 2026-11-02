@@ -14,6 +14,7 @@
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
+#include "PathTracing/Debug/SettingGuards.hlsli"
 
 void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI X_i)
 {
@@ -51,7 +52,7 @@ float Target(CandidateDI X_i, ContextPrimaryRay context)
     float3 m;
     if (FEAT_DBG(FixedMisNeeManual))
     {
-        m = gDebugSettings.FixedMisNee;
+        m = GetFixedMisNee();
     }
     else if (X_i.LightEval.IsDelta)
     {
