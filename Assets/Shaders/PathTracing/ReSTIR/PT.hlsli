@@ -100,6 +100,8 @@ float PDF(CandidatePT X_i, ContextPrimaryRay context)
     // 1. Ignores primary RNG and NEE RNG
     // 2. Prone to FP-Precision issues
 
+    return 1.0f;
+
     float pdfPath = 1.0f;
     for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
     {
