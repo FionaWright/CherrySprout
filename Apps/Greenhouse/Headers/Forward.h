@@ -9,6 +9,7 @@
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
 #include "HWI/Pipeline.h"
+#include "Render/ShadowMapManager.h"
 #include "Render/Skybox.h"
 #include "Scene/Material.h"
 #include "Utils/CBVs.h"
@@ -32,17 +33,20 @@ public:
         return  Align(sizeof(CbvMatrices_VP), 256) +
                 Align(sizeof(CbvForward), 256) +
                 Align(sizeof(Material), 256) +
-                Skybox::GetCbvRequiredSize();
+                Skybox::GetCbvRequiredSize() +
+                ShadowMapManager::GetCbvRequiredSize();
     }
 
 private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
-    DescriptorSet m_descriptorSet;
+    DescriptorSet m_set;
     Skybox m_skybox;
     RootConstants m_rootConstants;
 
     D12Resource m_brdfIntMap;
+
+    ShadowMapManager m_shadowMapManager;
 };
 
 

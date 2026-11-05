@@ -7,7 +7,7 @@
 #include "HWI/RootSig.h"
 #include "HWI/UploadHeap.h"
 #include "PathTracing/Structs.h"
-#include "../../../Assets/Shaders/PathTracing/NEE/LSD/Alias.h"
+#include "PathTracing/NEE/LSD/Alias.h"
 
 struct Scene;
 class D3D;

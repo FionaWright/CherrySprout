@@ -27,8 +27,8 @@ public:
                     DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
                     D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON, const XMFLOAT4* clearValue = nullptr, bool hasMipMaps = false);
     void Init_Depth2D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height,
-                      D3D12_RESOURCE_FLAGS flags,
-                      D3D12_RESOURCE_STATES initialState);
+                      D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+                      D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
     void Init_Tex1D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth,
                     DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
                     D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);

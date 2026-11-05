@@ -6,7 +6,7 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Structs.h"
 #include "Utils/Random.h"
-#include "Utils/ToneMapping.hlsli"
+#include "PostProcessing/ToneMapping.hlsli"
 
 #define BXDF_MODE BXDF_PBR
 //#define BXDF_MODE BXDF_LAMBERTIAN
@@ -118,6 +118,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.2f;
 
     float3 E = E_direct + E_indirect + E_ambient;
+    //float3 E = E_direct + E_ambient;
     //float3 E = E_direct;
     //float3 E = E_indirect;
 

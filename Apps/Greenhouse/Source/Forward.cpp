@@ -29,9 +29,9 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_rootSig.AddSceneTextures(1);
     m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
-    m_descriptorSet.Init(heap, true, true);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvForward), uploadHeapCBV);
+    m_set.Init(heap, true, true);
+    m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
+    m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvForward), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -69,6 +69,8 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
+
+    m_shadowMapManager.Init(d3d->GetDevice(), heap, uploadHeapCBV);
 }
 
 void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
@@ -88,9 +90,11 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     srvDesc.TextureCube.MipLevels = envMap->GetCubemap()->GetDesc().MipLevels;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
-    m_descriptorSet.SetSRV(d3d->GetDevice(), 0, 2, envMap->GetCubemap(), srvDesc);
+    m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
+    m_set.SetSRV(d3d->GetDevice(), 0, 2, envMap->GetCubemap(), srvDesc);
+
+    m_shadowMapManager.LoadSceneData(d3d->GetDevice(), scene);
 }
 
 void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -108,6 +112,11 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     Scene* scene = renderInfo.Scene;
     Heap* heap = renderInfo.Heap;
+
+    // Shadow Map
+    {
+        m_shadowMapManager.Render(d3d, cmdList, heap, scene, renderInfo.BackendConfig->DirLightDirection, renderInfo.P);
+    }
 
     {
         SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, Config::GetSystem().WindowAppGuiWidth);
@@ -137,7 +146,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
         scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        m_descriptorSet.TransitionAllSRVToShaderResource(cmdList);
+        m_set.TransitionAllSRVToShaderResource(cmdList);
 
         cmdList->IASetVertexBuffers(0, 1, &viewV);
         cmdList->IASetIndexBuffer(&viewI);
@@ -152,16 +161,16 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     CbvMatrices_VP matricesVP = {};
     XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
     XMStoreFloat4x4(&matricesVP.P, renderInfo.P);
-    m_descriptorSet.UpdateCBV(0, 0, &matricesVP);
+    m_set.UpdateCBV(0, 0, &matricesVP);
 
     CbvForward cbvForward{};
     cbvForward.CameraPosition = renderInfo.Camera->GetPosition();
     cbvForward.FrameIdx = renderInfo.FrameIndex;
     cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
     cbvForward.MaxCubemapMipMaps = renderInfo.EnvironmentMap->GetCubemap()->GetDesc().MipLevels;
-    m_descriptorSet.UpdateCBV(0, 1, &cbvForward);
+    m_set.UpdateCBV(0, 1, &cbvForward);
 
-    m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
+    m_set.SetDescriptorTables_Graphics(cmdList);
 
     CbvForward_PerInstance matricesM = {};
 

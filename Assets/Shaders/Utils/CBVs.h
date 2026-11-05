@@ -139,6 +139,14 @@ struct CbvForward_PerInstance
     hlsl::float2 p;
 };
 
+struct CbvShadowMap_PerInstance
+{
+    hlsl::float4x4 M;
+
+    hlsl::uint MaterialIdx;
+    hlsl::float3 p;
+};
+
 struct CbvGBufferPrePass_PerInstance
 {
     hlsl::uint InstanceIdx;
