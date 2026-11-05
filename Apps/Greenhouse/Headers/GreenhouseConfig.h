@@ -189,6 +189,12 @@ struct ForwardConfig
     float SmPcfRadius = 1.5f;
     float SmBiasDepth = 0.00003f;
     float SmBiasNormal = 0.001f;
+
+    bool FlagEnabledEnvironmentMap = true;
+    bool FlagEnabledPunctualLights = true;
+    bool FlagEnabledDirectionalLight = true;
+    bool FlagEnabledShadowMaps = true;
+    bool FlagEnabledAmbient = true;
 };
 
 enum class RenderBackendMode : uint32_t

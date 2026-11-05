@@ -114,6 +114,34 @@ struct CbvColor
     hlsl::float4 Color;
 };
 
+enum class ForwardFlags : hlsl::uint
+{
+    eNone = 0,
+
+    eEnvironmentMap = 1 << 0,
+    ePunctualLights = 1 << 1,
+    eDirectionalLight = 1 << 2,
+    eShadowMaps = 1 << 3,
+    eAmbient = 1 << 4,
+};
+
+inline bool ForwardFlagGet(const ForwardFlags flags, const ForwardFlags flag)
+{
+    return (hlsl::uint)flags & (hlsl::uint)flag;
+}
+
+inline void ForwardFlagSet(GLUE_INOUT(ForwardFlags) flags, const ForwardFlags flag, const bool state)
+{
+    hlsl::uint flagsU = (hlsl::uint)flags;
+
+    if (state)
+        flagsU |= ((hlsl::uint)flag);
+    else if (ForwardFlagGet(flags, flag))
+        flagsU &= ~((hlsl::uint)flag);
+
+    flags = (ForwardFlags)flagsU;
+}
+
 struct CbvForward
 {
     hlsl::float3 DirLightDir;
@@ -121,6 +149,9 @@ struct CbvForward
 
     hlsl::uint FrameIdx;
     hlsl::float3 CameraPosition;
+
+    ForwardFlags Flags;
+    hlsl::float3 p;
 };
 
 struct CbvMipMapCubemap

@@ -182,6 +182,14 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPitchYaw = {0.251301, 0.375632},
         .SceneScale = 0.1f
     },
+
+    {
+        .Name = "Cornell (Punc)",
+        .Filepath = "Scenes/USD/Cornell/CornellPunc.usdc",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
 };
 
 #endif

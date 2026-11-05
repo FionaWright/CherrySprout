@@ -85,19 +85,21 @@ float4 PSMain(VsOut input) : SV_TARGET
     uv.y = 1 - uv.y;
 
     HitInfo hitInfo;
-    hitInfo.Mat = gMaterials[gCbvObject.MaterialIdx];
+    {
+        hitInfo.Mat = gMaterials[gCbvObject.MaterialIdx];
 
-    ApplyNormalMap(uv, hitInfo.Mat.TexIdxNormal, Ns, true);
+        ApplyNormalMap(uv, hitInfo.Mat.TexIdxNormal, Ns, true);
 
-    hitInfo.Ng_ff = Ns;
-    hitInfo.Ns_ff = Ns;
-    hitInfo.SFrame = CreateShadingFrame(Ns);
-    hitInfo.UV = uv;
-    hitInfo.IsEntering = true;
-    hitInfo.RayT = length(input.worldPos.xyz - gSettings.CameraPosition);
-    hitInfo.HitPos = input.worldPos.xyz;
+        hitInfo.Ng_ff = Ns;
+        hitInfo.Ns_ff = Ns;
+        hitInfo.SFrame = CreateShadingFrame(Ns);
+        hitInfo.UV = uv;
+        hitInfo.IsEntering = true;
+        hitInfo.RayT = length(input.worldPos.xyz - gSettings.CameraPosition);
+        hitInfo.HitPos = input.worldPos.xyz;
 
-    ApplyMaterialTextures(hitInfo);
+        ApplyMaterialTextures(hitInfo);
+    }
 
     float3 wo = normalize(gSettings.CameraPosition - input.worldPos.xyz);
     float3 wi = -gSettings.DirLightDir;
@@ -114,23 +116,23 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     RngInfo rngInfo = InitializeRngInfo(input.position.xy, 0, gSettings.FrameIdx, 12005);
 
-    float shadowFactor = 1.0f;
-#if SHADOW_MAP_ENABLED
-    shadowFactor = GetShadowFactor(rngInfo, input.shadowPos);
-#endif
-
-    float3 Li = 1.0f;
+    float3 Li_dir = 1.0f;
 
     float3 E_direct = 0.0f;
-    if (NdL > 0.0f)
+    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eDirectionalLight) && NdL > 0.0f)
     {
         BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
+        float shadowFactor = 1.0f;
+        if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eShadowMaps))
+            shadowFactor = GetShadowFactor(rngInfo, input.shadowPos);
+
         if (bxdfEval.PDF > 0.0f)
-            E_direct = shadowFactor * NdL * Li * bxdfEval.Radiance;
+            E_direct = shadowFactor * NdL * Li_dir * bxdfEval.Radiance;
     }
 
-    float3 E_ibl;
+    float3 E_ibl = 0.0f;
+    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eEnvironmentMap))
     {
         float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
         float3 F = F_Schlick(NdV, F0);
@@ -145,7 +147,9 @@ float4 PSMain(VsOut input) : SV_TARGET
         E_ibl = max(0, E_ibl);
     }
 
-    float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.1f;
+    float3 E_ambient = 0.0f;
+    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eAmbient))
+        E_ambient = hitInfo.Mat.Albedo.rgb * 0.1f;
 
     float3 E = E_direct + E_ibl + E_ambient;
     //float3 E = E_direct + E_ambient;

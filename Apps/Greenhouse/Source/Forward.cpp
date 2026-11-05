@@ -144,6 +144,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     heap->Bind(cmdList);
 
+    if (renderInfo.ForwardConfig->FlagEnabledEnvironmentMap)
     {
         GPU_SCOPE(cmdList, "Skybox Pass");
         m_skybox.RenderForward(cmdList, &renderInfo.V, &renderInfo.P);
@@ -180,9 +181,14 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     cbvForward.FrameIdx = renderInfo.FrameIndex;
     cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
     cbvForward.MaxCubemapMipMaps = renderInfo.EnvironmentMap->GetCubemap()->GetDesc().MipLevels;
+    cbvForward.Flags = ForwardFlags::eNone;
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, renderInfo.ForwardConfig->FlagEnabledEnvironmentMap);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::ePunctualLights, renderInfo.ForwardConfig->FlagEnabledPunctualLights);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, renderInfo.ForwardConfig->FlagEnabledDirectionalLight);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eShadowMaps, renderInfo.ForwardConfig->FlagEnabledShadowMaps);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, renderInfo.ForwardConfig->FlagEnabledAmbient);
     m_set.UpdateCBV(0, 1, &cbvForward);
 
-    // TODO: Only recompute when changed?
     CbvShadowMapSample cbvShadow{};
     XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
     XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
