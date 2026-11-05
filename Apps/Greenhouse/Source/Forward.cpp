@@ -150,6 +150,15 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         GPU_SCOPE(cmdList, "Skybox Pass");
         m_skybox.RenderForward(cmdList, &renderInfo.V, &renderInfo.P);
     }
+    else
+    {
+        D3D12_RECT rect;
+        rect.top = 0;
+        rect.left = Config::GetSystem().WindowAppGuiWidth;
+        rect.bottom = Config::GetSystem().RtvHeight;
+        rect.right = Config::GetSystem().WindowAppGuiWidth + Config::GetSystem().RtvWidth;
+        cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &rect);
+    }
 
     {
         D3D12_VERTEX_BUFFER_VIEW viewV;

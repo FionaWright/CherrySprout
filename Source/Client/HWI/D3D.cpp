@@ -273,10 +273,10 @@ void D3D::InitFrameResources(uint32_t width, uint32_t height)
     {
         D3D12_CLEAR_VALUE clearValue = {};
         clearValue.Format = Config::GetRender().RtvFormat;
-        clearValue.Color[0] = 0.0f;
-        clearValue.Color[1] = 0.0f;
-        clearValue.Color[2] = 0.0f;
-        clearValue.Color[3] = 0.0f;
+        clearValue.Color[0] = Config::GetRender().RtvClearColor[0];
+        clearValue.Color[1] = Config::GetRender().RtvClearColor[1];
+        clearValue.Color[2] = Config::GetRender().RtvClearColor[2];
+        clearValue.Color[3] = Config::GetRender().RtvClearColor[3];
 
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;

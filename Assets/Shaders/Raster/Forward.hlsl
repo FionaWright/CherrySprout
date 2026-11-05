@@ -157,10 +157,10 @@ float4 PSMain(VsOut input) : SV_TARGET
 
                 float shadowFactor = 1.0f; // TODO
 
-                float radMult = 100.0f;
+                //float radMult = 100.0f;
 
                 if (bxdfEval.PDF > 0.0f)
-                    E_direct += shadowFactor * NdL * radMult * lightEval.Radiance * bxdfEval.Radiance;
+                    E_direct += shadowFactor * NdL * lightEval.Radiance * bxdfEval.Radiance;
             }
         }
     }

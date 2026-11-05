@@ -8,6 +8,8 @@
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
+// TODO: Inverse backface culling
+
 void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     m_shadowMapDir.Init_Depth2D("Shadow Map Dir", device, 2048, 2048);
