@@ -1,6 +1,7 @@
 #ifndef H_PUNCTUAL_H
 #define H_PUNCTUAL_H
 
+#include "Scene/PunctualLight.h"
 #include "Utils/Constants.h"
 #include "Utils/HlslUtils.hlsli"
 #include "PathTracing/Debug/Assert.hlsli"

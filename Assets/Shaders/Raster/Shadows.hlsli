@@ -25,7 +25,7 @@ float2 GetPcfOffset(inout RngInfo rngInfo, uint poissonIdx)
     return offset;
 }
 
-float GetShadowFactor(inout RngInfo rngInfo, float3 shadowPos[SHADOW_MAP_MAX_CASCADES])
+float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos[SHADOW_MAP_MAX_CASCADES])
 {
     uint cascadeIdx = 0; // TODO
 

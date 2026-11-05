@@ -1,4 +1,5 @@
 #include "Utils/CBVs.h"
+#include "Utils/Math/Punctual.hlsli"
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
 #include "Utils/SharedUtils.h"
 #include "Utils/Math/ShadingFrame.h"
@@ -11,8 +12,6 @@
 #define BXDF_MODE BXDF_PBR
 //#define BXDF_MODE BXDF_LAMBERTIAN
 #include "BxDFs/GetBxDF.hlsli"
-
-#define SHADOW_MAP_ENABLED 1 // TODO: GUI
 
 struct VsIn
 {
@@ -28,21 +27,20 @@ struct VsOut
     float3 normal : TEXCOORD1;
     float4 worldPos : TEXCOORD2;
 
-#if SHADOW_MAP_ENABLED
     float3 shadowPos[SHADOW_MAP_MAX_CASCADES] : TEXCOORD3;
-#endif
 };
 
-ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0, space0); // Push Constants
-ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1, space0);
-ConstantBuffer<CbvForward> gSettings : register(b2, space0);
-ConstantBuffer<CbvShadowMapSample> gSettingsShadows : register(b3, space0);
+ConstantBuffer<CbvForward_PerInstance> gCbvObject     : register(b0, space0); // Push Constants
+ConstantBuffer<CbvMatrices_VP> gMatricesVP            : register(b1, space0);
+ConstantBuffer<CbvForward> gSettings                  : register(b2, space0);
+ConstantBuffer<CbvShadowMapSample> gSettingsShadows   : register(b3, space0);
 
-StructuredBuffer<Material> gMaterials : register(t0, space0);
-Texture2D<float2> gBrdfInt : register(t1, space0);
-TextureCube gSkyBox : register(t2, space0);
-Texture2D<float> gShadowMapDir : register(t3, space0);
-//TextureCube gIrradiance : register(t1, space0);
+StructuredBuffer<Material> gMaterials                 : register(t0, space0);
+StructuredBuffer<PunctualLight> gPunctuals            : register(t1, space0);
+Texture2D<float2> gBrdfInt                            : register(t2, space0);
+TextureCube gSkyBox                                   : register(t3, space0);
+Texture2D<float> gShadowMapDir                        : register(t4, space0);
+//TextureCube gIrradiance                               : register(t1, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
@@ -64,16 +62,17 @@ VsOut VSMain(VsIn input)
     pos = mul(gMatricesVP.V, output.worldPos);
     output.position = mul(gMatricesVP.P, pos);
 
-#if SHADOW_MAP_ENABLED
-    float3 normalBias = output.normal * gSettingsShadows.NormalBias;
-    float4 biasedPos = float4(output.worldPos.xyz + normalBias, output.worldPos.w);
-    for (uint i = 0; i < gSettingsShadows.CascadeCount; i++)
+    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eShadowMaps))
     {
-        float4 shadowPos = mul(gSettingsShadows.ShadowMatrices[i], biasedPos);
-        output.shadowPos[i] = shadowPos.xyz / shadowPos.w;
-        output.shadowPos[i].xy = RemapStoU(output.shadowPos[i].xy);
+        float3 normalBias = output.normal * gSettingsShadows.NormalBias;
+        float4 biasedPos = float4(output.worldPos.xyz + normalBias, output.worldPos.w);
+        for (uint i = 0; i < gSettingsShadows.CascadeCount; i++)
+        {
+            float4 shadowPos = mul(gSettingsShadows.ShadowMatrices[i], biasedPos);
+            output.shadowPos[i] = shadowPos.xyz / shadowPos.w;
+            output.shadowPos[i].xy = RemapStoU(output.shadowPos[i].xy);
+        }
     }
-#endif
 
     return output;
 }
@@ -102,13 +101,7 @@ float4 PSMain(VsOut input) : SV_TARGET
     }
 
     float3 wo = normalize(gSettings.CameraPosition - input.worldPos.xyz);
-    float3 wi = -gSettings.DirLightDir;
-    float3 wi_R = reflect(-wo, Ns);
 
-    float3 H = normalize(wo + wi);
-
-    float VdH = dot(H, wo);
-    float NdL = max(1e-6f, dot(Ns, wi));
     float NdV = saturate(dot(Ns, wo));
 
     //float3 irradianceIblSample = gIrradiance.SampleLevel(gSamplerLinearWrap, Ns, 0).rgb;
@@ -116,29 +109,72 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     RngInfo rngInfo = InitializeRngInfo(input.position.xy, 0, gSettings.FrameIdx, 12005);
 
-    float3 Li_dir = 1.0f;
-
     float3 E_direct = 0.0f;
-    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eDirectionalLight) && NdL > 0.0f)
+    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eDirectionalLight))
     {
-        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+        float3 dirLightRadiance = 1.0f;
 
-        float shadowFactor = 1.0f;
-        if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eShadowMaps))
-            shadowFactor = GetShadowFactor(rngInfo, input.shadowPos);
+        float3 wi = -gSettings.DirLightDir;
+        float NdL = max(1e-6f, dot(Ns, wi));
+        if (NdL > 0.0f)
+        {
+            BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
-        if (bxdfEval.PDF > 0.0f)
-            E_direct = shadowFactor * NdL * Li_dir * bxdfEval.Radiance;
+            float shadowFactor = 1.0f;
+            if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eShadowMaps))
+                shadowFactor = GetShadowFactorDirectional(rngInfo, input.shadowPos);
+
+            if (bxdfEval.PDF > 0.0f)
+                E_direct += shadowFactor * NdL * dirLightRadiance * bxdfEval.Radiance;
+        }
+    }
+    if (ForwardFlagGet(gSettings.Flags, ForwardFlags::ePunctualLights))
+    {
+        uint lightCount, _;
+        gPunctuals.GetDimensions(lightCount, _);
+
+        for (uint i = 0; i < lightCount; i++)
+        {
+            PunctualLight light = gPunctuals[i];
+
+            LightEval lightEval;
+            LightSample lightSample = EvaluatePunctualLight(light, hitInfo.HitPos, lightEval);
+
+            float3 wi = lightEval.Direction;
+            float NdL = max(1e-6f, dot(Ns, wi));
+            if (NdL > 0.0f && any(lightEval.Radiance > 0))
+            {
+                if (light.Type == PunctualLightType::eDistant)
+                {
+
+                }
+                else
+                {
+
+                }
+
+                BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+
+                float shadowFactor = 1.0f; // TODO
+
+                float radMult = 100.0f;
+
+                if (bxdfEval.PDF > 0.0f)
+                    E_direct += shadowFactor * NdL * radMult * lightEval.Radiance * bxdfEval.Radiance;
+            }
+        }
     }
 
     float3 E_ibl = 0.0f;
     if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eEnvironmentMap))
     {
+        float3 wi = reflect(-wo, Ns);
+
         float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
         float3 F = F_Schlick(NdV, F0);
 
         float lod = hitInfo.Mat.Roughness * (gSettings.MaxCubemapMipMaps - 1);
-        float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi_R, lod).rgb;
+        float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi, lod).rgb;
 
         float2 uv_brdfInt = saturate(float2(max(NdV, 0), hitInfo.Mat.Roughness));
         float2 brdfIntSample = gBrdfInt.SampleLevel(gSamplerLinearWrap, uv_brdfInt, 0).rg;

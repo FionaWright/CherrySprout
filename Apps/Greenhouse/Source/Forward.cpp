@@ -26,7 +26,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_rootSig.AddRootConstants(&m_rootConstants);
     m_rootSig.AddCbvRange(0, 3);
-    m_rootSig.AddSrvRange(0, 4);
+    m_rootSig.AddSrvRange(0, 5);
     m_rootSig.AddSceneTextures(1);
     m_rootSig.Init(d3d->GetDevice(), samplers, _countof(samplers));
 
@@ -94,9 +94,10 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-    m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
-    m_set.SetSRV(d3d->GetDevice(), 0, 2, envMap->GetCubemap(), srvDesc);
-    m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 3, m_shadowMapManager.GetShadowMapDir(), SHADOW_MAP_FORMAT_DEPTH_SRV);
+    m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 2, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
+    m_set.SetSRV(d3d->GetDevice(), 0, 3, envMap->GetCubemap(), srvDesc);
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 4, m_shadowMapManager.GetShadowMapDir(), SHADOW_MAP_FORMAT_DEPTH_SRV);
 
     m_shadowMapManager.LoadSceneData(d3d->GetDevice(), scene);
 }
