@@ -32,6 +32,7 @@ public:
     {
         return  Align(sizeof(CbvMatrices_VP), 256) +
                 Align(sizeof(CbvForward), 256) +
+                Align(sizeof(CbvShadowMapSample), 256) +
                 Align(sizeof(Material), 256) +
                 Skybox::GetCbvRequiredSize() +
                 ShadowMapManager::GetCbvRequiredSize();

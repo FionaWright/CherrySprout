@@ -147,6 +147,26 @@ struct CbvShadowMap_PerInstance
     hlsl::float3 p;
 };
 
+#define SHADOW_MAP_MAX_CASCADES 1 // TODO
+struct CbvShadowMapSample
+{
+    hlsl::float4x4 ShadowMatrices[SHADOW_MAP_MAX_CASCADES];
+
+    hlsl::float2 TexelSize;
+    hlsl::uint CascadeCount;
+    float Bias;
+
+    hlsl::float4 CascadeDistances;
+
+    hlsl::uint PcfSampleCount;
+    float PcfRadius;
+    float NormalBias;
+    float p;
+
+#define POISSON_DISC_COUNT 8
+    hlsl::float4 PoissonDisc[POISSON_DISC_COUNT];
+};
+
 struct CbvGBufferPrePass_PerInstance
 {
     hlsl::uint InstanceIdx;

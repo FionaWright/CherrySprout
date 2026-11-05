@@ -24,14 +24,15 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
     m_rootSig.AddRootConstants(&m_rootConstants);
-    m_rootSig.AddCbvRange(0, 2);
-    m_rootSig.AddSrvRange(0, 3);
+    m_rootSig.AddCbvRange(0, 3);
+    m_rootSig.AddSrvRange(0, 4);
     m_rootSig.AddSceneTextures(1);
     m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
     m_set.Init(heap, true, true);
     m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
     m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvForward), uploadHeapCBV);
+    m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvShadowMapSample), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -93,6 +94,7 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
     m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
     m_set.SetSRV(d3d->GetDevice(), 0, 2, envMap->GetCubemap(), srvDesc);
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), 0, 3, m_shadowMapManager.GetShadowMapDir(), SHADOW_MAP_FORMAT_DEPTH_SRV);
 
     m_shadowMapManager.LoadSceneData(d3d->GetDevice(), scene);
 }
@@ -115,7 +117,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     // Shadow Map
     {
-        m_shadowMapManager.Render(d3d, cmdList, heap, scene, renderInfo.BackendConfig->DirLightDirection, renderInfo.P);
+        m_shadowMapManager.Render(d3d, cmdList, heap, scene, renderInfo.BackendConfig->DirLightDirection);
     }
 
     {
@@ -169,6 +171,26 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
     cbvForward.MaxCubemapMipMaps = renderInfo.EnvironmentMap->GetCubemap()->GetDesc().MipLevels;
     m_set.UpdateCBV(0, 1, &cbvForward);
+
+    // TODO: Only recompute when changed?
+    auto poissonDisc = m_shadowMapManager.GeneratePoissonSamples(16);
+    CbvShadowMapSample cbvShadow{};
+    XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
+    XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
+    cbvShadow.TexelSize = XMFLOAT2(1.0f / dim.x, 1.0f / dim.y);
+    cbvShadow.Bias = 0.0f; // TODO
+    cbvShadow.CascadeCount = 1; // TODO
+    cbvShadow.NormalBias = 0.0f; // TODO
+    cbvShadow.PcfSampleCount = 1; // TODO
+    cbvShadow.PcfRadius = 1.0f; // TODO
+    for (uint32_t i = 0; i < POISSON_DISC_COUNT; i++)
+    {
+        cbvShadow.PoissonDisc[i].x = poissonDisc[i*2+0].x;
+        cbvShadow.PoissonDisc[i].y = poissonDisc[i*2+0].y;
+        cbvShadow.PoissonDisc[i].z = poissonDisc[i*2+1].x;
+        cbvShadow.PoissonDisc[i].w = poissonDisc[i*2+1].y;
+    }
+    m_set.UpdateCBV(0, 2, &cbvShadow);
 
     m_set.SetDescriptorTables_Graphics(cmdList);
 

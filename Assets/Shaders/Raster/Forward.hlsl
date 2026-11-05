@@ -12,6 +12,8 @@
 //#define BXDF_MODE BXDF_LAMBERTIAN
 #include "BxDFs/GetBxDF.hlsli"
 
+#define SHADOW_MAP_ENABLED 1 // TODO: GUI
+
 struct VsIn
 {
     float3 position : POSITION;
@@ -25,15 +27,21 @@ struct VsOut
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
     float4 worldPos : TEXCOORD2;
+
+#if SHADOW_MAP_ENABLED
+    float3 shadowPos[SHADOW_MAP_MAX_CASCADES] : TEXCOORD3;
+#endif
 };
 
 ConstantBuffer<CbvForward_PerInstance> gCbvObject : register(b0, space0); // Push Constants
 ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1, space0);
 ConstantBuffer<CbvForward> gSettings : register(b2, space0);
+ConstantBuffer<CbvShadowMapSample> gSettingsShadows : register(b3, space0);
 
 StructuredBuffer<Material> gMaterials : register(t0, space0);
 Texture2D<float2> gBrdfInt : register(t1, space0);
 TextureCube gSkyBox : register(t2, space0);
+Texture2D<float> gShadowMapDir : register(t3, space0);
 //TextureCube gIrradiance : register(t1, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
@@ -53,6 +61,17 @@ VsOut VSMain(VsIn input)
     output.worldPos = mul(gCbvObject.M, pos);
     pos = mul(gMatricesVP.V, output.worldPos);
     output.position = mul(gMatricesVP.P, pos);
+
+#if SHADOW_MAP_ENABLED
+    float3 normalBias = output.normal * gSettingsShadows.NormalBias;
+    float4 biasedPos = float4(output.worldPos.xyz + normalBias, output.worldPos.w);
+    for (uint i = 0; i < gSettingsShadows.CascadeCount; i++)
+    {
+        float4 shadowPos = mul(gSettingsShadows.ShadowMatrices[i], biasedPos);
+        output.shadowPos[i] = shadowPos.xyz / shadowPos.w;
+        output.shadowPos[i].xy = RemapStoU(output.shadowPos[i].xy);
+    }
+#endif
 
     return output;
 }
@@ -91,6 +110,63 @@ float4 PSMain(VsOut input) : SV_TARGET
     //float3 irradianceIblSample = gIrradiance.SampleLevel(gSamplerLinearWrap, Ns, 0).rgb;
     //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
+    // TODO: Put into new file
+    float shadowFactor = 1.0f;
+#if SHADOW_MAP_ENABLED
+    {
+        uint cascadeIdx = 0; // TODO
+        float blueNoise = 1.0f; // TODO
+
+        float3 shadowCoords = input.shadowPos[cascadeIdx];
+        shadowCoords.y = 1 - shadowCoords.y;
+        //shadowCoords.x = gSettingsShadows.ShadowWidthPercent * (shadowCoords.x + cascadeIdx);
+
+        float pixelDepth = shadowCoords.z + gSettingsShadows.Bias;
+
+        //return float4((pixelDepth-0.94f), 0,0,1);
+
+        shadowFactor = 0.0f;
+        for (uint i = 0; i < gSettingsShadows.PcfSampleCount; i++)
+        {
+            float2 offset = float2(0,0);
+
+            // PCF
+            if (false)
+            {
+                uint poissonIndex = (i * blueNoise * POISSON_DISC_COUNT) % POISSON_DISC_COUNT;
+                offset = i & 1 ? gSettingsShadows.PoissonDisc[poissonIndex].xy : gSettingsShadows.PoissonDisc[poissonIndex].zw;
+
+                // Rotate
+                if (false)
+                {
+                    float rng = 0.0f; // TODO
+                    float angle = rng * 6.2831853;
+
+                    float s, c;
+                    sincos(angle, s, c);
+
+                    offset = float2(
+                        offset.x * c - offset.y * s,
+                        offset.x * s + offset.y * c
+                    );
+                }
+
+                offset *= gSettingsShadows.PcfRadius;
+            }
+
+            float2 uv_shadow = shadowCoords.xy + (offset * gSettingsShadows.TexelSize);
+            float shadowMapDepth = gShadowMapDir.Sample(gSamplerLinearWrap, uv_shadow).r; // TODO: Is linear wrong?
+
+            //return float4((shadowMapDepth)>0, 0,0,1);
+            //return float4(uv_shadow,0,1);
+            //return float4(shadowCoords.xy,0,1);
+
+            shadowFactor += pixelDepth < shadowMapDepth;
+        }
+        shadowFactor /= float(gSettingsShadows.PcfSampleCount);
+    }
+#endif
+
     float3 Li = 1.0f;
 
     float3 E_direct = 0.0f;
@@ -99,21 +175,23 @@ float4 PSMain(VsOut input) : SV_TARGET
         BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
         if (bxdfEval.PDF > 0.0f)
-            E_direct += NdL * Li * bxdfEval.Radiance;
+            E_direct = shadowFactor * NdL * Li * bxdfEval.Radiance;
     }
 
-    float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
-    float3 F = F_Schlick(VdH, F0);
+    float3 E_indirect;
+    {
+        float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
+        float3 F = F_Schlick(VdH, F0);
 
-    float lod = hitInfo.Mat.Roughness * (gSettings.MaxCubemapMipMaps - 1);
-    float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi_R, lod).rgb;
+        float lod = hitInfo.Mat.Roughness * (gSettings.MaxCubemapMipMaps - 1);
+        float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi_R, lod).rgb;
 
-    float2 uv_brdfInt = saturate(float2(max(NdV, 0), hitInfo.Mat.Roughness));
-    float2 brdfIntSample = gBrdfInt.SampleLevel(gSamplerLinearWrap, uv_brdfInt, 0).rg;
-    float3 E_indirect = envSample * (F * brdfIntSample.r + brdfIntSample.g);
-    E_indirect = max(0, E_indirect);
+        float2 uv_brdfInt = saturate(float2(max(NdV, 0), hitInfo.Mat.Roughness));
+        float2 brdfIntSample = gBrdfInt.SampleLevel(gSamplerLinearWrap, uv_brdfInt, 0).rg;
 
-    // TODO: Shadow map
+        E_indirect = envSample * (F * brdfIntSample.r + brdfIntSample.g);
+        E_indirect = max(0, E_indirect);
+    }
 
     float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.2f;
 
@@ -122,10 +200,13 @@ float4 PSMain(VsOut input) : SV_TARGET
     //float3 E = E_direct;
     //float3 E = E_indirect;
 
-    TMO_Reinhard tmo;
-    ToneMapJodie(E, tmo);
+    // Post-Processing
+    {
+        TMO_Reinhard tmo;
+        ToneMapJodie(E, tmo);
 
-    E = LRGB_to_SRGB_Exact(E);
+        E = LRGB_to_SRGB_Exact(E);
+    }
 
     return float4(E, hitInfo.Mat.Albedo.a);
 }

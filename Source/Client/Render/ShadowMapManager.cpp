@@ -1,20 +1,19 @@
 #include "System/pch.h"
 #include "Render/ShadowMapManager.h"
 
+#include <random>
+
 #include "Debug/GPUEventScoped.h"
 #include "Scene/Scene.h"
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
-#define SHADOW_MAP_FORMAT_DEPTH        DXGI_FORMAT_D32_FLOAT
-#define SHADOW_MAP_FORMAT_DEPTH_SRV    DXGI_FORMAT_R32_FLOAT
-
 void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     m_shadowMapDir.Init_Depth2D("Shadow Map Dir", device, 2048, 2048);
 
-    m_heapDSV.Init("GBuffer Pre-Pass Heap DSV", device, 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    m_heapIdxDepth = CreateDSV(device, &m_heapDSV, &m_shadowMapDir, SHADOW_MAP_FORMAT_DEPTH);
+    m_heapDSV.Init("Shadow Map Heap DSV", device, 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    m_heapIdxDir = CreateDSV(device, &m_heapDSV, &m_shadowMapDir, SHADOW_MAP_FORMAT_DEPTH);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
@@ -47,19 +46,25 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true, 0);
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+    desc.SampleDesc.Count = 1;
     V(m_pipeline.InitGraphics(device, "Raster/ShadowMapVSPS.hlsl", "Raster/ShadowMapVSPS.hlsl", desc));
 
     // Projection
     {
         // TODO: Automatic calculate from camera frustum
+        float shadowWidth = 1.0f;
+        float shadowHeight = 1.0f;
         float nearPlane = 0.1f;
-        float farPlane  = 500.0f;
+        float farPlane  = 200.0f;
+
+        const float nearZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? nearPlane: farPlane;
+        const float farZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? farPlane : nearPlane;
 
         m_P = XMMatrixOrthographicLH(
-                m_shadowMapDir.GetDesc().Width,
-                m_shadowMapDir.GetDesc().Height,
-                nearPlane,
-                farPlane
+                shadowWidth,
+                shadowHeight,
+                nearZ,
+                farZ
             );
     }
 }
@@ -73,10 +78,12 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Scene* scene)
 
 void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, XMFLOAT3 dirLightDir)
 {
+    m_shadowMapDir.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
     {
         SetViewportScissor(cmdList, m_shadowMapDir.GetDesc().Width, m_shadowMapDir.GetDesc().Height);
 
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDir);
         cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
 
         const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
@@ -106,9 +113,9 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap
         heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
     }
 
-    XMMATRIX V;
+    if (m_viewMatrixDirty)
     {
-        float lightDistance = 100.0f; // TODO
+        float lightDistance = 10.0f; // TODO
 
         dirLightDir = normalize(dirLightDir);
         XMVECTOR L = XMLoadFloat3(&dirLightDir);
@@ -122,11 +129,13 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap
             up = XMVectorSet(0, 0, 1, 0);
         }
 
-        V = XMMatrixLookAtLH(lightPosition, sceneCenter, up);
+        m_V = XMMatrixLookAtLH(lightPosition, sceneCenter, up);
+
+        m_viewMatrixDirty = false;
     }
 
     CbvMatrices_VP matricesVP = {};
-    XMStoreFloat4x4(&matricesVP.V, V);
+    XMStoreFloat4x4(&matricesVP.V, m_V);
     XMStoreFloat4x4(&matricesVP.P, m_P);
     m_set.UpdateCBV(0, 0, &matricesVP);
 
@@ -154,4 +163,50 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap
 
         cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
     }
+}
+
+std::vector<XMFLOAT2> ShadowMapManager::GeneratePoissonSamples(const uint32_t count, const float minDistance)
+{
+    std::vector<XMFLOAT2> samples;
+    samples.reserve(count);
+
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
+    constexpr int MAX_ATTEMPTS = 10000;
+
+    for (int attempt = 0; attempt < MAX_ATTEMPTS && samples.size() < count; ++attempt)
+    {
+        // Generate a uniform random point inside the unit circle.
+        const float angle = dist(rng) * 2.0f * 3.14159265f;
+        const float radius = std::sqrt(dist(rng));
+
+        XMFLOAT2 candidate =
+        {
+            std::cos(angle) * radius,
+            std::sin(angle) * radius
+        };
+
+        // Check minimum distance from existing samples.
+        bool valid = true;
+
+        for (const XMFLOAT2& sample : samples)
+        {
+            const float dx = candidate.x - sample.x;
+            const float dy = candidate.y - sample.y;
+
+            const float distanceSq = dx * dx + dy * dy;
+
+            if (distanceSq < minDistance * minDistance)
+            {
+                valid = false;
+                break;
+            }
+        }
+
+        if (valid)
+            samples.push_back(candidate);
+    }
+
+    return samples;
 }
