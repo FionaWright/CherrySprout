@@ -75,9 +75,11 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_debugManager.Init(d3d, heap);
+    if (!m_debugManager.IsInitialized())
+        m_debugManager.Init(d3d, heap);
 #endif
 
+    if (!m_rootSig.Get())
     {
         D3D12_STATIC_SAMPLER_DESC samplers[2] = {};
         InitializeSamplerLinearClamp(&samplers[0], 0);
@@ -91,6 +93,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_rootSig.Init(d3d->GetDevice(), samplers, _countof(samplers));
     }
 
+    if (!m_rootSigPostProcess.Get())
     {
         m_rootSigPostProcess.AddCbvRange(0, 1);
         m_rootSigPostProcess.AddSrvRange(0, 1);

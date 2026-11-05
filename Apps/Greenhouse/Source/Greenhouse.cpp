@@ -125,8 +125,8 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         {
             m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
 
-            m_gbufferPrePass.UnreserveData();
-            m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
+            //m_gbufferPrePass.UnreserveData();
+            //m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
         }
 
         m_renderBackendDirty = false;

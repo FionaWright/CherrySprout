@@ -34,7 +34,7 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
             float m = 0.0f;
             if (FEAT_DBG(FixedMisNeeManual))
                 m = 1 - GetFixedMisNee();
-            else if (lastBxdfPdf <= 0.0f)
+            else if (lastBxdfPdf <= 0.0f || pdf_env <= 0.0f)
                 m = 0.0f;
             else
                 m = PowerHeuristic(lastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);

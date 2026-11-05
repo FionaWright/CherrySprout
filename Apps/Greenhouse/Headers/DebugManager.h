@@ -34,6 +34,8 @@ public:
     D12Resource* GetBufferPathDumpOCRW() { return &m_pathDumpOCBufferRW; }
     D12Resource* GetBufferPerPixelMutex() { return &m_gpuPerPixelMutex; }
 
+    bool IsInitialized() const { return m_isInitialized; }
+
     bool IsScheduledRunState(const ScheduledRunState state) const { return m_scheduledRunState == state; }
     hlsl::uint2 GetScheduledRunPixelCoords() const { return m_scheduledRunPixelCoords; }
     void ScheduledRunTransition(const ScheduledRunState state) { m_scheduledRunState = state; }
@@ -67,6 +69,8 @@ private:
     RmseTool m_rmseTool;
 
     D12Resource m_gpuPerPixelMutex;
+
+    bool m_isInitialized = false;
 };
 
 #endif

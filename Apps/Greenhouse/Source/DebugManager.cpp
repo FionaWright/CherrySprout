@@ -38,6 +38,8 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
     }
 
     m_rmseTool.Init(d3d, heap);
+
+    m_isInitialized = true;
 }
 
 void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)

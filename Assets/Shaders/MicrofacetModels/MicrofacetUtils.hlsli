@@ -171,7 +171,7 @@ float D_BeckmannAniso(float3 H, float alphaX, float alphaY)
 
 float3 F_Schlick(float VdH, float3 F0)
 {
-    return F0 + (1.0f - F0) * pow(1.0f - VdH, 5);
+    return F0 + (1.0f - F0) * pow(max(0.0f, 1.0f - VdH), 5);
 }
 
 // ================================
