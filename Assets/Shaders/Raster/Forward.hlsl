@@ -50,6 +50,7 @@ SamplerState gSamplerLinearWrap : register(s0, space0);
 SamplerState gSamplerPointClamp : register(s1, space0);
 
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
+#include "Raster/Shadows.hlsli"
 
 VsOut VSMain(VsIn input)
 {
@@ -113,53 +114,9 @@ float4 PSMain(VsOut input) : SV_TARGET
 
     RngInfo rngInfo = InitializeRngInfo(input.position.xy, 0, gSettings.FrameIdx, 12005);
 
-    // TODO: Put into new file
     float shadowFactor = 1.0f;
 #if SHADOW_MAP_ENABLED
-    {
-        uint cascadeIdx = 0; // TODO
-
-        float3 shadowCoords = input.shadowPos[cascadeIdx];
-        shadowCoords.y = 1 - shadowCoords.y;
-        //shadowCoords.x = gSettingsShadows.ShadowWidthPercent * (shadowCoords.x + cascadeIdx);
-
-        float pixelDepth = shadowCoords.z + gSettingsShadows.BiasDepth;
-
-        //return float4((pixelDepth-0.94f), 0,0,1);
-
-        shadowFactor = 0.0f;
-        for (uint i = 0; i < gSettingsShadows.PcfSampleCount; i++)
-        {
-            float2 offset = float2(0,0);
-
-            // PCF
-            {
-                uint poissonIndex = (i * Rand01(rngInfo)) % POISSON_DISC_COUNT; // TODO: Blue Noise
-                offset = poissonIndex & 1 ? gSettingsShadows.PoissonDisc[poissonIndex/2].xy : gSettingsShadows.PoissonDisc[poissonIndex/2].zw;
-
-                // Rotate
-                {
-                    float angle = Rand01(rngInfo) * 6.2831853;
-
-                    float s, c;
-                    sincos(angle, s, c);
-
-                    offset = float2(
-                        offset.x * c - offset.y * s,
-                        offset.x * s + offset.y * c
-                    );
-                }
-
-                offset *= gSettingsShadows.PcfRadius;
-            }
-
-            float2 uv_shadow = shadowCoords.xy + (offset * gSettingsShadows.TexelSize);
-            float shadowMapDepth = gShadowMapDir.Sample(gSamplerPointClamp, uv_shadow).r;
-
-            shadowFactor += pixelDepth >= shadowMapDepth;
-        }
-        shadowFactor /= float(gSettingsShadows.PcfSampleCount);
-    }
+    shadowFactor = GetShadowFactor(rngInfo, input.shadowPos);
 #endif
 
     float3 Li = 1.0f;
@@ -173,10 +130,10 @@ float4 PSMain(VsOut input) : SV_TARGET
             E_direct = shadowFactor * NdL * Li * bxdfEval.Radiance;
     }
 
-    float3 E_indirect;
+    float3 E_ibl;
     {
         float3 F0 = lerp(0.04f, hitInfo.Mat.Albedo.rgb, hitInfo.Mat.Metallic);
-        float3 F = F_Schlick(VdH, F0);
+        float3 F = F_Schlick(NdV, F0);
 
         float lod = hitInfo.Mat.Roughness * (gSettings.MaxCubemapMipMaps - 1);
         float3 envSample = gSkyBox.SampleLevel(gSamplerLinearWrap, wi_R, lod).rgb;
@@ -184,16 +141,16 @@ float4 PSMain(VsOut input) : SV_TARGET
         float2 uv_brdfInt = saturate(float2(max(NdV, 0), hitInfo.Mat.Roughness));
         float2 brdfIntSample = gBrdfInt.SampleLevel(gSamplerLinearWrap, uv_brdfInt, 0).rg;
 
-        E_indirect = envSample * (F * brdfIntSample.r + brdfIntSample.g);
-        E_indirect = max(0, E_indirect);
+        E_ibl = envSample * (F * brdfIntSample.r + brdfIntSample.g);
+        E_ibl = max(0, E_ibl);
     }
 
     float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.1f;
 
-    float3 E = E_direct + E_indirect + E_ambient;
+    float3 E = E_direct + E_ibl + E_ambient;
     //float3 E = E_direct + E_ambient;
     //float3 E = E_direct;
-    //float3 E = E_indirect;
+    //float3 E = E_ibl;
 
     // Post-Processing
     {
