@@ -48,25 +48,6 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     desc.SampleDesc.Count = 1;
     V(m_pipeline.InitGraphics(device, "Raster/ShadowMapVSPS.hlsl", "Raster/ShadowMapVSPS.hlsl", desc));
-
-    // Projection
-    {
-        // TODO: Automatic calculate from camera frustum
-        float shadowWidth = 1.0f;
-        float shadowHeight = 1.0f;
-        float nearPlane = 0.1f;
-        float farPlane  = 200.0f;
-
-        const float nearZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? nearPlane: farPlane;
-        const float farZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? farPlane : nearPlane;
-
-        m_P = XMMatrixOrthographicLH(
-                shadowWidth,
-                shadowHeight,
-                nearZ,
-                farZ
-            );
-    }
 }
 
 void ShadowMapManager::LoadSceneData(ID3D12Device* device, Scene* scene)
@@ -76,7 +57,7 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Scene* scene)
     m_set.SetSRV_Buffer(device, 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 }
 
-void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, XMFLOAT3 dirLightDir)
+void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, const ShadowMapConfig& config)
 {
     m_shadowMapDir.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
@@ -113,15 +94,13 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap
         heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
     }
 
-    if (m_viewMatrixDirty)
+    if (m_matricesDirty)
     {
-        float lightDistance = 10.0f; // TODO
-
-        dirLightDir = normalize(dirLightDir);
+        XMFLOAT3 dirLightDir = normalize(config.DirLightDir);
         XMVECTOR L = XMLoadFloat3(&dirLightDir);
 
         XMVECTOR sceneCenter = XMVectorSet(0, 0, 0, 1);
-        XMVECTOR lightPosition = sceneCenter - L * lightDistance;
+        XMVECTOR lightPosition = sceneCenter - L * config.DirDist;
 
         XMVECTOR up = XMVectorSet(0, 1, 0, 0);
         if (abs(XMVectorGetX(XMVector3Dot(L, up))) > 0.99f)
@@ -131,7 +110,23 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap
 
         m_V = XMMatrixLookAtLH(lightPosition, sceneCenter, up);
 
-        m_viewMatrixDirty = false;
+        // Projection
+        if (config.Width > 0 && config.Height > 0)
+        {
+            // TODO: Automatic calculate from camera frustum
+
+            const float nearZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? config.Near : config.Far;
+            const float farZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? config.Far : config.Near;
+
+            m_P = XMMatrixOrthographicLH(
+                    config.Width,
+                    config.Height,
+                    nearZ,
+                    farZ
+                );
+        }
+
+        m_matricesDirty = false;
     }
 
     CbvMatrices_VP matricesVP = {};

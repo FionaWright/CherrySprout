@@ -31,6 +31,7 @@ struct GreenHouseRenderInfo
 
     RenderBackendConfig* BackendConfig;
     PathTracerConfig* PathTracerConfig;
+    ForwardConfig* ForwardConfig;
 
     uint32_t LsdBasePunctuals = 0;
     uint32_t LsdBaseEmissives = 0;

@@ -14,19 +14,34 @@ struct Scene;
 #define SHADOW_MAP_FORMAT_DEPTH        DXGI_FORMAT_D32_FLOAT
 #define SHADOW_MAP_FORMAT_DEPTH_SRV    DXGI_FORMAT_R32_FLOAT
 
+struct ShadowMapConfig
+{
+    uint32_t CascadeCount;
+
+    float Width = 1.0f;
+    float Height = 1.0f;
+    float Near = 0.01f;
+    float Far = 100.0f;
+    float DirDist = 8.0f;
+
+    XMFLOAT3 DirLightDir;
+};
+
 class ShadowMapManager
 {
 public:
     void Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV);
     void LoadSceneData(ID3D12Device* device, Scene* scene);
 
-    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, XMFLOAT3 dirLightDir);
+    void Render(ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, const ShadowMapConfig& config);
     std::vector<XMFLOAT2> GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);
 
     D12Resource* GetShadowMapDir() { return &m_shadowMapDir; }
 
     XMMATRIX GetShadowMatrix(uint32_t cascadeIdx) const { return m_V * m_P; }
     XMFLOAT2 GetShadowDimensions(uint32_t cascadeIdx) const { return XMFLOAT2(m_shadowMapDir.GetDesc().Width, m_shadowMapDir.GetDesc().Height); }
+
+    void MarkMatricesDirty() { m_matricesDirty = true; }
 
     static size_t GetCbvRequiredSize() { return Align(sizeof(CbvMatrices_VP), 256); }
 
@@ -42,7 +57,7 @@ private:
     D12Resource m_shadowMapDir;
     XMMATRIX m_V{};
     XMMATRIX m_P{};
-    bool m_viewMatrixDirty = true;
+    bool m_matricesDirty = true;
 
     std::vector<D12Resource> m_shadowMapPunctuals;
 };

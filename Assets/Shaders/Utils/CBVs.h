@@ -154,7 +154,7 @@ struct CbvShadowMapSample
 
     hlsl::float2 TexelSize;
     hlsl::uint CascadeCount;
-    float Bias;
+    float BiasDepth;
 
     hlsl::float4 CascadeDistances;
 

@@ -121,7 +121,7 @@ float4 PSMain(VsOut input) : SV_TARGET
         shadowCoords.y = 1 - shadowCoords.y;
         //shadowCoords.x = gSettingsShadows.ShadowWidthPercent * (shadowCoords.x + cascadeIdx);
 
-        float pixelDepth = shadowCoords.z + gSettingsShadows.Bias;
+        float pixelDepth = shadowCoords.z + gSettingsShadows.BiasDepth;
 
         //return float4((pixelDepth-0.94f), 0,0,1);
 
@@ -161,11 +161,13 @@ float4 PSMain(VsOut input) : SV_TARGET
             //return float4(uv_shadow,0,1);
             //return float4(shadowCoords.xy,0,1);
 
-            shadowFactor += pixelDepth < shadowMapDepth;
+            shadowFactor += pixelDepth >= shadowMapDepth;
         }
         shadowFactor /= float(gSettingsShadows.PcfSampleCount);
     }
 #endif
+
+    //return float4(shadowFactor.xxx,1);
 
     float3 Li = 1.0f;
 

@@ -178,7 +178,17 @@ struct PathTracerConfig
 
 struct ForwardConfig
 {
-    int TODO;
+    uint32_t SmCascadeCount = 1;
+    uint32_t SmPcfCount = 5;
+
+    float SmWidth = 1.0f;
+    float SmHeight = 1.0f;
+    float SmNear = 0.01f;
+    float SmFar = 100.0f;
+    float SmDirDist = 50.0f;
+    float SmPcfRadius = 1.0f;
+    float SmBiasDepth = 0.00003f;
+    float SmBiasNormal = 0.001f;
 };
 
 enum class RenderBackendMode : uint32_t

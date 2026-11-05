@@ -117,7 +117,15 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     // Shadow Map
     {
-        m_shadowMapManager.Render(d3d, cmdList, heap, scene, renderInfo.BackendConfig->DirLightDirection);
+        ShadowMapConfig config;
+        config.Width = renderInfo.ForwardConfig->SmWidth;
+        config.Height = renderInfo.ForwardConfig->SmHeight;
+        config.CascadeCount = renderInfo.ForwardConfig->SmCascadeCount;
+        config.Near = renderInfo.ForwardConfig->SmNear;
+        config.Far = renderInfo.ForwardConfig->SmFar;
+        config.DirDist = renderInfo.ForwardConfig->SmDirDist;
+        config.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
+        m_shadowMapManager.Render(cmdList, heap, scene, config);
     }
 
     {
@@ -178,11 +186,11 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
     XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
     cbvShadow.TexelSize = XMFLOAT2(1.0f / dim.x, 1.0f / dim.y);
-    cbvShadow.Bias = 0.0f; // TODO
-    cbvShadow.CascadeCount = 1; // TODO
-    cbvShadow.NormalBias = 0.0f; // TODO
-    cbvShadow.PcfSampleCount = 1; // TODO
-    cbvShadow.PcfRadius = 1.0f; // TODO
+    cbvShadow.BiasDepth = renderInfo.ForwardConfig->SmBiasDepth;
+    cbvShadow.CascadeCount = renderInfo.ForwardConfig->SmCascadeCount;
+    cbvShadow.NormalBias = renderInfo.ForwardConfig->SmBiasNormal;
+    cbvShadow.PcfSampleCount = renderInfo.ForwardConfig->SmPcfCount;
+    cbvShadow.PcfRadius = renderInfo.ForwardConfig->SmPcfRadius;
     for (uint32_t i = 0; i < POISSON_DISC_COUNT; i++)
     {
         cbvShadow.PoissonDisc[i].x = poissonDisc[i*2+0].x;

@@ -66,6 +66,7 @@ void Greenhouse::Init(D3D* d3d)
     m_renderInfo.Camera = &m_cameraController.GetCamera();
     m_renderInfo.BackendConfig = &m_config.RenderBackendConfig;
     m_renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
+    m_renderInfo.ForwardConfig = &m_config.ForwardConfig;
     m_renderInfo.EnvironmentMap = &m_envMap;
     m_renderInfo.LightImportanceSampler = &m_lightImportanceSampler;
 
