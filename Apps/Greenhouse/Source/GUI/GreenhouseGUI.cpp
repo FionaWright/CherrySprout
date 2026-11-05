@@ -291,16 +291,21 @@ void Greenhouse::renderGuiCore()
 
         if (m_config.RenderBackend == RenderBackendMode::eForward || m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_DirectionalLight))
         {
+            bool dirLightDirty = false;
             ImGui::Text("Directional Light:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                m_ptFrameDirty |= GuiUtils::FwInputFloat3("Dir Light Dir", (float*)&m_config.RenderBackendConfig.DirLightDirection);
-                m_ptFrameDirty |= GuiUtils::FwColorEdit3("Dir Light Color", (float*)&m_config.RenderBackendConfig.DirLightColor);
-                m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Intensity", &m_config.RenderBackendConfig.DirLightIntensity);
-                m_ptFrameDirty |= GuiUtils::FwInputFloat("Dir Light Radius", &m_config.RenderBackendConfig.DirLightCosAngularRadius);
+                dirLightDirty |= GuiUtils::FwInputFloat3("Dir Light Dir", (float*)&m_config.RenderBackendConfig.DirLightDirection);
+                dirLightDirty |= GuiUtils::FwColorEdit3("Dir Light Color", (float*)&m_config.RenderBackendConfig.DirLightColor);
+                dirLightDirty |= GuiUtils::FwInputFloat("Dir Light Intensity", &m_config.RenderBackendConfig.DirLightIntensity);
+                dirLightDirty |= GuiUtils::FwInputFloat("Dir Light Radius", &m_config.RenderBackendConfig.DirLightCosAngularRadius);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();
+
+            m_ptFrameDirty |= dirLightDirty;
+            if (dirLightDirty && m_config.RenderBackend == RenderBackendMode::eForward)
+                m_forward.MarkShadowMapMatricesDirty();
         }
 
         if (m_config.RenderBackend == RenderBackendMode::eForward || m_config.PathTracerConfig.FeatFlagEnabledCore(eCore_EnvironmentMap))

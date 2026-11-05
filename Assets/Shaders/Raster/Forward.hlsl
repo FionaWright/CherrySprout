@@ -47,6 +47,7 @@ Texture2D<float> gShadowMapDir : register(t3, space0);
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
 
 SamplerState gSamplerLinearWrap : register(s0, space0);
+SamplerState gSamplerPointClamp : register(s1, space0);
 
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
 
@@ -110,12 +111,13 @@ float4 PSMain(VsOut input) : SV_TARGET
     //float3 irradianceIblSample = gIrradiance.SampleLevel(gSamplerLinearWrap, Ns, 0).rgb;
     //float3 diffuseIBL = f_bxdf * irradianceIblSample;
 
+    RngInfo rngInfo = InitializeRngInfo(input.position.xy, 0, gSettings.FrameIdx, 12005);
+
     // TODO: Put into new file
     float shadowFactor = 1.0f;
 #if SHADOW_MAP_ENABLED
     {
         uint cascadeIdx = 0; // TODO
-        float blueNoise = 1.0f; // TODO
 
         float3 shadowCoords = input.shadowPos[cascadeIdx];
         shadowCoords.y = 1 - shadowCoords.y;
@@ -131,16 +133,13 @@ float4 PSMain(VsOut input) : SV_TARGET
             float2 offset = float2(0,0);
 
             // PCF
-            if (false)
             {
-                uint poissonIndex = (i * blueNoise * POISSON_DISC_COUNT) % POISSON_DISC_COUNT;
-                offset = i & 1 ? gSettingsShadows.PoissonDisc[poissonIndex].xy : gSettingsShadows.PoissonDisc[poissonIndex].zw;
+                uint poissonIndex = (i * Rand01(rngInfo)) % POISSON_DISC_COUNT; // TODO: Blue Noise
+                offset = poissonIndex & 1 ? gSettingsShadows.PoissonDisc[poissonIndex/2].xy : gSettingsShadows.PoissonDisc[poissonIndex/2].zw;
 
                 // Rotate
-                if (false)
                 {
-                    float rng = 0.0f; // TODO
-                    float angle = rng * 6.2831853;
+                    float angle = Rand01(rngInfo) * 6.2831853;
 
                     float s, c;
                     sincos(angle, s, c);
@@ -155,19 +154,13 @@ float4 PSMain(VsOut input) : SV_TARGET
             }
 
             float2 uv_shadow = shadowCoords.xy + (offset * gSettingsShadows.TexelSize);
-            float shadowMapDepth = gShadowMapDir.Sample(gSamplerLinearWrap, uv_shadow).r; // TODO: Is linear wrong?
-
-            //return float4((shadowMapDepth)>0, 0,0,1);
-            //return float4(uv_shadow,0,1);
-            //return float4(shadowCoords.xy,0,1);
+            float shadowMapDepth = gShadowMapDir.Sample(gSamplerPointClamp, uv_shadow).r;
 
             shadowFactor += pixelDepth >= shadowMapDepth;
         }
         shadowFactor /= float(gSettingsShadows.PcfSampleCount);
     }
 #endif
-
-    //return float4(shadowFactor.xxx,1);
 
     float3 Li = 1.0f;
 
@@ -195,7 +188,7 @@ float4 PSMain(VsOut input) : SV_TARGET
         E_indirect = max(0, E_indirect);
     }
 
-    float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.2f;
+    float3 E_ambient = hitInfo.Mat.Albedo.rgb * 0.1f;
 
     float3 E = E_direct + E_indirect + E_ambient;
     //float3 E = E_direct + E_ambient;

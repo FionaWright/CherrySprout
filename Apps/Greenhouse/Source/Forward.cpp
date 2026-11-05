@@ -18,8 +18,9 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     IRenderBackend::Init(d3d, heap, uploadHeapCBV);
 
-    D3D12_STATIC_SAMPLER_DESC sampler = {};
-    InitializeSamplerLinearClamp(&sampler);
+    D3D12_STATIC_SAMPLER_DESC samplers[2] = {};
+    InitializeSamplerLinearClamp(&samplers[0], 0);
+    InitializeSamplerPointClamp(&samplers[1], 1);
 
     m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
 
@@ -27,7 +28,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_rootSig.AddCbvRange(0, 3);
     m_rootSig.AddSrvRange(0, 4);
     m_rootSig.AddSceneTextures(1);
-    m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
+    m_rootSig.Init(d3d->GetDevice(), samplers, _countof(samplers));
 
     m_set.Init(heap, true, true);
     m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
@@ -72,6 +73,7 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     d3d->Flush();
 
     m_shadowMapManager.Init(d3d->GetDevice(), heap, uploadHeapCBV);
+    m_shadowMapManager.GeneratePoissonSamples(16);
 }
 
 void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
@@ -181,7 +183,6 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     m_set.UpdateCBV(0, 1, &cbvForward);
 
     // TODO: Only recompute when changed?
-    auto poissonDisc = m_shadowMapManager.GeneratePoissonSamples(16);
     CbvShadowMapSample cbvShadow{};
     XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
     XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
@@ -191,6 +192,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     cbvShadow.NormalBias = renderInfo.ForwardConfig->SmBiasNormal;
     cbvShadow.PcfSampleCount = renderInfo.ForwardConfig->SmPcfCount;
     cbvShadow.PcfRadius = renderInfo.ForwardConfig->SmPcfRadius;
+    auto poissonDisc = m_shadowMapManager.GetPoissonSamples();
     for (uint32_t i = 0; i < POISSON_DISC_COUNT; i++)
     {
         cbvShadow.PoissonDisc[i].x = poissonDisc[i*2+0].x;

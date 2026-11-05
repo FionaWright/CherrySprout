@@ -28,6 +28,8 @@ public:
     void UnreserveData() override {};
     void GUI(GreenhouseConfig* config, bool& frameDirty) override;
 
+    void MarkShadowMapMatricesDirty() { m_shadowMapManager.MarkMatricesDirty(); }
+
     size_t TotalCbvRequiredSize() override
     {
         return  Align(sizeof(CbvMatrices_VP), 256) +

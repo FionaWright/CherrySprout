@@ -160,17 +160,17 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, Heap* heap, Sc
     }
 }
 
-std::vector<XMFLOAT2> ShadowMapManager::GeneratePoissonSamples(const uint32_t count, const float minDistance)
+void ShadowMapManager::GeneratePoissonSamples(const uint32_t count, const float minDistance)
 {
-    std::vector<XMFLOAT2> samples;
-    samples.reserve(count);
+    m_poissonDiscSamples.clear();
+    m_poissonDiscSamples.reserve(count);
 
     std::mt19937 rng(std::random_device{}());
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     constexpr int MAX_ATTEMPTS = 10000;
 
-    for (int attempt = 0; attempt < MAX_ATTEMPTS && samples.size() < count; ++attempt)
+    for (int attempt = 0; attempt < MAX_ATTEMPTS && m_poissonDiscSamples.size() < count; ++attempt)
     {
         // Generate a uniform random point inside the unit circle.
         const float angle = dist(rng) * 2.0f * 3.14159265f;
@@ -185,7 +185,7 @@ std::vector<XMFLOAT2> ShadowMapManager::GeneratePoissonSamples(const uint32_t co
         // Check minimum distance from existing samples.
         bool valid = true;
 
-        for (const XMFLOAT2& sample : samples)
+        for (const XMFLOAT2& sample : m_poissonDiscSamples)
         {
             const float dx = candidate.x - sample.x;
             const float dy = candidate.y - sample.y;
@@ -200,8 +200,6 @@ std::vector<XMFLOAT2> ShadowMapManager::GeneratePoissonSamples(const uint32_t co
         }
 
         if (valid)
-            samples.push_back(candidate);
+            m_poissonDiscSamples.push_back(candidate);
     }
-
-    return samples;
 }

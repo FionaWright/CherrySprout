@@ -34,7 +34,8 @@ public:
     void LoadSceneData(ID3D12Device* device, Scene* scene);
 
     void Render(ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, const ShadowMapConfig& config);
-    std::vector<XMFLOAT2> GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);
+    void GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);
+    const std::vector<XMFLOAT2>& GetPoissonSamples() const { return m_poissonDiscSamples; }
 
     D12Resource* GetShadowMapDir() { return &m_shadowMapDir; }
 
@@ -60,6 +61,8 @@ private:
     bool m_matricesDirty = true;
 
     std::vector<D12Resource> m_shadowMapPunctuals;
+
+    std::vector<XMFLOAT2> m_poissonDiscSamples;
 };
 
 #endif
