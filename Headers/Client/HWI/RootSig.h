@@ -23,7 +23,7 @@ public:
     void AddSrvRange(uint32_t spaceIdx, uint32_t srvCount);
     void AddUavRange(uint32_t spaceIdx, uint32_t uavCount);
     void AddRootConstants(RootConstants* rootConstants);
-    void AddSceneTextures(uint32_t spaceIdx);
+    void AddSrvRangeBindless(uint32_t spaceIdx);
     void Init(ID3D12Device* device, const D3D12_STATIC_SAMPLER_DESC* samplers = nullptr, UINT samplerCount = 0);
     void QuickInit(ID3D12Device* device, uint32_t cbvCount, uint32_t srvCount, uint32_t uavCount, const D3D12_STATIC_SAMPLER_DESC* samplers = nullptr, UINT samplerCount = 0);
 
@@ -33,7 +33,7 @@ public:
     int GetParamIndexCBV(const uint32_t spaceIdx) const { return m_paramIdxCBV.at(spaceIdx); }
     int GetParamIndexUAV(const uint32_t spaceIdx) const { return m_paramIdxUAV.at(spaceIdx); }
     int GetParamIndexRootConstants() const { return m_paramIdxRootConstants; }
-    int GetParamIndexSceneTextures() const { return m_paramIdxSceneTextures; }
+    int GetParamIndexSrvBindless(const uint32_t bindlessIdx) const { return m_paramIdxSrvBindless.at(bindlessIdx); }
 
 private:
     RootConstants* m_rootConstants = nullptr;
@@ -42,11 +42,11 @@ private:
 
     ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
 
-    std::vector<int> m_paramIdxSRV;
-    std::vector<int> m_paramIdxCBV;
-    std::vector<int> m_paramIdxUAV;
     int m_paramIdxRootConstants = -1;
-    int m_paramIdxSceneTextures = -1;
+    std::vector<int> m_paramIdxCBV;
+    std::vector<int> m_paramIdxSRV;
+    std::vector<int> m_paramIdxUAV;
+    std::vector<int> m_paramIdxSrvBindless;
 };
 
 

@@ -47,7 +47,8 @@ void GizmoManager::AddGizmo(D3D* d3d, Heap* heap, const XMFLOAT3 position, XMFLO
     gizmo.Position = position;
     gizmo.TextureFilepath = fullPath;
 
-    gizmo.DescSet.Init(heap, false, true);
+    gizmo.DescSet.Init(heap);
+    gizmo.DescSet.SetHasRootConstants();
     gizmo.DescSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvColor), &m_uploadHeap);
     gizmo.DescSet.UpdateCBV(0, 0, &color);
     gizmo.DescSet.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &m_textureCache[fullPath], m_textureCache[fullPath].GetDesc().Format);

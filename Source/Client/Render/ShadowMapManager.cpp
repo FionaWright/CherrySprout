@@ -4,6 +4,7 @@
 #include <random>
 
 #include "Debug/GPUEventScoped.h"
+#include "Raster/Utils/ShadowMapPuncInfo.h"
 #include "Scene/Scene.h"
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
@@ -25,10 +26,12 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
     m_rootConstants.Init(0, 0, sizeof(CbvShadowMap_PerInstance));
     m_rootSig.AddRootConstants(&m_rootConstants);
     m_rootSig.AddSrvRange(0, 1);
-    m_rootSig.AddSceneTextures(1);
+    m_rootSig.AddSrvRangeBindless(1);
     m_rootSig.Init(device, &sampler, 1);
 
-    m_set.Init(heap, true, true);
+    m_set.Init(heap);
+    m_set.SetHasRootConstants();
+    m_set.AddBindlessSrv(1);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -77,6 +80,13 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Scene* scene)
         }
         else
             __debugbreak();
+    }
+
+    const size_t expectedPuncInfoSize = scene->CPU.MegaBufferPunctualLightsCount * sizeof(ShadowMapPuncInfo);
+    if (!m_shadowMapPuncInfoBuffer.IsInitialized() || m_shadowMapPuncInfoBuffer.GetDesc().Width != expectedPuncInfoSize)
+    {
+        m_shadowMapPuncInfoBuffer.Init_Buffer("Shadow Map Punc Info", device, expectedPuncInfoSize);
+        // TODO: Upload
     }
 
     m_set.SetSRV_Buffer(device, 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
@@ -270,7 +280,7 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
 
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
 
-        heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
+        heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
     }
 
     m_set.SetDescriptorTables_Graphics(cmdList);

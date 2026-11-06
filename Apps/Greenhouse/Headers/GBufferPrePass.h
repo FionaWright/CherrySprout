@@ -53,7 +53,7 @@ private:
 
     Pipeline m_pipeline;
     RootSig m_rootSig;
-    DescriptorSet m_descriptorSet;
+    DescriptorSet m_set;
     RootConstants m_rootConstants;
 };
 

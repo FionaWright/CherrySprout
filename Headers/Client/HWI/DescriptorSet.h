@@ -39,9 +39,11 @@ class DescriptorSet
 public:
     ~DescriptorSet();
 
-    void Init(Heap* heap, bool hasBindlessParam = false, bool hasRootConstantsParam = false);
+    void Init(Heap* heap);
     const char* GetName() const { return m_name.c_str(); }
     void SetName(const char* str) { m_name = str; }
+
+    void SetHasRootConstants() { m_hasRootConstantsParam = true; }
 
     bool IsInitialized() const { return m_pHeap != nullptr; }
 
@@ -68,6 +70,7 @@ public:
     void SetUAV_Buffer(ID3D12Device* device, uint32_t spaceIdx, uint32_t uavIdx, const D12Resource* d12Resource, uint32_t numElements, size_t
                        stride);
     void SetUAV_ByteAddressBuffer(ID3D12Device* device, uint32_t spaceIdx, uint32_t uavIdx, const D12Resource* d12Resource, size_t size);
+    void AddBindlessSrv(uint32_t spaceIdx);
 
     D12Resource* GetSRV(uint32_t spaceIdx, uint32_t srvIdx) const;
 
@@ -85,12 +88,12 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle = {};
     uint32_t m_descriptorIncSize = 0;
 
-    bool m_hasBindlessParam = false;
     bool m_hasRootConstantsParam = false;
 
     std::vector<std::vector<CBV>> m_cbvs = {};
     std::vector<std::vector<SRV>> m_srvs = {};
     std::vector<std::vector<UAV>> m_uavs = {};
+    std::vector<uint32_t> m_srvBindless = {};
 };
 
 

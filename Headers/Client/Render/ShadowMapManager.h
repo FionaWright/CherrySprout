@@ -46,6 +46,7 @@ public:
     const std::vector<XMFLOAT2>& GetPoissonSamples() const { return m_poissonDiscSamples; }
 
     D12Resource* GetShadowMapDir() { return &m_shadowMapDir.Resource; }
+    D12Resource* GetShadowMapPuncInfo() { return &m_shadowMapPuncInfoBuffer; }
 
     XMMATRIX GetShadowMatrix(uint32_t cascadeIdx) const { return m_shadowMapDir.Vs[0] * m_shadowMapDir.P; }
     XMFLOAT2 GetShadowDimensions(uint32_t cascadeIdx) const { return XMFLOAT2(m_shadowMapDir.Resource.GetDesc().Width, m_shadowMapDir.Resource.GetDesc().Height); }
@@ -71,6 +72,8 @@ private:
     Heap m_heapDSV;
 
     ShadowMap m_shadowMapDir{};
+
+    D12Resource m_shadowMapPuncInfoBuffer;
 
     bool m_matricesDirty = true;
 

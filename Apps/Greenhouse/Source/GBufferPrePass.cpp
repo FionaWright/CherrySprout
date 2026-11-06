@@ -47,11 +47,13 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_rootSig.AddRootConstants(&m_rootConstants);
     m_rootSig.AddCbvRange(0, 1);
     m_rootSig.AddSrvRange(0, 2);
-    m_rootSig.AddSceneTextures(1);
+    m_rootSig.AddSrvRangeBindless(1);
     m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
-    m_descriptorSet.Init(heap, true, true);
-    m_descriptorSet.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
+    m_set.Init(heap);
+    m_set.SetHasRootConstants();
+    m_set.AddBindlessSrv(1);
+    m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -83,8 +85,8 @@ void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
     CherryAssert(scene->GPU.MegaBufferInstanceData.GetResource());
     CherryAssert(scene->GPU.MegaBufferMaterials.GetResource());
 
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 }
 
 XMMATRIX ApplyProjectionJitter(const XMMATRIX& projection, const XMFLOAT2& jitterPixels, const float width, const float height)
@@ -154,7 +156,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
 
         scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        m_descriptorSet.TransitionAllSRVToShaderResource(cmdList);
+        m_set.TransitionAllSRVToShaderResource(cmdList);
 
         cmdList->IASetVertexBuffers(0, 1, &viewV);
         cmdList->IASetIndexBuffer(&viewI);
@@ -163,15 +165,15 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
         cmdList->SetGraphicsRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
         renderInfo.Heap->Bind(cmdList);
-        renderInfo.Heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSceneTextures());
-        m_descriptorSet.SetDescriptorTables_Graphics(cmdList);
+        renderInfo.Heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
+        m_set.SetDescriptorTables_Graphics(cmdList);
     }
 
     CbvMatrices_VP matricesVP = {};
     XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
     XMStoreFloat4x4(&matricesVP.P, P);
     XMStoreFloat4x4(&matricesVP.PrevV, m_prevV);
-    m_descriptorSet.UpdateCBV(0, 0, &matricesVP);
+    m_set.UpdateCBV(0, 0, &matricesVP);
 
     m_prevV = renderInfo.V;
 

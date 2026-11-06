@@ -5,9 +5,12 @@
 #include "Utils/Math/ShadingFrame.h"
 #include "Scene/Material.h"
 #include "Utils/Debug/Palette.h"
-#include "PathTracing/Structs.h"
 #include "Utils/Random.h"
 #include "PostProcessing/ToneMapping.hlsli"
+
+#include "Raster/Utils/ShadowMapPuncInfo.h"
+
+#include "PathTracing/Structs.h"
 
 #define BXDF_MODE BXDF_PBR
 //#define BXDF_MODE BXDF_LAMBERTIAN
@@ -30,25 +33,29 @@ struct VsOut
     float3 shadowPos[SHADOW_MAP_MAX_CASCADES] : TEXCOORD3;
 };
 
-ConstantBuffer<CbvForward_PerInstance> gCbvObject     : register(b0, space0); // Push Constants
-ConstantBuffer<CbvMatrices_VP> gMatricesVP            : register(b1, space0);
-ConstantBuffer<CbvForward> gSettings                  : register(b2, space0);
-ConstantBuffer<CbvShadowMapSample> gSettingsShadows   : register(b3, space0);
+ConstantBuffer<CbvForward_PerInstance> gCbvObject             : register(b0, space0); // Push Constants
+ConstantBuffer<CbvMatrices_VP> gMatricesVP                    : register(b1, space0);
+ConstantBuffer<CbvForward> gSettings                          : register(b2, space0);
+ConstantBuffer<CbvShadowMapSample> gSettingsShadows           : register(b3, space0);
 
-StructuredBuffer<Material> gMaterials                 : register(t0, space0);
-StructuredBuffer<PunctualLight> gPunctuals            : register(t1, space0);
-Texture2D<float2> gBrdfInt                            : register(t2, space0);
-TextureCube gSkyBox                                   : register(t3, space0);
-Texture2D<float> gShadowMapDir                        : register(t4, space0);
-//TextureCube gIrradiance                               : register(t1, space0);
+StructuredBuffer<Material> gMaterials                         : register(t0, space0);
+StructuredBuffer<PunctualLight> gPunctuals                    : register(t1, space0);
+StructuredBuffer<ShadowMapPuncInfo> gPunctualShadowMapInfo    : register(t2, space0);
+Texture2D<float2> gBrdfInt                                    : register(t3, space0);
+TextureCube gSkyBox                                           : register(t4, space0);
+Texture2D<float> gShadowMapDir                                : register(t5, space0);
+//TextureCube gIrradiance                                       : register(t1, space0);
 
 Texture2D<float4> gSceneTextures[] : register(t0, space1);
+
+TextureCube<float> gShadowMapsPoint[] : register(t0, space2);
+Texture2D<float> gShadowMapsDistant[] : register(t0, space3);
 
 SamplerState gSamplerLinearWrap : register(s0, space0);
 SamplerState gSamplerPointClamp : register(s1, space0);
 
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
-#include "Raster/Shadows.hlsli"
+#include "Raster/Utils/Shadows.hlsli"
 
 VsOut VSMain(VsIn input)
 {

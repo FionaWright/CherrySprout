@@ -48,7 +48,7 @@ void RootSig::Init(ID3D12Device* device, const CD3DX12_ROOT_PARAMETER1* params, 
 void RootSig::AddCbvRange(const uint32_t spaceIdx, const uint32_t cbvCount)
 {
     CherryAssert(cbvCount > 0);
-    CherryAssert(m_paramIdxSceneTextures == -1);
+    CherryAssert(m_paramIdxSrvBindless.size() == 0);
     CherryAssert(m_paramIdxSRV.size() == 0);
     CherryAssert(m_paramIdxUAV.size() == 0);
     CherryAssert(spaceIdx == m_paramIdxCBV.size());
@@ -63,7 +63,7 @@ void RootSig::AddCbvRange(const uint32_t spaceIdx, const uint32_t cbvCount)
 void RootSig::AddSrvRange(const uint32_t spaceIdx, const uint32_t srvCount)
 {
     CherryAssert(srvCount > 0);
-    CherryAssert(m_paramIdxSceneTextures == -1);
+    CherryAssert(m_paramIdxSrvBindless.size() == 0);
     CherryAssert(m_paramIdxUAV.size() == 0);
     CherryAssert(spaceIdx == m_paramIdxSRV.size());
     m_paramIdxSRV.emplace_back(m_paramCount);
@@ -75,7 +75,7 @@ void RootSig::AddSrvRange(const uint32_t spaceIdx, const uint32_t srvCount)
 void RootSig::AddUavRange(const uint32_t spaceIdx, const uint32_t uavCount)
 {
     CherryAssert(uavCount > 0);
-    CherryAssert(m_paramIdxSceneTextures == -1);
+    CherryAssert(m_paramIdxSrvBindless.size() == 0);
     CherryAssert(spaceIdx == m_paramIdxUAV.size());
     m_paramIdxUAV.emplace_back(m_paramCount);
 
@@ -85,7 +85,7 @@ void RootSig::AddUavRange(const uint32_t spaceIdx, const uint32_t uavCount)
 
 void RootSig::AddRootConstants(RootConstants* rootConstants)
 {
-    CherryAssert(m_paramIdxSceneTextures == -1);
+    CherryAssert(m_paramIdxSrvBindless.size() == 0);
     CherryAssert(m_paramIdxCBV.size() == 0);
     CherryAssert(m_paramIdxSRV.size() == 0);
     CherryAssert(m_paramIdxUAV.size() == 0);
@@ -95,9 +95,9 @@ void RootSig::AddRootConstants(RootConstants* rootConstants)
     m_paramCount++;
 }
 
-void RootSig::AddSceneTextures(const uint32_t spaceIdx)
+void RootSig::AddSrvRangeBindless(const uint32_t spaceIdx)
 {
-    m_paramIdxSceneTextures = m_paramCount;
+    m_paramIdxSrvBindless.emplace_back(m_paramCount);
 
     m_rangeInfos.emplace_back(RangeInfo{D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, 0, spaceIdx, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE});
     m_paramCount++;

@@ -17,16 +17,13 @@ DescriptorSet::~DescriptorSet()
     CherryPrint("DescriptorSet Destroyed!");
 }
 
-void DescriptorSet::Init(Heap* heap, const bool hasBindlessParam, const bool hasRootConstantsParam)
+void DescriptorSet::Init(Heap* heap)
 {
     m_pHeap = heap;
 
     m_cpuHandle = m_pHeap->GetCPUHandle();
     m_gpuHandle = m_pHeap->GetGPUHandle();
     m_descriptorIncSize = m_pHeap->GetIncrementSize();
-
-    m_hasBindlessParam = hasBindlessParam;
-    m_hasRootConstantsParam = hasRootConstantsParam;
 
     m_cbvs.clear();
     m_srvs.clear();
@@ -281,6 +278,11 @@ void DescriptorSet::SetUAV_ByteAddressBuffer(ID3D12Device* device, const uint32_
     SetUAV(device, spaceIdx, uavIdx, d12Resource, desc);
 }
 
+void DescriptorSet::AddBindlessSrv(const uint32_t spaceIdx)
+{
+    m_srvBindless.emplace_back(spaceIdx);
+}
+
 void DescriptorSet::SetDescriptorTables_Graphics(ID3D12GraphicsCommandList* cmdList) const
 {
     setDescriptorTables(cmdList, false);
@@ -334,8 +336,10 @@ void DescriptorSet::setDescriptorTables(ID3D12GraphicsCommandList* cmdList, cons
         paramIdx++;
     }
 
-    if (m_hasBindlessParam)
+    for (uint32_t i = 0; i < m_srvBindless.size(); i++)
+    {
         paramIdx++;
+    }
 }
 
 D12Resource* DescriptorSet::GetSRV(const uint32_t spaceIdx, const uint32_t srvIdx) const

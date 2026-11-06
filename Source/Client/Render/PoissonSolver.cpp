@@ -129,8 +129,10 @@ void PoissonSolver::initResources(D3D* d3d, Heap* heap)
     const uint32_t w = Config::GetSystem().RtvWidth;
     const uint32_t h = Config::GetSystem().RtvHeight;
 
-    m_setJacobi0to1.Init(heap, false, true);
-    m_setJacobi1to0.Init(heap, false, true);
+    m_setJacobi0to1.Init(heap);
+    m_setJacobi1to0.Init(heap);
+    m_setJacobi0to1.SetHasRootConstants();
+    m_setJacobi1to0.SetHasRootConstants();
 
     m_gradientTerms.Init_Tex2D("Poisson Gradient Terms", d3d->GetDevice(), w, h, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     m_pingPong0.Init_Tex2D("Poisson PingPong 0", d3d->GetDevice(), w, h, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

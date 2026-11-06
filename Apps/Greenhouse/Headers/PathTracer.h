@@ -61,7 +61,7 @@ private:
 
     Pipeline m_pipeline;
     RootSig m_rootSig;
-    DescriptorSet m_descriptorSet;
+    DescriptorSet m_set;
     D12Resource m_primal, m_accum;
     D12Resource m_outputRgba8Unorm;
     D12Resource* m_finalHdrOutput = nullptr;

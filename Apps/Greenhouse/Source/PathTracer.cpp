@@ -89,7 +89,7 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_rootSig.AddSrvRange(SPACE_T_DEFAULT, 17);
         m_rootSig.AddUavRange(SPACE_U_DEFAULT, 10);
         m_rootSig.AddUavRange(SPACE_U_DEBUG, 4);
-        m_rootSig.AddSceneTextures(SPACE_T_SCENE_TEXTURES);
+        m_rootSig.AddSrvRangeBindless(SPACE_T_SCENE_TEXTURES);
         m_rootSig.Init(d3d->GetDevice(), samplers, _countof(samplers));
     }
 
@@ -123,12 +123,13 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         s_defaultBxdfMode,
         s_defaultMMType);
 
-    m_descriptorSet.Init         (heap, true);
-    m_descriptorSet.AddCBV       (d3d->GetDevice(), SPACE_B_DEFAULT, sizeof(CbvPathTracingSettings), uploadHeapCBV);
-    m_descriptorSet.AddCBV       (d3d->GetDevice(), SPACE_B_DEFAULT, sizeof(CbvRestirSettings), uploadHeapCBV);
+    m_set.Init         (heap);
+    m_set.AddBindlessSrv(SPACE_T_SCENE_TEXTURES);
+    m_set.AddCBV       (d3d->GetDevice(), SPACE_B_DEFAULT, sizeof(CbvPathTracingSettings), uploadHeapCBV);
+    m_set.AddCBV       (d3d->GetDevice(), SPACE_B_DEFAULT, sizeof(CbvRestirSettings), uploadHeapCBV);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.AddCBV       (d3d->GetDevice(), SPACE_B_DEBUG, sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
+    m_set.AddCBV       (d3d->GetDevice(), SPACE_B_DEBUG, sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
 #endif
 
     m_gradientManager.Init(d3d);
@@ -145,49 +146,49 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_rtasBuilder.FlushAndBuild(d3d, scene);
     }
 
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 0, &m_accum, m_accum.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 1, &m_primal, m_primal.GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 2, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 3, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 4, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 5, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 0, &m_accum, m_accum.GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 1, &m_primal, m_primal.GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 2, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 3, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 4, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 5, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEBUG, 0, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
-    m_descriptorSet.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEBUG, 1, m_debugManager.GetBufferPathDumpRW(), MAX_RAY_DEPTH, sizeof(RayDump));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), SPACE_U_DEBUG, 2, m_debugManager.GetBufferPathDumpOCRW(), MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
-    m_descriptorSet.SetUAV_ByteAddressBuffer(d3d->GetDevice(), SPACE_U_DEBUG, 3, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEBUG, 0, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEBUG, 1, m_debugManager.GetBufferPathDumpRW(), MAX_RAY_DEPTH, sizeof(RayDump));
+    m_set.SetUAV_ByteAddressBuffer(d3d->GetDevice(), SPACE_U_DEBUG, 2, m_debugManager.GetBufferPathDumpOCRW(), MAX_RAY_DEPTH * sizeof(DebugOutputStruct));
+    m_set.SetUAV_ByteAddressBuffer(d3d->GetDevice(), SPACE_U_DEBUG, 3, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
 #endif
 
-    m_descriptorSet.SetSRV_RTAS  (d3d->GetDevice(), SPACE_T_DEFAULT, 0, m_rtasBuilder.GetRtasResource());
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-    m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 5, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
+    m_set.SetSRV_RTAS  (d3d->GetDevice(), SPACE_T_DEFAULT, 0, m_rtasBuilder.GetRtasResource());
+    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 1, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 5, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
 
-    m_descriptorSet.SetSRV_Tex2D (d3d->GetDevice(), SPACE_T_DEFAULT, 6, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
+    m_set.SetSRV_Tex2D (d3d->GetDevice(), SPACE_T_DEFAULT, 6, envMap->GetEA(), envMap->GetEA()->GetDesc().Format);
 
     if (lightImportanceSampler->IsInitialized())
     {
         const size_t lsdStride = lightImportanceSampler->IsLsdAliasTable() ? sizeof(AliasEntry) : sizeof(ProbabilityDistributionSample);
 
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 7, lightImportanceSampler->GetEnvMapPdf(), lightImportanceSampler->GetEnvMapPdf()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 8, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Tex1D(d3d->GetDevice(), SPACE_T_DEFAULT, 9, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 10, lightImportanceSampler->GetEmissiveToInstanceMap(), lightImportanceSampler->GetMaxEmissiveCount(), sizeof(uint32_t));
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 11, lightImportanceSampler->GetInstanceToEmissiveMap(), scene->CPU.ObjectCount, sizeof(int32_t));
-        m_descriptorSet.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 12, lightImportanceSampler->GetLightsCdf(), lightImportanceSampler->GetMaxLsdCount(), lsdStride);
+        m_set.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 7, lightImportanceSampler->GetEnvMapPdf(), lightImportanceSampler->GetEnvMapPdf()->GetDesc().Format);
+        m_set.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 8, lightImportanceSampler->GetEnvMapCdfConditional(), lightImportanceSampler->GetEnvMapCdfConditional()->GetDesc().Format);
+        m_set.SetSRV_Tex1D(d3d->GetDevice(), SPACE_T_DEFAULT, 9, lightImportanceSampler->GetEnvMapCdfMarginal(), lightImportanceSampler->GetEnvMapCdfMarginal()->GetDesc().Format);
+        m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 10, lightImportanceSampler->GetEmissiveToInstanceMap(), lightImportanceSampler->GetMaxEmissiveCount(), sizeof(uint32_t));
+        m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 11, lightImportanceSampler->GetInstanceToEmissiveMap(), scene->CPU.ObjectCount, sizeof(int32_t));
+        m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 12, lightImportanceSampler->GetLightsCdf(), lightImportanceSampler->GetMaxLsdCount(), lsdStride);
     }
 
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 13, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 14, gbuffer->GetGBufferNormalsUv(), gbuffer->GetGBufferNormalsUv()->GetDesc().Format);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 15, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
-    m_descriptorSet.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 16, gbuffer->GetGBufferMv(), gbuffer->GetGBufferMv()->GetDesc().Format);
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 13, gbuffer->GetGBufferMaterialIdx(), gbuffer->GetGBufferMaterialIdx()->GetDesc().Format);
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 14, gbuffer->GetGBufferNormalsUv(), gbuffer->GetGBufferNormalsUv()->GetDesc().Format);
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 15, gbuffer->GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
+    m_set.SetSRV_Tex2D(d3d->GetDevice(), SPACE_T_DEFAULT, 16, gbuffer->GetGBufferMv(), gbuffer->GetGBufferMv()->GetDesc().Format);
 
     m_gradientManager.LoadSceneData(d3d, heap, &m_primal);
 }
@@ -293,7 +294,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
         settings.FrameDimensions = { Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight };
         settings.TexelSize = XMFLOAT2(1.0f / (float)settings.FrameDimensions.x, 1.0f / (float)settings.FrameDimensions.y);
-        m_descriptorSet.UpdateCBV(SPACE_B_DEFAULT, 0, &settings);
+        m_set.UpdateCBV(SPACE_B_DEFAULT, 0, &settings);
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
@@ -328,7 +329,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.ForcedLightIndex = renderInfo.PathTracerConfig->DebugInfo.ForcedLightIndex;
         settings.FeatFlagsCoreQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsCoreQS;
         settings.FeatFlagsDbgQS = renderInfo.PathTracerConfig->DebugInfo.FeatFlagsDebugQS;
-        m_descriptorSet.UpdateCBV(SPACE_B_DEBUG, 0, &settings);
+        m_set.UpdateCBV(SPACE_B_DEBUG, 0, &settings);
     }
 #endif
 
@@ -346,7 +347,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.SpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
         settings.TemporalEnabled = renderInfo.PathTracerConfig->RestirTemporalEnabled;
         settings.SpatialEnabled = renderInfo.PathTracerConfig->RestirSpatialEnabled;
-        m_descriptorSet.UpdateCBV(SPACE_B_DEFAULT, 1, &settings);
+        m_set.UpdateCBV(SPACE_B_DEFAULT, 1, &settings);
     }
 
     {
@@ -368,8 +369,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     {
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         heap->Bind(cmdList);
-        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
-        m_descriptorSet.SetDescriptorTables_Compute(cmdList);
+        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
+        m_set.SetDescriptorTables_Compute(cmdList);
 
         RestirConfig restirConfig;
         restirConfig.ClearBuffers = m_restirClearScheduled;
@@ -397,8 +398,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
         heap->Bind(cmdList);
-        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSceneTextures());
-        m_descriptorSet.SetDescriptorTables_Compute(cmdList);
+        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
+        m_set.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
     }
@@ -528,10 +529,10 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         {
             m_restirManager.UpdateBuffersAndPipelines(device, &m_rootSig, compileArgs, restirConfig);
 
-            m_descriptorSet.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
-            m_descriptorSet.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
-            m_descriptorSet.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
-            m_descriptorSet.SetUAV_Buffer(device, SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
+            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
+            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
+            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
         }
     }
 

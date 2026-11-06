@@ -212,7 +212,8 @@ void EnvironmentMap::ComputeMipMapsCubemap(ID3D12Device* device, ID3D12GraphicsC
         int dstMip = srcMip + 1;
 
         DescriptorSet set;
-        set.Init(heap, false, true);
+        set.Init(heap);
+        set.SetHasRootConstants();
 
         int dstWidth = std::max<int>(width >> (dstMip), 1);
         int dstHeight = std::max<int>(height >> (dstMip), 1);

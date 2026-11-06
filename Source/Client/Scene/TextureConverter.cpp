@@ -43,7 +43,8 @@ void TextureConverter::Convert(const D3D* d3d, Heap* heap, ID3D12GraphicsCommand
     m_rootConstants.Bind_Compute(cmdList, &cbv);
 
     DescriptorSet set;
-    set.Init(heap, false, true);
+    set.Init(heap);
+    set.SetHasRootConstants();
     set.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, source, source->GetDesc().Format);
     set.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, dest4, dest4->GetDesc().Format);
     set.SetUAV_Tex2D(d3d->GetDevice(), 0, 1, dest1, dest1->GetDesc().Format);
