@@ -287,6 +287,9 @@ inline uint32_t CreateDSV(ID3D12Device* device, Heap* heapDSV, const D12Resource
     D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
     desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
     desc.Format = format;
+    desc.Texture2DArray.MipSlice = 0;
+    desc.Texture2DArray.FirstArraySlice = 0;
+    desc.Texture2DArray.ArraySize = resource->GetDesc().DepthOrArraySize;
     desc.Texture2D.MipSlice = 0;
 
     const uint32_t heapIdx = heapDSV->GetNextDescriptorIdx(resource->GetName());

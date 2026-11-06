@@ -27,40 +27,54 @@ struct ShadowMapConfig
     XMFLOAT3 DirLightDir;
 };
 
+struct ShadowMap
+{
+    D12Resource Resource;
+    uint32_t HeapIdx;
+    std::vector<XMMATRIX> Vs;
+    XMMATRIX P;
+};
+
 class ShadowMapManager
 {
 public:
     void Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV);
     void LoadSceneData(ID3D12Device* device, Scene* scene);
 
-    void Render(ID3D12GraphicsCommandList* cmdList, Heap* heap, Scene* scene, const ShadowMapConfig& config);
+    void Render(ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config);
     void GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);
     const std::vector<XMFLOAT2>& GetPoissonSamples() const { return m_poissonDiscSamples; }
 
-    D12Resource* GetShadowMapDir() { return &m_shadowMapDir; }
+    D12Resource* GetShadowMapDir() { return &m_shadowMapDir.Resource; }
 
-    XMMATRIX GetShadowMatrix(uint32_t cascadeIdx) const { return m_V * m_P; }
-    XMFLOAT2 GetShadowDimensions(uint32_t cascadeIdx) const { return XMFLOAT2(m_shadowMapDir.GetDesc().Width, m_shadowMapDir.GetDesc().Height); }
+    XMMATRIX GetShadowMatrix(uint32_t cascadeIdx) const { return m_shadowMapDir.Vs[0] * m_shadowMapDir.P; }
+    XMFLOAT2 GetShadowDimensions(uint32_t cascadeIdx) const { return XMFLOAT2(m_shadowMapDir.Resource.GetDesc().Width, m_shadowMapDir.Resource.GetDesc().Height); }
 
     void MarkMatricesDirty() { m_matricesDirty = true; }
 
-    static size_t GetCbvRequiredSize() { return Align(sizeof(CbvMatrices_VP), 256); }
+    static size_t GetCbvRequiredSize() { return Align(sizeof(CbvShadowMapCreate), 256); }
 
 private:
+    XMMATRIX getViewMatrixDistant(XMFLOAT3 direction, float distance) const;
+    XMMATRIX getViewMatrixPoint(XMFLOAT3 position, XMFLOAT3 direction) const;
+    XMMATRIX getProjectionMatrix(float width, float height, float nearPlane, float farPlane);
+    void renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* cmdList, const Scene* scene) const;
+    void renderDistant(ID3D12GraphicsCommandList* cmdList, const Scene* scene, ShadowMap* shadowMap) const;
+    void renderPoint(ID3D12GraphicsCommandList* cmdList, const Scene* scene, ShadowMap* shadowMap, XMFLOAT3 position, float farPlane) const;
+
     RootConstants m_rootConstants;
     RootSig m_rootSig;
     DescriptorSet m_set;
-    Pipeline m_pipeline;
+    Pipeline m_pipelineDistant;
+    Pipeline m_pipelinePoint;
 
     Heap m_heapDSV;
-    uint32_t m_heapIdxDir = 0;
 
-    D12Resource m_shadowMapDir;
-    XMMATRIX m_V{};
-    XMMATRIX m_P{};
+    ShadowMap m_shadowMapDir{};
+
     bool m_matricesDirty = true;
 
-    std::vector<D12Resource> m_shadowMapPunctuals;
+    std::vector<ShadowMap> m_shadowMapPunctuals;
 
     std::vector<XMFLOAT2> m_poissonDiscSamples;
 };

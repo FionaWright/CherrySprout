@@ -16,7 +16,7 @@ struct VsOut
 };
 
 ConstantBuffer<CbvShadowMap_PerInstance> gCbvObject : register(b0, space0); // Push Constants
-ConstantBuffer<CbvMatrices_VP> gMatricesVP : register(b1, space0);
+ConstantBuffer<CbvShadowMapCreate> gMatricesVP : register(b1, space0);
 
 StructuredBuffer<Material> gMaterials : register(t0, space0);
 

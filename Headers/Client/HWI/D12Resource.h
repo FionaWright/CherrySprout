@@ -18,7 +18,7 @@ public:
                 const D3D12_RESOURCE_DESC& desc);
 
     void Init(const char* name, ID3D12Device* device, const D3D12_RESOURCE_DESC& resourceDesc,
-              const D3D12_RESOURCE_STATES& initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr,
+              const D3D12_RESOURCE_STATES& initialState = D3D12_RESOURCE_STATE_COMMON, const D3D12_CLEAR_VALUE* clearValue = nullptr,
               const CD3DX12_HEAP_PROPERTIES& heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT));
     void Init_Buffer(const char* name, ID3D12Device* device, size_t size,
                      D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, bool readbackHeap = false,
@@ -26,7 +26,7 @@ public:
     void Init_Tex2D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth,
                     DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
                     D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON, const XMFLOAT4* clearValue = nullptr, bool hasMipMaps = false);
-    void Init_Depth2D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height,
+    void Init_Depth2D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth = 1,
                       D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
                       D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON);
     void Init_Tex1D(const char* name, ID3D12Device* device, uint32_t width, uint32_t height, uint32_t depth,

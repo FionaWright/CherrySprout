@@ -28,7 +28,7 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_gbufferTexMaterialIdx.Init_Tex2D("GBuffer Material Idx", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_MAT_IDX, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[0]);
     m_gbufferTexNormalsUv.Init_Tex2D("GBuffer Normals + UV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_NORMALS_UV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[1]);
     m_gbufferTexMv.Init_Tex2D("GBuffer MV", d3d->GetDevice(), w, h, 1, GBUFFER_FORMAT_MV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[2]);
-    m_gbufferTexDepth.Init_Depth2D("GBuffer Depth", d3d->GetDevice(), w, h, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    m_gbufferTexDepth.Init_Depth2D("GBuffer Depth", d3d->GetDevice(), w, h, 1, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 #define NUM_RENDER_TARGETS 3
 

@@ -69,7 +69,7 @@ void D12Resource::Init_Tex2D(const char* name, ID3D12Device* device, const uint3
     Init(name, device, desc, initialState, clearValue ? &d12ClearValue : nullptr);
 }
 
-void D12Resource::Init_Depth2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height,
+void D12Resource::Init_Depth2D(const char* name, ID3D12Device* device, const uint32_t width, const uint32_t height, const uint32_t depth,
                              const D3D12_RESOURCE_FLAGS flags, const D3D12_RESOURCE_STATES initialState)
 {
     D3D12_RESOURCE_DESC desc = {};
@@ -78,7 +78,7 @@ void D12Resource::Init_Depth2D(const char* name, ID3D12Device* device, const uin
     desc.Height = height;
     desc.Format = DXGI_FORMAT_R32_TYPELESS;
     desc.MipLevels = 1;
-    desc.DepthOrArraySize = 1;
+    desc.DepthOrArraySize = depth;
     desc.Flags = flags | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
