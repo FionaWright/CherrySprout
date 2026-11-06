@@ -179,15 +179,15 @@ struct PathTracerConfig
 struct ForwardConfig
 {
     uint32_t SmCascadeCount = 1;
-    uint32_t SmPcfCount = 32;
+    uint32_t SmPcfCount = 48;
 
     float SmWidth = 1.0f;
     float SmHeight = 1.0f;
     float SmNear = 0.01f;
     float SmFar = 100.0f;
     float SmDirDist = 50.0f;
-    float SmPcfRadius = 1.5f;
-    float SmBiasDepth = 0.00003f;
+    float SmPcfRadius = 3.0f;
+    float SmBiasDepth = 0.000001f;
     float SmBiasNormal = 0.001f;
 
     bool FlagEnabledEnvironmentMap = true;

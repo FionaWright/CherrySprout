@@ -47,7 +47,7 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
     };
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true, 0);
-    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+    desc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
     desc.SampleDesc.Count = 1;
     V(m_pipeline.InitGraphics(device, "Raster/ShadowMapVSPS.hlsl", "Raster/ShadowMapVSPS.hlsl", desc));
 }
