@@ -8,28 +8,27 @@
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
-#define MAX_SHADOW_MAPS 100
-#define SHADOW_MAP_RESO 2048
+#define MAX_SHADOW_MAPS 500
+#define SHADOW_MAP_RESO_DISTANT 2048
+#define SHADOW_MAP_RESO_POINT 512
 
 void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     m_heapDSV.Init("Shadow Map Heap DSV", device, MAX_SHADOW_MAPS, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-    m_shadowMapDir.Resource.Init_Depth2D("Shadow Map Dir", device, SHADOW_MAP_RESO, SHADOW_MAP_RESO);
-    m_shadowMapDir.HeapIdx = CreateDSV(device, &m_heapDSV, &m_shadowMapDir.Resource, SHADOW_MAP_FORMAT_DEPTH);
+    m_shadowMapDir.Resource.Init_Depth2D("Shadow Map Dir", device, SHADOW_MAP_RESO_DISTANT, SHADOW_MAP_RESO_DISTANT);
+    m_shadowMapDir.HeapIndices.emplace_back(CreateDSV(device, &m_heapDSV, &m_shadowMapDir.Resource, SHADOW_MAP_FORMAT_DEPTH));
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     InitializeSamplerLinearClamp(&sampler);
 
-    m_rootConstants.Init(0, 0, sizeof(CbvForward_PerInstance));
+    m_rootConstants.Init(0, 0, sizeof(CbvShadowMap_PerInstance));
     m_rootSig.AddRootConstants(&m_rootConstants);
-    m_rootSig.AddCbvRange(0, 1);
     m_rootSig.AddSrvRange(0, 1);
     m_rootSig.AddSceneTextures(1);
     m_rootSig.Init(device, &sampler, 1);
 
     m_set.Init(heap, true, true);
-    m_set.AddCBV(device, 0, sizeof(CbvShadowMapCreate), uploadHeapCBV);
 
     D3D12_INPUT_ELEMENT_DESC ildDesc[] =
     {
@@ -68,13 +67,13 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Scene* scene)
 
         if (light.Type == PunctualLightType::eDistant)
         {
-            m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Distant)", device, SHADOW_MAP_RESO, SHADOW_MAP_RESO);
-            m_shadowMapPunctuals[i].HeapIdx = CreateDSV(device, &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH);
+            m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Distant)", device, SHADOW_MAP_RESO_DISTANT, SHADOW_MAP_RESO_DISTANT);
+            m_shadowMapPunctuals[i].HeapIndices.emplace_back(CreateDSV(device, &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH));
         }
         else if (light.Type == PunctualLightType::ePoint)
         {
-            m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Point)", device, SHADOW_MAP_RESO, SHADOW_MAP_RESO, 6);
-            m_shadowMapPunctuals[i].HeapIdx = CreateDSV(device, &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH);
+            m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Point)", device, SHADOW_MAP_RESO_POINT, SHADOW_MAP_RESO_POINT, 6);
+            m_shadowMapPunctuals[i].HeapIndices = CreateDSVs_Array(device, &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH);
         }
         else
             __debugbreak();
@@ -127,10 +126,8 @@ XMMATRIX ShadowMapManager::getProjectionMatrix(const float width, const float he
     return XMMatrixOrthographicLH(width, height, nearZ, farZ);
 }
 
-void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* cmdList, const Scene* scene) const
+void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* cmdList, const Scene* scene, CbvShadowMap_PerInstance& cbv) const
 {
-    CbvShadowMap_PerInstance matricesM = {};
-
     // TODO: Sort objects
     // TODO: Frustum Cull
 
@@ -146,9 +143,9 @@ void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* c
             obj.M[12], obj.M[13], obj.M[14], obj.M[15]
         );
 
-        XMStoreFloat4x4(&matricesM.M, M);
-        matricesM.MaterialIdx = obj.MaterialIndex;
-        m_rootConstants.Bind_Graphics(cmdList, &matricesM);
+        XMStoreFloat4x4(&cbv.M, M);
+        cbv.MaterialIdx = obj.MaterialIndex;
+        m_rootConstants.Bind_Graphics(cmdList, &cbv);
 
         cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
     }
@@ -156,6 +153,8 @@ void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* c
 
 void ShadowMapManager::renderDistant(ID3D12GraphicsCommandList* cmdList, const Scene* scene, ShadowMap* shadowMap) const
 {
+    GPU_SCOPE(cmdList, "Shadow Map (Distant)");
+
     shadowMap->Resource.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
     cmdList->SetPipelineState(m_pipelineDistant.GetPSO());
@@ -163,52 +162,56 @@ void ShadowMapManager::renderDistant(ID3D12GraphicsCommandList* cmdList, const S
     {
         SetViewportScissor(cmdList, shadowMap->Resource.GetDesc().Width, shadowMap->Resource.GetDesc().Height);
 
-        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(shadowMap->HeapIdx);
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(shadowMap->HeapIndices[0]);
         cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
 
         const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
         cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depthClearValue, 0, 0, nullptr);
     }
 
-    CbvShadowMapCreate cbv = {};
+    CbvShadowMap_PerInstance cbv = {};
     XMStoreFloat4x4(&cbv.V, shadowMap->Vs[0]);
     XMStoreFloat4x4(&cbv.P, shadowMap->P);
-    m_set.UpdateCBV(0, 0, &cbv);
 
-    renderSceneObjectsToBoundMap(cmdList, scene);
+    renderSceneObjectsToBoundMap(cmdList, scene, cbv);
 }
 
 void ShadowMapManager::renderPoint(ID3D12GraphicsCommandList* cmdList, const Scene* scene, ShadowMap* shadowMap, const XMFLOAT3 position, const float farPlane) const
 {
+    GPU_SCOPE(cmdList, "Shadow Map (Point)");
+
     shadowMap->Resource.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
     cmdList->SetPipelineState(m_pipelinePoint.GetPSO());
 
     {
         SetViewportScissor(cmdList, shadowMap->Resource.GetDesc().Width, shadowMap->Resource.GetDesc().Height);
-
-        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(shadowMap->HeapIdx);
-        cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
-
-        const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
-        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depthClearValue, 0, 0, nullptr);
     }
 
     for (uint32_t i = 0; i < 6; i++)
     {
-        CbvShadowMapCreate cbv = {};
+        GPU_SCOPE(cmdList, (std::string("Shadow Map (Point, Face ") + std::to_string(i) + ")").c_str());
+
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(shadowMap->HeapIndices[i]);
+        cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
+
+        const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
+        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depthClearValue, 0, 0, nullptr);
+
+        CbvShadowMap_PerInstance cbv = {};
         XMStoreFloat4x4(&cbv.V, shadowMap->Vs[i]);
         XMStoreFloat4x4(&cbv.P, shadowMap->P);
         cbv.PointLightPosition = position;
         cbv.FarPlane = farPlane;
-        m_set.UpdateCBV(0, 0, &cbv);
 
-        renderSceneObjectsToBoundMap(cmdList, scene);
+        renderSceneObjectsToBoundMap(cmdList, scene, cbv);
     }
 }
 
 void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config)
 {
+    GPU_SCOPE(cmdList, "Shadow Maps");
+
     if (m_matricesDirty)
     {
         m_shadowMapDir.Vs.resize(1);

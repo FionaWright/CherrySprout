@@ -16,8 +16,7 @@ struct VsOut
     float4 worldPos : TEXCOORD1;
 };
 
-ConstantBuffer<CbvShadowMap_PerInstance> gCbvObject : register(b0, space0); // Push Constants
-ConstantBuffer<CbvShadowMapCreate> gMatricesVP : register(b1, space0);
+ConstantBuffer<CbvShadowMap_PerInstance> gCBV : register(b0, space0); // Push Constants
 
 StructuredBuffer<Material> gMaterials : register(t0, space0);
 
@@ -34,9 +33,9 @@ VsOut VSMain(VsIn input)
     output.uv = input.uv;
 
     float4 pos = float4(input.position, 1.0f);
-    output.worldPos = mul(gCbvObject.M, pos);
-    pos = mul(gMatricesVP.V, output.worldPos);
-    output.position = mul(gMatricesVP.P, pos);
+    output.worldPos = mul(gCBV.M, pos);
+    pos = mul(gCBV.V, output.worldPos);
+    output.position = mul(gCBV.P, pos);
 
     return output;
 }
@@ -48,7 +47,7 @@ float PSMain(VsOut input) : SV_DEPTH
         uv.y = 1 - uv.y;
 
         HitInfo hitInfo;
-        hitInfo.Mat = gMaterials[gCbvObject.MaterialIdx];
+        hitInfo.Mat = gMaterials[gCBV.MaterialIdx];
         hitInfo.UV = uv;
 
         ApplyMaterialTextures(hitInfo);
@@ -56,7 +55,7 @@ float PSMain(VsOut input) : SV_DEPTH
         clip(hitInfo.Mat.Albedo.a < 0.5f);
     }
 
-    float depth = length(input.worldPos.xyz - gMatricesVP.PointLightPosition);
+    float depth = length(input.worldPos.xyz - gCBV.PointLightPosition);
 
-    return depth / gMatricesVP.FarPlane;
+    return depth / gCBV.FarPlane;
 }

@@ -109,14 +109,6 @@ struct CbvMatrices_VP
     hlsl::float4x4 V, P, PrevV;
 };
 
-struct CbvShadowMapCreate
-{
-    hlsl::float4x4 V, P;
-
-    hlsl::float3 PointLightPosition;
-    float FarPlane;
-};
-
 struct CbvColor
 {
     hlsl::float4 Color;
@@ -180,9 +172,12 @@ struct CbvForward_PerInstance
 
 struct CbvShadowMap_PerInstance
 {
-    hlsl::float4x4 M;
+    hlsl::float4x4 M, V, P;
 
     hlsl::uint MaterialIdx;
+    hlsl::float3 PointLightPosition;
+
+    float FarPlane;
     hlsl::float3 p;
 };
 

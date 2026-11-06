@@ -300,6 +300,31 @@ inline uint32_t CreateDSV(ID3D12Device* device, Heap* heapDSV, const D12Resource
     return heapIdx;
 }
 
+inline std::vector<uint32_t> CreateDSVs_Array(ID3D12Device* device, Heap* heapDSV, const D12Resource* resource, DXGI_FORMAT format)
+{
+    D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
+    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+    desc.Format = format;
+    desc.Texture2DArray.MipSlice = 0;
+    desc.Texture2DArray.ArraySize = 1;
+    desc.Texture2D.MipSlice = 0;
+
+    std::vector<uint32_t> heapIndices;
+    heapIndices.resize(resource->GetDesc().DepthOrArraySize);
+
+    for (uint32_t i = 0; i < resource->GetDesc().DepthOrArraySize; i++)
+    {
+        desc.Texture2DArray.FirstArraySlice = i;
+
+        heapIndices[i] = heapDSV->GetNextDescriptorIdx(resource->GetName());
+        const auto handle = heapDSV->GetDescriptorHandleAtIndex(heapIndices[i]);
+
+        device->CreateDepthStencilView(resource->GetResource(), &desc, handle);
+    }
+
+    return heapIndices;
+}
+
 inline bool FormatIsHDR(const DXGI_FORMAT format)
 {
     switch (format)
