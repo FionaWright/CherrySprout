@@ -108,7 +108,7 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     m_set.SetSRV        (d3d->GetDevice(), 0, 4, envMap->GetCubemap(), srvDesc);
     m_set.SetSRV_Tex2D  (d3d->GetDevice(), 0, 5, m_shadowMapManager.GetShadowMapDir(), SHADOW_MAP_FORMAT_DEPTH_SRV);
 
-    m_shadowMapManager.LoadSceneData(d3d->GetDevice(), scene);
+    m_shadowMapManager.LoadSceneData(d3d->GetDevice(), heap, scene);
 }
 
 void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -188,6 +188,8 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         cmdList->SetPipelineState(m_pipeline.GetPSO());
 
         heap->BindSceneTextures_Graphics(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
+        if (m_shadowMapManager.GetHeapBasePoint() != UINT_MAX)
+            heap->BindBindless_Graphics(cmdList, m_shadowMapManager.GetHeapBasePoint(), m_rootSig.GetParamIndexSrvBindless(1));
     }
 
     CbvMatrices_VP matricesVP = {};

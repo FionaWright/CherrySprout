@@ -19,6 +19,8 @@ public:
     uint32_t GetNextDescriptorIdx(const char* debugName = nullptr);
 
     uint32_t GetNextDescriptorIdx_SceneTexture(const char* debugName = nullptr);
+    uint32_t AddSRV_Bindless(ID3D12Device* device, const D12Resource* resource,
+                             const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
     uint32_t AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* resource);
     void FreeSceneTextures();
     [[nodiscard]] uint32_t GetBindlessTexBase() const { return static_cast<uint32_t>(m_baseSceneTextures); }
@@ -26,6 +28,7 @@ public:
     void Bind(ID3D12GraphicsCommandList* cmdList) const;
     void BindSceneTextures_Graphics(ID3D12GraphicsCommandList* cmdList, uint32_t paramIdx) const;
     void BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList, uint32_t paramIdx) const;
+    void BindBindless_Graphics(ID3D12GraphicsCommandList* cmdList, uint32_t baseHeapIdx, uint32_t paramIdx) const;
     void PrintHeapInfo() const;
 
     [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const { return m_heapResource->GetCPUDescriptorHandleForHeapStart(); }

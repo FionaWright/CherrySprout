@@ -79,6 +79,16 @@ uint32_t Heap::GetNextDescriptorIdx_SceneTexture(const char* debugName)
     return idx;
 }
 
+uint32_t Heap::AddSRV_Bindless(ID3D12Device* device, const D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
+{
+    const uint32_t idx = GetNextDescriptorIdx(resource->GetName());
+    const auto handle = GetDescriptorHandleAtIndex(idx);
+
+    device->CreateShaderResourceView(resource->GetResource(), &desc, handle);
+
+    return idx;
+}
+
 uint32_t Heap::AddSRV_SceneTexture(ID3D12Device* device, const D12Resource* resource)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
@@ -122,6 +132,12 @@ void Heap::BindSceneTextures_Compute(ID3D12GraphicsCommandList* cmdList, const u
 {
     const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), GetBindlessTexBase(), GetIncrementSize());
     cmdList->SetComputeRootDescriptorTable(paramIdx, bindlessHandle);
+}
+
+void Heap::BindBindless_Graphics(ID3D12GraphicsCommandList* cmdList, const uint32_t baseHeapIdx, const uint32_t paramIdx) const
+{
+    const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), baseHeapIdx, GetIncrementSize());
+    cmdList->SetGraphicsRootDescriptorTable(paramIdx, bindlessHandle);
 }
 
 void Heap::PrintHeapInfo() const

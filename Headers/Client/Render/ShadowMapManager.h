@@ -30,16 +30,17 @@ struct ShadowMapConfig
 struct ShadowMap
 {
     D12Resource Resource;
-    std::vector<uint32_t> HeapIndices;
+    std::vector<uint32_t> DsvHeapIndices;
     std::vector<XMMATRIX> Vs;
     XMMATRIX P;
+    uint32_t HeapIdx = UINT_MAX;
 };
 
 class ShadowMapManager
 {
 public:
     void Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV);
-    void LoadSceneData(ID3D12Device* device, Scene* scene);
+    void LoadSceneData(ID3D12Device* device, Heap* heap, Scene* scene);
 
     void Render(ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config);
     void GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);
@@ -47,6 +48,8 @@ public:
 
     D12Resource* GetShadowMapDir() { return &m_shadowMapDir.Resource; }
     D12Resource* GetShadowMapPuncInfo() { return &m_shadowMapPuncInfoBuffer; }
+    uint32_t GetHeapBaseDistant() const { return m_heapBaseDistant; }
+    uint32_t GetHeapBasePoint() const { return m_heapBasePoint; }
 
     XMMATRIX GetShadowMatrix(uint32_t cascadeIdx) const { return m_shadowMapDir.Vs[0] * m_shadowMapDir.P; }
     XMFLOAT2 GetShadowDimensions(uint32_t cascadeIdx) const { return XMFLOAT2(m_shadowMapDir.Resource.GetDesc().Width, m_shadowMapDir.Resource.GetDesc().Height); }
@@ -78,6 +81,8 @@ private:
     bool m_matricesDirty = true;
 
     std::vector<ShadowMap> m_shadowMapPunctuals;
+    uint32_t m_heapBaseDistant = UINT_MAX;
+    uint32_t m_heapBasePoint = UINT_MAX;
 
     std::vector<XMFLOAT2> m_poissonDiscSamples;
 };
