@@ -16,7 +16,7 @@ class D3D;
 class Skybox
 {
 public:
-    void Init(D3D* d3d, D12Resource* cubemap);
+    void Init(D3D* d3d, uint32_t width, uint32_t height);
     void RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* vMatrix, const XMMATRIX* pMatrix) const;
 
     void UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Heap* heap, UploadHeap* uploadHeapCBV);

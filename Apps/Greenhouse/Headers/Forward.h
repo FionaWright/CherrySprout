@@ -44,8 +44,10 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_set;
-    Skybox m_skybox;
     RootConstants m_rootConstants;
+
+    Skybox m_skybox;
+    std::wstring m_currentPanoFilepath = L"";
 
     D12Resource m_brdfIntMap;
 

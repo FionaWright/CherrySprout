@@ -43,6 +43,8 @@ public:
     const char* GetName() const { return m_name.c_str(); }
     void SetName(const char* str) { m_name = str; }
 
+    bool IsInitialized() const { return m_pHeap != nullptr; }
+
     void AddCBV(ID3D12Device* device, uint32_t spaceIdx, size_t size, UploadHeap* uploadHeap, const char* debugName = nullptr);
     void UpdateCBV(uint32_t spaceIdx, uint32_t cbvIdx, const void* data) const;
     void ReleaseCBVs();

@@ -16,7 +16,7 @@
 void EnvironmentMap::CreateCubemapResource(ID3D12Device* device)
 {
     if (!m_cubemap.IsInitialized())
-        m_cubemap.Init_Tex2D("Cubemap", device, 1024, 1024, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_cubemap.Init_Tex2D("Cubemap", device, CUBEMAP_RESO, CUBEMAP_RESO, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 }
 
 void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::wstring& filePath, const float rotation)

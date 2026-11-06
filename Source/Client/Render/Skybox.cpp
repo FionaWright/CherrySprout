@@ -11,14 +11,17 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-void Skybox::Init(D3D* d3d, D12Resource* cubemap)
+void Skybox::Init(D3D* d3d, uint32_t width, uint32_t height)
 {
-    D3D12_STATIC_SAMPLER_DESC sampler;
-    InitializeSamplerLinearClamp(&sampler);
+    if (!m_rootSig.Get())
+    {
+        D3D12_STATIC_SAMPLER_DESC sampler;
+        InitializeSamplerLinearClamp(&sampler);
 
-    m_rootSig.AddCbvRange(0, 1);
-    m_rootSig.AddSrvRange(0, 1);
-    m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
+        m_rootSig.AddCbvRange(0, 1);
+        m_rootSig.AddSrvRange(0, 1);
+        m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
+    }
 
     D3D12_INPUT_ELEMENT_DESC rasterILD[] =
     {
@@ -35,67 +38,73 @@ void Skybox::Init(D3D* d3d, D12Resource* cubemap)
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { rasterILD, _countof(rasterILD) }, true);
     V(m_pipelineForward.InitGraphics(d3d->GetDevice(), "Raster/SkyboxVS.hlsl", "Raster/SkyboxPS.hlsl", desc, compileArgs));
 
-    constexpr XMFLOAT3 vertexBuffer[8] = {
-        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
-        {-1, -1,  1}, {1, -1,  1}, {1, 1,  1}, {-1, 1,  1}
-    };
-
-    constexpr uint32_t indexBuffer[36] = {
-        0, 1, 2,  // back face
-        0, 2, 3,
-        4, 6, 5,  // front face
-        4, 7, 6,
-        0, 3, 7,  // left face
-        0, 7, 4,
-        1, 6, 2,  // right face
-        1, 5, 6,
-        0, 5, 1,  // bottom face
-        0, 4, 5,
-        3, 6, 7,  // top face
-        3, 2, 6
-    };
-
-    m_cubeVertexBuffer.Init_Buffer("Cube Vertex Buffer", d3d->GetDevice(), sizeof(XMFLOAT3) * 8);
-    m_cubeIndexBuffer.Init_Buffer("Cube Index Buffer", d3d->GetDevice(), sizeof(uint32_t) * 36);
-
+    if (!m_cubeVertexBuffer.IsInitialized())
     {
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
-        const auto cmdList = cmdListPtr.Get();
+        constexpr XMFLOAT3 vertexBuffer[8] = {
+            {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
+            {-1, -1,  1}, {1, -1,  1}, {1, 1,  1}, {-1, 1,  1}
+        };
 
-        const size_t uploadHeapRequiredSize = m_cubeVertexBuffer.GetIntermediateSize() + m_cubeIndexBuffer.GetIntermediateSize();
+        constexpr uint32_t indexBuffer[36] = {
+            0, 1, 2,  // back face
+            0, 2, 3,
+            4, 6, 5,  // front face
+            4, 7, 6,
+            0, 3, 7,  // left face
+            0, 7, 4,
+            1, 6, 2,  // right face
+            1, 5, 6,
+            0, 5, 1,  // bottom face
+            0, 4, 5,
+            3, 6, 7,  // top face
+            3, 2, 6
+        };
 
-        UploadHeap uploadHeap;
-        uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
+        m_cubeVertexBuffer.Init_Buffer("Cube Vertex Buffer", d3d->GetDevice(), sizeof(XMFLOAT3) * 8);
+        m_cubeIndexBuffer.Init_Buffer("Cube Index Buffer", d3d->GetDevice(), sizeof(uint32_t) * 36);
 
-        m_cubeVertexBuffer.UploadBuffer(cmdList, &uploadHeap, vertexBuffer, sizeof(XMFLOAT3) * 8);
-        m_cubeIndexBuffer.UploadBuffer(cmdList, &uploadHeap, indexBuffer, sizeof(uint32_t) * 36);
+        {
+            const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_COPY);
+            const auto cmdList = cmdListPtr.Get();
 
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
+            const size_t uploadHeapRequiredSize = m_cubeVertexBuffer.GetIntermediateSize() + m_cubeIndexBuffer.GetIntermediateSize();
+
+            UploadHeap uploadHeap;
+            uploadHeap.Init(d3d->GetDevice(), uploadHeapRequiredSize);
+
+            m_cubeVertexBuffer.UploadBuffer(cmdList, &uploadHeap, vertexBuffer, sizeof(XMFLOAT3) * 8);
+            m_cubeIndexBuffer.UploadBuffer(cmdList, &uploadHeap, indexBuffer, sizeof(uint32_t) * 36);
+
+            V(cmdList->Close());
+            d3d->ExecuteCommandList(cmdList);
+            d3d->Flush();
+        }
     }
 
     // Init Generate Irradiance
+    if (!m_rootSigGenIrr.Get())
     {
+        D3D12_STATIC_SAMPLER_DESC sampler;
+        InitializeSamplerLinearClamp(&sampler);
+
         m_rootSigGenIrr.AddSrvRange(0, 1);
         m_rootSigGenIrr.AddUavRange(0, 1);
         m_rootSigGenIrr.Init(d3d->GetDevice(), &sampler, 1);
         V(m_pipelineGenIrr.InitCompute(d3d->GetDevice(), "Compute/GenIrradianceIblCS.hlsl", m_rootSigGenIrr.Get()));
 
         if (!m_texIrradianceIBL.IsInitialized())
-            m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", d3d->GetDevice(), cubemap->GetDesc().Width, cubemap->GetDesc().Height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+            m_texIrradianceIBL.Init_Tex2D("Irradiance IBL", d3d->GetDevice(), width, height, 6, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     }
 }
 
 void Skybox::RenderForward(ID3D12GraphicsCommandList* cmdList, const XMMATRIX* vMatrix, const XMMATRIX* pMatrix) const
 {
-    CbvMatrices_MVP matrices = {};
-    XMStoreFloat4x4(&matrices.V, *vMatrix);
-    XMStoreFloat4x4(&matrices.P, *pMatrix);
-
     cmdList->SetGraphicsRootSignature(m_rootSig.Get());
     cmdList->SetPipelineState(m_pipelineForward.GetPSO());
 
+    CbvMatrices_MVP matrices = {};
+    XMStoreFloat4x4(&matrices.V, *vMatrix);
+    XMStoreFloat4x4(&matrices.P, *pMatrix);
     m_setForwardRender.UpdateCBV(0, 0, &matrices);
 
     m_setForwardRender.TransitionAllSRVToShaderResource(cmdList);
@@ -119,6 +128,7 @@ void Skybox::UpdateDescriptorSet(ID3D12Device* device, D12Resource* cubemap, Hea
     srvDesc.TextureCube.MipLevels = 1;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
+    if (!m_setForwardRender.IsInitialized())
     {
         m_setForwardRender.Init(heap);
         m_setForwardRender.AddCBV(device, 0, sizeof(CbvMatrices_MVP), uploadHeapCBV, "CBV Matrices (Skybox)");

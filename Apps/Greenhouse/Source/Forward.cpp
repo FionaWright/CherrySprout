@@ -74,17 +74,20 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     m_shadowMapManager.Init(d3d->GetDevice(), heap, uploadHeapCBV);
     m_shadowMapManager.GeneratePoissonSamples(16);
+
+    m_skybox.Init(d3d, CUBEMAP_RESO, CUBEMAP_RESO);
 }
 
 void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
 {
     IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler, gbuffer);
 
-    if (!envMap->GetCubemap()->IsInitialized())
+    if (!envMap->GetCubemap()->IsInitialized() || m_currentPanoFilepath != envMap->GetCurrentPanoFilepath())
     {
         envMap->InitCubemap(d3d, heap);
-        m_skybox.Init(d3d, envMap->GetCubemap());
         m_skybox.UpdateDescriptorSet(d3d->GetDevice(), envMap->GetCubemap(), heap, uploadHeapCBV);
+
+        m_currentPanoFilepath = envMap->GetCurrentPanoFilepath();
     }
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};

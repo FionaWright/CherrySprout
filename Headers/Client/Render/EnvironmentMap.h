@@ -17,6 +17,8 @@
 
 class D3D;
 
+#define CUBEMAP_RESO 1024
+
 class EnvironmentMap
 {
 public:
@@ -31,6 +33,8 @@ public:
     D12Resource* GetPano() { return &m_pano; }
     D12Resource* GetEA() { return &m_ea; }
     D12Resource* GetCubemap() { return &m_cubemap; }
+
+    const std::wstring& GetCurrentPanoFilepath() const { return m_currentPanoFilepath; }
 
 private:
     void initResources(ID3D12Device* device);

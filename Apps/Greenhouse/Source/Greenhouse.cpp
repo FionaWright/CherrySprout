@@ -122,12 +122,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
 
         if (!m_currRenderBackend->IsInitialized())
-        {
             m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
-
-            //m_gbufferPrePass.UnreserveData();
-            //m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
-        }
 
         m_renderBackendDirty = false;
     }
