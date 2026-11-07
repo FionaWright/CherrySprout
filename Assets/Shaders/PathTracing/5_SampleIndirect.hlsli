@@ -7,6 +7,7 @@ float3 SampleIndirectLighting(
     RngValuesAncillary::RngValuesBxDF rng,
     HitInfo hitInfo,
     float3 wo,
+    bool divideByPDF,
 
     out float3 wi,
     out float pdf,
@@ -89,7 +90,12 @@ float3 SampleIndirectLighting(
     if (bxdfEval.PDF == 0.0f)
         return 0.0f;
 
-    return bxdfEval.Radiance * abs(NdL) / max(1e-6, bxdfEval.PDF);
+    float3 contrib = bxdfEval.Radiance * abs(NdL);
+
+    if (divideByPDF)
+        contrib /= max(1e-6, bxdfEval.PDF);
+
+    return contrib;
 }
 
 #endif

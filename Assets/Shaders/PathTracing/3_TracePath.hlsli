@@ -85,6 +85,7 @@ bool ResolvePathAncillaryVertex(
         float3 L_gi;
         if (TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
         {
+            L_gi *= 0.5f;
             pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
             DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
         }
@@ -124,7 +125,7 @@ bool ResolvePathAncillaryVertex(
             DBG_OUTPUT1(1.0f, KilledByRR);
             return false;
         }
-        pathState.Beta /= p;
+        pathState.Beta /= p; // TODO: DivideByPdfEnabled?
     }
 
     DBG_PATH_DUMP_PATH_STATE(pathState);
@@ -173,6 +174,11 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
 
         if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
             pathSample.VertexList = vertexList;
+    }
+
+    if (FEAT_CORE(RestirGI))
+    {
+        pathSample.Lo *= 0.5f;
     }
 
     DBG_OUTPUT1(pathState.RaySegmentIdx == gSettings.MaxRayDepth, KilledByMaxDepth);

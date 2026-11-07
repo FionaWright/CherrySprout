@@ -45,7 +45,7 @@ void Hit(
     float pdf_bxdf;
     bool isDirac;
     LobeTag lobe;
-    float3 E_indirect = SampleIndirectLighting(rng.BxDF, hitInfo, wo, wi, pdf_bxdf, isDirac, lobe);
+    float3 E_indirect = SampleIndirectLighting(rng.BxDF, hitInfo, wo, pathState.DivideByPdfEnabled, wi, pdf_bxdf, isDirac, lobe);
     DBG_SCALE_INTENSITY_INDIRECT(E_indirect);
 
     pathState.Beta *= E_indirect;
@@ -53,8 +53,6 @@ void Hit(
     pathState.Desc.Origin = hitInfo.HitPosBiased;
 
     pathState.LastRayWasDiracDelta = isDirac;
-
-    DBG_FORCE_OUTPUT1(isDirac);
 
     if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;

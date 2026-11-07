@@ -27,6 +27,8 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathVertexList vertexList = CreatePathVertexList();
 
+    pathState.DivideByPdfEnabled = false;
+
     uint2 pixelCoord = uint2(0,0); // TODO: Needed to combine ReSTIR types, ignore for now
 
     // Primary Ray
@@ -91,7 +93,7 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 
 float Target(CandidatePT X_i, ContextPrimaryRay context)
 {
-    return Luminance(X_i.Lo * X_i.Jacobian);
+    return Luminance(X_i.Lo) * X_i.Jacobian;
 }
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
@@ -100,7 +102,7 @@ float PDF(CandidatePT X_i, ContextPrimaryRay context)
     // 1. Ignores primary RNG and NEE RNG
     // 2. Prone to FP-Precision issues
 
-    return 1.0f;
+	//return 1.0f;
 
     float pdfPath = 1.0f;
     for (uint i = 0; i < X_i.VertexList.NumVertices; i++)

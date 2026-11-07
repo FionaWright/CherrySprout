@@ -19,6 +19,9 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
+#define MISS_SAMPLES_VALID 1
+#define NON_MISS_SAMPLES_VALID 1
+
 void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i)
 {
     RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
@@ -45,12 +48,28 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
             GetHitInfo(q, secondaryHitInfo);
     }
 
+#if !MISS_SAMPLES_VALID
+    if (isMiss)
+#elif !NON_MISS_SAMPLES_VALID
+    if (!isMiss)
+#else
+    if (!isMiss && !FEAT_CORE(NEE))
+#endif
+    {
+        X_i.IsMiss = false;
+        X_i.DirectContribution = 0.0f;
+        X_i.BxdfEval.Radiance = 0.0f;
+        X_i.BxdfEval.PDF = 0.0f;
+        X_i.Jacobian = 0.0f;
+        return;
+    }
+
     float3 E_direct = 0.0f;
     if (isMiss)
     {
         E_direct = Miss(bxdfSample.Wi, bxdfEval.PDF, false, bxdfSample.IsDirac);
     }
-    else
+    else if (FEAT_CORE(NEE))
     {
         RngValuesAncillary::RngValuesNEE rngNEE = SampleRngNEE(rngInfo);
 
@@ -71,7 +90,19 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
 
 void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 {
-    if (all(X_i.DestPosition == context.HitInfo.HitPos))
+#if !MISS_SAMPLES_VALID
+    if (X_i.IsMiss)
+#elif !NON_MISS_SAMPLES_VALID
+    if (!X_i.IsMiss)
+#else
+    if (!X_i.IsMiss && !FEAT_CORE(NEE))
+#endif
+    {
+        return;
+    }
+
+    bool primaryOnSecondaryVertex = all(X_i.DestPosition == context.HitInfo.HitPos);
+    if (!X_i.IsMiss && primaryOnSecondaryVertex)
     {
         X_i.BxdfEval.Radiance = 0.0f; // TODO: IsValid flag in reservoir?
         return;
@@ -80,7 +111,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
 
     bool swappedSidesOfSurface = dot(X_i.DestNg, wi) >= 0.0f;
-    if (swappedSidesOfSurface)
+    if (!X_i.IsMiss && swappedSidesOfSurface)
     {
         X_i.BxdfEval.Radiance = 0.0f;
         // TODO: Could possibly allow this to still be valid, but would need NEE re-evaluation which is annoying
@@ -124,7 +155,19 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 
 float Target(CandidateGI X_i, ContextPrimaryRay context)
 {
-    if (!X_i.IsMiss && all(X_i.DestPosition == context.HitInfo.HitPos))
+#if !MISS_SAMPLES_VALID
+    if (X_i.IsMiss)
+#elif !NON_MISS_SAMPLES_VALID
+    if (!X_i.IsMiss)
+#else
+    if (!X_i.IsMiss && !FEAT_CORE(NEE))
+#endif
+    {
+        return 0.0f;
+    }
+
+    bool primaryOnSecondaryVertex = all(X_i.DestPosition == context.HitInfo.HitPos);
+    if (!X_i.IsMiss && primaryOnSecondaryVertex)
         return 0.0f;
 
     float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
@@ -153,9 +196,9 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     beta *= E_indirect;
 
     // NEE Sample
-    float3 Lo = beta * X_i.DirectContribution * X_i.Jacobian;
+    float3 Lo = beta * X_i.DirectContribution;
 
-    return Luminance(Lo);
+    return Luminance(Lo) * X_i.Jacobian;
 }
 
 float PDF(CandidateGI X_i, ContextPrimaryRay context)
@@ -177,6 +220,17 @@ bool TrySampleReservoirGI(
     ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
     Y = reservoir.Y;
 
+#if !MISS_SAMPLES_VALID
+    if (Y.IsMiss)
+#elif !NON_MISS_SAMPLES_VALID
+    if (!Y.IsMiss)
+#else
+    if (!Y.IsMiss && !FEAT_CORE(NEE))
+#endif
+    {
+        return false;
+    }
+
     float3 wi = Y.IsMiss ? Y.DestPosition : normalize(Y.DestPosition - hitInfo.HitPos);
 
     // Debug
@@ -197,13 +251,11 @@ bool TrySampleReservoirGI(
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
 
-    if (!Y.IsMiss && all(Y.DestPosition == hitInfo.HitPos))
+    bool primaryOnSecondaryVertex = all(Y.DestPosition == hitInfo.HitPos);
+    if (!Y.IsMiss && primaryOnSecondaryVertex)
         return false;
 
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
-        return false;
-
-    if (Y.IsMiss)
         return false;
 
     float NdL = max(0, dot(wi, hitInfo.Ns_ff));

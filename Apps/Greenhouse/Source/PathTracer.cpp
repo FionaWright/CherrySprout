@@ -104,6 +104,9 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_setPostProcess.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_outputRgba8Unorm, m_outputRgba8Unorm.GetDesc().Format);
     }
 
+    m_gradientManager.Init(d3d);
+    m_restirManager.Init(d3d->GetDevice());
+
     auto featureFlags = s_defaultFeatFlagsCore;
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
@@ -131,9 +134,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_set.AddCBV       (d3d->GetDevice(), SPACE_B_DEBUG, sizeof(CbvPathTracingDebugSettings), uploadHeapCBV);
 #endif
-
-    m_gradientManager.Init(d3d);
-    m_restirManager.Init(d3d->GetDevice());
 
     CherryPrint("Path-Tracer Initialized");
 }
@@ -529,10 +529,13 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         {
             m_restirManager.UpdateBuffersAndPipelines(device, &m_rootSig, compileArgs, restirConfig);
 
-            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
-            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
-            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
-            m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+            if (m_set.GetSRV(0, 6))
+            {
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+            }
         }
     }
 
