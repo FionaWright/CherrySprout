@@ -22,7 +22,6 @@
 void Core(uint2 pixelCoord)
 {
     DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
-    DBG_PATH_DUMP_CLEAR();
     DBG_OUTPUT1(0.0f, Black);
 
     if (FEAT_DBG(BxdfTestCore))
@@ -54,6 +53,8 @@ void Core(uint2 pixelCoord)
     }
     else
     {
+        DBG_PATH_DUMP_CLEAR();
+
         float3 origin = gSettings.CameraPositionWorld;
 
         for (uint i = 0; i < gSettings.SPP; i++)

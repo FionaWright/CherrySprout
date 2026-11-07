@@ -160,6 +160,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     PathState pathState = CreatePathState(origin, dir);
     PathVertexList vertexList = CreatePathVertexList();
 
+    //pathState.DivideByPdfEnabled = false;
+
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
         pathState.RaySegmentIdx = i;
@@ -180,6 +182,14 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     {
         pathSample.Lo *= 0.5f;
     }
+
+    //float pdfPathLog = 0.0f;
+    //for (uint i = 0; i < vertexList.NumVertices; i++)
+    //{
+    //    if (vertexList.Array[i].Type == VertexType::eStandard)
+    //        pdfPathLog += log(vertexList.Array[i].PDF);
+    //}
+    //pathSample.Lo /= exp(pdfPathLog);
 
     DBG_OUTPUT1(pathState.RaySegmentIdx == gSettings.MaxRayDepth, KilledByMaxDepth);
     DBG_OUTPUT_DUMP_DISABLE();

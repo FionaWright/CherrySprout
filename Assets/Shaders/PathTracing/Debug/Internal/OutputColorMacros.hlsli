@@ -1,6 +1,8 @@
 #ifndef H_OUTPUT_COLOR_MACROS_H
 #define H_OUTPUT_COLOR_MACROS_H
 
+#include "PathTracing/Debug/PathDumper.hlsli"
+
 #if FEAT_DBG_D(OutputColor)
 
 #include "PathTracing/Debug/Internal/OutputColor.h"
@@ -8,7 +10,6 @@
 
 #include "PathTracing/FeatFlags/FeatFlags.hlsli"
 #include "PathTracing/Debug/Globals.hlsli"
-#include "PathTracing/Debug/PathDumper.hlsli"
 
 [noinline]
 void dbgOutput3(float value_x, float value_y, float value_z, uint index)

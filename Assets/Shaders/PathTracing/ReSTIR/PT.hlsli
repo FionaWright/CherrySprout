@@ -61,6 +61,8 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
+    pathState.DivideByPdfEnabled = false;
+
     // Primary Ray
     bool proceed;
     {
@@ -104,12 +106,13 @@ float PDF(CandidatePT X_i, ContextPrimaryRay context)
 
 	//return 1.0f;
 
-    float pdfPath = 1.0f;
+    float pdfPathLog = 0.0f;
     for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
     {
-        pdfPath *= X_i.VertexList.Array[i].PDF;
+        if (X_i.VertexList.Array[i].Type == VertexType::eStandard)
+            pdfPathLog += log(X_i.VertexList.Array[i].PDF);
     }
-    return pdfPath;
+    return exp(pdfPathLog);
 }
 
 bool TrySampleReservoirPT(

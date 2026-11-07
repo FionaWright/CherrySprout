@@ -12,12 +12,12 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         //eCore_JitterPerFrame |
         eCore_Accumulation |
         //eCore_NormalMaps |
-        //eCore_EnvironmentMap |
+        eCore_EnvironmentMap |
         eCore_AlphaTesting |
         //eCore_Transmission |
         //eCore_NEE |
         //eCore_FireflyThreshold |
-        eCore_Emission |
+        //eCore_Emission |
         //eCore_Punctuals |
         //eCore_GradientDomain |
         eCore_GdptShiftRecEnv |

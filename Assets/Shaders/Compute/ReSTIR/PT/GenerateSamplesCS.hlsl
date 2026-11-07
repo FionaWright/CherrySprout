@@ -17,6 +17,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
+    DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
+    DBG_PATH_DUMP_CLEAR();
+
     uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     ReservoirPT reservoir = CreateReservoir<CandidatePT>();
 
