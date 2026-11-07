@@ -9,7 +9,7 @@
 #include "Utils/CBVs.h"
 #include "Utils/D3DUtils.h"
 
-#define MAX_SHADOW_MAPS 500
+#define MAX_SHADOW_MAPS 1000
 #define SHADOW_MAP_RESO_DISTANT 2048
 #define SHADOW_MAP_RESO_POINT 512
 
@@ -104,37 +104,6 @@ void ShadowMapManager::LoadSceneData(D3D* d3d, Heap* heap, Scene* scene)
     {
         m_shadowMapPuncInfoBuffer.Reset();
         m_shadowMapPuncInfoBuffer.Init_Buffer("Shadow Map Punc Info", d3d->GetDevice(), expectedPuncInfoSize);
-
-        std::vector<ShadowMapPuncInfo> cpuSmPuncInfoBuffer;
-        cpuSmPuncInfoBuffer.resize(scene->CPU.MegaBufferPunctualLightsCount);
-
-        for (uint32_t i = 0; i < scene->CPU.MegaBufferPunctualLightsCount; i++)
-        {
-            const PunctualLight& light = scene->CPU.MegaBufferPunctualLights[i];
-            if (light.Intensity <= 0.0f)
-                continue;
-
-            // TODO: ShadowMatrix, TexelSize
-            cpuSmPuncInfoBuffer[i] = {};
-            cpuSmPuncInfoBuffer[i].ShadowMapIndex =
-                light.Type == PunctualLightType::eDistant ? m_shadowMapPunctuals[i].HeapIdx - m_heapBaseDistant :
-                light.Type == PunctualLightType::ePoint ? m_shadowMapPunctuals[i].HeapIdx - m_heapBasePoint : UINT_MAX;
-            cpuSmPuncInfoBuffer[i].NearPlane = 0.01f; // TODO
-            cpuSmPuncInfoBuffer[i].FarPlane = 100.0f; // TODO
-        }
-
-        UploadHeap uploadHeap;
-        uploadHeap.Init(d3d->GetDevice(), Align(m_shadowMapPuncInfoBuffer.GetIntermediateSize(), 512));
-
-        d3d->Flush();
-        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        const auto cmdList = cmdListPtr.Get();
-        {
-            m_shadowMapPuncInfoBuffer.UploadBuffer(cmdList, &uploadHeap, cpuSmPuncInfoBuffer.data(), expectedPuncInfoSize);
-        }
-        V(cmdList->Close());
-        d3d->ExecuteCommandList(cmdList);
-        d3d->Flush();
     }
 
     m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
@@ -276,9 +245,43 @@ void ShadowMapManager::renderPoint(ID3D12GraphicsCommandList* cmdList, const Sce
     }
 }
 
-void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config)
+void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config)
 {
     GPU_SCOPE(cmdList, "Shadow Maps");
+
+    const size_t expectedPuncInfoSize = scene->CPU.MegaBufferPunctualLightsCount * sizeof(ShadowMapPuncInfo);
+    if (m_matricesDirty || m_shadowMapPuncInfoBuffer.GetDesc().Width != expectedPuncInfoSize)
+    {
+        std::vector<ShadowMapPuncInfo> cpuSmPuncInfoBuffer;
+        cpuSmPuncInfoBuffer.resize(scene->CPU.MegaBufferPunctualLightsCount);
+
+        for (uint32_t i = 0; i < scene->CPU.MegaBufferPunctualLightsCount; i++)
+        {
+            const PunctualLight& light = scene->CPU.MegaBufferPunctualLights[i];
+            if (light.Intensity <= 0.0f)
+                continue;
+
+            cpuSmPuncInfoBuffer[i] = {};
+            cpuSmPuncInfoBuffer[i].ShadowMapIndex =
+                light.Type == PunctualLightType::eDistant ? m_shadowMapPunctuals[i].HeapIdx - m_heapBaseDistant :
+                light.Type == PunctualLightType::ePoint ? m_shadowMapPunctuals[i].HeapIdx - m_heapBasePoint : UINT_MAX;
+            cpuSmPuncInfoBuffer[i].NearPlane = config.Near;
+            cpuSmPuncInfoBuffer[i].FarPlane = config.Far;
+        }
+
+        UploadHeap uploadHeap;
+        uploadHeap.Init(d3d->GetDevice(), Align(m_shadowMapPuncInfoBuffer.GetIntermediateSize(), 512));
+
+        d3d->Flush();
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        const auto cmdList2 = cmdListPtr.Get();
+        {
+            m_shadowMapPuncInfoBuffer.UploadBuffer(cmdList2, &uploadHeap, cpuSmPuncInfoBuffer.data(), expectedPuncInfoSize);
+        }
+        V(cmdList2->Close());
+        d3d->ExecuteCommandList(cmdList2);
+        d3d->Flush();
+    }
 
     if (m_matricesDirty)
     {
@@ -286,7 +289,7 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
         m_shadowMapDir.Vs[0] = getViewMatrixDistant(config.DirLightDir, config.DirDist);
 
         // Projection
-        if (config.Width > 0 && config.Height > 0)
+        if (config.Width > 0 && config.Height > 0 && config.Near > 0 && config.Far > 0)
             m_shadowMapDir.P = getProjectionMatrixDistant(config.Width, config.Height, config.Near, config.Far);
 
         for (uint32_t i = 0; i < scene->CPU.MegaBufferPunctualLightsCount; i++)
@@ -300,7 +303,7 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
                 m_shadowMapPunctuals[i].Vs.resize(1);
                 m_shadowMapPunctuals[i].Vs[0] = getViewMatrixDistant(light.Position, config.DirDist);
 
-                if (config.Width > 0 && config.Height > 0)
+                if (config.Width > 0 && config.Height > 0 && config.Near > 0 && config.Far > 0)
                     m_shadowMapPunctuals[i].P = getProjectionMatrixDistant(config.Width, config.Height, config.Near, config.Far);
             }
             else if (light.Type == PunctualLightType::ePoint)
@@ -313,7 +316,7 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
                 m_shadowMapPunctuals[i].Vs[4] = getViewMatrixPoint(light.Position, XMFLOAT3(0,0,1));
                 m_shadowMapPunctuals[i].Vs[5] = getViewMatrixPoint(light.Position, XMFLOAT3(0,0,-1));
 
-                if (config.Width > 0 && config.Height > 0)
+                if (config.Width > 0 && config.Height > 0 && config.Near > 0 && config.Far > 0)
                     m_shadowMapPunctuals[i].P = getProjectionMatrixPoint(config.Width, config.Height, config.Near, config.Far);
             }
         }

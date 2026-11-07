@@ -42,7 +42,7 @@ public:
     void Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV);
     void LoadSceneData(D3D* d3d, Heap* heap, Scene* scene);
 
-    void Render(ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config);
+    void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config);
     void GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);
     const std::vector<XMFLOAT2>& GetPoissonSamples() const { return m_poissonDiscSamples; }
 

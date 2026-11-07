@@ -59,8 +59,9 @@ float GetShadowFactorPoint(inout RngInfo rngInfo, PunctualLight light, ShadowMap
 
     float3 un_wi = light.Position - biasedPos.xyz;
     float pixelDepth = max3(abs(un_wi.x), abs(un_wi.y), abs(un_wi.z));
-    pixelDepth -= gSettingsShadows.BiasDepthPoint;
     pixelDepth = UnlinearizeDepth(pixelDepth, smPuncInfo.NearPlane, smPuncInfo.FarPlane);
+    pixelDepth += gSettingsShadows.BiasDepthPoint;
+    pixelDepth = saturate(pixelDepth);
 
     float3 base_dir = normalize(-un_wi);
 
@@ -70,10 +71,8 @@ float GetShadowFactorPoint(inout RngInfo rngInfo, PunctualLight light, ShadowMap
     {
         ShadingFrame sFrame = CreateShadingFrame(base_dir);
 
-        float2 offset2D = GetPcfOffset(rngInfo, i) / (100.0f);
-        //float2 offset2D = float2(0.01f, 0.0f);
+        float2 offset2D = GetPcfOffset(rngInfo, i) / (200.0f);
         float3 offset = (sFrame.T * offset2D.x + sFrame.B * offset2D.y);
-        //float3 offset = 0.0f;
 
         float3 dir = normalize(base_dir + offset);
 
