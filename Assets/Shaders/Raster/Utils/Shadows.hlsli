@@ -68,8 +68,12 @@ float GetShadowFactorPoint(inout RngInfo rngInfo, PunctualLight light, ShadowMap
 
     for (uint i = 0; i < gSettingsShadows.PcfSampleCount; i++)
     {
-        //float2 offset = GetPcfOffset(rngInfo, i);
-        float3 offset = 0.0f;
+        ShadingFrame sFrame = CreateShadingFrame(base_dir);
+
+        float2 offset2D = GetPcfOffset(rngInfo, i) / (100.0f);
+        //float2 offset2D = float2(0.01f, 0.0f);
+        float3 offset = (sFrame.T * offset2D.x + sFrame.B * offset2D.y);
+        //float3 offset = 0.0f;
 
         float3 dir = normalize(base_dir + offset);
 
