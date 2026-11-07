@@ -58,12 +58,22 @@ void Lab3::Init(D3D* d3d)
 
     // Scene
     {
-        SceneConfig sceneConfig = {
+        SceneConfig sceneConfigChess = {
             .Name = "Chess",
             .Filepath = "Scenes/USD/OpenChessSet/chess_set.usda",
             .CameraPosition = {-0.114393, 0.159540, -0.291603},
             .CameraPitchYaw = {0.251301, 0.375632},
         };
+        SceneConfig sceneConfigCornell = {
+            .Name = "Cornell (Punc)",
+            .Filepath = "Scenes/USD/Cornell/CornellPunc.usdc",
+            .CameraPosition = {0.0, 1.0, -2.75},
+            .CameraPitchYaw = {0.0f, 0.0f},
+            .SceneScale = 1.0f
+        };
+        //SceneConfig sceneConfig = sceneConfigChess;
+        SceneConfig sceneConfig = sceneConfigCornell;
+
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str(), sceneConfig.SceneScale);
         m_sceneManager.UploadScene(d3d, true);
         m_sceneManager.GenerateMipMaps(d3d, &m_heap);
@@ -196,6 +206,8 @@ void Lab3::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
 
+    const bool punctualShowcaseEnabled = true;
+
     // Shadow Map
     {
         ShadowMapConfig config;
@@ -209,12 +221,13 @@ void Lab3::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         m_shadowMapManager.Render(d3d, cmdList, &m_heap, &m_sceneManager.GetScene(), config);
     }
 
+    const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = d3d->GetRtvHandle();
+
     {
         SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, Config::GetSystem().WindowAppGuiWidth);
 
         d3d->GetRtv()->Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = d3d->GetRtvHandle();
         const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(d3d->GetDsvHeapStart(), 0, d3d->GetDsvDescriptorSize());
         cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
@@ -224,9 +237,19 @@ void Lab3::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 
     m_heap.Bind(cmdList);
 
+    if (!punctualShowcaseEnabled)
     {
         GPU_SCOPE(cmdList, "Skybox Pass");
         m_skybox.RenderForward(cmdList, &m_V, &m_P);
+    }
+    else
+    {
+        D3D12_RECT rect;
+        rect.top = 0;
+        rect.left = Config::GetSystem().WindowAppGuiWidth;
+        rect.bottom = Config::GetSystem().RtvHeight;
+        rect.right = Config::GetSystem().WindowAppGuiWidth + Config::GetSystem().RtvWidth;
+        cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &rect);
     }
 
     {
@@ -265,11 +288,11 @@ void Lab3::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     cbvForward.DirLightDir = m_dirLightDir;
     cbvForward.MaxCubemapMipMaps = m_envMap.GetCubemap()->GetDesc().MipLevels;
     cbvForward.Flags = ForwardFlags::eNone;
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, true);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, !punctualShowcaseEnabled);
     ForwardFlagSet(cbvForward.Flags, ForwardFlags::ePunctualLights, true);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, true);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, !punctualShowcaseEnabled);
     ForwardFlagSet(cbvForward.Flags, ForwardFlags::eShadowMaps, true);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, true);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, !punctualShowcaseEnabled);
     m_set.UpdateCBV(0, 1, &cbvForward);
 
     CbvShadowMapSample cbvShadow{};
