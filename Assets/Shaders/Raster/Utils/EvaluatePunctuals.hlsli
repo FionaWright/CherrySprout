@@ -39,10 +39,19 @@ float3 EvaluatePunctuals(inout RngInfo rngInfo, HitInfo hitInfo, float3 wo, floa
             float3 un_wi = light.Position - worldPos.xyz;
             float3 dir = normalize(-un_wi);
             float shadowMapDepth = gShadowMapsPoint[smPuncInfo.ShadowMapIndex].Sample(gSamplerPointClamp, dir).r;
+            float pixelDepth = length(un_wi) / smPuncInfo.FarPlane;
+
+            float linDepth = max(max(abs(un_wi.x),abs(un_wi.y)),abs(un_wi.z));
+
+
+            //pixelDepth += gSettingsShadows.BiasDepth;
+            float fac = pixelDepth - shadowMapDepth;
 
             //return float3(dir);
             //return float3(shadowFactor.xxx);
-            return float3(shadowMapDepth.xxx);
+            //return float3(pixelDepth.xxx);
+            //return float3(shadowMapDepth.xxx);
+            return float3(fac.xxx);
 
             BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 

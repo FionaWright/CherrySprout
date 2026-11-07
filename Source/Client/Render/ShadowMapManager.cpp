@@ -173,11 +173,21 @@ XMMATRIX ShadowMapManager::getViewMatrixPoint(const XMFLOAT3 position, XMFLOAT3 
 }
 
 // TODO: Automatically compute params from camera frustum
-XMMATRIX ShadowMapManager::getProjectionMatrix(const float width, const float height, const float nearPlane, const float farPlane)
+XMMATRIX ShadowMapManager::getProjectionMatrixDistant(const float width, const float height, const float nearPlane, const float farPlane)
 {
     const float nearZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? nearPlane : farPlane;
     const float farZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? farPlane : nearPlane;
     return XMMatrixOrthographicLH(width, height, nearZ, farZ);
+}
+
+XMMATRIX ShadowMapManager::getProjectionMatrixPoint(const float width, const float height, const float nearPlane, const float farPlane)
+{
+    const float FoV = 90.0f;
+
+    const float aspectRatio = width / height;
+    const float nearZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? nearPlane : farPlane;
+    const float farZ = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? farPlane : nearPlane;
+    return XMMatrixPerspectiveFovLH(XMConvertToRadians(FoV), aspectRatio, nearZ, farZ);
 }
 
 void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* cmdList, const Scene* scene, CbvShadowMap_PerInstance& cbv) const
@@ -273,7 +283,7 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
 
         // Projection
         if (config.Width > 0 && config.Height > 0)
-            m_shadowMapDir.P = getProjectionMatrix(config.Width, config.Height, config.Near, config.Far);
+            m_shadowMapDir.P = getProjectionMatrixDistant(config.Width, config.Height, config.Near, config.Far);
 
         for (uint32_t i = 0; i < scene->CPU.MegaBufferPunctualLightsCount; i++)
         {
@@ -285,6 +295,9 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
             {
                 m_shadowMapPunctuals[i].Vs.resize(1);
                 m_shadowMapPunctuals[i].Vs[0] = getViewMatrixDistant(light.Position, config.DirDist);
+
+                if (config.Width > 0 && config.Height > 0)
+                    m_shadowMapPunctuals[i].P = getProjectionMatrixDistant(config.Width, config.Height, config.Near, config.Far);
             }
             else if (light.Type == PunctualLightType::ePoint)
             {
@@ -295,10 +308,10 @@ void ShadowMapManager::Render(ID3D12GraphicsCommandList* cmdList, const Heap* he
                 m_shadowMapPunctuals[i].Vs[3] = getViewMatrixPoint(light.Position, XMFLOAT3(0,-1,0));
                 m_shadowMapPunctuals[i].Vs[4] = getViewMatrixPoint(light.Position, XMFLOAT3(0,0,1));
                 m_shadowMapPunctuals[i].Vs[5] = getViewMatrixPoint(light.Position, XMFLOAT3(0,0,-1));
-            }
 
-            if (config.Width > 0 && config.Height > 0)
-                m_shadowMapPunctuals[i].P = getProjectionMatrix(config.Width, config.Height, config.Near, config.Far);
+                if (config.Width > 0 && config.Height > 0)
+                    m_shadowMapPunctuals[i].P = getProjectionMatrixPoint(config.Width, config.Height, config.Near, config.Far);
+            }
         }
 
         m_matricesDirty = false;

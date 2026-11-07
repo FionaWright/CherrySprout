@@ -124,6 +124,8 @@ int2 MotionVectorToPixelCoord(int2 pixelCoord, float2 mv, float2 dimensions)
     return int2(floor(prevUV * dimensions));
 }
 
+//n*f = d*f-d*x*(f-n)
+
 float LinearizeDepthForward(float depth, float nearPlane, float farPlane)
 {
     return (nearPlane * farPlane) / (farPlane - depth * (farPlane - nearPlane));

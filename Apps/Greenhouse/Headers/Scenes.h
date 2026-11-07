@@ -190,6 +190,14 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPitchYaw = {0.0f, 0.0f},
         .SceneScale = 1.0f
     },
+
+    {
+        .Name = "ShadowTest",
+        .Filepath = "Scenes/USD/ShadowTest/ShadowTest.usda",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
 };
 
 #endif

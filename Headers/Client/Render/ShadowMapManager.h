@@ -61,7 +61,8 @@ public:
 private:
     XMMATRIX getViewMatrixDistant(XMFLOAT3 direction, float distance) const;
     XMMATRIX getViewMatrixPoint(XMFLOAT3 position, XMFLOAT3 direction) const;
-    XMMATRIX getProjectionMatrix(float width, float height, float nearPlane, float farPlane);
+    XMMATRIX getProjectionMatrixDistant(float width, float height, float nearPlane, float farPlane);
+    XMMATRIX getProjectionMatrixPoint(float width, float height, float nearPlane, float farPlane);
     void renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* cmdList, const Scene* scene, CbvShadowMap_PerInstance& cbv) const;
     void renderDistant(ID3D12GraphicsCommandList* cmdList, const Scene* scene, ShadowMap* shadowMap) const;
     void renderPoint(ID3D12GraphicsCommandList* cmdList, const Scene* scene, ShadowMap* shadowMap, XMFLOAT3 position, float farPlane) const;
