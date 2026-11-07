@@ -52,24 +52,24 @@ float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos[SHADOW_
     return shadowFactor;
 }
 
-float GetShadowFactorPoint(inout RngInfo rngInfo, float3 shadowPos[SHADOW_MAP_MAX_CASCADES])
+float GetShadowFactorPoint(inout RngInfo rngInfo, PunctualLight light, ShadowMapPuncInfo smPuncInfo, float3 Ns, float4 worldPos)
 {
-    uint cascadeIdx = 0; // TODO
+    float3 un_wi = light.Position - worldPos.xyz;
+    float pixelDepth = length(un_wi) / smPuncInfo.FarPlane;
+    pixelDepth += gSettingsShadows.BiasDepth;
 
-    float3 shadowCoords = shadowPos[cascadeIdx];
-    shadowCoords.y = 1 - shadowCoords.y;
-    //shadowCoords.x = gSettingsShadows.ShadowWidthPercent * (shadowCoords.x + cascadeIdx);
-
-    float pixelDepth = shadowCoords.z + gSettingsShadows.BiasDepth;
+    float3 base_dir = normalize(-un_wi);
 
     float shadowFactor = 0.0f;
 
     for (uint i = 0; i < gSettingsShadows.PcfSampleCount; i++)
     {
-        float2 offset = GetPcfOffset(rngInfo, i);
+        //float2 offset = GetPcfOffset(rngInfo, i);
+        float3 offset = 0.0f;
 
-        float2 uv_shadow = shadowCoords.xy + (offset * gSettingsShadows.TexelSize);
-        float shadowMapDepth = gShadowMapDir.Sample(gSamplerPointClamp, uv_shadow).r;
+        float3 dir = normalize(base_dir + offset);
+
+        float shadowMapDepth = gShadowMapsPoint[smPuncInfo.ShadowMapIndex].Sample(gSamplerPointClamp, dir).r;
 
         shadowFactor += pixelDepth >= shadowMapDepth;
     }

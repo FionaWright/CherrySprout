@@ -40,7 +40,7 @@ class ShadowMapManager
 {
 public:
     void Init(ID3D12Device* device, Heap* heap, UploadHeap* uploadHeapCBV);
-    void LoadSceneData(ID3D12Device* device, Heap* heap, Scene* scene);
+    void LoadSceneData(D3D* d3d, Heap* heap, Scene* scene);
 
     void Render(ID3D12GraphicsCommandList* cmdList, const Heap* heap, Scene* scene, const ShadowMapConfig& config);
     void GeneratePoissonSamples(uint32_t count, float minDistance = 0.15f);

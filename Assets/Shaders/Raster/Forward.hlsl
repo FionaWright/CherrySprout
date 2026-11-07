@@ -55,6 +55,7 @@ SamplerState gSamplerLinearWrap : register(s0, space0);
 SamplerState gSamplerPointClamp : register(s1, space0);
 
 #include "PathTracing/HitInfo/ApplyMaterialTextures.hlsli"
+#include "Raster/Utils/EvaluatePunctuals.hlsli"
 #include "Raster/Utils/Shadows.hlsli"
 
 VsOut VSMain(VsIn input)
@@ -135,41 +136,10 @@ float4 PSMain(VsOut input) : SV_TARGET
                 E_direct += shadowFactor * NdL * dirLightRadiance * bxdfEval.Radiance;
         }
     }
+
     if (ForwardFlagGet(gSettings.Flags, ForwardFlags::ePunctualLights))
     {
-        uint lightCount, _;
-        gPunctuals.GetDimensions(lightCount, _);
-
-        for (uint i = 0; i < lightCount; i++)
-        {
-            PunctualLight light = gPunctuals[i];
-
-            LightEval lightEval;
-            LightSample lightSample = EvaluatePunctualLight(light, hitInfo.HitPos, lightEval);
-
-            float3 wi = lightEval.Direction;
-            float NdL = max(1e-6f, dot(Ns, wi));
-            if (NdL > 0.0f && any(lightEval.Radiance > 0))
-            {
-                if (light.Type == PunctualLightType::eDistant)
-                {
-
-                }
-                else
-                {
-
-                }
-
-                BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
-
-                float shadowFactor = 1.0f; // TODO
-
-                //float radMult = 100.0f;
-
-                if (bxdfEval.PDF > 0.0f)
-                    E_direct += shadowFactor * NdL * lightEval.Radiance * bxdfEval.Radiance;
-            }
-        }
+        E_direct += EvaluatePunctuals(rngInfo, hitInfo, wo, input.worldPos);
     }
 
     float3 E_ibl = 0.0f;

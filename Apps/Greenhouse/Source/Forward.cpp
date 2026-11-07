@@ -95,6 +95,8 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
         m_currentPanoFilepath = envMap->GetCurrentPanoFilepath();
     }
 
+    m_shadowMapManager.LoadSceneData(d3d, heap, scene);
+
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
     srvDesc.Format = envMap->GetCubemap()->GetDesc().Format;
@@ -107,8 +109,6 @@ void Forward::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uplo
     m_set.SetSRV_Tex2D  (d3d->GetDevice(), 0, 3, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
     m_set.SetSRV        (d3d->GetDevice(), 0, 4, envMap->GetCubemap(), srvDesc);
     m_set.SetSRV_Tex2D  (d3d->GetDevice(), 0, 5, m_shadowMapManager.GetShadowMapDir(), SHADOW_MAP_FORMAT_DEPTH_SRV);
-
-    m_shadowMapManager.LoadSceneData(d3d->GetDevice(), heap, scene);
 }
 
 void Forward::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)

@@ -56,7 +56,7 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
     V(m_pipelinePoint.InitGraphics(device, "Raster/ShadowMapPointVSPS.hlsl", "Raster/ShadowMapPointVSPS.hlsl", desc));
 }
 
-void ShadowMapManager::LoadSceneData(ID3D12Device* device, Heap* heap, Scene* scene)
+void ShadowMapManager::LoadSceneData(D3D* d3d, Heap* heap, Scene* scene)
 {
     CherryAssert(scene->CPU.MegaBufferPunctualLightsCount + 1 < MAX_SHADOW_MAPS);
 
@@ -68,8 +68,8 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Heap* heap, Scene* sc
         if (light.Intensity <= 0.0f || light.Type != PunctualLightType::eDistant)
             continue;
 
-        m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Distant)", device, SHADOW_MAP_RESO_DISTANT, SHADOW_MAP_RESO_DISTANT);
-        m_shadowMapPunctuals[i].DsvHeapIndices.emplace_back(CreateDSV(device, &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH));
+        m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Distant)", d3d->GetDevice(), SHADOW_MAP_RESO_DISTANT, SHADOW_MAP_RESO_DISTANT);
+        m_shadowMapPunctuals[i].DsvHeapIndices.emplace_back(CreateDSV(d3d->GetDevice(), &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH));
 
         // TODO
     }
@@ -81,18 +81,16 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Heap* heap, Scene* sc
         if (light.Intensity <= 0.0f || light.Type != PunctualLightType::ePoint)
             continue;
 
-        m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Point)", device, SHADOW_MAP_RESO_POINT, SHADOW_MAP_RESO_POINT, 6);
-        m_shadowMapPunctuals[i].DsvHeapIndices = CreateDSVs_Array(device, &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH);
+        m_shadowMapPunctuals[i].Resource.Init_Depth2D("Punctual Shadow Map (Point)", d3d->GetDevice(), SHADOW_MAP_RESO_POINT, SHADOW_MAP_RESO_POINT, 6);
+        m_shadowMapPunctuals[i].DsvHeapIndices = CreateDSVs_Array(d3d->GetDevice(), &m_heapDSV, &m_shadowMapPunctuals[i].Resource, SHADOW_MAP_FORMAT_DEPTH);
 
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
         desc.Format = SHADOW_MAP_FORMAT_DEPTH_SRV;
-        desc.Texture2DArray.ArraySize = m_shadowMapPunctuals[i].Resource.GetDesc().DepthOrArraySize;
-        desc.Texture2DArray.FirstArraySlice = 0;
-        desc.Texture2DArray.MipLevels = 1;
+        desc.TextureCube.MipLevels = 1;
         desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-        m_shadowMapPunctuals[i].HeapIdx = heap->AddSRV_Bindless(device, &m_shadowMapPunctuals[i].Resource, desc);
+        m_shadowMapPunctuals[i].HeapIdx = heap->AddSRV_Bindless(d3d->GetDevice(), &m_shadowMapPunctuals[i].Resource, desc);
         if (!assignedHeapBase)
             m_heapBasePoint = m_shadowMapPunctuals[i].HeapIdx;
         assignedHeapBase = true;
@@ -101,11 +99,41 @@ void ShadowMapManager::LoadSceneData(ID3D12Device* device, Heap* heap, Scene* sc
     const size_t expectedPuncInfoSize = scene->CPU.MegaBufferPunctualLightsCount * sizeof(ShadowMapPuncInfo);
     if (!m_shadowMapPuncInfoBuffer.IsInitialized() || m_shadowMapPuncInfoBuffer.GetDesc().Width != expectedPuncInfoSize)
     {
-        m_shadowMapPuncInfoBuffer.Init_Buffer("Shadow Map Punc Info", device, expectedPuncInfoSize);
-        // TODO: Upload
+        m_shadowMapPuncInfoBuffer.Reset();
+        m_shadowMapPuncInfoBuffer.Init_Buffer("Shadow Map Punc Info", d3d->GetDevice(), expectedPuncInfoSize);
+
+        std::vector<ShadowMapPuncInfo> cpuSmPuncInfoBuffer;
+        cpuSmPuncInfoBuffer.resize(scene->CPU.MegaBufferPunctualLightsCount);
+
+        for (uint32_t i = 0; i < scene->CPU.MegaBufferPunctualLightsCount; i++)
+        {
+            const PunctualLight& light = scene->CPU.MegaBufferPunctualLights[i];
+            if (light.Intensity <= 0.0f)
+                continue;
+
+            // TODO: ShadowMatrix, TexelSize
+            cpuSmPuncInfoBuffer[i] = {};
+            cpuSmPuncInfoBuffer[i].ShadowMapIndex =
+                light.Type == PunctualLightType::eDistant ? m_shadowMapPunctuals[i].HeapIdx - m_heapBaseDistant :
+                light.Type == PunctualLightType::ePoint ? m_shadowMapPunctuals[i].HeapIdx - m_heapBasePoint : UINT_MAX;
+            cpuSmPuncInfoBuffer[i].FarPlane = 100.0f; // TODO
+        }
+
+        UploadHeap uploadHeap;
+        uploadHeap.Init(d3d->GetDevice(), Align(m_shadowMapPuncInfoBuffer.GetIntermediateSize(), 512));
+
+        d3d->Flush();
+        const auto cmdListPtr = d3d->GetAvailableCmdList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        const auto cmdList = cmdListPtr.Get();
+        {
+            m_shadowMapPuncInfoBuffer.UploadBuffer(cmdList, &uploadHeap, cpuSmPuncInfoBuffer.data(), expectedPuncInfoSize);
+        }
+        V(cmdList->Close());
+        d3d->ExecuteCommandList(cmdList);
+        d3d->Flush();
     }
 
-    m_set.SetSRV_Buffer(device, 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
 
     m_matricesDirty = true;
 }
