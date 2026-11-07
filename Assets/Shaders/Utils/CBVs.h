@@ -166,8 +166,7 @@ struct CbvForward_PerInstance
     hlsl::float4x4 M, MTI;
 
     hlsl::uint MaterialIdx;
-    float ScaleY;
-    hlsl::float2 p;
+    hlsl::float3 p;
 };
 
 struct CbvShadowMap_PerInstance
