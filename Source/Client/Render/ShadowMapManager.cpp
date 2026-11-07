@@ -50,9 +50,12 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
     };
 
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true, 0);
-    desc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
     desc.SampleDesc.Count = 1;
+
+    desc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
     V(m_pipelineDistant.InitGraphics(device, "Raster/ShadowMapVSPS.hlsl", "Raster/ShadowMapVSPS.hlsl", desc));
+
+    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     V(m_pipelinePoint.InitGraphics(device, "Raster/ShadowMapPointVSPS.hlsl", "Raster/ShadowMapPointVSPS.hlsl", desc));
 }
 
@@ -116,6 +119,7 @@ void ShadowMapManager::LoadSceneData(D3D* d3d, Heap* heap, Scene* scene)
             cpuSmPuncInfoBuffer[i].ShadowMapIndex =
                 light.Type == PunctualLightType::eDistant ? m_shadowMapPunctuals[i].HeapIdx - m_heapBaseDistant :
                 light.Type == PunctualLightType::ePoint ? m_shadowMapPunctuals[i].HeapIdx - m_heapBasePoint : UINT_MAX;
+            cpuSmPuncInfoBuffer[i].NearPlane = 0.01f; // TODO
             cpuSmPuncInfoBuffer[i].FarPlane = 100.0f; // TODO
         }
 

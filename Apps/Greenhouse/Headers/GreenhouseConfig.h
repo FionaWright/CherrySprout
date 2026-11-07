@@ -187,8 +187,10 @@ struct ForwardConfig
     float SmFar = 100.0f;
     float SmDirDist = 50.0f;
     float SmPcfRadius = 3.0f;
-    float SmBiasDepth = 0.000001f;
-    float SmBiasNormal = 0.001f;
+    float SmBiasDepthDistant = 0.000001f;
+    float SmBiasDepthPoint = 0.04f;
+    float SmBiasNormalDistant = 0.001f;
+    float SmBiasNormalPoint = 0.1f;
 
     bool FlagEnabledEnvironmentMap = true;
     bool FlagEnabledPunctualLights = true;

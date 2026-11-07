@@ -188,14 +188,17 @@ struct CbvShadowMapSample
 
     hlsl::float2 TexelSize;
     hlsl::uint CascadeCount;
-    float BiasDepth;
+    float PcfRadius;
 
     hlsl::float4 CascadeDistances;
 
+    float NormalBiasDistant;
+    float NormalBiasPoint;
+    float BiasDepthDistant;
+    float BiasDepthPoint;
+
     hlsl::uint PcfSampleCount;
-    float PcfRadius;
-    float NormalBias;
-    float p;
+    hlsl::float3 p;
 
 #define POISSON_DISC_COUNT 8
     hlsl::float4 PoissonDisc[POISSON_DISC_COUNT];

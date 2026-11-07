@@ -56,9 +56,13 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         },
     };
 
+    std::vector<std::string> compileArgs;
+    if (Config::GetRender().DepthBufferType == DepthBufferType::eReversed)
+        compileArgs.emplace_back("-DUSING_REVERSED_Z");
+
     auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true);
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-    V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/Forward.hlsl", "Raster/Forward.hlsl", desc));
+    V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/Forward.hlsl", "Raster/Forward.hlsl", desc, compileArgs));
 
     UploadHeap uploadHeap;
 
@@ -214,9 +218,11 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
     XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
     cbvShadow.TexelSize = XMFLOAT2(1.0f / dim.x, 1.0f / dim.y);
-    cbvShadow.BiasDepth = renderInfo.ForwardConfig->SmBiasDepth;
+    cbvShadow.BiasDepthDistant = renderInfo.ForwardConfig->SmBiasDepthDistant;
+    cbvShadow.BiasDepthPoint = renderInfo.ForwardConfig->SmBiasDepthPoint;
     cbvShadow.CascadeCount = renderInfo.ForwardConfig->SmCascadeCount;
-    cbvShadow.NormalBias = renderInfo.ForwardConfig->SmBiasNormal;
+    cbvShadow.NormalBiasDistant = renderInfo.ForwardConfig->SmBiasNormalDistant;
+    cbvShadow.NormalBiasPoint = renderInfo.ForwardConfig->SmBiasNormalPoint;
     cbvShadow.PcfSampleCount = renderInfo.ForwardConfig->SmPcfCount;
     cbvShadow.PcfRadius = renderInfo.ForwardConfig->SmPcfRadius;
     auto poissonDisc = m_shadowMapManager.GetPoissonSamples();

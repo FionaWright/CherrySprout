@@ -72,7 +72,7 @@ VsOut VSMain(VsIn input)
 
     if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eShadowMaps))
     {
-        float3 normalBias = output.normal * gSettingsShadows.NormalBias;
+        float3 normalBias = output.normal * gSettingsShadows.NormalBiasDistant;
         float4 biasedPos = float4(output.worldPos.xyz + normalBias, output.worldPos.w);
         for (uint i = 0; i < gSettingsShadows.CascadeCount; i++)
         {

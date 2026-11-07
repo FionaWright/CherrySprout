@@ -33,8 +33,11 @@ void Forward::GUI(GreenhouseConfig* config, bool& frameDirty)
             shadowMatricesDirty |= GuiUtils::FwInputFloat("Far Plane##SM", &config->ForwardConfig.SmFar);
             shadowMatricesDirty |= GuiUtils::FwInputFloat("Distance##SM", &config->ForwardConfig.SmDirDist);
 
-            GuiUtils::FwInputFloat("Depth Bias##SM", &config->ForwardConfig.SmBiasDepth, 0, 0, "%f");
-            GuiUtils::FwInputFloat("Normal Bias##SM", &config->ForwardConfig.SmBiasNormal, 0, 0, "%f");
+            GuiUtils::FwInputFloat("Depth Bias Distant##SM", &config->ForwardConfig.SmBiasDepthDistant, 0, 0, "%f");
+            GuiUtils::FwInputFloat("Normal Bias Distant##SM", &config->ForwardConfig.SmBiasNormalDistant, 0, 0, "%f");
+
+            GuiUtils::FwInputFloat("Depth Bias Point##SM", &config->ForwardConfig.SmBiasDepthPoint, 0, 0, "%f");
+            GuiUtils::FwInputFloat("Normal Bias Point##SM", &config->ForwardConfig.SmBiasNormalPoint, 0, 0, "%f");
 
             GuiUtils::FwInputUInt("PCF Count", &config->ForwardConfig.SmPcfCount);
             GuiUtils::FwInputFloat("PCF Radius##SM", &config->ForwardConfig.SmPcfRadius);

@@ -11,6 +11,9 @@ struct ShadowMapPuncInfo
     hlsl::uint ShadowMapIndex;
     hlsl::float2 TexelSize;
     float FarPlane;
+
+    float NearPlane;
+    hlsl::float3 p;
 };
 
 #endif

@@ -40,27 +40,6 @@ VsOut VSMain(VsIn input)
     return output;
 }
 
-/*
-float PSMain(VsOut input) : SV_DEPTH
-{
-    {
-        float2 uv = input.uv;
-        uv.y = 1 - uv.y;
-
-        HitInfo hitInfo;
-        hitInfo.Mat = gMaterials[gCBV.MaterialIdx];
-        hitInfo.UV = uv;
-
-        ApplyMaterialTextures(hitInfo);
-
-        clip(hitInfo.Mat.Albedo.a < 0.5f);
-    }
-
-    float depth = length(frac(input.worldPos.xyz));
-    return depth / gCBV.FarPlane;
-}
-*/
-
 void PSMain(VsOut input)
 {
     float2 uv = input.uv;

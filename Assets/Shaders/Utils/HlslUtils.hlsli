@@ -124,8 +124,6 @@ int2 MotionVectorToPixelCoord(int2 pixelCoord, float2 mv, float2 dimensions)
     return int2(floor(prevUV * dimensions));
 }
 
-//n*f = d*f-d*x*(f-n)
-
 float LinearizeDepthForward(float depth, float nearPlane, float farPlane)
 {
     return (nearPlane * farPlane) / (farPlane - depth * (farPlane - nearPlane));
@@ -148,6 +146,31 @@ float LinearizeDepth(float depth, float nearPlane, float farPlane)
 #else
     return LinearizeDepthForward(depth, nearPlane, farPlane);
 #endif
+}
+
+float UnlinearizeDepthForward(float depth, float nearPlane, float farPlane)
+{
+    return (farPlane - (nearPlane * farPlane) / depth) / (farPlane - nearPlane);
+}
+
+float UnlinearizeDepthReversed(float depth, float nearPlane, float farPlane)
+{
+    return ((nearPlane * farPlane) / depth - nearPlane) / (farPlane - nearPlane);
+}
+
+float UnlinearizeDepth(float depth, float nearPlane, float farPlane)
+{
+#if USING_REVERSED_Z
+    return UnlinearizeDepthReversed(depth, nearPlane, farPlane);
+#else
+    return UnlinearizeDepthForward(depth, nearPlane, farPlane);
+#endif
+}
+
+template <typename T>
+T max3(T a, T b, T c)
+{
+    return max(a, max(b,c));
 }
 
 #define INIT0(Type) (Type)0

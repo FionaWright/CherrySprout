@@ -33,7 +33,7 @@ float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos[SHADOW_
     shadowCoords.y = 1 - shadowCoords.y;
     //shadowCoords.x = gSettingsShadows.ShadowWidthPercent * (shadowCoords.x + cascadeIdx);
 
-    float pixelDepth = shadowCoords.z + gSettingsShadows.BiasDepth;
+    float pixelDepth = shadowCoords.z + gSettingsShadows.BiasDepthDistant;
 
     float shadowFactor = 0.0f;
 
@@ -54,9 +54,13 @@ float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos[SHADOW_
 
 float GetShadowFactorPoint(inout RngInfo rngInfo, PunctualLight light, ShadowMapPuncInfo smPuncInfo, float3 Ns, float4 worldPos)
 {
-    float3 un_wi = light.Position - worldPos.xyz;
-    float pixelDepth = length(un_wi) / smPuncInfo.FarPlane;
-    pixelDepth += gSettingsShadows.BiasDepth;
+    float3 normalBias = Ns * gSettingsShadows.NormalBiasPoint;
+    float4 biasedPos = float4(worldPos.xyz + normalBias, worldPos.w);
+
+    float3 un_wi = light.Position - biasedPos.xyz;
+    float pixelDepth = max3(abs(un_wi.x), abs(un_wi.y), abs(un_wi.z));
+    pixelDepth -= gSettingsShadows.BiasDepthPoint;
+    pixelDepth = UnlinearizeDepth(pixelDepth, smPuncInfo.NearPlane, smPuncInfo.FarPlane);
 
     float3 base_dir = normalize(-un_wi);
 
