@@ -32,7 +32,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     }
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-    DecorrelateRng(rngInfo, SEED_DECORRELATOR_PT_GEN_SAMPLES);
+    //DecorrelateRng(rngInfo, SEED_DECORRELATOR_PT_GEN_SAMPLES);
+    RngValuesPrimary _ = SampleRngPrimary(rngInfo);
 
     WRS(rngInfo, reservoir, gRestirSettings.GenCandidatesCount, context);
 

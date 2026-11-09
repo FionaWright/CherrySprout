@@ -77,8 +77,6 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
         E_direct = SampleNEE(rngNEE, secondaryHitInfo, 1, wo);
     }
 
-    // TODO: Extension: More bounces
-
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
     X_i.DestPosition = isMiss ? bxdfSample.Wi : secondaryHitInfo.HitPos;
     X_i.DestNg = isMiss ? 0 : secondaryHitInfo.Ng;

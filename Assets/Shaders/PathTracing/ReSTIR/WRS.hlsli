@@ -45,6 +45,8 @@ bool ReservoirMerge(
     float c2 = min(other.Confidence, ConfidenceCap);
     float M = c1 + c2;
 
+    reservoir.Confidence = M;
+
     if (M <= 0.0f)
         return false;
 
@@ -60,13 +62,12 @@ bool ReservoirMerge(
     //float mis1 = pdf1 / (c1 * pdf1 + c2 * pdf2);
     //float mis2 = pdf2 / (c1 * pdf1 + c2 * pdf2);
 
-    float w1 = GetWeight(mis1, 1.0f, c1, reservoir.WeightSum);
     float w2 = GetWeight(mis2, pHat, c2, other.W_Y);
-
-    reservoir.Confidence = M;
 
     if (w2 <= 0.0f || pHat <= 0.0f)
         return false;
+
+    float w1 = GetWeight(mis1, 1.0f, c1, reservoir.WeightSum);
 
     reservoir.WeightSum = w1 + w2;
 

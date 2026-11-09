@@ -123,6 +123,8 @@ bool TrySampleReservoirPT(
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
+    Lo = Y.Lo * reservoir.W_Y * Y.Jacobian;
+
     // Debug
     {
         DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
@@ -156,8 +158,6 @@ bool TrySampleReservoirPT(
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
-
-    Lo = Y.Lo * Y.Jacobian;
 
     return true;
 }

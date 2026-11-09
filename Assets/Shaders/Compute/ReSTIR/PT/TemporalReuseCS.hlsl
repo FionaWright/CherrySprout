@@ -75,10 +75,9 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         ReEvaluate(reservoirPrev.Y, context);
 
-        bool candidateSampled = ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, context);
+        ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, context);
 
-        if (candidateSampled)
-            NormalizeUnbiasedContributionWeight(reservoir);
+        NormalizeUnbiasedContributionWeight(reservoir);
     }
 
     gReservoirBufferPT[reservoirIdxOut] = reservoir;
