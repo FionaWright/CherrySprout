@@ -47,7 +47,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         if (all(coord == pixelCoord))
             continue;
 
-        uint contextIdxOther = GetReservoirBufferIndexLocal(coord);
+        uint contextIdxOther = GetContextBufferIndex_Prev(coord);
         ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
         if (contextOther.IsMiss)
             continue;

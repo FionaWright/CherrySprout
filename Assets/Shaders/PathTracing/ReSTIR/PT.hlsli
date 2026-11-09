@@ -91,7 +91,7 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
         }
     }
 
-    if (!pathStateShifted.IsSymmetric) // TODO: Successful asymmetric shifted paths can be used
+    if (!pathStateShifted.IsSymmetric) // TODO: Successful asymmetric shifted paths can be used?
     {
         X_i.Lo = 0.0f;
         return;
