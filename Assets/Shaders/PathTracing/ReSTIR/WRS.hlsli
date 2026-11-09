@@ -57,8 +57,8 @@ bool ReservoirMerge(
     float mis2 = 1 / M;
 
     // Balance:
-    //float pdf1 = PDF(reservoir.Y, context);
-    //float pdf2 = PDF(other.Y, context);
+    //float pdf1 = max(1e-6f, PDF(reservoir.Y, context));
+    //float pdf2 = max(1e-6f, PDF(other.Y, context));
     //float mis1 = pdf1 / (c1 * pdf1 + c2 * pdf2);
     //float mis2 = pdf2 / (c1 * pdf1 + c2 * pdf2);
 

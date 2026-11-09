@@ -48,9 +48,18 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
         }
     }
 
+    float pdfPathLog = 0.0f;
+    for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
+    {
+        if (X_i.VertexList.Array[i].Type == VertexType::eStandard)
+            pdfPathLog += log(X_i.VertexList.Array[i].PDF);
+    }
+    float pdf = exp(pdfPathLog);
+
     X_i.VertexList = vertexList;
     X_i.Lo = pathState.Lo;
     X_i.Jacobian = 1.0f;
+    X_i.PDF = pdf;
 }
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
@@ -82,15 +91,18 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
         }
     }
 
-    if (!pathStateShifted.IsSymmetric) // TODO
+    if (!pathStateShifted.IsSymmetric) // TODO: Successful asymmetric shifted paths can be used
     {
         X_i.Lo = 0.0f;
-        X_i.Jacobian = 1.0f;
         return;
     }
 
-    X_i.Lo = pathState.Lo;
+    float pdfRatio = pathStateShifted.PdfRatio * pathStateShifted.Jacobian;
+    float m = BalanceHeuristicRatio(pdfRatio, 1, 1); // TODO
+
+    X_i.Lo = pathState.Lo * m;
     X_i.Jacobian = pathStateShifted.Jacobian;
+    X_i.PDF = pathStateShifted.PdfRatio * X_i.PDF;
 }
 
 float Target(CandidatePT X_i, ContextPrimaryRay context)
@@ -100,13 +112,7 @@ float Target(CandidatePT X_i, ContextPrimaryRay context)
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
 {
-    float pdfPathLog = 0.0f;
-    for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
-    {
-        if (X_i.VertexList.Array[i].Type == VertexType::eStandard)
-            pdfPathLog += log(X_i.VertexList.Array[i].PDF);
-    }
-    return exp(pdfPathLog);
+    return X_i.PDF;
 }
 
 bool TrySampleReservoirPT(
@@ -123,7 +129,7 @@ bool TrySampleReservoirPT(
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    Lo = Y.Lo * reservoir.W_Y * Y.Jacobian;
+    Lo = Y.Lo * reservoir.W_Y * Y.Jacobian; // TODO: Applying jacobian twice?
 
     // Debug
     {

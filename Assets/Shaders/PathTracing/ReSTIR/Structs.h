@@ -43,6 +43,7 @@ struct CandidatePT
 
     hlsl::float3 Lo;
     float Jacobian;
+    float PDF;
 };
 
 typedef Reservoir<CandidateDI> ReservoirDI;
