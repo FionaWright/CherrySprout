@@ -5,10 +5,7 @@
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/PT.hlsli"
 
-#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
-#include "PathTracing/ReSTIR/WRS.hlsli"
-#include "Compute/ReSTIR/SeedDecorrelators.h"
-#include "Compute/ReSTIR/Utils.hlsli"
+#include "Compute/ReSTIR/Contexts/ScreenSpace.hlsli"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -18,58 +15,5 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
-    uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    ReservoirPT reservoir = gReservoirBufferPT[reservoirIdxIn];
-
-    uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
-    if (context.IsMiss)
-    {
-        gReservoirBufferPT[reservoirIdxOut] = reservoir;
-        return;
-    }
-
-    float3 normalMain = context.HitInfo.Ns_ff;
-    float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
-
-    RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-    DecorrelateRng(rngInfo, SEED_DECORRELATOR_PT_SPATIAL);
-
-    for (uint i = 0; i < gRestirSettings.SpatialNumSamples; i++)
-    {
-        float u1 = Rand01(rngInfo);
-        float u2 = Rand01(rngInfo);
-        int2 coord = SampleDisc(u1, u2, pixelCoord, gRestirSettings.SpatialRadius);
-        coord.x = max(0, min(coord.x, gSettings.FrameDimensions.x - 1));
-        coord.y = max(0, min(coord.y, gSettings.FrameDimensions.y - 1));
-
-        if (all(coord == pixelCoord))
-            continue;
-
-        uint contextIdxOther = GetContextBufferIndex_Prev(coord);
-        ContextPrimaryRay contextOther = gContextsPrimaryRay[contextIdxOther];
-        if (contextOther.IsMiss)
-            continue;
-
-        uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        ReservoirPT reservoirNeighbour = gReservoirBufferPT[idx];
-
-        float3 normalOther = contextOther.HitInfo.Ns_ff;
-        if (!PassNormalThreshold(normalMain, normalOther, gRestirSettings.SpatialNormalDivThreshold))
-            continue;
-
-        float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
-        if (!PassDepthThreshold(depthMain, depthOther, gRestirSettings.SpatialDepthDivThreshold))
-            continue;
-
-        ReEvaluate(reservoirNeighbour.Y, context);
-
-        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);
-    }
-
-    NormalizeUnbiasedContributionWeight(reservoir);
-
-    gReservoirBufferPT[reservoirIdxOut] = reservoir;
-    TryPreserveReservoirSpatial(gReservoirBufferPT, reservoir, pixelCoord);
+    SpatialReuse(gReservoirBufferPT, pixelCoord, SEED_DECORRELATOR_PT_SPATIAL);
 }

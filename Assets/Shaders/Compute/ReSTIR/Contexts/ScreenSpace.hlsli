@@ -1,8 +1,17 @@
 #ifndef H_RESTIR_SCREEN_SPACE_CONTEXT_H
 #define H_RESTIR_SCREEN_SPACE_CONTEXT_H
 
+#include "PathTracing/Structs.h"
+
+#include "PathTracing/Buffers.hlsli"
+
+#include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/WRS.hlsli"
+#include "Compute/ReSTIR/SeedDecorrelators.h"
+#include "Compute/ReSTIR/Utils.hlsli"
+
 template <typename TCandidate>
-void GenerateCandidates(StructuredBuffer<Reservoir<TCandidate>> buffer, uint2 pixelCoord, uint seedDecorrelator)
+void GenerateCandidates(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     uint contextIdx = GetContextBufferIndex(pixelCoord);
     ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
@@ -22,7 +31,7 @@ void GenerateCandidates(StructuredBuffer<Reservoir<TCandidate>> buffer, uint2 pi
 }
 
 template <typename TCandidate>
-void SpatialReuse(StructuredBuffer<Reservoir<TCandidate>> buffer, uint2 pixelCoord, uint seedDecorrelator)
+void SpatialReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
@@ -86,7 +95,7 @@ void SpatialReuse(StructuredBuffer<Reservoir<TCandidate>> buffer, uint2 pixelCoo
 }
 
 template <typename TCandidate>
-void TemporalReuse(StructuredBuffer<Reservoir<TCandidate>> buffer, uint2 pixelCoord, uint seedDecorrelator)
+void TemporalReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     uint contextIdx = GetContextBufferIndex(pixelCoord);
     ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
