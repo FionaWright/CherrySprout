@@ -53,7 +53,7 @@ ShiftResult ShiftMapHybrid(
     // TODO: Some of these conditions can be computed earlier on the main path to avoid work
     // TODO: Jacobian denominator can also be computed earlier
 
-#define DISTANCE_THRESHOLD 1.0f // TODO
+#define DISTANCE_THRESHOLD 0.01f // TODO
 
     bool isValidReconnection = true;
     isValidReconnection &= v2.Type == VertexType::eEnvironment || LengthSquared(v2.Position - v1.Position) >= DISTANCE_THRESHOLD;

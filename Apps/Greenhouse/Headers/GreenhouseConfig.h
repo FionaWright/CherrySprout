@@ -124,8 +124,8 @@ struct PathTracerConfig
 
     float RestirTemporalNormalDivThreshold = 0.9f;
     float RestirSpatialNormalDivThreshold = 0.9f;
-    float RestirTemporalDepthDivThreshold = 0.1f;
-    float RestirSpatialDepthDivThreshold = 0.1f;
+    float RestirTemporalDepthDivThreshold = 5.0f;
+    float RestirSpatialDepthDivThreshold = 5.0f;
     float RestirSpatialRadius = 30.0f;
 
     bool TrueRandomSeedMode = false;

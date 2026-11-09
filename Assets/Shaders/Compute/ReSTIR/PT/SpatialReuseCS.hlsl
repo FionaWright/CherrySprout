@@ -18,14 +18,17 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
-    if (context.IsMiss)
-        return;
-
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
     ReservoirPT reservoir = gReservoirBufferPT[reservoirIdxIn];
+
+    uint contextIdx = GetContextBufferIndex(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+    if (context.IsMiss)
+    {
+        gReservoirBufferPT[reservoirIdxOut] = reservoir;
+        return;
+    }
 
     float3 normalMain = context.HitInfo.Ns_ff;
     float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
