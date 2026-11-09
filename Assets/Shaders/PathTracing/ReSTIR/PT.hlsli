@@ -126,7 +126,7 @@ bool TrySampleReservoirPT(
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    Lo = Y.Lo * reservoir.W_Y * Y.Jacobian; // TODO: Applying jacobian twice?
+    Lo = Y.Lo * reservoir.W_Y;
 
     // Debug
     {

@@ -273,7 +273,7 @@ bool TrySampleReservoirGI(
     beta *= E_indirect;
 
     // NEE Sample
-    Lo = beta * Y.DirectContribution * Y.Jacobian; // TODO: Applying jacobian twice? Already in W_Y
+    Lo = beta * Y.DirectContribution;
 
     return true;
 }
