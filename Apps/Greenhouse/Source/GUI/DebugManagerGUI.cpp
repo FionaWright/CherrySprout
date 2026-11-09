@@ -354,12 +354,19 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                         if (RowSection("Path Vertex Info"))
                         {
                             RowInt("Type", static_cast<int>(m_cpuPathDump[i].PathVertex.Type));
+                            RowInt("Lobe", static_cast<int>(m_cpuPathDump[i].PathVertex.Lobe));
+                            RowInt("RNG Ancillary", static_cast<int>(m_cpuPathDump[i].PathVertex.InitialRngAncillaryState));
+                            RowInt("Light Index", static_cast<int>(m_cpuPathDump[i].PathVertex.LightSample.Index));
+                            RowInt("Light SubIndex", static_cast<int>(m_cpuPathDump[i].PathVertex.LightSample.SubIndex));
                             RowFloat3("Position", m_cpuPathDump[i].PathVertex.Position, true);
                             RowFloat3("Normal", m_cpuPathDump[i].PathVertex.Ng_ff, true);
                             RowFloat3("Wo", m_cpuPathDump[i].PathVertex.Wo, true);
                             RowFloat3("Wi", m_cpuPathDump[i].PathVertex.Wi, true);
                             RowFloat("Eta", m_cpuPathDump[i].PathVertex.Eta, true);
+                            RowFloat("Roughness", m_cpuPathDump[i].PathVertex.Roughness, true);
+                            RowFloat("ShadowFactor", m_cpuPathDump[i].PathVertex.ShadowFactor, true);
                             RowFloat3("Indirect", m_cpuPathDump[i].PathVertex.IndirectContribution, true);
+                            RowFloat3("Direct", m_cpuPathDump[i].PathVertex.DirectContribution, true);
                             RowFloat("PDF", m_cpuPathDump[i].PathVertex.PDF, true);
                             ImGui::TreePop();
                         }

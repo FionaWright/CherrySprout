@@ -4,6 +4,10 @@
 float GetFixedMisNee()
 {
 #if FEAT_DBG_D(FixedMisNeeManual)
+    if (gDebugSettings.FixedMisNee < EPSILON)
+        return 0.0f;
+    if (gDebugSettings.FixedMisNee >= 1.0f - EPSILON)
+        return 1.0f;
     return gDebugSettings.FixedMisNee;
 #else
     return NAN;

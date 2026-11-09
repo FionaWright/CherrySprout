@@ -57,11 +57,10 @@ void HitShiftedUnconnected(
         if (v1.ShadowFactor > 0.0f)
         {
             float shadowFactor;
-            float3 L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
+            float3 E_direct = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
 
-            DBG_OUTPUT3(L_nee, GD_NeeContrib);
+            DBG_OUTPUT3(E_direct, GD_NeeContrib);
 
-            // TODO: Should this even be trying NEE samples if they failed for main path? Just going to reject anyways
             if (shadowFactor <= 0.0f)
             {
                 pathStateShifted.IsSymmetric = false;
@@ -69,7 +68,8 @@ void HitShiftedUnconnected(
                 return;
             }
 
-            contrib += L_nee * pathState.Beta;
+            float3 L_sample = E_direct * pathState.Beta;
+            pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
         }
     }
 }
