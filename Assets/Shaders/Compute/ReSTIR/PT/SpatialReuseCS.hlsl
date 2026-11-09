@@ -33,6 +33,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, SEED_DECORRELATOR_PT_SPATIAL);
 
+    bool candidateSampled = false;
+
     for (uint i = 0; i < gRestirSettings.SpatialNumSamples; i++)
     {
         float u1 = Rand01(rngInfo);
@@ -62,10 +64,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         ReEvaluate(reservoirNeighbour.Y, context);
 
-        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);
+        candidateSampled |= ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);
     }
 
-    NormalizeUnbiasedContributionWeight(reservoir);
+    if (candidateSampled)
+        NormalizeUnbiasedContributionWeight(reservoir);
 
     gReservoirBufferPT[reservoirIdxOut] = reservoir;
     TryPreserveReservoirSpatial(gReservoirBufferPT, reservoir, pixelCoord);

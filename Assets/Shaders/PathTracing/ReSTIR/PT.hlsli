@@ -100,12 +100,6 @@ float Target(CandidatePT X_i, ContextPrimaryRay context)
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
 {
-    // TODO: Not happy about this at all
-    // 1. Ignores primary RNG and NEE RNG
-    // 2. Prone to FP-Precision issues
-
-	//return 1.0f;
-
     float pdfPathLog = 0.0f;
     for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
     {

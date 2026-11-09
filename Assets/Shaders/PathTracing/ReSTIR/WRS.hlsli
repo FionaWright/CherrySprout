@@ -45,18 +45,21 @@ bool ReservoirMerge(
     float c2 = min(other.Confidence, ConfidenceCap);
     float M = c1 + c2;
 
-    // TODO
-    float mis1 = c1 / M;
-    float mis2 = c2 / M;
+    if (M <= 0.0f)
+        return false;
 
     float pHat = Target(other.Y, context);
 
-    float w1 = reservoir.WeightSum * mis1;
-    float w2 = GetWeight(mis2, pHat, 1, other.W_Y);
+    // TODO
+    float mis1 = 1 / M;
+    float mis2 = 1 / M;
+
+    float w1 = GetWeight(mis1, 1.0f, c1, reservoir.WeightSum);
+    float w2 = GetWeight(mis2, pHat, c2, other.W_Y);
 
     reservoir.Confidence = M;
 
-    if (M <= 0.0f || w2 <= 0.0f || pHat <= 0.0f)
+    if (w2 <= 0.0f || pHat <= 0.0f)
         return false;
 
     reservoir.WeightSum = w1 + w2;
@@ -70,12 +73,6 @@ bool ReservoirMerge(
         return true;
     }
     return false;
-}
-
-template<typename TCandidate>
-float RestirMis(TCandidate X_i, uint M)
-{
-    return 1 / (float)M;
 }
 
 template<typename TCandidate>
@@ -116,7 +113,7 @@ void WRS(
 
         float W_X_i = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
 
-        float mis = RestirMis(X_i, M);
+        float mis = 1 / (float)M;
         float c = 1;
         float w = GetWeight(mis, pHat, c, W_X_i);
 
