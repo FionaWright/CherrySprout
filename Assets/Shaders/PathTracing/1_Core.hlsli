@@ -35,21 +35,7 @@ void Core(uint2 pixelCoord)
 
     if (FEAT_CORE(RestirPT))
     {
-        uint contextIdx = GetContextBufferIndex(pixelCoord);
-        ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
-        if (context.IsMiss)
-        {
-            primalSum = Miss(-context.Wo, 1.0f, true, false);
-        }
-        else
-        {
-            CandidatePT Y;
-            float3 Lo;
-            if (TrySampleReservoirPT(context.HitInfo, pixelCoord, context.Wo, Y, Lo))
-                primalSum = Lo;
-            else
-                primalSum = float3(0, 0, 0); // TODO
-        }
+        primalSum = SampleRestirPT(pixelCoord);
     }
     else
     {

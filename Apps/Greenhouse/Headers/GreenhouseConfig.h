@@ -89,7 +89,7 @@ struct PathTracerConfig
 {
     uint32_t Seed = 1205;
     uint32_t SPP = 1;
-    uint32_t MaxRayDepth = 8;
+    uint32_t MaxRayDepth = 4;
     uint32_t MaxShadowRayDepth = 8;
     uint32_t MaxFrameCount = 0;
     uint32_t RussianRouletteMinBounces = 1;

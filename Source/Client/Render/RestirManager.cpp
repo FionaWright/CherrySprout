@@ -61,7 +61,7 @@ void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* roo
     }
 }
 
-void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config)
+void RestirManager::PrePasses(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config)
 {
     GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
 
@@ -77,8 +77,9 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
     if (!m_pipelineInitContext.GetPSO() || m_pipelinesDirty)
     {
-        V(m_pipelineInitContext.InitCompute(device, "Compute/ReSTIR/InitContextCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-        V(m_pipelineClear.InitCompute(device, "Compute/ReSTIR/ClearCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+        d3d->Flush();
+        V(m_pipelineInitContext.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/InitContextCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+        V(m_pipelineClear.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/ClearCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
     }
 
     auto dispatchRestirPass = [&](const Pipeline* pipeline, const D12Resource* resource = nullptr)
@@ -92,7 +93,10 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
 
     // Clear Pass
     if (config.ClearBuffers)
+    {
+        d3d->Flush();
         dispatchRestirPass(&m_pipelineClear);
+    }
 
     // Init Context
     {
@@ -104,9 +108,10 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     {
         if (!m_pipelineDiGen.GetPSO() || m_pipelinesDirty)
         {
-            V(m_pipelineDiGen.InitCompute(device, "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-            V(m_pipelineDiTemporal.InitCompute(device, "Compute/ReSTIR/DI/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-            V(m_pipelineDiSpatio.InitCompute(device, "Compute/ReSTIR/DI/SpatialReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            d3d->Flush();
+            V(m_pipelineDiGen.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/DI/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            V(m_pipelineDiTemporal.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/DI/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            V(m_pipelineDiSpatio.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/DI/SpatialReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
         }
 
         // Generate Candidates Pass
@@ -127,11 +132,14 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     // GI
     if (config.EnabledGI)
     {
+        d3d->Flush(); // TODO: Shouldn't be required but...
+
         if (!m_pipelineGiGen.GetPSO() || m_pipelinesDirty)
         {
-            V(m_pipelineGiGen.InitCompute(device, "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-            V(m_pipelineGiTemporal.InitCompute(device, "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-            V(m_pipelineGiSpatio.InitCompute(device, "Compute/ReSTIR/GI/SpatialReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            d3d->Flush();
+            V(m_pipelineGiGen.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/GI/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            V(m_pipelineGiTemporal.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/GI/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            V(m_pipelineGiSpatio.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/GI/SpatialReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
         }
 
         // Generate Candidates Pass
@@ -152,11 +160,14 @@ void RestirManager::PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* c
     // PT
     if (config.EnabledPT)
     {
+        d3d->Flush(); // TODO: Shouldn't be required but...
+
         if (!m_pipelinePtGen.GetPSO() || m_pipelinesDirty)
         {
-            V(m_pipelinePtGen.InitCompute(device, "Compute/ReSTIR/PT/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-            V(m_pipelinePtTemporal.InitCompute(device, "Compute/ReSTIR/PT/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-            V(m_pipelinePtSpatio.InitCompute(device, "Compute/ReSTIR/PT/SpatialReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            d3d->Flush();
+            V(m_pipelinePtGen.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/PT/GenerateSamplesCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            V(m_pipelinePtTemporal.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/PT/TemporalReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+            V(m_pipelinePtSpatio.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/PT/SpatialReuseCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
         }
 
         // Generate Candidates Pass

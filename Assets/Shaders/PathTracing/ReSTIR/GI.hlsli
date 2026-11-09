@@ -240,12 +240,12 @@ bool TrySampleReservoirGI(
         DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
         DBG_OUTPUT1(max(0, dot(wi, hitInfo.Ns_ff)), RESTIR_NdL);
         DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
+        DBG_OUTPUT1(Y.Jacobian,                     RESTIR_Jacobian);
 
         DBG_OUTPUT3(wi,                             RESTIRGI_Dir);
         DBG_OUTPUT3(Y.DirectContribution,           RESTIRGI_DirectContrib);
         DBG_OUTPUT3(Y.BxdfEval.Radiance,            RESTIRGI_BxdfRadiance);
         DBG_OUTPUT1(Y.BxdfEval.PDF,                 RESTIRGI_BxdfPDF);
-        DBG_OUTPUT1(Y.Jacobian,                     RESTIRGI_Jacobian);
 
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);

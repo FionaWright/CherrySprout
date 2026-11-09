@@ -12,22 +12,22 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         //eCore_JitterPerFrame |
         eCore_Accumulation |
         //eCore_NormalMaps |
-        eCore_EnvironmentMap |
+        //eCore_EnvironmentMap |
         eCore_AlphaTesting |
         //eCore_Transmission |
-        //eCore_NEE |
+        eCore_NEE |
         //eCore_FireflyThreshold |
         //eCore_Emission |
-        //eCore_Punctuals |
+        eCore_Punctuals |
         //eCore_GradientDomain |
         eCore_GdptShiftRecEnv |
         eCore_GdptShiftRec |
         eCore_GdptShiftHalf |
         eCore_AliasTables |
-        eCore_RestirPT |
-        eCore_HybridShift
+        eCore_HybridShift |
         //eCore_RestirDI |
         //eCore_RestirGI |
+        eCore_RestirPT
         //eCore_RussianRoulette
     );
 

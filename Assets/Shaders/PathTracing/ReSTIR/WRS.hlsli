@@ -50,9 +50,15 @@ bool ReservoirMerge(
 
     float pHat = Target(other.Y, context);
 
-    // TODO
+    // Naive:
     float mis1 = 1 / M;
     float mis2 = 1 / M;
+
+    // Balance:
+    //float pdf1 = PDF(reservoir.Y, context);
+    //float pdf2 = PDF(other.Y, context);
+    //float mis1 = pdf1 / (c1 * pdf1 + c2 * pdf2);
+    //float mis2 = pdf2 / (c1 * pdf1 + c2 * pdf2);
 
     float w1 = GetWeight(mis1, 1.0f, c1, reservoir.WeightSum);
     float w2 = GetWeight(mis2, pHat, c2, other.W_Y);

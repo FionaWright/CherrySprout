@@ -28,7 +28,7 @@ public:
     void UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs,
                                    const RestirConfig& config);
 
-    void PrePasses(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config);
+    void PrePasses(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config);
     void PostUpdate(D3D* d3d);
 
     static size_t TotalCbvRequiredSize() { return 0; }

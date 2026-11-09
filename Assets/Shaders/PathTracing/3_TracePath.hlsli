@@ -85,9 +85,10 @@ bool ResolvePathAncillaryVertex(
         float3 L_gi;
         if (TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
         {
-            L_gi *= 0.5f;
+            //L_gi *= 0.5f;
             pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
             DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
+            return false;
         }
 
         /*
@@ -160,8 +161,6 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     PathState pathState = CreatePathState(origin, dir);
     PathVertexList vertexList = CreatePathVertexList();
 
-    //pathState.DivideByPdfEnabled = false;
-
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
         pathState.RaySegmentIdx = i;
@@ -178,18 +177,10 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             pathSample.VertexList = vertexList;
     }
 
-    if (FEAT_CORE(RestirGI))
+    if (false && FEAT_CORE(RestirGI))
     {
         pathSample.Lo *= 0.5f;
     }
-
-    //float pdfPathLog = 0.0f;
-    //for (uint i = 0; i < vertexList.NumVertices; i++)
-    //{
-    //    if (vertexList.Array[i].Type == VertexType::eStandard)
-    //        pdfPathLog += log(vertexList.Array[i].PDF);
-    //}
-    //pathSample.Lo /= exp(pdfPathLog);
 
     DBG_OUTPUT1(pathState.RaySegmentIdx == gSettings.MaxRayDepth, KilledByMaxDepth);
     DBG_OUTPUT_DUMP_DISABLE();
@@ -203,11 +194,11 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
         DBG_OUTPUT1(0.0f, RESTIR_ReservoirConfidence);
         DBG_OUTPUT1(0.0f, RESTIR_NdL);
         DBG_OUTPUT1(0.0f, RESTIR_W_Y);
+        DBG_OUTPUT1(0.0f, RESTIR_Jacobian);
         DBG_OUTPUT1(0.0f, RESTIRGI_Dir);
         DBG_OUTPUT1(0.0f, RESTIRGI_DirectContrib);
         DBG_OUTPUT1(0.0f, RESTIRGI_BxdfRadiance);
         DBG_OUTPUT1(0.0f, RESTIRGI_BxdfPDF);
-        DBG_OUTPUT1(0.0f, RESTIRGI_Jacobian);
         DBG_OUTPUT1(0.0f, RESTIRGI_GiLo);
     }
     DBG_OUTPUT_DUMP_ENABLE();

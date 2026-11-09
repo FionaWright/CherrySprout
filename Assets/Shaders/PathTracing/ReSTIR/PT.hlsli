@@ -120,25 +120,92 @@ bool TrySampleReservoirPT(
     ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
     Y = reservoir.Y;
 
+    if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
+        return false;
+
     // Debug
     {
         DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
         DBG_OUTPUT1(reservoir.WeightSum,            RESTIR_ReservoirWeightSum);
         DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
         DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
+        DBG_OUTPUT1(Y.Jacobian,                     RESTIR_Jacobian);
 
-        DBG_OUTPUT1(Y.Jacobian,                     RESTIRGI_Jacobian); // TODO
+        DBG_OUTPUT3(Y.Lo,                                             RESTIRPT_Lo);
+        DBG_OUTPUT3(Palette(Y.VertexList.NumVertices),                RESTIRPT_NumVertices);
+        DBG_OUTPUT3(Palette((uint)Y.VertexList.Array[0].Type),        RESTIRPT_V1Type);
+        DBG_OUTPUT3(Y.VertexList.Array[0].Ng_ff,                      RESTIRPT_V1Ng_ff);
+        DBG_OUTPUT3(Palette((uint)Y.VertexList.Array[0].Lobe),        RESTIRPT_V1Lobe);
+        DBG_OUTPUT3(Y.VertexList.Array[0].Wo,                         RESTIRPT_V1Wo);
+        DBG_OUTPUT3(Y.VertexList.Array[0].Wi,                         RESTIRPT_V1Wi);
+        DBG_OUTPUT3(Y.VertexList.Array[0].IndirectContribution,       RESTIRPT_V1Indirect);
+        DBG_OUTPUT3(Y.VertexList.Array[0].DirectContribution,         RESTIRPT_V1Direct);
+        DBG_OUTPUT1(Y.VertexList.Array[0].ShadowFactor,               RESTIRPT_V1ShadowFactor);
+        if (Y.VertexList.NumVertices >= 2)
+        {
+            DBG_OUTPUT3(Palette((uint)Y.VertexList.Array[1].Type),        RESTIRPT_V2Type);
+            DBG_OUTPUT3(Y.VertexList.Array[1].Ng_ff,                      RESTIRPT_V2Ng_ff);
+            DBG_OUTPUT3(Palette((uint)Y.VertexList.Array[1].Lobe),        RESTIRPT_V2Lobe);
+            DBG_OUTPUT3(Y.VertexList.Array[1].Wo,                         RESTIRPT_V2Wo);
+            DBG_OUTPUT3(Y.VertexList.Array[1].Wi,                         RESTIRPT_V2Wi);
+            DBG_OUTPUT3(Y.VertexList.Array[1].IndirectContribution,       RESTIRPT_V2Indirect);
+            DBG_OUTPUT3(Y.VertexList.Array[1].DirectContribution,         RESTIRPT_V2Direct);
+            DBG_OUTPUT1(Y.VertexList.Array[1].ShadowFactor,               RESTIRPT_V2ShadowFactor);
+        }
 
         DBG_ASSERT_GE(reservoir.W_Y, 0.0f,          RESTIR_W_Y_RANGE);
         DBG_ASSERT_GE(reservoir.WeightSum, 0.0f,    RESTIR_WEIGHT_SUM_RANGE);
     }
 
-    if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
-        return false;
-
     Lo = Y.Lo * Y.Jacobian;
 
     return true;
+}
+
+float3 SampleRestirPT(uint2 pixelCoord)
+{
+    uint contextIdx = GetContextBufferIndex(pixelCoord);
+    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+    if (context.IsMiss)
+    {
+        return Miss(-context.Wo, 1.0f, true, false);
+    }
+
+    CandidatePT Y;
+    float3 Lo;
+    bool found = TrySampleReservoirPT(context.HitInfo, pixelCoord, context.Wo, Y, Lo);
+
+    DBG_OUTPUT_DUMP_DISABLE();
+    {
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirWeightSum);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirConfidence);
+        DBG_OUTPUT1(0.0f, RESTIR_W_Y);
+        DBG_OUTPUT1(0.0f, RESTIR_Jacobian);
+        DBG_OUTPUT1(0.0f, RESTIRPT_Lo);
+        DBG_OUTPUT1(0.0f, RESTIRPT_NumVertices);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Type);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Ng_ff);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Lobe);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Wo);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Wi);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Indirect);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1Direct);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V1ShadowFactor);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Type);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Ng_ff);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Lobe);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Wo);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Wi);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Indirect);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2Direct);
+        DBG_OUTPUT1(0.0f, RESTIRPT_V2ShadowFactor);
+    }
+    DBG_OUTPUT_DUMP_ENABLE();
+
+    if (found)
+        return Lo;
+
+    return float3(0, 0, 0); // TODO
 }
 
 #else
@@ -153,6 +220,7 @@ bool TrySampleReservoirPT(
     float3 wo,
     out CandidatePT Y,
     out float3 Lo) { Y = (CandidatePT)0; Lo = NAN; return NAN; }
+float3 SampleRestirPT(uint2 pixelCoord) { return NAN; }
 
 #endif
 

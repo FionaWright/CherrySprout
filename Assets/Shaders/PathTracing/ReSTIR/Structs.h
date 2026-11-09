@@ -36,7 +36,7 @@ struct CandidateGI
     float Jacobian;
 };
 
-// TODO: Storing all RNG values rather than initial rng state may not be worth it
+// TODO: Need to put vertices in their own buffer to avoid allocating unused vertices
 struct CandidatePT
 {
     PathVertexList VertexList;

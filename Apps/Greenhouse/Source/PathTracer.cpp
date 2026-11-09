@@ -334,23 +334,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 #endif
 
     {
-        CbvRestirSettings settings;
-        settings.GenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
-        settings.TemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
-        settings.GenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
-        settings.TemporalNormalDivThreshold = renderInfo.PathTracerConfig->RestirTemporalNormalDivThreshold;
-        settings.TemporalDepthDivThreshold = renderInfo.PathTracerConfig->RestirTemporalDepthDivThreshold;
-        settings.SpatialNormalDivThreshold = renderInfo.PathTracerConfig->RestirSpatialNormalDivThreshold;
-        settings.SpatialDepthDivThreshold = renderInfo.PathTracerConfig->RestirSpatialDepthDivThreshold;
-        settings.SpatialNumSamples = renderInfo.PathTracerConfig->RestirSpatialNumSamples;
-        settings.SpatialConfidenceCap = renderInfo.PathTracerConfig->RestirSpatialConfidenceCap;
-        settings.SpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
-        settings.TemporalEnabled = renderInfo.PathTracerConfig->RestirTemporalEnabled;
-        settings.SpatialEnabled = renderInfo.PathTracerConfig->RestirSpatialEnabled;
-        m_set.UpdateCBV(SPACE_B_DEFAULT, 1, &settings);
-    }
-
-    {
         m_primal.Transition                             (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         m_accum.Transition                              (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -360,28 +343,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         scene->GPU.MegaBufferMaterials.Transition       (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
         renderInfo.EnvironmentMap->GetEA()->Transition  (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    }
-
-    const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI);
-    const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirGI);
-    const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirPT);
-    if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
-    {
-        cmdList->SetComputeRootSignature(m_rootSig.Get());
-        heap->Bind(cmdList);
-        heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
-        m_set.SetDescriptorTables_Compute(cmdList);
-
-        RestirConfig restirConfig;
-        restirConfig.ClearBuffers = m_restirClearScheduled;
-        restirConfig.EnabledDI = restirDiEnabled;
-        restirConfig.EnabledGI = restirGiEnabled;
-        restirConfig.EnabledPT = restirPtEnabled;
-        restirConfig.EnabledTemporal = renderInfo.PathTracerConfig->RestirTemporalEnabled;
-        restirConfig.EnabledSpatial = renderInfo.PathTracerConfig->RestirSpatialEnabled;
-
-        m_restirManager.PrePasses(d3d->GetDevice(), cmdList, restirConfig);
-        m_restirClearScheduled = false;
     }
 
     const bool isMaxFramesReached = renderInfo.PathTracerConfig->MaxFrameCount != 0 && renderInfo.FrameIndex >= renderInfo.PathTracerConfig->MaxFrameCount;
@@ -395,6 +356,45 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     // Main Pass
     if (runPT)
     {
+        const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI);
+        const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirGI);
+        const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirPT);
+        if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
+        {
+            {
+                CbvRestirSettings settings;
+                settings.GenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
+                settings.TemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
+                settings.GenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
+                settings.TemporalNormalDivThreshold = renderInfo.PathTracerConfig->RestirTemporalNormalDivThreshold;
+                settings.TemporalDepthDivThreshold = renderInfo.PathTracerConfig->RestirTemporalDepthDivThreshold;
+                settings.SpatialNormalDivThreshold = renderInfo.PathTracerConfig->RestirSpatialNormalDivThreshold;
+                settings.SpatialDepthDivThreshold = renderInfo.PathTracerConfig->RestirSpatialDepthDivThreshold;
+                settings.SpatialNumSamples = renderInfo.PathTracerConfig->RestirSpatialNumSamples;
+                settings.SpatialConfidenceCap = renderInfo.PathTracerConfig->RestirSpatialConfidenceCap;
+                settings.SpatialRadius = renderInfo.PathTracerConfig->RestirSpatialRadius;
+                settings.TemporalEnabled = renderInfo.PathTracerConfig->RestirTemporalEnabled;
+                settings.SpatialEnabled = renderInfo.PathTracerConfig->RestirSpatialEnabled;
+                m_set.UpdateCBV(SPACE_B_DEFAULT, 1, &settings);
+            }
+
+            cmdList->SetComputeRootSignature(m_rootSig.Get());
+            heap->Bind(cmdList);
+            heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
+            m_set.SetDescriptorTables_Compute(cmdList);
+
+            RestirConfig restirConfig;
+            restirConfig.ClearBuffers = m_restirClearScheduled;
+            restirConfig.EnabledDI = restirDiEnabled;
+            restirConfig.EnabledGI = restirGiEnabled;
+            restirConfig.EnabledPT = restirPtEnabled;
+            restirConfig.EnabledTemporal = renderInfo.PathTracerConfig->RestirTemporalEnabled;
+            restirConfig.EnabledSpatial = renderInfo.PathTracerConfig->RestirSpatialEnabled;
+
+            m_restirManager.PrePasses(d3d, cmdList, restirConfig);
+            m_restirClearScheduled = false;
+        }
+
         cmdList->SetComputeRootSignature(m_rootSig.Get());
         cmdList->SetPipelineState(m_pipeline.GetPSO());
         heap->Bind(cmdList);
@@ -519,7 +519,7 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
             return;
         }
 
-        RestirConfig restirConfig;
+        RestirConfig restirConfig{};
         restirConfig.EnabledDI = GetFeatFlagCore(featureFlags, eCore_RestirDI);
         restirConfig.EnabledGI = GetFeatFlagCore(featureFlags, eCore_RestirGI);
         restirConfig.EnabledPT = GetFeatFlagCore(featureFlags, eCore_RestirPT);
