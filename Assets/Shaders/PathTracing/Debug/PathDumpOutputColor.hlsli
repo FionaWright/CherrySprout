@@ -2,6 +2,7 @@
 #define H_PATH_DUMP_OUTPUT_COLOR_H
 
 #include "Utils/Constants.h"
+#include "PathTracing/Debug/Globals.hlsli"
 
 #if FEAT_DBG_D(PathDumper)
 
@@ -18,7 +19,7 @@ void LoadOutputColor(uint rayIdx, uint dbgIdx, out float3 value, out uint isAssi
     uint4 bytes = gPathDumpDebugOutput.Load4(offset);
 
     value = float3(asfloat(bytes.x), asfloat(bytes.y), asfloat(bytes.z));
-    isAssignedValue = bytes.w;
+    isAssignedValue = bytes.w != 0;
 }
 
 void StoreOutputColor(uint rayIdx, uint dbgIdx, float3 value, uint isAssignedValue)

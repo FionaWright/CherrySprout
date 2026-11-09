@@ -105,8 +105,9 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
         m_pathDumpOCBufferReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
         constexpr size_t bufferSize = MAX_RAY_DEPTH * sizeof(RayDump);
+        constexpr size_t bufferSizeOC = MAX_RAY_DEPTH * sizeof(DebugOutputStruct);
         cmdList->CopyBufferRegion(m_pathDumpBufferReadback.GetResource(), 0, m_pathDumpBufferRW.GetResource(), 0, bufferSize);
-        cmdList->CopyBufferRegion(m_pathDumpOCBufferReadback.GetResource(), 0, m_pathDumpOCBufferRW.GetResource(), 0, bufferSize);
+        cmdList->CopyBufferRegion(m_pathDumpOCBufferReadback.GetResource(), 0, m_pathDumpOCBufferRW.GetResource(), 0, bufferSizeOC);
 
         V(cmdList->Close());
         d3d->ExecuteCommandList(cmdList);

@@ -75,7 +75,11 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
         cmdList->SetPipelineState(m_pipelineGradientsSS.GetPSO());
         cmdList->SetComputeRootSignature(m_rootSigGradientsSS.Get());
 
-        m_setGradientsSS.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, primal, primal->GetDesc().Format);
+        if (m_setGradientsSS.GetSRV(0, 0) != primal)
+        {
+            d3d->Flush();
+            m_setGradientsSS.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, primal, primal->GetDesc().Format);
+        }
         m_setGradientsSS.SetDescriptorTables_Compute(cmdList);
 
         DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
@@ -121,10 +125,14 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
             V(m_pipelineGradientsCombine.InitCompute(d3d->GetDevice(), "Compute/GradientDomain/CombineGradientsCS.hlsl", m_rootSigGradientsCombine.Get()));
         }
 
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, gXF, gXF->GetDesc().Format);
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, gXB, gXB->GetDesc().Format);
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 2, gYF, gYF->GetDesc().Format);
-        m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 3, gYB, gYB->GetDesc().Format);
+        if (m_setGradientsCombine.GetSRV(0, 0) != gXF)
+        {
+            d3d->Flush();
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, gXF, gXF->GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, gXB, gXB->GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 2, gYF, gYF->GetDesc().Format);
+            m_setGradientsCombine.SetSRV_Tex2D(d3d->GetDevice(), 0, 3, gYB, gYB->GetDesc().Format);
+        }
 
         gXF->Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         gXB->Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);

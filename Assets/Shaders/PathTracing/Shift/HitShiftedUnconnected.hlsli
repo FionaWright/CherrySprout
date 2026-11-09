@@ -54,20 +54,23 @@ void HitShiftedUnconnected(
 
         // TODO: Emissive Jacobian
 
-        float shadowFactor;
-        float3 L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
-
-        DBG_OUTPUT3(L_nee, GD_NeeContrib);
-
-        // TODO: Should this even be trying NEE samples if they failed for main path? Just going to reject anyways
-        if (v1.ShadowFactor > 0.99f != shadowFactor > 0.99f)
+        if (v1.ShadowFactor > 0.0f)
         {
-            pathStateShifted.IsSymmetric = false;
-            DBG_OUTPUT1(1.0f, GD_RejectionNEE);
-            return;
-        }
+            float shadowFactor;
+            float3 L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
 
-        contrib += L_nee * pathState.Beta;
+            DBG_OUTPUT3(L_nee, GD_NeeContrib);
+
+            // TODO: Should this even be trying NEE samples if they failed for main path? Just going to reject anyways
+            if (shadowFactor <= 0.0f)
+            {
+                pathStateShifted.IsSymmetric = false;
+                DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+                return;
+            }
+
+            contrib += L_nee * pathState.Beta;
+        }
     }
 }
 

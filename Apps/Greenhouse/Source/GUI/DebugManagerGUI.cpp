@@ -597,7 +597,10 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                 else if (!currentHeader.empty())
                 {
                     if (currentHeaderOpen)
+                    {
+                        ImGui::TableNextRow();
                         ImGui::TreePop();
+                    }
                     currentHeader = "";
                     currentHeaderOpen = false;
                 }

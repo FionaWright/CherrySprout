@@ -108,10 +108,10 @@ Gradients SampleGradients(int2 mainCoord, PathSample mainPath)
     [loop] // Note: Do not unroll, otherwise expensive inlining will occur
     for (int i = 0; i < 4; i++)
     {
-        if (i == 0)
-            { DBG_OUTPUT_ENABLE(); }
-        else
-            { DBG_OUTPUT_DISABLE(); }
+        //if (i == 0)
+        //    { DBG_OUTPUT_ENABLE(); }
+        //else
+        //    { DBG_OUTPUT_DISABLE(); }
 
         sampleShiftedPath(mainPath.RngPrimary, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
     }

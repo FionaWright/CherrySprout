@@ -97,10 +97,7 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
         return;
     }
 
-    float pdfRatio = pathStateShifted.PdfRatio * pathStateShifted.Jacobian;
-    float m = BalanceHeuristicRatio(pdfRatio, 1, 1); // TODO
-
-    X_i.Lo = pathState.Lo * m;
+    X_i.Lo = pathState.Lo;
     X_i.Jacobian = pathStateShifted.Jacobian;
     X_i.PDF = pathStateShifted.PdfRatio * X_i.PDF;
 }

@@ -12,14 +12,13 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         //eCore_JitterPerFrame |
         eCore_Accumulation |
         //eCore_NormalMaps |
-        //eCore_EnvironmentMap |
-        eCore_AlphaTesting |
+        eCore_EnvironmentMap |
         //eCore_Transmission |
         eCore_NEE |
         //eCore_FireflyThreshold |
         //eCore_Emission |
         eCore_Punctuals |
-        //eCore_GradientDomain |
+        eCore_GradientDomain |
         eCore_GdptShiftRecEnv |
         eCore_GdptShiftRec |
         eCore_GdptShiftHalf |
@@ -27,8 +26,9 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_HybridShift |
         //eCore_RestirDI |
         //eCore_RestirGI |
-        eCore_RestirPT
+        //eCore_RestirPT
         //eCore_RussianRoulette
+        eCore_AlphaTesting
     );
 
 static constexpr auto s_defaultFeatFlagsCoreQS = static_cast<FeatFlagsCore>(~0);

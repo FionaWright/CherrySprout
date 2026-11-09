@@ -25,9 +25,9 @@ void ClearBuffer()
         gPathDump[i].PathState.LastRayWasDiracDelta = false;
         gPathDump[i].ForcedOutput = NAN;
 
-        for (int j = 0; j < (int)DebugOutputIndex::eCount; j++)
+        for (uint j = 0; j < (uint)DebugOutputIndex::eCount; j++)
         {
-            StoreOutputColor(i, j, NAN, false);
+            StoreOutputColor(i, j, float3(NAN,NAN,NAN), false);
         }
     }
 }
