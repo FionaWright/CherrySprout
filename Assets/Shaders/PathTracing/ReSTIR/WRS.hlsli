@@ -1,9 +1,9 @@
 #ifndef H_RIS_H
 #define H_RIS_H
 
-float GetWeight(float pHat, float c, float W)
+float GetWeight(float mis, float pHat, float c, float W)
 {
-    return pHat * c * W;
+    return mis * pHat * c * W;
 }
 
 template<typename TCandidate>
@@ -41,19 +41,28 @@ bool ReservoirMerge(
     Reservoir<TCandidate> other,
     TContext context)
 {
-    float c = min(other.Confidence, ConfidenceCap);
+    float c1 = reservoir.Confidence;
+    float c2 = min(other.Confidence, ConfidenceCap);
+    float M = c1 + c2;
+
+    // TODO
+    float mis1 = c1 / M;
+    float mis2 = c2 / M;
+
     float pHat = Target(other.Y, context);
-    float w = GetWeight(pHat, c, other.W_Y);
 
-    reservoir.Confidence += c;
+    float w1 = reservoir.WeightSum * mis1;
+    float w2 = GetWeight(mis2, pHat, 1, other.W_Y);
 
-    if (w <= 0.0f || pHat <= 0.0f)
+    reservoir.Confidence = M;
+
+    if (M <= 0.0f || w2 <= 0.0f || pHat <= 0.0f)
         return false;
 
-    reservoir.WeightSum += w;
+    reservoir.WeightSum = w1 + w2;
 
     float r = Rand01(rngInfo);
-    float norm_w = w / reservoir.WeightSum;
+    float norm_w = w2 / reservoir.WeightSum;
     if (r <= norm_w)
     {
         reservoir.Y = other.Y;
@@ -79,7 +88,7 @@ void NormalizeUnbiasedContributionWeight(inout Reservoir<TCandidate> reservoir)
         return;
     }
 
-    reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat * reservoir.Confidence);
+    reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat);
 }
 
 template<typename TCandidate, typename TContext>
@@ -107,9 +116,9 @@ void WRS(
 
         float W_X_i = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
 
-        //float m = RestirMis(X_i, M);
+        float mis = RestirMis(X_i, M);
         float c = 1;
-        float w = GetWeight(pHat, c, W_X_i);
+        float w = GetWeight(mis, pHat, c, W_X_i);
 
         candidateSelected |= ReservoirUpdate<TCandidate>(rngInfo, reservoir, X_i, w, c, pHat);
     }
