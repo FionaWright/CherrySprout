@@ -69,6 +69,31 @@ void ReconstructPrimaryRayHit(
 
     ApplyMaterialTextures(hitInfo);
 
+    if (FEAT_CORE(NEE)) // TODO
+    {
+        hitInfo.InstanceIdx = 0;
+        hitInfo.PrimitiveCount = 0;
+        hitInfo.TriangleArea = 0.0f;
+    }
+
+    if (FEAT_DBG(Checkerboard))
+    {
+        uint2 uvQuant = uint2(hitInfo.UV * 100);
+        hitInfo.Mat.Albedo.xyz = ((uvQuant.x + uvQuant.y) % 2 == 0) ? 1.0f : 0.0f;
+    }
+
+    if (FEAT_DBG(FurnaceTestHHE))
+    {
+        hitInfo.Mat.Albedo.xyz = 1.0f;
+        hitInfo.Emission = 0.0f;
+    }
+
+    if (FEAT_DBG(FurnaceTestHDR))
+    {
+        hitInfo.Mat.Albedo.xyz = 0.0f;
+        hitInfo.Emission = 1.0f;
+    }
+
     {
         DBG_OUTPUT3(Palette(matIdx),              Hit_MaterialIdx);
         DBG_OUTPUT3(hitInfo.Ns_ff,                Hit_Normals);

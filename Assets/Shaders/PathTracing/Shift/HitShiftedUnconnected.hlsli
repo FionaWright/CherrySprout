@@ -57,11 +57,11 @@ void HitShiftedUnconnected(
         if (v1.ShadowFactor > 0.0f)
         {
             float shadowFactor;
-            float3 E_direct = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, shadowFactor);
+            float3 E_direct = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, v1.Lobe, shadowFactor);
 
             DBG_OUTPUT3(E_direct, GD_NeeContrib);
 
-            if (shadowFactor <= 0.0f)
+            if (abs(v1.ShadowFactor - shadowFactor) > EPSILON)
             {
                 pathStateShifted.IsSymmetric = false;
                 DBG_OUTPUT1(1.0f, GD_RejectionNEE);

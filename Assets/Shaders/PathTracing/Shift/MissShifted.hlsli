@@ -5,7 +5,11 @@ void MissShifted(inout PathState pathState, PathVertexInfo v1, ReconnectionState
 {
     float3 Li;
 
-    if (reconnectionState == ReconnectionState::eConnected)
+    if (FEAT_DBG(FurnaceTestHHE))
+        Li = 0.0f;
+    else if (FEAT_DBG(FurnaceTestHDR))
+        Li = 1.0f;
+    else if (reconnectionState == ReconnectionState::eConnected)
     {
         Li = pathState.Beta * v1.DirectContribution;
     }

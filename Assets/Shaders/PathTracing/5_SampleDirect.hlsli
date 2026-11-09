@@ -41,7 +41,7 @@ float3 SampleDirectLighting(
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, shadowFactor);
+            L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, LobeTag::eAll, shadowFactor);
         }
 
         E_direct += L_nee;

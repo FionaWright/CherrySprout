@@ -71,6 +71,7 @@ float3 EvaluateNEE(
     uint numSamples,
     float3 wo,
     LightSample lightSample,
+    LobeTag lobe,
 
     out float shadowFactor)
 {
@@ -100,7 +101,7 @@ float3 EvaluateNEE(
     }
     else
     {
-        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, lobe);
 
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
@@ -134,6 +135,7 @@ float3 EvaluateNEE(
     uint numSamples,
     float3 wo,
     LightSample lightSample,
+    LobeTag lobe,
 
     out float shadowFactor) { shadowFactor = NAN; return NAN; }
 
