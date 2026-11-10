@@ -28,6 +28,8 @@ void HitShiftedUnconnected(
     else
         shiftResult = ShiftMapHPlusR(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
 
+    // TODO: if min(jacobian, 1.0 / jacobian) < 0.1f reject? (https://github.com/elite-sheep/gradient-restir/blob/release/Source/RenderPasses/GPathTracer/GPathTracer.slang)
+
     if (!shiftResult.IsSuccessful || bxdfEval.PDF <= 0.0f)
     {
         pathStateShifted.IsSymmetric = false;

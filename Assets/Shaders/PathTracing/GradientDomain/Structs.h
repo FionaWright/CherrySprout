@@ -7,6 +7,12 @@
 #include "PathTracing/Structs.h"
 #include "PathTracing/NEE/Structs.h"
 
+enum GradientEstimator
+{
+    eForward,
+    eBackward
+};
+
 struct Gradients
 {
     hlsl::float3 XForward;

@@ -25,7 +25,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
 {
     float3 origin = NAN;
     PathState pathState = CreatePathState(origin, -context.Wo);
-    PathVertexList vertexList = CreatePathVertexList();
+    X_i.VertexList = CreatePathVertexList();
 
     pathState.DivideByPdfEnabled = false;
 
@@ -34,7 +34,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     // Primary Ray
     bool proceed;
     {
-        proceed = ResolvePathAncillaryVertex(pathState, vertexList, rngInfo, context.HitInfo, context.IsMiss, pixelCoord);
+        proceed = ResolvePathAncillaryVertex(pathState, X_i.VertexList, rngInfo, context.HitInfo, context.IsMiss, pixelCoord);
     }
 
     if (proceed)
@@ -43,7 +43,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
         {
             pathState.RaySegmentIdx = i;
 
-            if (!TracePathAncillary(pathState, vertexList, rngInfo, pixelCoord))
+            if (!TracePathAncillary(pathState, X_i.VertexList, rngInfo, pixelCoord))
                 break;
         }
     }
@@ -56,7 +56,6 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     }
     float pdf = exp(pdfPathLog);
 
-    X_i.VertexList = vertexList;
     X_i.Lo = pathState.Lo;
     X_i.Jacobian = 1.0f;
     X_i.PDF = pdf;

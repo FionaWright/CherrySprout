@@ -7,7 +7,7 @@
 #include "PathTracing/Shift/TraceShiftedPath.hlsli"
 #include "PathTracing/MIS.hlsli"
 
-void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
+void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
 {
     if (shiftedCoord.x < 0 ||
         shiftedCoord.y < 0 ||
@@ -25,7 +25,7 @@ void sampleShiftedPath(RngValuesPrimary rng, int2 shiftedCoord, PathSample mainP
     float3 shiftedRayDirection;
 
     GetPrimaryRay(
-        rng, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        mainPath.RngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
         shiftedCoord, gSettings.InvV, gSettings.InvP,
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         shiftedRayOrigin, shiftedRayDirection);
@@ -113,7 +113,7 @@ Gradients SampleGradients(int2 mainCoord, PathSample mainPath)
         else
             { DBG_OUTPUT_DISABLE(); }
 
-        sampleShiftedPath(mainPath.RngPrimary, mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
+        EvaluateShiftedPath(mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
     }
     DBG_OUTPUT_ENABLE()
 

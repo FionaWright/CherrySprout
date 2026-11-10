@@ -40,9 +40,8 @@ FLAG_PROCESS(RestirGI, true)
 FLAG_PROCESS(RestirPT, true)
 FLAG_PROCESS(RestirPG, true)
 
+FLAG_PROCESS(RestirGPT, true)
 FLAG_PROCESS(RestirTargetVisibility, true)
+
 FLAG_PROCESS(Transient, true)
-
 FLAG_PROCESS(ToneMapping, true)
-
-// 1 flag slots remaining
