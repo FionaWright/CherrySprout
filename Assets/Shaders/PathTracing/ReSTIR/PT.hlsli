@@ -24,7 +24,8 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 {
     if (!FEAT_CORE(NEE))
     {
-        EvaluateSubPath(X_i.VertexList, X_i.Lo, X_i.PDF);
+        float finalMIS; // Always 1, discard
+        EvaluateSubPath(X_i.VertexList, X_i.Lo, X_i.PDF, finalMIS);
         return;
     }
 
@@ -41,9 +42,11 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
         X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
         X_i.VertexList.NumVertices = i + 1;
 
-        EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i]);
+        float finalMIS;
+        EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i], finalMIS);
+        //Lo[i] *= finalMIS;
 
-        float mis = 1.0f; // TODO: Balance heuristic for BXDF
+        float mis = 1.0f; // TODO: Generate BxDF candidate for each NEE candidate
         float W_X = pdf[i] <= 0.0f ? 0.0f : 1.0f / pdf[i];
         float pHat = Luminance(Lo[i]);
 
@@ -69,7 +72,7 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
             X_i.Lo = Lo[i];
 
             float pHat = Luminance(Lo[i]);
-            float W_Y = wSum / (float(M) * pHat); // TODO: M?
+            float W_Y = wSum / (float(M) * pHat);
 
             X_i.PDF = 1.0f / W_Y; // TODO
         }

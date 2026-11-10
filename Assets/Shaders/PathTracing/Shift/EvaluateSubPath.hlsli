@@ -16,16 +16,22 @@
 
 #if PATH_VERTICES_REQUIRED_D
 
+// finalMIS set to final vertex MIS between BXDF/NEE sampling
 bool EvaluateSubPathAncillaryVertex(
     inout PathState pathState,
     PathVertexInfo vertex,
 
-    inout float logPDF)
+    inout float logPdf,
+    out float finalMIS)
 {
+    finalMIS = 1.0f;
+
     if (vertex.Type == VertexType::eEnvironment)
     {
         float3 L_direct = pathState.Beta * vertex.DirectContribution;
         pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
+
+        finalMIS = vertex.MIS;
 
         DBG_OUTPUT3(L_direct, MissContrib);
         DBG_OUTPUT1(1.0f, KilledByMiss);
@@ -37,6 +43,8 @@ bool EvaluateSubPathAncillaryVertex(
     {
         float3 L_sample = pathState.Beta * vertex.DirectContribution;
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+
+        finalMIS = vertex.MIS;
 
         DBG_OUTPUT1(1.0f, KilledByEmission);
         return false;
@@ -50,7 +58,9 @@ bool EvaluateSubPathAncillaryVertex(
         float3 L_sample = pathState.Beta * vertex.DirectContribution / float(gSettings.DirectNumSamples);
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
-        logPDF += log(vertex.PDF_NEE);
+        finalMIS = vertex.MIS;
+
+        logPdf += log(vertex.PDF_NEE);
         return false;
     }
 
@@ -60,13 +70,15 @@ bool EvaluateSubPathAncillaryVertex(
     {
         pathState.Beta *= vertex.IndirectContribution;
 
-        logPDF += log(vertex.PDF_BXDF);
+        logPdf += log(vertex.PDF_BXDF);
         return true;
     }
 }
 
-void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf)
+void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf, out float finalMIS)
 {
+    finalMIS = 1.0f;
+
     PathState pathState = CreatePathState(0, 0);
 
     float logPDF = 0.0f;
@@ -77,7 +89,7 @@ void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf)
 
         PathVertexInfo vertex = vertexList.Array[i];
 
-        if (!EvaluateSubPathAncillaryVertex(pathState, vertex, logPDF))
+        if (!EvaluateSubPathAncillaryVertex(pathState, vertex, logPDF, finalMIS))
             break;
     }
 
@@ -90,9 +102,10 @@ void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf)
 bool EvaluateSubPathAncillaryVertex(
     inout PathState pathState,
     PathVertexInfo vertex,
-    inout float logPDF) { logPDF = NAN; return false; }
+    inout float logPDF,
+    out float finalMIS) { logPDF = NAN; finalMIS = NAN; return false; }
 
-void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf) { Lo = NAN; pdf = NAN; }
+void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf, out float finalMIS) { Lo = NAN; pdf = NAN; finalMIS = NAN; }
 
 #endif
 

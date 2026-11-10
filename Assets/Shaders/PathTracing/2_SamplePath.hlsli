@@ -25,7 +25,7 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 
     if (FEAT_DBG(EvaluatePathTest))
     {
-        uint neeIdx = 1;
+        uint neeIdx = UINT_MAX;
         if (neeIdx != UINT_MAX)
         {
             if (neeIdx < pathSample.VertexList.NumVertices && pathSample.VertexList.Array[neeIdx].Type == VertexType::eStandard)
@@ -42,7 +42,8 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 
         float3 Lo;
         float pdf;
-        EvaluateSubPath(pathSample.VertexList, Lo, pdf);
+        float finalMIS;
+        EvaluateSubPath(pathSample.VertexList, Lo, pdf, finalMIS);
         pathSample.Lo = Lo / max(1e-6f, pdf);
     }
 
