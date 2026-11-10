@@ -13,19 +13,18 @@
 #include "PathTracing/Shift/ShiftMapping/Components/ReconnectEnv.hlsli"
 #include "PathTracing/Shift/TraceShiftedPath.hlsli"
 #include "PathTracing/3_TracePath.hlsli"
+#include "PathTracing/3_EvaluatePath.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i)
+void GenerateGroup(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i, out uint numSubCandidates)
 {
     float3 origin = NAN;
     PathState pathState = CreatePathState(origin, -context.Wo);
     X_i.VertexList = CreatePathVertexList();
-
-    //pathState.DivideByPdfEnabled = false;
 
     uint2 pixelCoord = uint2(0,0); // TODO: Needed to combine ReSTIR types, ignore for now
 
@@ -46,17 +45,24 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
         }
     }
 
-    float pdfPathLog = 0.0f;
-    for (uint i = 0; i < X_i.VertexList.NumVertices; i++)
-    {
-        if (X_i.VertexList.Array[i].Type == VertexType::eStandard)
-            pdfPathLog += log(X_i.VertexList.Array[i].PDF);
-    }
-    float pdf = exp(pdfPathLog);
-
-    X_i.Lo = pathState.Lo;
     X_i.Jacobian = 1.0f;
-    X_i.PDF = pdf;
+
+    numSubCandidates = X_i.VertexList.NumVertices;
+
+    // TODO: RIS to select random sub-path
+}
+
+CandidatePT ExtractSubCandidateFromGroup(CandidatePT group, uint subCandidateIdx)
+{
+    CandidatePT subCandidate = group;
+
+    if (subCandidateIdx != group.VertexList.NumVertices - 1)
+    {
+        subCandidate.VertexList.Array[subCandidateIdx].Lobe = eNEE;
+        subCandidate.VertexList.NumVertices = subCandidateIdx + 1;
+    }
+
+    EvaluatePath(subCandidate.VertexList, subCandidate.Lo, subCandidate.PDF);
 }
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)

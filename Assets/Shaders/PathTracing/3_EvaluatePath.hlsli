@@ -14,7 +14,7 @@
 #include "PathTracing/RandomSample.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
-void EvaluatePathAncillaryVertex(
+bool EvaluateSubPathAncillaryVertex(
     inout PathState pathState,
     PathVertexInfo vertex,
 
@@ -27,7 +27,7 @@ void EvaluatePathAncillaryVertex(
 
         DBG_OUTPUT3(L_direct, MissContrib);
         DBG_OUTPUT1(1.0f, KilledByMiss);
-        return;
+        return false;
     }
 
     float3 wo = -pathState.Desc.Direction;
@@ -37,11 +37,11 @@ void EvaluatePathAncillaryVertex(
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
         DBG_OUTPUT1(1.0f, KilledByEmission);
-        return;
+        return false;
     }
 
     if (vertex.Type != VertexType::eStandard)
-        return;
+        return false;
 
     if (vertex.Lobe == LobeTag::eNEE)
     {
@@ -49,18 +49,21 @@ void EvaluatePathAncillaryVertex(
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
         logPDF += log(vertex.PDF_NEE);
+        return false;
     }
-    else
+
+    if (vertex.PDF_BXDF <= 0.0f)
+        return false;
+
     {
         pathState.Beta *= vertex.IndirectContribution;
 
         logPDF += log(vertex.PDF_BXDF);
+        return true;
     }
-
-    pathState.IsPrimaryRay = false;
 }
 
-void EvaluatePath(PathVertexList vertexList, out float3 Lo, out float pdf)
+void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf)
 {
     PathState pathState = CreatePathState(0, 0);
 
@@ -72,7 +75,8 @@ void EvaluatePath(PathVertexList vertexList, out float3 Lo, out float pdf)
 
         PathVertexInfo vertex = vertexList.Array[i];
 
-        EvaluatePathAncillaryVertex(pathState, vertex, logPDF);
+        if (!EvaluateSubPathAncillaryVertex(pathState, vertex, logPDF))
+            break;
     }
 
     Lo = pathState.Lo;

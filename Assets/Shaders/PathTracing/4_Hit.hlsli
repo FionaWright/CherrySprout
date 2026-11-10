@@ -68,7 +68,6 @@ void Hit(
         vInfo.Eta = ComputeEtaAir(hitInfo.IsEntering, hitInfo.Mat.IOR_N);
         vInfo.Roughness = hitInfo.Mat.Roughness;
         vInfo.IndirectContribution = E_indirect;
-        vInfo.DirectContribution = E_direct;
         vInfo.PDF_BXDF = pdf_bxdf;
     }
 }
