@@ -35,6 +35,10 @@ float3 SampleNEE(
     if (shadowFactor <= 0.0f)
         return 0;
 
+    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+
+    float3 radiance = lightEval.Radiance * bxdfEval.Radiance;
+
     if (FEAT_DBG(FixedMisNeeManual))
     {
         mis = GetFixedMisNee();
@@ -45,17 +49,13 @@ float3 SampleNEE(
     }
     else
     {
-        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
-
-        lightEval.Radiance *= bxdfEval.Radiance; // TODO: ?
-
         mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     DBG_OUTPUT1(mis, NEE_MIS);
 
     pdf = lightEval.PDF;
-    return shadowFactor * lightEval.Radiance * NdL;
+    return shadowFactor * radiance * NdL;
 }
 
 float3 SampleNEE(
@@ -102,6 +102,10 @@ float3 EvaluateNEE(
     if (shadowFactor <= 0.0f)
         return 0;
 
+    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+
+    float3 radiance = lightEval.Radiance * bxdfEval.Radiance;
+
     if (FEAT_DBG(FixedMisNeeManual))
     {
         mis = GetFixedMisNee();
@@ -112,15 +116,11 @@ float3 EvaluateNEE(
     }
     else
     {
-        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, lobe);
-
-        lightEval.Radiance *= bxdfEval.Radiance; // TODO: ?
-
         mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     pdf = lightEval.PDF;
-    return shadowFactor * lightEval.Radiance * NdL;
+    return shadowFactor * radiance * NdL;
 }
 
 #else
