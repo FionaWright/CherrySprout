@@ -5,6 +5,8 @@
 #   error HLSL only
 #endif
 
+#include "PathTracing/FeatFlags/Combinations.hlsli"
+
 #if defined(FEAT_FLAGS_COMP_CORE) && defined(FEAT_FLAGS_COMP_DBG)
 
 #include "PathTracing/FeatFlags/Internal/Interpretations.h"

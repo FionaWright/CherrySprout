@@ -32,3 +32,4 @@ FLAG_PROCESS(GeometricNormalOnly, true)
 FLAG_PROCESS(BxdfTestCore, true)
 
 FLAG_PROCESS(BxdfTestFullMode, true)
+FLAG_PROCESS(EvaluatePathTest, true)

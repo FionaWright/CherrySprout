@@ -53,7 +53,7 @@ float3 SampleDirectLighting(
 
     // TODO: Move shadow factor outside?
 
-	if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
+	if (PATH_VERTICES_REQUIRED)
     {
 	    vInfo.LightSample = lightSample;
 	    vInfo.ShadowFactor = shadowFactor;

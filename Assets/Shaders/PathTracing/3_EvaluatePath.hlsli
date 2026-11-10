@@ -17,7 +17,6 @@
 void EvaluatePathAncillaryVertex(
     inout PathState pathState,
     PathVertexInfo vertex,
-    uint2 pixelCoord,
 
     inout float logPDF)
 {
@@ -61,9 +60,9 @@ void EvaluatePathAncillaryVertex(
     pathState.IsPrimaryRay = false;
 }
 
-void EvaluatePath(float3 origin, float3 dir, PathVertexList vertexList, uint2 pixelCoord, out float3 Lo, out float pdf)
+void EvaluatePath(PathVertexList vertexList, out float3 Lo, out float pdf)
 {
-    PathState pathState = CreatePathState(origin, dir);
+    PathState pathState = CreatePathState(0, 0);
 
     float logPDF = 0.0f;
 
@@ -73,7 +72,7 @@ void EvaluatePath(float3 origin, float3 dir, PathVertexList vertexList, uint2 pi
 
         PathVertexInfo vertex = vertexList.Array[i];
 
-        EvaluatePathAncillaryVertex(pathState, vertex, pixelCoord, logPDF);
+        EvaluatePathAncillaryVertex(pathState, vertex, logPDF);
     }
 
     Lo = pathState.Lo;

@@ -4,6 +4,7 @@
 #include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/3_TracePath.hlsli"
+#include "PathTracing/3_EvaluatePath.hlsli"
 
 PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 {
@@ -21,6 +22,14 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
     DBG_SCALE_INTENSITY_GLOBAL(pathSample.Lo);
 
     pathSample.RngPrimary = rngPrimary;
+
+    if (FEAT_DBG(EvaluatePathTest))
+    {
+        float3 Lo;
+        float pdf;
+        EvaluatePath(pathSample.VertexList, Lo, pdf);
+        pathSample.Lo = Lo / max(1e-6f, pdf);
+    }
 
     return pathSample;
 }

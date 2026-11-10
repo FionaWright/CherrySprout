@@ -57,7 +57,7 @@ void Hit(
     if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;
 
-    if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
+    if (PATH_VERTICES_REQUIRED)
     {
         vInfo.Type = VertexType::eStandard;
         vInfo.Lobe = lobe;

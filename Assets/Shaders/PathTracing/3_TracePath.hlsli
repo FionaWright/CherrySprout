@@ -31,7 +31,7 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT3(L_direct, MissContrib);
         DBG_OUTPUT1(1.0f, KilledByMiss);
 
-        if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
+        if (PATH_VERTICES_REQUIRED)
             AddVertexEnvMap(vertexList, L_miss);
 
         return false;
@@ -47,7 +47,7 @@ bool ResolvePathAncillaryVertex(
 
         DBG_OUTPUT1(1.0f, KilledByEmission);
 
-        if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
+        if (PATH_VERTICES_REQUIRED)
             AddVertexEmissive(vertexList, L_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
         return false;
@@ -101,7 +101,7 @@ bool ResolvePathAncillaryVertex(
     float3 L_sample;
     Hit(pathState, rng, hitInfo, pixelCoord, L_sample, vInfo);
 
-    if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
+    if (PATH_VERTICES_REQUIRED)
         AddVertex(vertexList, vInfo);
 
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
@@ -125,7 +125,7 @@ bool ResolvePathAncillaryVertex(
             DBG_OUTPUT1(1.0f, KilledByRR);
             return false;
         }
-        pathState.Beta /= p; // TODO: DivideByPdfEnabled?
+        pathState.Beta /= p;
     }
 
     DBG_PATH_DUMP_PATH_STATE(pathState);
@@ -172,7 +172,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     {
         pathSample.Lo = pathState.Lo;
 
-        if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
+        if (PATH_VERTICES_REQUIRED)
             pathSample.VertexList = vertexList;
     }
 
