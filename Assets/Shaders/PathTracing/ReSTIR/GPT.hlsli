@@ -88,7 +88,7 @@ void ReEvaluate(inout CandidateGPT X_i, ContextPrimaryRay context)
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
-    pathState.DivideByPdfEnabled = false;
+    //pathState.DivideByPdfEnabled = false;
 
     // Primary Ray
     bool proceed;

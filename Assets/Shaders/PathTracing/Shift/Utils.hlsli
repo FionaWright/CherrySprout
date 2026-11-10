@@ -26,13 +26,14 @@ void AddVertexEnvMap(inout PathVertexList vList, float3 contrib)
     AddVertex(vList, vInfo);
 }
 
-void AddVertexEmissive(inout PathVertexList vList, float3 hitPos, float3 Ng_ff, float roughness)
+void AddVertexEmissive(inout PathVertexList vList, float3 L_emisson, float3 hitPos, float3 Ng_ff, float roughness)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
 
     PathVertexInfo vInfo = (PathVertexInfo)0;
     vInfo.Type = VertexType::eEmission;
+    vInfo.DirectContribution = L_emisson;
     vInfo.Position = hitPos;
     vInfo.Ng_ff = Ng_ff;
     vInfo.Roughness = roughness;

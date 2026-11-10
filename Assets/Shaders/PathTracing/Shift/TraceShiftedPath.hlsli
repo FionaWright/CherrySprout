@@ -10,12 +10,12 @@
 void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, out float3 wi, out float pdf)
 {
     wi = v1.Wi;
-    pdf = v1.PDF;
+    pdf = v1.PDF_BXDF; // TODO
 
     if (FEAT_CORE(NEE))
-        L_sample += v1.DirectContribution * pathState.Beta;
+        L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
 
-    pathState.Beta *= v1.IndirectContribution;
+    pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
 }
 
 void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, HitInfo hitInfo, float3 wo, out float3 wi, out float pdf)
@@ -24,16 +24,16 @@ void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, Path
 
     BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, v1.Lobe);
 
-    pdf = bxdfEval.PDF;
+    pdf = bxdfEval.PDF; // TODO
 
     if (FEAT_CORE(NEE))
     {
-        L_sample += v1.DirectContribution * pathState.Beta;
+        L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
         pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
     }
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-    pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6f, v1.PDF);
+    pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6f, v1.PDF_BXDF);
 }
 
 bool ResolveShiftedPathAncillaryVertex(
@@ -124,7 +124,7 @@ bool ResolveShiftedPathAncillaryVertex(
 
     DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
 
-    float pdfMain = v1.PDF;
+    float pdfMain = v1.PDF_BXDF; // TODO
 
     pathStateShifted.IsSymmetric &= pdfMain > 0.0f;
     pathStateShifted.IsSymmetric &= pdfShifted > 0.0f;

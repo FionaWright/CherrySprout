@@ -30,15 +30,16 @@ struct PathVertexInfo
     float Roughness;
 
     hlsl::float3 IndirectContribution;
-    float PDF;
+    hlsl::uint InitialRngAncillaryState;
 
     hlsl::float3 DirectContribution;
     float ShadowFactor;
 
     LightSample LightSample; // TODO: Multiple NEE samples
 
-    hlsl::uint InitialRngAncillaryState;
-    hlsl::float3 p;
+    float PDF_BXDF;
+    float PDF_NEE;
+    hlsl::float2 p;
 };
 
 struct PathVertexList

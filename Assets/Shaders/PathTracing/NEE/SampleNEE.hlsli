@@ -14,14 +14,16 @@ float3 SampleNEE(
 
     out LightSample lightSample,
     out float lightDistance,
-    out float shadowFactor)
+    out float shadowFactor,
+    out float pdf)
 {
+    shadowFactor = 0.0f;
+    pdf = 0.0f;
+
     LightEval lightEval;
     lightSample = SampleLight(rng, hitInfo.HitPos, wo, lightEval);
 
     lightDistance = lightEval.Distance;
-
-    shadowFactor = 0.0f;
 
     float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
     if (NdL < 0.0f || length(lightEval.Radiance) == 0.0f)
@@ -49,20 +51,22 @@ float3 SampleNEE(
 
     DBG_OUTPUT1(m, NEE_MIS);
 
-    return shadowFactor * lightEval.Radiance * m * NdL / max(1e-6f, lightEval.PDF);
+    pdf = lightEval.PDF;
+    return shadowFactor * lightEval.Radiance * m * NdL;
 }
 
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
-
     uint numSamples,
-    float3 wo)
+    float3 wo,
+
+    out float pdf)
 {
     LightSample _1;
     float _2;
     float _3;
-    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3);
+    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3, pdf);
 }
 
 float3 EvaluateNEE(
@@ -73,9 +77,11 @@ float3 EvaluateNEE(
     LightSample lightSample,
     LobeTag lobe,
 
-    out float shadowFactor)
+    out float shadowFactor,
+    out float pdf)
 {
     shadowFactor = 0.0f;
+    pdf = 0.0f;
 
     LightEval lightEval = EvaluateLight(hitInfo.HitPos, wo, lightSample);
 
@@ -106,7 +112,8 @@ float3 EvaluateNEE(
         m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
-    return shadowFactor * lightEval.Radiance * m * NdL / lightEval.PDF;
+    pdf = lightEval.PDF;
+    return shadowFactor * lightEval.Radiance * m * NdL;
 }
 
 #else
@@ -120,14 +127,16 @@ float3 SampleNEE(
 
     out LightSample lightSample,
     out float lightDistance,
-    out float shadowFactor) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; return NAN; }
+    out float shadowFactor,
+    out float pdf) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; pdf = NAN; return NAN; }
 
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
     HitInfo hitInfo,
 
     uint numSamples,
-    float3 wo) { return NAN; }
+    float3 wo,
+    out float pdf) { pdf = NAN; return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
@@ -137,7 +146,8 @@ float3 EvaluateNEE(
     LightSample lightSample,
     LobeTag lobe,
 
-    out float shadowFactor) { shadowFactor = NAN; return NAN; }
+    out float shadowFactor,
+    out float pdf) { shadowFactor = NAN; pdf = NAN; return NAN; }
 
 #endif
 

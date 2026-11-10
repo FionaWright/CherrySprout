@@ -367,7 +367,8 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                             RowFloat("ShadowFactor", m_cpuPathDump[i].PathVertex.ShadowFactor, true);
                             RowFloat3("Indirect", m_cpuPathDump[i].PathVertex.IndirectContribution, true);
                             RowFloat3("Direct", m_cpuPathDump[i].PathVertex.DirectContribution, true);
-                            RowFloat("PDF", m_cpuPathDump[i].PathVertex.PDF, true);
+                            RowFloat("PDF BxDF", m_cpuPathDump[i].PathVertex.PDF_BXDF, true);
+                            RowFloat("PDF NEE", m_cpuPathDump[i].PathVertex.PDF_NEE, true);
                             ImGui::TreePop();
                         }
 

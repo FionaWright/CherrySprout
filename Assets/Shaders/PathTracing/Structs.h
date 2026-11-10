@@ -92,7 +92,7 @@ struct PathState
     hlsl::uint LastRayWasDiracDelta;
     hlsl::uint RaySegmentIdx;
     hlsl::uint IsPrimaryRay;
-    hlsl::uint DivideByPdfEnabled;
+    hlsl::uint p;
 };
 
 #include "PathTracing/Shift/Structs.h"

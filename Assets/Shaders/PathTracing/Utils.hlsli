@@ -17,7 +17,6 @@ PathState CreatePathState(float3 origin, float3 dir)
     pathState.IsPrimaryRay = true;
     pathState.LastRayWasDiracDelta = false;
     pathState.RaySegmentIdx = 0;
-    pathState.DivideByPdfEnabled = true;
 
     if (FEAT_CORE(Transient))
         pathState.RollingPathDistance = 0.0f;

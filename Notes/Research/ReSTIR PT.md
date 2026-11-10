@@ -136,3 +136,14 @@ struct CandidatePT
     float JacobianDenominator;
 };
 ```
+
+## TODO:
+
+When tracing a path, ignore the actual final contribution, just track the vertices and write all NEE samples
+
+Then turn each of those subpaths into candidates which are only then evaluated?  
+This is where NEE lobe tag comes in  
+
+Might make sense to create a new super-generate which creates a list of candidates that must then be extracted one by one
+
+path pdf only works when you do it like this, make sure to track NEE pdf as a part of this value

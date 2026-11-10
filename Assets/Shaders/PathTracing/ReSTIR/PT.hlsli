@@ -7,8 +7,6 @@
 #if FEAT_CORE_D(RestirPT)
 
 #include "PathTracing/RandomSample.hlsli"
-#include "PathTracing/NEE/SampleNEE.hlsli"
-#include "PathTracing/VisibilityRays.hlsli"
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"
 #include "PathTracing/4_Miss.hlsli"
 #include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
@@ -27,7 +25,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     PathState pathState = CreatePathState(origin, -context.Wo);
     X_i.VertexList = CreatePathVertexList();
 
-    pathState.DivideByPdfEnabled = false;
+    //pathState.DivideByPdfEnabled = false;
 
     uint2 pixelCoord = uint2(0,0); // TODO: Needed to combine ReSTIR types, ignore for now
 
@@ -63,13 +61,16 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 {
+    // TODO: Now that using EvaluatePath, remember to build new path vertices if needed
+    // TODO: Also remember to track NEE lobe tag subpath for trace shifted
+
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
-    pathState.DivideByPdfEnabled = false;
+    //pathState.DivideByPdfEnabled = false;
 
     // Primary Ray
     bool proceed;
@@ -96,6 +97,9 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
         return;
     }
 
+    //float mis = BalanceHeuristicRatio(pathStateShifted.PdfRatio, 1, 1);
+    //pathState.Lo *= mis;
+
     X_i.Lo = pathState.Lo;
     X_i.Jacobian = pathStateShifted.Jacobian;
     X_i.PDF = pathStateShifted.PdfRatio * X_i.PDF;
@@ -108,6 +112,7 @@ float Target(CandidatePT X_i, ContextPrimaryRay context)
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
 {
+    //return 1.0f;
     return X_i.PDF;
 }
 
@@ -126,6 +131,7 @@ bool TrySampleReservoirPT(
         return false;
 
     Lo = Y.Lo * reservoir.W_Y;
+    //Lo = Y.Lo * reservoir.W_Y * Y.Jacobian;
 
     // Debug
     {
@@ -179,6 +185,22 @@ float3 SampleRestirPT(uint2 pixelCoord)
 
     DBG_OUTPUT_DUMP_DISABLE();
     {
+        DBG_OUTPUT1(0.0f, KilledByBetaLoss);
+        DBG_OUTPUT1(0.0f, KilledByRR);
+        DBG_OUTPUT1(0.0f, KilledByMiss);
+        DBG_OUTPUT1(0.0f, KilledByEmission);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirIdx);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirWeightSum);
+        DBG_OUTPUT1(0.0f, RESTIR_ReservoirConfidence);
+        DBG_OUTPUT1(0.0f, RESTIR_NdL);
+        DBG_OUTPUT1(0.0f, RESTIR_W_Y);
+        DBG_OUTPUT1(0.0f, RESTIR_Jacobian);
+        DBG_OUTPUT1(0.0f, RESTIRGI_Dir);
+        DBG_OUTPUT1(0.0f, RESTIRGI_DirectContrib);
+        DBG_OUTPUT1(0.0f, RESTIRGI_BxdfRadiance);
+        DBG_OUTPUT1(0.0f, RESTIRGI_BxdfPDF);
+        DBG_OUTPUT1(0.0f, RESTIRGI_GiLo);
+
         DBG_OUTPUT1(0.0f, RESTIR_ReservoirWeightSum);
         DBG_OUTPUT1(0.0f, RESTIR_ReservoirConfidence);
         DBG_OUTPUT1(0.0f, RESTIR_W_Y);

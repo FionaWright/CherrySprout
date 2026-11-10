@@ -42,7 +42,7 @@ void HitShiftedUnconnected(
     DBG_OUTPUT1(shiftResult.Jacobian, GD_Jacobian);
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-    contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF); // Note: Divide by sample PDF, not eval PDF
+    contrib = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF_BXDF); // Note: Divide by sample PDF, not eval PDF
 
     pdf *= bxdfEval.PDF;
 
@@ -59,7 +59,10 @@ void HitShiftedUnconnected(
         if (v1.ShadowFactor > 0.0f)
         {
             float shadowFactor;
-            float3 E_direct = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, v1.Lobe, shadowFactor);
+            float pdf_nee;
+            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, v1.Lobe, shadowFactor, pdf_nee);
+            //float3 E_direct = radiance / max(1e-6f, v1.PDF_NEE); // TODO: Correct or? What about pdf *= pdf_nee?
+            float3 E_direct = radiance / max(1e-6f, pdf_nee);
 
             DBG_OUTPUT3(E_direct, GD_NeeContrib);
 

@@ -30,7 +30,7 @@ ShiftResult ShiftMapHybrid(
         return shiftResult;
     }
 
-    if (v1.PDF <= 0.0f || (v1Dirac != isDirac))
+    if (v1.PDF_BXDF <= 0.0f || (v1Dirac != isDirac))
     {
         DBG_OUTPUT1(1.0f, GD_RejectionDirac);
 

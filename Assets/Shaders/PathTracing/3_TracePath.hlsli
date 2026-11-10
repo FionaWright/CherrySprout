@@ -48,13 +48,12 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT1(1.0f, KilledByEmission);
 
         if (FEAT_CORE(GradientDomain) || FEAT_CORE(RestirPT))
-            AddVertexEmissive(vertexList, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
+            AddVertexEmissive(vertexList, L_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
         return false;
     }
 
     PathVertexInfo vInfo = INIT0(PathVertexInfo);
-    vInfo.PDF = 1.0f;
 
     if (FEAT_CORE(HybridShift))
         vInfo.InitialRngAncillaryState = rngInfo.IndependentRngState;

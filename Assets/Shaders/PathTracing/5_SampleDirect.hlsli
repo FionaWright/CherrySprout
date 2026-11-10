@@ -22,31 +22,32 @@ float3 SampleDirectLighting(
     LightSample lightSample = INIT0(LightSample);
     float shadowFactor = 0.0f;
 
+    float3 radiance = 0.0f;
     float lightDistance = INF;
+    float pdf_nee = 1.0f;
 
-    if (FEAT_CORE(RestirDI) && pathState.IsPrimaryRay)
+    if (FEAT_CORE(RestirDI) && pathState.IsPrimaryRay) // TODO: PDF
     {
         CandidateDI lightSE;
-        float3 L_restir;
-        bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, gSettings.DirectNumSamples, lightSE, lightDistance, L_restir);
+        bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, gSettings.DirectNumSamples, lightSE, lightDistance, radiance);
 
         DBG_OUTPUT1(validReservoir, RESTIRDI_ValidReservoir);
 
-        E_direct += L_restir;
+        E_direct += radiance;
         lightSample = lightSE.LightSample;
     }
     else
     {
-        float3 L_nee = SampleNEE(rng, hitInfo, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor);
+        radiance = SampleNEE(rng, hitInfo, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor, pdf_nee);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            L_nee = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, LobeTag::eAll, shadowFactor);
+            radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, LobeTag::eAll, shadowFactor, pdf_nee);
         }
 
-        E_direct += L_nee;
+        E_direct += radiance / max(1e-6f, pdf_nee);
 
-        DBG_OUTPUT3(L_nee, NEE_Contrib);
+        DBG_OUTPUT3(radiance / max(1e-6f, pdf_nee), NEE_Contrib);
         DBG_OUTPUT1(shadowFactor, NEE_ShadowFactor);
     }
 
@@ -56,6 +57,8 @@ float3 SampleDirectLighting(
     {
 	    vInfo.LightSample = lightSample;
 	    vInfo.ShadowFactor = shadowFactor;
+        vInfo.DirectContribution = radiance;
+        vInfo.PDF_NEE = pdf_nee;
     }
 
     if (FEAT_CORE(Transient))
