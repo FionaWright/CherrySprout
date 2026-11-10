@@ -13,7 +13,7 @@ void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVert
     pdf = v1.PDF_BXDF; // TODO
 
     if (FEAT_CORE(NEE))
-        L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+        L_sample += v1.DirectContribution * v1.MIS * pathState.Beta / max(1e-6f, v1.PDF_NEE);
 
     pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
 }
@@ -28,7 +28,7 @@ void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, Path
 
     if (FEAT_CORE(NEE))
     {
-        L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+        L_sample += v1.DirectContribution * v1.MIS * pathState.Beta / max(1e-6f, v1.PDF_NEE);
         pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
     }
 
@@ -66,7 +66,9 @@ bool ResolveShiftedPathAncillaryVertex(
 
     float3 wo = -pathState.Desc.Direction;
 
-    float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
+    float mis_emission;
+    float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo, mis_emission);
+    L_emission *= mis_emission;
 
     DBG_OUTPUT3(L_emission, GD_Emission);
     DBG_OUTPUT3(wo, GD_V_w);
@@ -82,7 +84,7 @@ bool ResolveShiftedPathAncillaryVertex(
         return false;
     }
 
-    if (isEmissive)
+    if (isEmissive) // TODO: When connected, reuse v1 emission
     {
         L_sample += pathState.Beta * L_emission;
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);

@@ -75,8 +75,9 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
 
         float3 wo = -bxdfSample.Wi;
         float pdf;
-        float3 radiance = SampleNEE(rngNEE, secondaryHitInfo, 1, wo, pdf);
-        E_direct = radiance / max(1e-6f, pdf);
+        float mis;
+        float3 radiance = SampleNEE(rngNEE, secondaryHitInfo, 1, wo, pdf, mis);
+        E_direct = mis * radiance / max(1e-6f, pdf);
     }
 
     X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;

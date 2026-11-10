@@ -24,21 +24,25 @@ bool ResolvePathAncillaryVertex(
 {
     if (isMiss)
     {
-        float3 L_miss = Miss(pathState);
-        float3 L_direct = pathState.Beta * L_miss;
+        float mis_env;
+        float3 L_miss = Miss(pathState, mis_env);
+        float3 L_direct = pathState.Beta * L_miss * mis_env;
         pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 
         DBG_OUTPUT3(L_direct, MissContrib);
         DBG_OUTPUT1(1.0f, KilledByMiss);
 
         if (PATH_VERTICES_REQUIRED)
-            AddVertexEnvMap(vertexList, L_miss);
+            AddVertexEnvMap(vertexList, L_miss, mis_env);
 
         return false;
     }
 
     float3 wo = -pathState.Desc.Direction;
-    float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo);
+
+    float mis_emission;
+    float3 emission = EvaluateHitEmission(hitInfo, pathState, wo, mis_emission);
+    float3 L_emission = emission * mis_emission;
     bool isEmissive = any(L_emission > 0.0f);
     if (isEmissive)
     {
@@ -48,7 +52,7 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT1(1.0f, KilledByEmission);
 
         if (PATH_VERTICES_REQUIRED)
-            AddVertexEmissive(vertexList, L_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
+            AddVertexEmissive(vertexList, emission, mis_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
         return false;
     }

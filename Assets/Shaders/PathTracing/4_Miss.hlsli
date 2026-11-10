@@ -7,8 +7,11 @@
 #include "PathTracing/Debug/Scales.hlsli"
 #include "PathTracing/Debug/SettingGuards.hlsli"
 
-float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDelta)
+// TODO: When both env map and dir light enabled at same time, MIS value is incorrect. It's an output from this function for ReSTIR reasons
+float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDelta, out float mis)
 {
+    mis = 1.0f;
+
     if (FEAT_DBG(FurnaceTestHHE))
         return 0.0f;
     if (FEAT_DBG(FurnaceTestHDR))
@@ -31,14 +34,12 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
 
             float pdf_env = pdf_lsd * EvaluateEnvMapPdf(uv);
 
-            float m = 0.0f;
             if (FEAT_DBG(FixedMisNeeManual))
-                m = 1.0f - GetFixedMisNee();
+                mis = 1.0f - GetFixedMisNee();
             else if (lastBxdfPdf <= 0.0f || pdf_env <= 0.0f)
-                m = 0.0f;
+                mis = 0.0f;
             else
-                m = PowerHeuristic(lastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
-            Le *= m;
+                mis = PowerHeuristic(lastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
         }
 
         DBG_OUTPUT2(uv, EnvironmentMapUV);
@@ -61,9 +62,9 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
     return Li;
 }
 
-float3 Miss(PathState pathState)
+float3 Miss(PathState pathState, out float mis)
 {
-    return Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, pathState.IsPrimaryRay, pathState.LastRayWasDiracDelta);
+    return Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, pathState.IsPrimaryRay, pathState.LastRayWasDiracDelta, mis);
 }
 
 #endif

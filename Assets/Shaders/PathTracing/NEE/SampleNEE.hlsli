@@ -15,10 +15,12 @@ float3 SampleNEE(
     out LightSample lightSample,
     out float lightDistance,
     out float shadowFactor,
-    out float pdf)
+    out float pdf,
+    out float mis)
 {
     shadowFactor = 0.0f;
     pdf = 0.0f;
+    mis = 0.0f;
 
     LightEval lightEval;
     lightSample = SampleLight(rng, hitInfo.HitPos, wo, lightEval);
@@ -33,26 +35,27 @@ float3 SampleNEE(
     if (shadowFactor <= 0.0f)
         return 0;
 
-    float3 m;
     if (FEAT_DBG(FixedMisNeeManual))
     {
-        m = GetFixedMisNee();
+        mis = GetFixedMisNee();
     }
     else if (lightEval.IsDelta)
     {
-        m = 1.0f;
+        mis = 1.0f;
     }
     else
     {
         BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
 
-        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
+        lightEval.Radiance *= bxdfEval.Radiance; // TODO: ?
+
+        mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
-    DBG_OUTPUT1(m, NEE_MIS);
+    DBG_OUTPUT1(mis, NEE_MIS);
 
     pdf = lightEval.PDF;
-    return shadowFactor * lightEval.Radiance * m * NdL;
+    return shadowFactor * lightEval.Radiance * NdL;
 }
 
 float3 SampleNEE(
@@ -61,12 +64,13 @@ float3 SampleNEE(
     uint numSamples,
     float3 wo,
 
-    out float pdf)
+    out float pdf,
+    out float mis)
 {
     LightSample _1;
     float _2;
     float _3;
-    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3, pdf);
+    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3, pdf, mis);
 }
 
 float3 EvaluateNEE(
@@ -78,10 +82,12 @@ float3 EvaluateNEE(
     LobeTag lobe,
 
     out float shadowFactor,
-    out float pdf)
+    out float pdf,
+    out float mis)
 {
     shadowFactor = 0.0f;
     pdf = 0.0f;
+    mis = 0.0f;
 
     LightEval lightEval = EvaluateLight(hitInfo.HitPos, wo, lightSample);
 
@@ -96,24 +102,25 @@ float3 EvaluateNEE(
     if (shadowFactor <= 0.0f)
         return 0;
 
-    float3 m;
     if (FEAT_DBG(FixedMisNeeManual))
     {
-        m = GetFixedMisNee();
+        mis = GetFixedMisNee();
     }
     else if (lightEval.IsDelta)
     {
-        m = 1.0f;
+        mis = 1.0f;
     }
     else
     {
         BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, lobe);
 
-        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
+        lightEval.Radiance *= bxdfEval.Radiance; // TODO: ?
+
+        mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     pdf = lightEval.PDF;
-    return shadowFactor * lightEval.Radiance * m * NdL;
+    return shadowFactor * lightEval.Radiance * NdL;
 }
 
 #else
@@ -128,7 +135,8 @@ float3 SampleNEE(
     out LightSample lightSample,
     out float lightDistance,
     out float shadowFactor,
-    out float pdf) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; pdf = NAN; return NAN; }
+    out float pdf,
+    out float mis) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; pdf = NAN; mis = NAN; return NAN; }
 
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
@@ -136,7 +144,8 @@ float3 SampleNEE(
 
     uint numSamples,
     float3 wo,
-    out float pdf) { pdf = NAN; return NAN; }
+    out float pdf,
+    out float mis) { pdf = NAN; mis = NAN; return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
@@ -147,7 +156,8 @@ float3 EvaluateNEE(
     LobeTag lobe,
 
     out float shadowFactor,
-    out float pdf) { shadowFactor = NAN; pdf = NAN; return NAN; }
+    out float pdf,
+    out float mis) { shadowFactor = NAN; pdf = NAN; mis = NAN; return NAN; }
 
 #endif
 

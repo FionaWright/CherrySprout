@@ -14,6 +14,8 @@
 #include "PathTracing/RandomSample.hlsli"
 #include "Utils/HlslUtils.hlsli"
 
+#if PATH_VERTICES_REQUIRED_D
+
 bool EvaluateSubPathAncillaryVertex(
     inout PathState pathState,
     PathVertexInfo vertex,
@@ -82,5 +84,16 @@ void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf)
     Lo = pathState.Lo;
     pdf = exp(logPDF);
 }
+
+#else
+
+bool EvaluateSubPathAncillaryVertex(
+    inout PathState pathState,
+    PathVertexInfo vertex,
+    inout float logPDF) { logPDF = NAN; return false; }
+
+void EvaluateSubPath(PathVertexList vertexList, out float3 Lo, out float pdf) { Lo = NAN; pdf = NAN; }
+
+#endif
 
 #endif

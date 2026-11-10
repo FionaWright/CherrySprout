@@ -3,6 +3,9 @@
 
 #include "PathTracing/Shift/ShiftMapping/HR.hlsli"
 #include "PathTracing/Shift/ShiftMapping/Hybrid.hlsli"
+#include "PathTracing/NEE/SampleNEE.hlsli"
+
+// TODO: Consider changed made for EvaluateSubPath and make sure they aren't affecting GDPT (PDF separate, MIS separate)
 
 void HitShiftedUnconnected(
     inout PathState pathState,
@@ -60,9 +63,10 @@ void HitShiftedUnconnected(
         {
             float shadowFactor;
             float pdf_nee;
-            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, v1.Lobe, shadowFactor, pdf_nee);
-            //float3 E_direct = radiance / max(1e-6f, v1.PDF_NEE); // TODO: Correct or? What about pdf *= pdf_nee?
-            float3 E_direct = radiance / max(1e-6f, pdf_nee);
+            float mis_nee;
+            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, v1.Lobe, shadowFactor, pdf_nee, mis_nee);
+            //float3 E_direct = mis_nee * radiance / max(1e-6f, v1.PDF_NEE); // TODO: Correct or? What about pdf *= pdf_nee?
+            float3 E_direct = mis_nee * radiance / max(1e-6f, pdf_nee);
 
             DBG_OUTPUT3(E_direct, GD_NeeContrib);
 

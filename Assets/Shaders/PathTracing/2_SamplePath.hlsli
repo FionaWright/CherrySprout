@@ -4,7 +4,7 @@
 #include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/3_GetPrimaryRay.hlsli"
 #include "PathTracing/3_TracePath.hlsli"
-#include "PathTracing/3_EvaluatePath.hlsli"
+#include "PathTracing/Shift/EvaluateSubPath.hlsli"
 
 PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 {

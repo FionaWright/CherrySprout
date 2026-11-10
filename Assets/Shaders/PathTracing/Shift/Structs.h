@@ -39,7 +39,8 @@ struct PathVertexInfo
 
     float PDF_BXDF;
     float PDF_NEE;
-    hlsl::float2 p;
+    float MIS;
+    float p;
 };
 
 struct PathVertexList

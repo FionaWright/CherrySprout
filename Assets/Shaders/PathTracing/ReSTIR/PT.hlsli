@@ -13,14 +13,70 @@
 #include "PathTracing/Shift/ShiftMapping/Components/ReconnectEnv.hlsli"
 #include "PathTracing/Shift/TraceShiftedPath.hlsli"
 #include "PathTracing/3_TracePath.hlsli"
-#include "PathTracing/3_EvaluatePath.hlsli"
+#include "PathTracing/Shift/EvaluateSubPath.hlsli"
 
 #include "PathTracing/ReSTIR/Structs.h"
 #include "PathTracing/ReSTIR/WRS.hlsli"
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-void GenerateGroup(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i, out uint numSubCandidates)
+void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
+{
+    if (!FEAT_CORE(NEE))
+    {
+        EvaluateSubPath(X_i.VertexList, X_i.Lo, X_i.PDF);
+        return;
+    }
+
+    uint M = X_i.VertexList.NumVertices;
+
+    float3 Lo[MAX_RAY_DEPTH];
+    float pdf[MAX_RAY_DEPTH];
+
+    float w[MAX_RAY_DEPTH];
+    float wSum = 0.0f;
+
+    for (uint i = 0; i < M; i++)
+    {
+        X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
+        X_i.VertexList.NumVertices = i + 1;
+
+        EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i]);
+
+        float mis = 1.0f; // TODO: Balance heuristic for BXDF
+        float W_X = pdf[i] <= 0.0f ? 0.0f : 1.0f / pdf[i];
+        float pHat = Luminance(Lo[i]);
+
+        w[i] = mis * pHat * W_X;
+        wSum += w[i];
+    }
+
+    if (wSum <= 0.0f)
+    {
+        X_i.Lo = 0.0f;
+        return;
+    }
+
+    float r = Rand01(rngInfo);
+    for (uint i = 0; i < M; i++)
+    {
+        r -= w[i] / wSum;
+        if (r <= 0.0f)
+        {
+            X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
+            X_i.VertexList.NumVertices = i + 1;
+
+            X_i.Lo = Lo[i];
+
+            float pHat = Luminance(Lo[i]);
+            float W_Y = wSum / (float(M) * pHat); // TODO: M?
+
+            X_i.PDF = 1.0f / W_Y; // TODO
+        }
+    }
+}
+
+void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i)
 {
     float3 origin = NAN;
     PathState pathState = CreatePathState(origin, -context.Wo);
@@ -47,22 +103,9 @@ void GenerateGroup(inout RngInfo rngInfo, ContextPrimaryRay context, out Candida
 
     X_i.Jacobian = 1.0f;
 
-    numSubCandidates = X_i.VertexList.NumVertices;
+    // TODO: Can all evaluations be done in one pass?
 
-    // TODO: RIS to select random sub-path
-}
-
-CandidatePT ExtractSubCandidateFromGroup(CandidatePT group, uint subCandidateIdx)
-{
-    CandidatePT subCandidate = group;
-
-    if (subCandidateIdx != group.VertexList.NumVertices - 1)
-    {
-        subCandidate.VertexList.Array[subCandidateIdx].Lobe = eNEE;
-        subCandidate.VertexList.NumVertices = subCandidateIdx + 1;
-    }
-
-    EvaluatePath(subCandidate.VertexList, subCandidate.Lo, subCandidate.PDF);
+    selectSubPathRIS(rngInfo, X_i);
 }
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
@@ -182,7 +225,9 @@ float3 SampleRestirPT(uint2 pixelCoord)
     ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
     {
-        return Miss(-context.Wo, 1.0f, true, false);
+        float mis;
+        float3 L_miss = Miss(-context.Wo, 1.0f, true, false, mis);
+        return mis * L_miss;
     }
 
     CandidatePT Y;
