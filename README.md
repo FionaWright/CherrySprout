@@ -6,6 +6,8 @@ by Fiona Wright
 
 D3D12 Path-Tracer Research Engine  
 
+Focused on ReSTIR-PT, GDPT, Path-Guiding and their combinations
+
 Using CMAKE, C++, HLSL and Python  
 
 ## Features
@@ -43,7 +45,8 @@ Using CMAKE, C++, HLSL and Python
 - NEE/MIS for Environment Maps, Punctual Lights & Area Lights
 - Alias Tables for performant light sampling
 - Modular Feature Flags System
-- ReSTIR DI & GI with Spatio-Temporal reuse
+- ReSTIR DI & GI with Spatio-Temporal Reuse
+- ReSTIR PT using Hybrid Shift Mappings
 - Gradient Domain Path-Tracing using Jacobi-Iterator Screened Poisson Reconstruction
 
 ### Debug Tools
