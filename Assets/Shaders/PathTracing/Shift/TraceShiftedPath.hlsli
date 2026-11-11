@@ -2,6 +2,7 @@
 #define H_TRACE_SHIFTED_RAY_H
 
 #include "PathTracing/Shift/HitShiftedUnconnected.hlsli"
+#include "PathTracing/Shift/NeeShiftedUnconnected.hlsli"
 #include "PathTracing/Shift/MissShifted.hlsli"
 #include "PathTracing/EvaluateHitEmission.hlsli"
 #include "PathTracing/4_ComputeRayHit.hlsli"
@@ -114,50 +115,38 @@ bool ResolveShiftedPathAncillaryVertex(
     }
     else if (pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
     {
-        // TODO: ugly
-        if (FEAT_CORE(NEE) && v1.Lobe == LobeTag::eNEE) // Terminal vertex of subpath
+        if (FEAT_CORE(NEE))
         {
-            float shadowFactor;
-            float pdf_nee;
-            float mis_nee;
-            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee);
-
-            // TODO: ?
-            //float3 E_direct = v1.MIS * radiance / max(1e-6f, v1.PDF_NEE);
-            float3 E_direct = radiance / max(1e-6f, v1.PDF_NEE);
-            DBG_OUTPUT3(E_direct, GD_NeeContrib);
-
-            pathStateShifted.PdfRatio *= (pdf_nee / max(1e-6f, v1.PDF_NEE));
-
-            if (pdf_nee <= 0.0f || abs(v1.ShadowFactor - shadowFactor) > EPSILON)
+            if (v1.Lobe == LobeTag::eNEE)
             {
-                pathStateShifted.IsSymmetric = false;
-                DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+                NeeShiftedUnconnectedSubpathTerminal(pathState, pathStateShifted, v1, hitInfo, wo);
                 return false;
             }
 
-            float3 L_sample = E_direct * pathState.Beta;
-            pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
-            return false;
+            if (!NeeShiftedUnconnected(pathState, pathStateShifted, v1, hitInfo, wo))
+                return false;
         }
 
         bool mainPathBetaLoss = pathState.RaySegmentIdx == mainVertices.NumVertices - 1;
-        if (!FEAT_CORE(NEE) && mainPathBetaLoss) // TODO: Allow symmetric?
+        if (mainPathBetaLoss)
         {
-            pathStateShifted.IsSymmetric = false;
-            DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
+            if (!FEAT_CORE(NEE))
+            {
+                pathStateShifted.IsSymmetric = false;
+                DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
+            }
             return false;
         }
 
         PathVertexInfo v2 = mainVertices.Array[pathState.RaySegmentIdx + 1];
-
-        float3 E_indirect;
-        HitShiftedUnconnected(pathState, pathStateShifted, v1, v2, hitInfo, wo, wi, E_indirect, pdfShifted);
-
-        pathState.Beta *= E_indirect;
-
         DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
         DBG_OUTPUT3(Palette((uint)v2.Lobe), GD_V2Lobe);
+
+        float3 E_indirect;
+        if (!HitShiftedUnconnected(pathState, pathStateShifted, v1, v2, hitInfo, wo, wi, E_indirect, pdfShifted))
+            return false;
+
+        pathState.Beta *= E_indirect;
     }
 
     DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
