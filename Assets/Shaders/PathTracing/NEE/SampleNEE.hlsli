@@ -37,7 +37,7 @@ float3 SampleNEE(
 
     BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
 
-    float3 radiance = lightEval.Radiance * bxdfEval.Radiance;
+    float3 radiance = lightEval.Radiance * bxdfEval.Radiance; // TODO: Did this introduce jacobian issues to punctuals?
 
     if (FEAT_DBG(FixedMisNeeManual))
     {

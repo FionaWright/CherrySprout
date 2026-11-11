@@ -122,8 +122,6 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
-    //pathState.DivideByPdfEnabled = false;
-
     // Primary Ray
     bool proceed;
     {
@@ -164,7 +162,6 @@ float Target(CandidatePT X_i, ContextPrimaryRay context)
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
 {
-    //return 1.0f;
     return X_i.PDF;
 }
 
@@ -183,7 +180,6 @@ bool TrySampleReservoirPT(
         return false;
 
     Lo = Y.Lo * reservoir.W_Y;
-    //Lo = Y.Lo * reservoir.W_Y * Y.Jacobian;
 
     // Debug
     {

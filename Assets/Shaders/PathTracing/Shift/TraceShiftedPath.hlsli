@@ -13,7 +13,9 @@ void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVert
     pdf = v1.PDF_BXDF; // TODO
 
     if (FEAT_CORE(NEE))
-        L_sample += v1.DirectContribution * v1.MIS * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+    {
+        L_sample += v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+    }
 
     pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
 }
@@ -105,6 +107,32 @@ bool ResolveShiftedPathAncillaryVertex(
     }
     else if (pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
     {
+        // TODO: ugly
+        if (FEAT_CORE(NEE) && v1.Lobe == LobeTag::eNEE) // Terminal vertex of subpath
+        {
+            float shadowFactor;
+            float pdf_nee;
+            float mis_nee;
+            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee);
+
+            // TODO: ?
+            float3 E_direct = v1.MIS * radiance / max(1e-6f, v1.PDF_NEE);
+            DBG_OUTPUT3(E_direct, GD_NeeContrib);
+
+            pathStateShifted.PdfRatio *= (pdf_nee / max(1e-6f, v1.PDF_NEE));
+
+            if (pdf_nee <= 0.0f || abs(v1.ShadowFactor - shadowFactor) > EPSILON)
+            {
+                pathStateShifted.IsSymmetric = false;
+                DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+                return false;
+            }
+
+            float3 L_sample = E_direct * pathState.Beta;
+            pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+            return false;
+        }
+
         bool mainPathBetaLoss = pathState.RaySegmentIdx == mainVertices.NumVertices - 1;
         if (mainPathBetaLoss) // TODO: Allow symmetric?
         {
@@ -137,6 +165,10 @@ bool ResolveShiftedPathAncillaryVertex(
 	pathStateShifted.PdfRatio *= (pdfShifted / pdfMain);
 
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+
+    if (v1.Lobe == LobeTag::eNEE)
+        return false;
+
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;
     pathState.IsPrimaryRay = false;

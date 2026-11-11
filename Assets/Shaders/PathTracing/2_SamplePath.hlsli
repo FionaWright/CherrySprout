@@ -25,7 +25,7 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 
     if (FEAT_DBG(EvaluatePathTest))
     {
-        uint neeIdx = UINT_MAX;
+        uint neeIdx = 1;
         if (neeIdx != UINT_MAX)
         {
             if (neeIdx < pathSample.VertexList.NumVertices && pathSample.VertexList.Array[neeIdx].Type == VertexType::eStandard)
@@ -35,6 +35,7 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
             }
             else
             {
+                pathSample.VertexList.NumVertices = 0;
                 pathSample.Lo = 0.0f;
                 return pathSample;
             }
