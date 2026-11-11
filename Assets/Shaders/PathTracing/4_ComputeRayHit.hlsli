@@ -5,7 +5,7 @@
 
 void ComputeRayHit(uint2 pixelCoord, inout PathState pathState, out bool isMiss, out HitInfo hitInfo)
 {
-    if (FEAT_CORE(ReconstructPrimaryRay) && pathState.RaySegmentIdx == 0)
+    if (FEAT_CORE(ReconstructPrimaryRay) && pathState.GetPathFlag(eIsPrimaryRay))
     {
         float _;
         ReconstructPrimaryRayHit(

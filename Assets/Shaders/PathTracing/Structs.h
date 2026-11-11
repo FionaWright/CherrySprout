@@ -79,6 +79,17 @@ struct RayDesc
 };
 #endif
 
+enum PathFlags : hlsl::uint
+{
+    eNone = 0,
+
+    eIsPrimaryRay = 1 << 0,
+    eIsTerminalRay = 1 << 1,
+    eLastRayWasDirac = 1 << 2,
+
+    eAll = UINT_MAX
+};
+
 struct PathState
 {
     RayDesc Desc;
@@ -89,10 +100,24 @@ struct PathState
     hlsl::float3 Lo;
     float LastBxdfPdf;
 
-    hlsl::uint LastRayWasDiracDelta;
+    PathFlags Flags;
     hlsl::uint RaySegmentIdx;
-    hlsl::uint IsPrimaryRay;
-    hlsl::uint p;
+    hlsl::uint2 p;
+
+    bool GetPathFlag(const PathFlags flag)
+    {
+        return (Flags & flag);
+    }
+
+    void SetPathFlag(const PathFlags flag, const bool state)
+    {
+        const bool enabled = GetPathFlag(flag);
+
+        if (enabled && !state)
+            Flags = (PathFlags)(Flags ^ flag);
+        else if (!enabled && state)
+            Flags = (PathFlags)(flag | Flags);
+    }
 };
 
 #include "PathTracing/Shift/Structs.h"

@@ -346,7 +346,9 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                             RowFloat3("RayDirection", m_cpuPathDump[i].PathState.Desc.Direction, true);
                             RowFloat3("Beta", m_cpuPathDump[i].PathState.Beta, true);
                             RowFloat3("Lo", m_cpuPathDump[i].PathState.Lo, true);
-                            RowBool("LastRayWasDiracDelta", m_cpuPathDump[i].PathState.LastRayWasDiracDelta);
+                            RowBool("Is Primary Ray", m_cpuPathDump[i].PathState.GetPathFlag(eIsPrimaryRay));
+                            RowBool("Is Terminal Ray", m_cpuPathDump[i].PathState.GetPathFlag(eIsTerminalRay));
+                            RowBool("Last Ray Was Dirac", m_cpuPathDump[i].PathState.GetPathFlag(eLastRayWasDirac));
                             RowFloat("LastBxdfPdf", m_cpuPathDump[i].PathState.LastBxdfPdf, true);
                             ImGui::TreePop();
                         }

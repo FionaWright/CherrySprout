@@ -82,7 +82,7 @@ bool ResolvePathAncillaryVertex(
     if (FEAT_CORE(Transient))
         pathState.RollingPathDistance += hitInfo.RayT;
 
-    if (FEAT_CORE(RestirGI) && pathState.IsPrimaryRay)
+    if (FEAT_CORE(RestirGI) && pathState.GetPathFlag(eIsPrimaryRay))
     {
         CandidateGI Y;
         float3 L_gi;
@@ -133,8 +133,6 @@ bool ResolvePathAncillaryVertex(
     }
 
     DBG_PATH_DUMP_PATH_STATE(pathState);
-
-    pathState.IsPrimaryRay = false;
     return true;
 }
 
@@ -167,6 +165,8 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
     for (uint i = 0; i < gSettings.MaxRayDepth; i++)
     {
         pathState.RaySegmentIdx = i;
+        pathState.SetPathFlag(eIsPrimaryRay, i == 0);
+        pathState.SetPathFlag(eIsTerminalRay, i == gSettings.MaxRayDepth - 1);
 
         if (!TracePathAncillary(pathState, vertexList, rngInfo, pixelCoord))
             break;

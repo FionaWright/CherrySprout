@@ -16,9 +16,9 @@ void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVert
     if (FEAT_CORE(NEE))
     {
 		if (v1.Lobe == LobeTag::eNEE)
-			L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+			L_sample += v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
 		else
-        	L_sample += v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+        	L_sample += v1.ShadowFactor * v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
     }
 
     pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
@@ -29,15 +29,23 @@ void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, Path
     wi = v1.Wi;
 
     BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, v1.Lobe);
-
     pdf = bxdfEval.PDF; // TODO
 
     if (FEAT_CORE(NEE))
     {
 		if (v1.Lobe == LobeTag::eNEE)
-			L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+			L_sample += v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
 		else
-        	L_sample += v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+        {
+            float shadowFactor; // TODO: Is this necessary? (Only need PDF) (Not accounting for emissives)
+            float pdf_nee;
+            float mis_nee;
+            LightEval lightEval;
+            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee, lightEval);
+
+            L_sample += shadowFactor * mis_nee * radiance * pathState.Beta / max(1e-6f, pdf_nee);
+        }
+
         pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
     }
 
@@ -115,7 +123,7 @@ bool ResolveShiftedPathAncillaryVertex(
     }
     else if (pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
     {
-        if (FEAT_CORE(NEE))
+        if (FEAT_CORE(NEE) && !pathState.GetPathFlag(eIsTerminalRay))
         {
             if (v1.Lobe == LobeTag::eNEE)
             {
@@ -127,8 +135,7 @@ bool ResolveShiftedPathAncillaryVertex(
                 return false;
         }
 
-        bool mainPathBetaLoss = pathState.RaySegmentIdx == mainVertices.NumVertices - 1;
-        if (mainPathBetaLoss)
+        if (pathState.GetPathFlag(eIsTerminalRay))
         {
             if (!FEAT_CORE(NEE))
             {
@@ -168,7 +175,6 @@ bool ResolveShiftedPathAncillaryVertex(
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;
-    pathState.IsPrimaryRay = false;
 
     DBG_OUTPUT3(wi, GD_L_w);
     DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wi), GD_L_s);
@@ -212,6 +218,8 @@ void TraceShiftedPath(
         DBG_PATH_DUMP_MARK_EXPLORED();
 
         pathState.RaySegmentIdx = i;
+        pathState.SetPathFlag(eIsPrimaryRay, i == 0);
+        pathState.SetPathFlag(eIsTerminalRay, i == mainVertices.NumVertices - 1);
 
         if (!TraceShiftedPathAncillary(pathState, pathStateShifted, mainVertices, pixelCoord))
             break;

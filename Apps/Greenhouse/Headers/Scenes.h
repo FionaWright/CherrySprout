@@ -21,18 +21,10 @@ struct SceneConfig
 
 inline std::vector<SceneConfig> s_sceneConfigs = {
     {
-        .Name = "Cube",
-        .Filepath = "Scenes/USD/Cube/Cube.usda",
-        .CameraPosition = {-0.42048344, 0.180789918, -0.327038676},
-        .CameraPitchYaw = {0.292135, 0.910922825},
-        .SceneScale = 10.0f
-    },
-
-    {
         .Name = "Chess",
         .Filepath = "Scenes/USD/OpenChessSet/chess_set.usda",
-        .CameraPosition = {-0.114393, 0.159540, -0.291603},
-        .CameraPitchYaw = {0.251301, 0.375632},
+        .CameraPosition = {-0.276719, 0.445731, -0.879961},
+        .CameraPitchYaw = {0.261301, 0.215631},
         .SceneScale = 3.0f
     },
 

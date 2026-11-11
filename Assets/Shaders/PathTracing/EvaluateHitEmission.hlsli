@@ -24,7 +24,7 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo, out 
     if (!emissivesInLSD || all(L_emission <= 0.0f))
         return L_emission;
 
-    if (pathState.IsPrimaryRay || pathState.LastRayWasDiracDelta)
+    if (pathState.GetPathFlag(eIsPrimaryRay) || pathState.GetPathFlag(eLastRayWasDirac))
         return L_emission;
 
     if (pathState.LastBxdfPdf <= 0.0f)

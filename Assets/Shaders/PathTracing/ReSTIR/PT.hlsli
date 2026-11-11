@@ -39,8 +39,12 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 
     for (uint i = 0; i < M; i++)
     {
-        X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
-        X_i.VertexList.NumVertices = i + 1;
+        bool terminalVertex = i == M - 1;
+        if (!terminalVertex)
+        {
+            X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
+            X_i.VertexList.NumVertices = i + 1;
+        }
 
         float finalMIS;
         EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i], finalMIS);
@@ -98,6 +102,8 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
         for (uint i = 1; i < gSettings.MaxRayDepth; i++)
         {
             pathState.RaySegmentIdx = i;
+            pathState.SetPathFlag(eIsPrimaryRay, i == 0);
+            pathState.SetPathFlag(eIsTerminalRay, i == gSettings.MaxRayDepth - 1);
 
             if (!TracePathAncillary(pathState, X_i.VertexList, rngInfo, pixelCoord))
                 break;
@@ -132,6 +138,8 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
         for (uint i = 1; i < X_i.VertexList.NumVertices; i++)
         {
             pathState.RaySegmentIdx = i;
+            pathState.SetPathFlag(eIsPrimaryRay, i == 0);
+            pathState.SetPathFlag(eIsTerminalRay, i == X_i.VertexList.NumVertices - 1);
 
             if (!TraceShiftedPathAncillary(pathState, pathStateShifted, X_i.VertexList, pixelCoord))
                 break;

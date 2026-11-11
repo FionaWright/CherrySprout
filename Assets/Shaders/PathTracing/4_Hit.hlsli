@@ -29,7 +29,7 @@ void Hit(
     float3 wo = -pathState.Desc.Direction;
 
     float3 E_direct = 0;
-    if (FEAT_CORE(NEE))
+    if (FEAT_CORE(NEE) && !pathState.GetPathFlag(eIsTerminalRay))
     {
         for (uint i = 0; i < gSettings.DirectNumSamples; i++)
         {
@@ -52,7 +52,7 @@ void Hit(
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = hitInfo.HitPosBiased;
 
-    pathState.LastRayWasDiracDelta = isDirac;
+    pathState.SetPathFlag(eLastRayWasDirac, isDirac);
 
     if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = pdf_bxdf;

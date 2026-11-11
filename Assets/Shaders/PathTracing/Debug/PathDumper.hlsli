@@ -22,7 +22,7 @@ void ClearBuffer()
         gPathDump[i].Explored = false;
         gPathDump[i].PathState.LastBxdfPdf = NAN;
         gPathDump[i].PathState.RaySegmentIdx = 0;
-        gPathDump[i].PathState.LastRayWasDiracDelta = false;
+        gPathDump[i].PathState.Flags = PathFlags::eNone;
         gPathDump[i].ForcedOutput = NAN;
 
         for (uint j = 0; j < (uint)DebugOutputIndex::eCount; j++)
