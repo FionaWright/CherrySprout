@@ -5,8 +5,6 @@
 #include "PathTracing/Shift/ShiftMapping/Hybrid.hlsli"
 #include "PathTracing/NEE/SampleNEE.hlsli"
 
-// TODO: Consider changed made for EvaluateSubPath and make sure they aren't affecting GDPT (PDF separate, MIS separate)
-
 bool HitShiftedUnconnected(
     inout PathState pathState,
     inout PathStateShifted pathStateShifted,

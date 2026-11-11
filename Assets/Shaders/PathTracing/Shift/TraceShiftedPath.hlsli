@@ -222,7 +222,10 @@ void TraceShiftedPath(
     pdfRatio = pathStateShifted.PdfRatio;
     isSymmetric = pathStateShifted.IsSymmetric;
 
-    DBG_OUTPUT3(Palette((uint)pathStateShifted.ReconnectionState), GD_FinalReconnectionState);
+    float3 dbgRcStateColor =
+        pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected ? float3(1,0,0) :
+        pathStateShifted.ReconnectionState == ReconnectionState::eSemiConnected ? float3(0.5,0.5,0) : float3(0,1,0);
+    DBG_OUTPUT3(dbgRcStateColor, GD_FinalReconnectionState);
 }
 
 #endif

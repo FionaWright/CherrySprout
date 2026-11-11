@@ -33,6 +33,7 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .Filepath = "Scenes/USD/OpenChessSet/chess_set.usda",
         .CameraPosition = {-0.114393, 0.159540, -0.291603},
         .CameraPitchYaw = {0.251301, 0.375632},
+        .SceneScale = 3.0f
     },
 
     {

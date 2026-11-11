@@ -1,6 +1,8 @@
 #ifndef H_NEE_SHIFTED_UNCONNECTED_H
 #define H_NEE_SHIFTED_UNCONNECTED_H
 
+// TODO: Refactor this and HitShifted to have clear separate functions per reconnection state
+
 bool NeeShiftedUnconnected(
     inout PathState pathState,
     inout PathStateShifted pathStateShifted,
@@ -26,8 +28,15 @@ bool NeeShiftedUnconnected(
         return false;
     }
 
-    if (pdf_nee <= 0.0f)
+    if (v1.PDF_NEE <= 0.0f)
         return true;
+
+    if (shadowFactor <= 0.0f)
+    {
+        pathStateShifted.IsSymmetric = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+        return false;
+    }
 
     bool isEmissiveLight = v1.LightSample.Index >= gSettings.LsdBaseEmissives;
     if (isEmissiveLight)
