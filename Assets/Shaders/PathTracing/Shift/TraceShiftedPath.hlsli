@@ -142,7 +142,7 @@ bool ResolveShiftedPathAncillaryVertex(
         }
 
         bool mainPathBetaLoss = pathState.RaySegmentIdx == mainVertices.NumVertices - 1;
-        if (mainPathBetaLoss) // TODO: Allow symmetric?
+        if (!FEAT_CORE(NEE) && mainPathBetaLoss) // TODO: Allow symmetric?
         {
             pathStateShifted.IsSymmetric = false;
             DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
@@ -227,10 +227,6 @@ void TraceShiftedPath(
         if (!TraceShiftedPathAncillary(pathState, pathStateShifted, mainVertices, pixelCoord))
             break;
     }
-
-    // TODO: Only hybrid shift seems to require this? Maybe I just need changes elsewhere to allow this
-    //if (FEAT_CORE(HybridShift) && pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
-    //    pathStateShifted.IsSymmetric = false;
 
     Lo = pathStateShifted.IsSymmetric ? pathState.Lo : 0.0f;
     jacobian = pathStateShifted.Jacobian;

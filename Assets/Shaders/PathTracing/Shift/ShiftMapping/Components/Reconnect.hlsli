@@ -8,7 +8,7 @@
 
 ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3 x2_Ng)
 {
-    ShiftResult result;
+    ShiftResult result = INIT0(ShiftResult);
 
     if (!FEAT_CORE(GdptShiftRec))
     {
@@ -51,7 +51,7 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3
 
 ShiftResult ShiftReconnectVis(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3 x2_Ng)
 {
-    ShiftResult result;
+    ShiftResult result = INIT0(ShiftResult);
 
     if (!FEAT_CORE(GdptShiftRec))
     {

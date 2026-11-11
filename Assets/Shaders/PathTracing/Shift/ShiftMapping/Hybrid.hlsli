@@ -54,8 +54,9 @@ ShiftResult ShiftMapHybrid(
     // TODO: Jacobian denominator can also be computed earlier
 
 #define DISTANCE_THRESHOLD 0.001f // TODO
+#define SQR_DISTANCE_THRESHOLD (DISTANCE_THRESHOLD*DISTANCE_THRESHOLD)
 
-    if (isDirac)
+    if (isDirac || v2Dirac)
     {
         RngValuesAncillary rng = INIT0(RngValuesAncillary);
         {
@@ -75,7 +76,8 @@ ShiftResult ShiftMapHybrid(
 
     if (v2.Type == VertexType::eStandard || v2.Type == VertexType::eEmission)
     {
-        if (LengthSquared(v2.Position - v1.Position) < DISTANCE_THRESHOLD || LengthSquared(v2.Position - hitInfo.HitPos) < DISTANCE_THRESHOLD)
+        if (LengthSquared(v2.Position - v1.Position) < SQR_DISTANCE_THRESHOLD ||
+             LengthSquared(v2.Position - hitInfo.HitPos) < SQR_DISTANCE_THRESHOLD)
             shiftResult = ShiftFail();
         else
             shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);

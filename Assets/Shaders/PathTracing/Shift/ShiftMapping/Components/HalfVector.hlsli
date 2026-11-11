@@ -8,7 +8,7 @@
 // Is this eta relative or n?
 ShiftResult ShiftHalfVector(float3 x1_Ng, float3 y1_Ng, float3 x1_wi, float3 x1_wo, float3 y1_wo, float etaMain, float etaShifted)
 {
-    ShiftResult result = (ShiftResult)0;
+    ShiftResult result = INIT0(ShiftResult);
 
     // TODO: Can be handled as special case
     if (!FEAT_CORE(GdptShiftHalf) || etaMain == 1.0f || etaShifted == 1.0f)

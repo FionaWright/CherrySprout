@@ -8,7 +8,7 @@
 
 ShiftResult ShiftReconnectEnvironment(float3 y1_Ng, float3 dirMain)
 {
-    ShiftResult result;
+    ShiftResult result = INIT0(ShiftResult);
 
     if (!FEAT_CORE(GdptShiftRecEnv))
     {
@@ -32,7 +32,7 @@ ShiftResult ShiftReconnectEnvironment(float3 y1_Ng, float3 dirMain)
 
 ShiftResult ShiftReconnectEnvironmentVis(float3 x1, float3 y1_Ng, float3 dirMain)
 {
-    ShiftResult result;
+    ShiftResult result = INIT0(ShiftResult);
 
     if (!FEAT_CORE(GdptShiftRecEnv))
     {

@@ -7,7 +7,7 @@ ShiftResult ShiftFail()
 {
     DBG_ASSERT_FAIL(GD_INVALID_VERTEX_TYPE);
 
-    ShiftResult shiftResult = (ShiftResult)0;
+    ShiftResult shiftResult = INIT0(ShiftResult);
     shiftResult.IsSuccessful = false;
     return shiftResult;
 }
