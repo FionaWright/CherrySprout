@@ -67,7 +67,9 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
     float3 E_direct = 0.0f;
     if (isMiss)
     {
-        E_direct = Miss(bxdfSample.Wi, bxdfEval.PDF, false, bxdfSample.IsDirac);
+        float mis;
+        E_direct = Miss(bxdfSample.Wi, bxdfEval.PDF, false, bxdfSample.IsDirac, mis);
+        E_direct *= mis;
     }
     else if (FEAT_CORE(NEE))
     {
@@ -121,28 +123,28 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
 
     X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
 
-    float3 v1PosMain = X_i.SourcePositionBiased;
-    float3 v1PosShift = context.HitInfo.HitPosBiased;
+    float3 x1 = X_i.SourcePositionBiased;
+    float3 y1 = context.HitInfo.HitPosBiased;
 
-    if (all(v1PosMain == v1PosShift))
+    if (all(x1 == y1))
     {
         X_i.Jacobian = 1.0f;
         return;
     }
 
-    float3 v1NormalShift = context.HitInfo.Ng_ff;
+    float3 y1_Ng = context.HitInfo.Ng_ff;
 
     ShiftResult shiftResult;
     if (X_i.IsMiss)
     {
-        shiftResult = ShiftReconnectEnvironment(v1NormalShift, wi);
+        shiftResult = ShiftReconnectEnvironment(y1_Ng, wi);
     }
     else
     {
-        float3 v2Pos = X_i.DestPosition;
-        float3 v2Normal = dot(X_i.DestNg, wi) >= 0.0f ? -X_i.DestNg : X_i.DestNg; // Recompute face-forward
+        float3 x2 = X_i.DestPosition;
+        float3 x2_Ng = dot(X_i.DestNg, wi) >= 0.0f ? -X_i.DestNg : X_i.DestNg; // Recompute face-forward
 
-        shiftResult = ShiftReconnect(v1PosMain, v1PosShift, v1NormalShift, v2Pos, v2Normal);
+        shiftResult = ShiftReconnect(x1, y1, y1_Ng, x2, x2_Ng);
     }
 
     if (!shiftResult.IsSuccessful)

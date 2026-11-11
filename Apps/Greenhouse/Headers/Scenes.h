@@ -21,6 +21,14 @@ struct SceneConfig
 
 inline std::vector<SceneConfig> s_sceneConfigs = {
     {
+        .Name = "ShadowTest",
+        .Filepath = "Scenes/USD/ShadowTest/ShadowTest.usda",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
+
+    {
         .Name = "Chess",
         .Filepath = "Scenes/USD/OpenChessSet/chess_set.usda",
         .CameraPosition = {-0.276719, 0.445731, -0.879961},
@@ -179,14 +187,6 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
     {
         .Name = "Cornell (Punc)",
         .Filepath = "Scenes/USD/Cornell/CornellPunc.usdc",
-        .CameraPosition = {0.0, 1.0, -2.75},
-        .CameraPitchYaw = {0.0f, 0.0f},
-        .SceneScale = 1.0f
-    },
-
-    {
-        .Name = "ShadowTest",
-        .Filepath = "Scenes/USD/ShadowTest/ShadowTest.usda",
         .CameraPosition = {0.0, 1.0, -2.75},
         .CameraPitchYaw = {0.0f, 0.0f},
         .SceneScale = 1.0f

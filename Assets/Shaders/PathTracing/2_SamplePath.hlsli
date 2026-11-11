@@ -25,27 +25,32 @@ PathSample SamplePath(RngInfo rngInfo, uint2 pixelCoord)
 
     if (FEAT_DBG(EvaluatePathTest))
     {
-        uint neeIdx = 1;
-        if (neeIdx != UINT_MAX)
+        uint i = 1;
+
+        uint numSubPaths = pathSample.VertexList.NumVertices;
+        LobeTag cachedLobe = pathSample.VertexList.Array[i].Lobe;
+
+        bool isNeeEndPoint = i < numSubPaths - 1;
+        if (isNeeEndPoint && pathSample.VertexList.Array[i].Type == VertexType::eStandard)
         {
-            if (neeIdx < pathSample.VertexList.NumVertices && pathSample.VertexList.Array[neeIdx].Type == VertexType::eStandard)
-            {
-                pathSample.VertexList.Array[neeIdx].Lobe = LobeTag::eNEE;
-                pathSample.VertexList.NumVertices = neeIdx + 1;
-            }
-            else
-            {
-                pathSample.VertexList.NumVertices = 0;
-                pathSample.Lo = 0.0f;
-                return pathSample;
-            }
+            pathSample.VertexList.Array[i].Lobe = LobeTag::eNEE;
+            pathSample.VertexList.NumVertices = i + 1;
+        }
+        else if (i != UINT_MAX)
+        {
+            pathSample.Lo = 0.0f;
+            return pathSample;
         }
 
         float3 Lo;
         float pdf;
         float finalMIS;
         EvaluateSubPath(pathSample.VertexList, Lo, pdf, finalMIS);
+
         pathSample.Lo = Lo / max(1e-6f, pdf);
+
+        pathSample.VertexList.Array[i].Lobe = cachedLobe;
+        pathSample.VertexList.NumVertices = numSubPaths;
     }
 
     return pathSample;
