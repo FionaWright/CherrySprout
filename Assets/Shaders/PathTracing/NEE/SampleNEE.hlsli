@@ -83,13 +83,14 @@ float3 EvaluateNEE(
 
     out float shadowFactor,
     out float pdf,
-    out float mis)
+    out float mis,
+    out LightEval lightEval)
 {
     shadowFactor = 0.0f;
     pdf = 0.0f;
     mis = 0.0f;
 
-    LightEval lightEval = EvaluateLight(hitInfo.HitPos, wo, lightSample);
+    lightEval = EvaluateLight(hitInfo.HitPos, wo, lightSample);
 
     float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
     if (NdL <= 0.0f)
@@ -121,6 +122,22 @@ float3 EvaluateNEE(
 
     pdf = lightEval.PDF;
     return shadowFactor * radiance * NdL;
+}
+
+float3 EvaluateNEE(
+    HitInfo hitInfo,
+
+    uint numSamples,
+    float3 wo,
+    LightSample lightSample,
+    LobeTag lobe,
+
+    out float shadowFactor,
+    out float pdf,
+    out float mis)
+{
+    LightEval _1;
+    return EvaluateNEE(hitInfo, numSamples, wo, lightSample, lobe, shadowFactor, pdf, mis, _1);
 }
 
 #else
@@ -158,6 +175,19 @@ float3 EvaluateNEE(
     out float shadowFactor,
     out float pdf,
     out float mis) { shadowFactor = NAN; pdf = NAN; mis = NAN; return NAN; }
+
+float3 EvaluateNEE(
+    HitInfo hitInfo,
+
+    uint numSamples,
+    float3 wo,
+    LightSample lightSample,
+    LobeTag lobe,
+
+    out float shadowFactor,
+    out float pdf,
+    out float mis,
+    out LightEval lightEval) { shadowFactor = NAN; pdf = NAN; mis = NAN; lightEval = INIT0(LightEval); return NAN; }
 
 #endif
 

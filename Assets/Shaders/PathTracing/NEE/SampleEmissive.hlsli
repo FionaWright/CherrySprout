@@ -79,6 +79,7 @@ LightSample SampleEmissive(float2 rng, uint emissiveIdx, float3 hitPos, out Ligh
     lightEval.Direction = wi;
     lightEval.Distance = dist;
     lightEval.IsDelta = false;
+    lightEval.Ng = Ng;
 
     LightSample lightSample = (LightSample)0;
     lightSample.BaryOrUV = bary;
@@ -128,6 +129,7 @@ LightEval EvaluateEmissive(uint emissiveIdx, float3 hitPos, LightSample lightSam
     lightEval.Direction = wi;
     lightEval.Distance = dist;
     lightEval.IsDelta = false;
+    lightEval.Ng = Ng;
     return lightEval;
 }
 

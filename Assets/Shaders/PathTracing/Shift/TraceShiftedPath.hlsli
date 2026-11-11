@@ -14,7 +14,10 @@ void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVert
 
     if (FEAT_CORE(NEE))
     {
-        L_sample += v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+		if (v1.Lobe == LobeTag::eNEE)
+			L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+		else
+        	L_sample += v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
     }
 
     pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
@@ -30,7 +33,10 @@ void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, Path
 
     if (FEAT_CORE(NEE))
     {
-        L_sample += v1.DirectContribution * v1.MIS * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+		if (v1.Lobe == LobeTag::eNEE)
+			L_sample += v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+		else
+        	L_sample += v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
         pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
     }
 
@@ -70,7 +76,8 @@ bool ResolveShiftedPathAncillaryVertex(
 
     float mis_emission;
     float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo, mis_emission);
-    L_emission *= mis_emission;
+    if (v1.Lobe != LobeTag::eNEE)
+        L_emission *= mis_emission;
 
     DBG_OUTPUT3(L_emission, GD_Emission);
     DBG_OUTPUT3(wo, GD_V_w);
@@ -116,7 +123,8 @@ bool ResolveShiftedPathAncillaryVertex(
             float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee);
 
             // TODO: ?
-            float3 E_direct = v1.MIS * radiance / max(1e-6f, v1.PDF_NEE);
+            //float3 E_direct = v1.MIS * radiance / max(1e-6f, v1.PDF_NEE);
+            float3 E_direct = radiance / max(1e-6f, v1.PDF_NEE);
             DBG_OUTPUT3(E_direct, GD_NeeContrib);
 
             pathStateShifted.PdfRatio *= (pdf_nee / max(1e-6f, v1.PDF_NEE));

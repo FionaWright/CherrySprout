@@ -11,13 +11,18 @@ void MissShifted(inout PathState pathState, PathVertexInfo v1, ReconnectionState
         Li = 1.0f;
     else if (reconnectionState == ReconnectionState::eConnected)
     {
-        Li = pathState.Beta * v1.DirectContribution * v1.MIS;
+        Li = pathState.Beta * v1.DirectContribution;
+
+        if (v1.Lobe != LobeTag::eNEE)
+            Li *= v1.MIS;
     }
     else
     {
         float mis;
         Li = pathState.Beta * Miss(pathState, mis);
-        Li *= mis;
+
+        if (v1.Lobe != LobeTag::eNEE)
+            Li *= mis;
     }
 
     pathState.Lo += ApplyFireflyThreshold(Li, gSettings.FireflyThreshold);

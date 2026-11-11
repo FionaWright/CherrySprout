@@ -30,31 +30,57 @@ bool HitShiftedUnconnected(
 
     // TODO: Emissive Jacobian
 
-    if (FEAT_CORE(NEE))
+    if (FEAT_CORE(NEE) && v1.ShadowFactor > 0.0f)
     {
-        if (v1.ShadowFactor > 0.0f) // Part of full path-tree
+        // TODO: All lobe tags or only v1 lobe?
+        // TODO: Shadow factor not applied (and for nee lobe tag part)
+
+        float shadowFactor;
+        float pdf_nee;
+        float mis_nee;
+        LightEval lightEval;
+        float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee, lightEval);
+
+        bool isEmissiveLight = v1.LightSample.Index >= gSettings.LsdBaseEmissives;
+        if (isEmissiveLight)
         {
-            // TODO: All lobe tags or only v1 lobe?
-            // TODO: Shadow factor not applied (and for nee lobe tag part)
+            float3 x1 = v1.Position;
+            float3 y1 = hitInfo.HitPos;
+            float3 x2 = y1 + lightEval.Direction * lightEval.Distance;
+            float3 y1_Ng = hitInfo.Ng_ff;
+            float3 x2_Ng = lightEval.Ng;
+            ShiftResult shiftResultEmissive = ShiftReconnect(x1, y1, y1_Ng, x2, x2_Ng);
 
-            float shadowFactor;
-            float pdf_nee;
-            float mis_nee;
-            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee);
-
-            float3 E_direct = mis_nee * radiance / max(1e-6f, pdf_nee);
-            DBG_OUTPUT3(E_direct, GD_NeeContrib);
-
-            if (abs(v1.ShadowFactor - shadowFactor) > EPSILON)
+            if (!shiftResultEmissive.IsSuccessful)
             {
                 pathStateShifted.IsSymmetric = false;
                 DBG_OUTPUT1(1.0f, GD_RejectionNEE);
                 return false;
             }
 
-            float3 L_sample = E_direct * pathState.Beta;
-            pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+            //DBG_FORCE_OUTPUT1(shiftResultEmissive.Jacobian);
+
+            //pdf_nee *= shiftResultEmissive.Jacobian;
+            pdf_nee /= shiftResultEmissive.Jacobian;
+
+            // TODO:
+            BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+            mis_nee = PowerHeuristic(pdf_nee, bxdfEval.PDF, gSettings.DirectNumSamples, 1);
+            //mis_nee = 1.0f;
         }
+
+        float3 E_direct = shadowFactor * mis_nee * radiance / max(1e-6f, pdf_nee);
+        DBG_OUTPUT3(E_direct, GD_NeeContrib);
+
+        if (abs(v1.ShadowFactor - shadowFactor) > EPSILON)
+        {
+            pathStateShifted.IsSymmetric = false;
+            DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+            return false;
+        }
+
+        float3 L_sample = E_direct * pathState.Beta;
+        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
     }
 
     BxdfEval bxdfEval;

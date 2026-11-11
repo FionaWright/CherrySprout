@@ -362,7 +362,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
         {
             {
-                CbvRestirSettings settings;
+                CbvRestirSettings settings{};
                 settings.GenConfidenceCap = renderInfo.PathTracerConfig->RestirGenConfidenceCap;
                 settings.TemporalConfidenceCap = renderInfo.PathTracerConfig->RestirTemporalConfidenceCap;
                 settings.GenCandidatesCount = renderInfo.PathTracerConfig->RestirGenCandidatesCount;
@@ -383,7 +383,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
             m_set.SetDescriptorTables_Compute(cmdList);
 
-            RestirConfig restirConfig;
+            RestirConfig restirConfig{};
             restirConfig.ClearBuffers = m_restirClearScheduled;
             restirConfig.EnabledDI = restirDiEnabled;
             restirConfig.EnabledGI = restirGiEnabled;

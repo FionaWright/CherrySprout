@@ -113,9 +113,6 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
 
 void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 {
-    // TODO: Now that using EvaluatePath, remember to build new path vertices if needed
-    // TODO: Also remember to track NEE lobe tag subpath for trace shifted
-
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
