@@ -228,6 +228,10 @@ void TraceShiftedPath(
             break;
     }
 
+    // TODO: Only hybrid shift seems to require this? Maybe I just need changes elsewhere to allow this
+    //if (FEAT_CORE(HybridShift) && pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
+    //    pathStateShifted.IsSymmetric = false;
+
     Lo = pathStateShifted.IsSymmetric ? pathState.Lo : 0.0f;
     jacobian = pathStateShifted.Jacobian;
     pdfRatio = pathStateShifted.PdfRatio;

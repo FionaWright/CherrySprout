@@ -53,43 +53,42 @@ ShiftResult ShiftMapHybrid(
     // TODO: Some of these conditions can be computed earlier on the main path to avoid work
     // TODO: Jacobian denominator can also be computed earlier
 
-#define DISTANCE_THRESHOLD 0.01f // TODO
+#define DISTANCE_THRESHOLD 0.001f // TODO
 
-    bool isValidReconnection = true;
-    isValidReconnection &= v2.Type == VertexType::eEnvironment || LengthSquared(v2.Position - v1.Position) >= DISTANCE_THRESHOLD;
-    isValidReconnection &= v2.Type == VertexType::eEnvironment || LengthSquared(v2.Position - hitInfo.HitPos) >= DISTANCE_THRESHOLD;
-    //isValidReconnection &= !isDirac && !v1Dirac && !v2Dirac; // TODO: Assuming dirac is the threshold they're looking for
-    isValidReconnection &= !isDirac && !v1Dirac;
-
-    if (isValidReconnection)
+    if (isDirac)
     {
-        reconnectionState = ReconnectionState::eSemiConnected;
+        RngValuesAncillary rng = INIT0(RngValuesAncillary);
+        {
+            RngInfo rngInfo = INIT0(RngInfo);
+            rngInfo.IndependentRngState = v1.InitialRngAncillaryState;
 
-        ShiftResult shiftResult;
+            SampleRngAncillaryBatch1(rngInfo, rng);
+            SampleRngAncillaryBatch2(rngInfo, rng);
+        }
 
-        if (v2.Type == VertexType::eStandard || v2.Type == VertexType::eEmission)
-            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);
-        else if (v2.Type == VertexType::eEnvironment)
-            shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ng_ff, v1.Wi);
-        else
+        return ShiftRandomReplay(rng.BxDF, hitInfo, wo, bxdfEval);
+    }
+
+    reconnectionState = ReconnectionState::eSemiConnected;
+
+    ShiftResult shiftResult;
+
+    if (v2.Type == VertexType::eStandard || v2.Type == VertexType::eEmission)
+    {
+        if (LengthSquared(v2.Position - v1.Position) < DISTANCE_THRESHOLD || LengthSquared(v2.Position - hitInfo.HitPos) < DISTANCE_THRESHOLD)
             shiftResult = ShiftFail();
-
-        if (shiftResult.IsSuccessful)
-            bxdfEval = BxDF::Evaluate(hitInfo, wo, shiftResult.Wi, v1.Lobe);
-
-        return shiftResult;
+        else
+            shiftResult = ShiftReconnectVis(v1.Position, hitInfo.HitPosBiased, hitInfo.Ng_ff, v2.Position, v2.Ng_ff);
     }
+    else if (v2.Type == VertexType::eEnvironment)
+        shiftResult = ShiftReconnectEnvironmentVis(hitInfo.HitPosBiased, hitInfo.Ng_ff, v1.Wi);
+    else
+        shiftResult = ShiftFail();
 
-    RngValuesAncillary rng = INIT0(RngValuesAncillary);
-    {
-        RngInfo rngInfo = INIT0(RngInfo);
-        rngInfo.IndependentRngState = v1.InitialRngAncillaryState;
+    if (shiftResult.IsSuccessful)
+        bxdfEval = BxDF::Evaluate(hitInfo, wo, shiftResult.Wi, v1.Lobe);
 
-        SampleRngAncillaryBatch1(rngInfo, rng);
-        SampleRngAncillaryBatch2(rngInfo, rng);
-    }
-
-    return ShiftRandomReplay(rng.BxDF, hitInfo, wo, bxdfEval);
+    return shiftResult;
 }
 
 
