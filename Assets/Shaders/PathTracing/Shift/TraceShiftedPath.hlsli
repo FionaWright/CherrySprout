@@ -1,57 +1,12 @@
 #ifndef H_TRACE_SHIFTED_RAY_H
 #define H_TRACE_SHIFTED_RAY_H
 
-#include "PathTracing/Shift/HitShiftedUnconnected.hlsli"
-#include "PathTracing/Shift/NeeShiftedUnconnected.hlsli"
-#include "PathTracing/Shift/MissShifted.hlsli"
+#include "PathTracing/Shift/SampleDirect_Shifted.hlsli"
+#include "PathTracing/Shift/SampleIndirect_Shifted.hlsli"
+#include "PathTracing/Shift/Miss_Shifted.hlsli"
 #include "PathTracing/EvaluateHitEmission.hlsli"
 #include "PathTracing/4_ComputeRayHit.hlsli"
 #include "Utils/Debug/Palette.h"
-
-void ResolveConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, out float3 wi, out float pdf)
-{
-    wi = v1.Wi;
-    pdf = v1.PDF_BXDF; // TODO
-
-    if (FEAT_CORE(NEE))
-    {
-		if (v1.Lobe == LobeTag::eNEE)
-			L_sample += v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
-		else
-        	L_sample += v1.ShadowFactor * v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
-    }
-
-    pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
-}
-
-void ResolveSemiConnected(inout PathState pathState, inout float3 L_sample, PathVertexInfo v1, HitInfo hitInfo, float3 wo, out float3 wi, out float pdf)
-{
-    wi = v1.Wi;
-
-    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, v1.Lobe);
-    pdf = bxdfEval.PDF; // TODO
-
-    if (FEAT_CORE(NEE))
-    {
-		if (v1.Lobe == LobeTag::eNEE)
-			L_sample += v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
-		else
-        {
-            float shadowFactor; // TODO: Is this necessary? (Only need PDF) (Not accounting for emissives)
-            float pdf_nee;
-            float mis_nee;
-            LightEval lightEval;
-            float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee, lightEval);
-
-            L_sample += shadowFactor * mis_nee * radiance * pathState.Beta / max(1e-6f, pdf_nee);
-        }
-
-        pathState.LastBxdfPdf = bxdfEval.PDF; // Note: Not necessary, will be unused once connected. Remove?
-    }
-
-    float NdL = dot(hitInfo.Ns_ff, wi);
-    pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6f, v1.PDF_BXDF);
-}
 
 bool ResolveShiftedPathAncillaryVertex(
     inout PathState pathState,
@@ -75,11 +30,9 @@ bool ResolveShiftedPathAncillaryVertex(
 
     if (isMiss)
     {
-        MissShifted(pathState, v1, pathStateShifted.ReconnectionState);
+        Miss_S(pathState, v1, pathStateShifted.ReconnectionState);
         return false;
     }
-
-    float3 L_sample = 0.0f;
 
     float3 wo = -pathState.Desc.Direction;
 
@@ -104,61 +57,35 @@ bool ResolveShiftedPathAncillaryVertex(
 
     if (isEmissive) // TODO: When connected, reuse v1 emission
     {
-        L_sample += pathState.Beta * L_emission;
+        float3 L_sample = pathState.Beta * L_emission;
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
         return false;
     }
 
+    if (FEAT_CORE(NEE) && !pathState.GetPathFlag(eIsTerminalRay))
+    {
+        if (!SampleDirect_S(pathState, pathStateShifted, v1, hitInfo, wo))
+            return false;
+    }
+
+    if (pathState.GetPathFlag(eIsTerminalRay))
+    {
+        if (!FEAT_CORE(NEE) || true) // TODO
+        {
+            pathStateShifted.IsSymmetric = false;
+            DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
+        }
+        return false;
+    }
+
     float3 wi;
-	float pdfShifted;
-
-    if (pathStateShifted.ReconnectionState == ReconnectionState::eConnected)
-    {
-        ResolveConnected(pathState, L_sample, v1, wi, pdfShifted);
-    }
-    else if (pathStateShifted.ReconnectionState == ReconnectionState::eSemiConnected)
-    {
-        ResolveSemiConnected(pathState, L_sample, v1, hitInfo, wo, wi, pdfShifted);
-        pathStateShifted.ReconnectionState = ReconnectionState::eConnected;
-    }
-    else if (pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected)
-    {
-        if (FEAT_CORE(NEE) && !pathState.GetPathFlag(eIsTerminalRay))
-        {
-            if (v1.Lobe == LobeTag::eNEE)
-            {
-                NeeShiftedUnconnectedSubpathTerminal(pathState, pathStateShifted, v1, hitInfo, wo);
-                return false;
-            }
-
-            if (!NeeShiftedUnconnected(pathState, pathStateShifted, v1, hitInfo, wo))
-                return false;
-        }
-
-        if (pathState.GetPathFlag(eIsTerminalRay))
-        {
-            if (!FEAT_CORE(NEE))
-            {
-                pathStateShifted.IsSymmetric = false;
-                DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
-            }
-            return false;
-        }
-
-        PathVertexInfo v2 = mainVertices.Array[pathState.RaySegmentIdx + 1];
-        DBG_OUTPUT3(Palette((uint)v2.Type), GD_V2Type);
-        DBG_OUTPUT3(Palette((uint)v2.Lobe), GD_V2Lobe);
-
-        float3 E_indirect;
-        if (!HitShiftedUnconnected(pathState, pathStateShifted, v1, v2, hitInfo, wo, wi, E_indirect, pdfShifted))
-            return false;
-
-        pathState.Beta *= E_indirect;
-    }
+    float pdfShifted;
+    if (!SampleIndirect_S(pathState, pathStateShifted, mainVertices, v1, hitInfo, wo, wi, pdfShifted))
+        return false;
 
     DBG_OUTPUT3(pathState.Beta, GD_BetaLate);
 
-    float pdfMain = v1.PDF_BXDF; // TODO
+    float pdfMain = v1.PDF_BXDF;
 
     pathStateShifted.IsSymmetric &= pdfMain > 0.0f;
     pathStateShifted.IsSymmetric &= pdfShifted > 0.0f;
@@ -167,11 +94,6 @@ bool ResolveShiftedPathAncillaryVertex(
         return false;
 
 	pathStateShifted.PdfRatio *= (pdfShifted / pdfMain);
-
-    pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
-
-    if (v1.Lobe == LobeTag::eNEE)
-        return false;
 
     pathState.Desc.Direction = wi;
     pathState.Desc.Origin = hitInfo.HitPos + hitInfo.Ng_ff * EPSILON;;

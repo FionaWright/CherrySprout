@@ -1,7 +1,7 @@
 #ifndef H_GD_MISS_SHIFTED_H
 #define H_GD_MISS_SHIFTED_H
 
-void MissShifted(inout PathState pathState, PathVertexInfo v1, ReconnectionState reconnectionState)
+void Miss_S(inout PathState pathState, PathVertexInfo v1, ReconnectionState reconnectionState)
 {
     float3 Li;
 

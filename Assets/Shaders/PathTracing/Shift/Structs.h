@@ -51,7 +51,7 @@ struct PathVertexList
 
 inline PathVertexList CreatePathVertexList()
 {
-    PathVertexList vertexList;
+    PathVertexList vertexList; // Note: Purposefully not initialized
     vertexList.NumVertices = 0;
     return vertexList;
 }
