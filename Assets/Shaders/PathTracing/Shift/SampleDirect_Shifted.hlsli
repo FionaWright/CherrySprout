@@ -39,8 +39,14 @@ bool SampleDirect_S_Connected(
     float3 shiftedLo = jacobianPath * pathState.Beta * vertexLo;
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
-
     pathStateShifted.SubpathGradients += gradient;
+
+    DBG_OUTPUT3(mainLo, GD_Nee_MainLo);
+    DBG_OUTPUT3(shiftedLo, GD_Nee_ShiftLo);
+    DBG_OUTPUT3(gradient, GD_Nee_Gradient);
+    DBG_OUTPUT1(mis_path, GD_Nee_MIS);
+    DBG_OUTPUT1(jacobianPath, GD_Nee_Jacobian);
+
     return true;
 }
 
@@ -91,8 +97,14 @@ bool SampleDirect_S_Semiconnected(
     float3 shiftedLo = jacobianPath * pathState.Beta * shiftedVertexLo;
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
-
     pathStateShifted.SubpathGradients += gradient;
+
+    DBG_OUTPUT3(mainLo, GD_Nee_MainLo);
+    DBG_OUTPUT3(shiftedLo, GD_Nee_ShiftLo);
+    DBG_OUTPUT3(gradient, GD_Nee_Gradient);
+    DBG_OUTPUT1(mis_path, GD_Nee_MIS);
+    DBG_OUTPUT1(jacobianPath, GD_Nee_Jacobian);
+
     return true;
 }
 
@@ -168,8 +180,13 @@ bool SampleDirect_S_Unconnected(
     float3 shiftedLo = jacobianPath * pathState.Beta * shiftedVertexLo;
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
-
     pathStateShifted.SubpathGradients += gradient;
+
+    DBG_OUTPUT3(mainLo, GD_Nee_MainLo);
+    DBG_OUTPUT3(shiftedLo, GD_Nee_ShiftLo);
+    DBG_OUTPUT3(gradient, GD_Nee_Gradient);
+    DBG_OUTPUT1(mis_path, GD_Nee_MIS);
+    DBG_OUTPUT1(jacobianPath, GD_Nee_Jacobian);
     return true;
 }
 

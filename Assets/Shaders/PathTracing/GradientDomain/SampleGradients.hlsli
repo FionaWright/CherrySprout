@@ -74,6 +74,10 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
     // Debug
     {
         DBG_OUTPUT_DUMP_DISABLE();
+        DBG_OUTPUT1(1.0f, GD_PdfRatio);
+        DBG_OUTPUT1(0.0f, GD_IsSymmetric);
+        DBG_OUTPUT1(0.0f, GD_MIS);
+        DBG_OUTPUT1(0.0f, GD_Lo);
         DBG_OUTPUT1(0.0f, GD_RejectionUninit);
         DBG_OUTPUT1(0.0f, GD_RejectionDirac);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
@@ -93,8 +97,12 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
         DBG_OUTPUT1(0.0f, GD_L_w);
         DBG_OUTPUT1(0.0f, GD_L_s);
         DBG_OUTPUT1(0.0f, GD_IsLobeDirac);
-        DBG_OUTPUT1(0.0f, GD_NeeContrib);
         DBG_OUTPUT1(1.0f, GD_Jacobian);
+        DBG_OUTPUT1(0.0f, GD_Nee_MainLo);
+        DBG_OUTPUT1(0.0f, GD_Nee_ShiftLo);
+        DBG_OUTPUT1(0.0f, GD_Nee_Gradient);
+        DBG_OUTPUT1(0.0f, GD_Nee_MIS);
+        DBG_OUTPUT1(1.0f, GD_Nee_Jacobian);
         DBG_OUTPUT_DUMP_ENABLE();
     }
 }

@@ -68,9 +68,15 @@ bool ResolveShiftedPathAncillaryVertex(
             return false;
     }
 
+    DBG_OUTPUT1(0.0f, GD_Nee_MainLo);
+    DBG_OUTPUT1(0.0f, GD_Nee_ShiftLo);
+    DBG_OUTPUT1(0.0f, GD_Nee_Gradient);
+    DBG_OUTPUT1(0.0f, GD_Nee_MIS);
+    DBG_OUTPUT1(1.0f, GD_Nee_Jacobian);
+
     if (pathState.GetPathFlag(eIsTerminalRay))
     {
-        if (!FEAT_CORE(NEE) || true) // TODO
+        if (!FEAT_CORE(NEE))
         {
             pathStateShifted.IsSymmetric = false;
             DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
