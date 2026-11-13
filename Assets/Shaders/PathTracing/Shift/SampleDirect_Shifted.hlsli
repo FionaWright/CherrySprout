@@ -136,7 +136,7 @@ bool SampleDirect_S_Unconnected(
 
     bool v1Dirac = MaterialIsDirac(v1.Roughness);
     bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
-    if (false && !LightIsPunctual(v1.LightSample) && (v1Dirac || isDirac)) // TODO: This feels wrong
+    if (!LightIsPunctual(v1.LightSample) && (v1Dirac || isDirac)) // TODO: This feels wrong
     {
         pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionNEE);
