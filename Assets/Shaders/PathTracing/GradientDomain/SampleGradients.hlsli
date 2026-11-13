@@ -9,14 +9,12 @@
 
 void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 gradient)
 {
+    gradient = 0.0f;
     if (shiftedCoord.x < 0 ||
         shiftedCoord.y < 0 ||
         shiftedCoord.x >= gSettings.FrameDimensions.x ||
         shiftedCoord.y >= gSettings.FrameDimensions.y)
-    {
-        gradient = 0.0f;
         return;
-    }
 
     DBG_SET_CURRENT_RAY_DEPTH(0);
 
@@ -48,29 +46,33 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
         pdfRatio,
         isSymmetric);
 
-    shiftedLo *= jacobian;
-    pdfRatio *= pdfRatioPrimary;
-    pdfRatio *= jacobian;
-
-    float mis_path = 1.0f;
     if (isSymmetric)
     {
-        if (FEAT_DBG(FixedMisHalf))
-            mis_path = 0.5f;
-        else
-            mis_path = BalanceHeuristicRatio(pdfRatio, 1, 1);
-    }
+        shiftedLo *= jacobian;
+        pdfRatio *= jacobian;
 
-    gradient = (shiftedLo - mainPath.Lo) * mis_path;
-    gradient += subpathGradients;
+        pdfRatio *= pdfRatioPrimary;
 
-    // Debug
-    {
+        float mis_path = 1.0f;
+        if (isSymmetric)
+        {
+            if (FEAT_DBG(FixedMisHalf))
+                mis_path = 0.5f;
+            else
+                mis_path = BalanceHeuristicRatio(pdfRatio, 1, 1);
+        }
+
+        gradient = (shiftedLo - mainPath.Lo) * mis_path;
+        gradient += subpathGradients;
+
         DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
         DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
         DBG_OUTPUT1(mis_path, GD_MIS);
         DBG_OUTPUT3(shiftedLo, GD_Lo);
+    }
 
+    // Debug
+    {
         DBG_OUTPUT_DUMP_DISABLE();
         DBG_OUTPUT1(0.0f, GD_RejectionUninit);
         DBG_OUTPUT1(0.0f, GD_RejectionDirac);

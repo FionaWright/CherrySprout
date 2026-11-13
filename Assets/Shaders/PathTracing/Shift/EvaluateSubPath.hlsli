@@ -31,7 +31,7 @@ bool EvaluateSubPathAncillaryVertex(
         float3 L_direct = pathState.Beta * vertex.DirectContribution;
         pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 
-        finalMIS = vertex.MIS;
+        finalMIS = vertex.MIS_NEE;
 
         DBG_OUTPUT3(L_direct, MissContrib);
         DBG_OUTPUT1(1.0f, KilledByMiss);
@@ -43,7 +43,7 @@ bool EvaluateSubPathAncillaryVertex(
         float3 L_sample = pathState.Beta * vertex.DirectContribution;
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
-        finalMIS = vertex.MIS;
+        finalMIS = vertex.MIS_NEE;
 
         DBG_OUTPUT1(1.0f, KilledByEmission);
         return false;
@@ -57,7 +57,7 @@ bool EvaluateSubPathAncillaryVertex(
         float3 L_sample = vertex.ShadowFactor * pathState.Beta * vertex.DirectContribution / float(gSettings.DirectNumSamples);
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
-        finalMIS = vertex.MIS;
+        finalMIS = vertex.MIS_NEE;
 
         logPdf += log(vertex.PDF_NEE);
         return false;

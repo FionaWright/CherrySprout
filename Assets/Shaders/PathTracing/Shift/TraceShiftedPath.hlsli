@@ -150,7 +150,7 @@ void TraceShiftedPath(
             break;
     }
 
-    Lo = pathStateShifted.IsSymmetric ? pathState.Lo : 0.0f;
+    Lo = pathState.Lo;
     jacobian = pathStateShifted.Jacobian;
     pdfRatio = pathStateShifted.PdfRatio;
     isSymmetric = pathStateShifted.IsSymmetric;

@@ -108,9 +108,9 @@ bool SampleDirect_S_Unconnected(
 
     float shadowFactor;
     float pdfShifted_NEE, pdfShifted_BXDF;
-    float mis;
+    float mis_nee;
     LightEval lightEval;
-    float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdfShifted_NEE, pdfShifted_BXDF, mis, lightEval);
+    float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdfShifted_NEE, pdfShifted_BXDF, mis_nee, lightEval);
 
     if ((v1.PDF_NEE > 0.0f) != (pdfShifted_NEE > 0.0f))
     {
@@ -118,6 +118,9 @@ bool SampleDirect_S_Unconnected(
         DBG_OUTPUT1(1.0f, GD_RejectionNEE);
         return false;
     }
+
+    if (v1.PDF_NEE <= 0.0f)
+        return true;
 
     bool v1Dirac = MaterialIsDirac(v1.Roughness);
     bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
@@ -127,9 +130,6 @@ bool SampleDirect_S_Unconnected(
         DBG_OUTPUT1(1.0f, GD_RejectionNEE);
         return false;
     }
-
-    if (v1.PDF_NEE <= 0.0f)
-        return true;
 
     if (shadowFactor <= 0.0f)
     {
@@ -155,7 +155,7 @@ bool SampleDirect_S_Unconnected(
     float shiftedPathPDF_BXDF = jacobianPath * shiftedPathPrefixPDF * shiftPDF_BXDF;
     float shiftedPathPDF_NEE = jacobianPath * shiftedPathPrefixPDF * shiftPDF_NEE;
 
-    // Selecting Main - NEE
+    // Selecting (Main, NEE) PDF
     float mis_path = BalanceHeuristic(
         mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
         gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);

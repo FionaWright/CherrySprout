@@ -8,7 +8,13 @@ float GenPowerHeuristic(float pdf1, float pdf2, uint N1, uint N2, float P)
 
     float pdf1_P = pow(pdf1, P) * N1;
     float pdf2_P = pow(pdf2, P) * N2;
-    return pdf1_P / (pdf1_P + pdf2_P);
+
+    float denom = pdf1_P + pdf2_P;
+
+    if (denom <= 0.0f)
+        return 0.0f;
+
+    return pdf1_P / denom;
 }
 
 float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4, float P)
@@ -20,7 +26,13 @@ float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1,
     float pdf2_P = pow(pdf2, P) * N2;
     float pdf3_P = pow(pdf3, P) * N3;
     float pdf4_P = pow(pdf4, P) * N4;
-    return pdf1_P / (pdf1_P + pdf2_P + pdf3_P + pdf4_P);
+
+    float denom = pdf1_P + pdf2_P + pdf3_P + pdf4_P;
+
+    if (denom <= 0.0f)
+        return 0.0f;
+
+    return pdf1_P / denom;
 }
 
 float PowerHeuristic(float pdf1, float pdf2, uint N1, uint N2)

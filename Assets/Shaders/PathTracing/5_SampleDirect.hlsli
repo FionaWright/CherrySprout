@@ -63,7 +63,7 @@ float3 SampleDirectLighting(
         vInfo.DirectContribution = radiance;
         vInfo.PDF_NEE = pdf_nee;
         vInfo.PDF_BXDF_at_NEE = pdf_bxdf;
-        vInfo.MIS = mis_nee;
+        vInfo.MIS_NEE = mis_nee;
     }
 
     if (FEAT_CORE(Transient))

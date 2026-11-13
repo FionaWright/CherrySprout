@@ -13,14 +13,14 @@ void Miss_S(inout PathState pathState, PathVertexInfo v1, ReconnectionState reco
     {
         Li = pathState.Beta * v1.DirectContribution;
 
-        // Li *= v1.MIS;
+        Li *= v1.MIS_NEE;
     }
     else
     {
-        float mis;
-        Li = pathState.Beta * Miss(pathState, mis);
+        float mis_nee;
+        Li = pathState.Beta * Miss(pathState, mis_nee);
 
-        // Li *= mis;
+        Li *= mis_nee;
     }
 
     pathState.Lo += ApplyFireflyThreshold(Li, gSettings.FireflyThreshold);
