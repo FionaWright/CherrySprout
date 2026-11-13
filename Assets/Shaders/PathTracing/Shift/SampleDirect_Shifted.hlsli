@@ -2,6 +2,7 @@
 #define H_NEE_SHIFTED_UNCONNECTED_H
 
 #include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/NEE/Utils.hlsli"
 
 bool SampleDirect_S_Connected(
     inout PathState pathState,
@@ -11,12 +12,12 @@ bool SampleDirect_S_Connected(
     HitInfo hitInfo,
     float3 wo)
 {
-    if (v1.Lobe == LobeTag::eNEE)
-    {
-        float3 L_sample = v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
-        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
-        return false;
-    }
+    //if (v1.Lobe == LobeTag::eNEE)
+    //{
+    //    float3 L_sample = v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+    //    pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+    //    return false;
+    //}
 
     float3 L_sample = v1.ShadowFactor * v1.MIS * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
@@ -31,20 +32,20 @@ bool SampleDirect_S_Semiconnected(
     HitInfo hitInfo,
     float3 wo)
 {
-    if (v1.Lobe == LobeTag::eNEE) // TODO: Not accounting for different bxdf eval
-    {
-        float3 L_sample = v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
-        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
-        return false;
-    }
+    //if (v1.Lobe == LobeTag::eNEE) // TODO: Not accounting for different bxdf eval
+    //{
+    //    float3 L_sample = v1.ShadowFactor * v1.DirectContribution * pathState.Beta / max(1e-6f, v1.PDF_NEE);
+    //    pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+    //    return false;
+    //}
 
     float shadowFactor; // TODO: Is this necessary? (Only need PDF) (Not accounting for emissives)
-    float pdf_nee;
-    float mis_nee; // TODO: Use v1.PDF_NEE to recompute MIS?
+    float pdfShifted;
+    float mis; // TODO: Use v1.PDF_NEE to recompute MIS?
     LightEval lightEval;
-    float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee, lightEval);
+    float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdfShifted, mis, lightEval);
 
-    if ((v1.PDF_NEE > 0.0f) != (pdf_nee > 0.0f))
+    if ((v1.PDF_NEE > 0.0f) != (pdfShifted > 0.0f))
     {
         pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionNEE);
@@ -52,10 +53,10 @@ bool SampleDirect_S_Semiconnected(
     }
 
     //BxdfEval bxdfEval_NEE = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
-    //mis_nee = PowerHeuristic(v1.PDF_NEE, bxdfEval_NEE.PDF, gSettings.DirectNumSamples, 1);
+    //mis = PowerHeuristic(v1.PDF_NEE, bxdfEval_NEE.PDF, gSettings.DirectNumSamples, 1);
 
-    //float3 L_sample = shadowFactor * mis_nee * radiance * pathState.Beta / max(1e-6f, pdf_nee);
-    float3 L_sample = shadowFactor * mis_nee * radiance * pathState.Beta / max(1e-6f, v1.PDF_NEE); // TODO
+    //float3 L_sample = shadowFactor * mis * radiance * pathState.Beta / max(1e-6f, pdfShifted);
+    float3 L_sample = shadowFactor * mis * radiance * pathState.Beta / max(1e-6f, v1.PDF_NEE); // TODO
     pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
     return true;
 }
@@ -73,29 +74,36 @@ bool SampleDirect_S_Unconnected(
     // TODO: NEE Lobe tag section not updated
 
     float shadowFactor;
-    float pdf_nee;
-    float mis_nee;
+    float pdfShifted;
+    float mis;
     LightEval lightEval;
-    float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee, lightEval);
+    float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, shadowFactor, pdfShifted, mis, lightEval);
 
-    if ((v1.PDF_NEE > 0.0f) != (pdf_nee > 0.0f))
+    if ((v1.PDF_NEE > 0.0f) != (pdfShifted > 0.0f))
     {
         pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionNEE);
         return false;
     }
 
-    if (v1.Lobe == LobeTag::eNEE) // TODO: Outdated
+    //if (v1.Lobe == LobeTag::eNEE) // TODO: Outdated
+    //{
+    //    // TODO: ?
+    //    //float3 E_direct = v1.MIS * radiance / max(1e-6f, v1.PDF_NEE);
+    //    float3 E_direct = radiance / max(1e-6f, v1.PDF_NEE);
+    //    DBG_OUTPUT3(E_direct, GD_NeeContrib);
+    //    pathStateShifted.PdfRatio *= (pdfShifted / max(1e-6f, v1.PDF_NEE));
+    //    float3 L_sample = E_direct * pathState.Beta;
+    //    pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+    //    return false;
+    //}
+
+    bool v1Dirac = MaterialIsDirac(v1.Roughness);
+    bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
+    if (!LightIsPunctual(v1.LightSample) && (v1Dirac || isDirac))
     {
-        // TODO: ?
-        //float3 E_direct = v1.MIS * radiance / max(1e-6f, v1.PDF_NEE);
-        float3 E_direct = radiance / max(1e-6f, v1.PDF_NEE);
-        DBG_OUTPUT3(E_direct, GD_NeeContrib);
-
-        pathStateShifted.PdfRatio *= (pdf_nee / max(1e-6f, v1.PDF_NEE));
-
-        float3 L_sample = E_direct * pathState.Beta;
-        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
+        pathStateShifted.IsSymmetric = false;
+        DBG_OUTPUT1(1.0f, GD_RejectionNEE);
         return false;
     }
 
@@ -126,19 +134,19 @@ bool SampleDirect_S_Unconnected(
             return false;
         }
 
-        pdf_nee /= shiftResultEmissive.Jacobian;
+        pdfShifted /= shiftResultEmissive.Jacobian; // TODO: radiance also needs to be changed by jacobian
 
         // TODO: Slow
         //BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
-        //mis_nee = PowerHeuristic(pdf_nee, bxdfEval.PDF, gSettings.DirectNumSamples, 1);
+        //mis = PowerHeuristic(pdfShifted, bxdfEval.PDF, gSettings.DirectNumSamples, 1);
     }
 
     // TODO: Slow
-    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
-    mis_nee = PowerHeuristic(v1.PDF_NEE, bxdfEval.PDF, gSettings.DirectNumSamples, 1);
+    //BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, lightEval.Direction, LobeTag::eAll);
+    //mis = PowerHeuristic(v1.PDF_NEE, bxdfEval.PDF, gSettings.DirectNumSamples, 1);
 
-    //float3 E_direct = shadowFactor * mis_nee * radiance / max(1e-6f, pdf_nee);
-    float3 E_direct = shadowFactor * mis_nee * radiance / max(1e-6f, v1.PDF_NEE);
+    //float3 E_direct = shadowFactor * mis * radiance / max(1e-6f, pdfShifted);
+    float3 E_direct = shadowFactor * mis * radiance / max(1e-6f, v1.PDF_NEE);
     DBG_OUTPUT3(E_direct, GD_NeeContrib);
 
     float3 L_sample = E_direct * pathState.Beta;

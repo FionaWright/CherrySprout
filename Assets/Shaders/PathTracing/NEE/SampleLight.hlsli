@@ -10,6 +10,7 @@
 #include "PathTracing/NEE/LSD/SampleLSD.hlsli"
 #include "PathTracing/NEE/SampleEnvMap.hlsli"
 #include "PathTracing/NEE/SampleEmissive.hlsli"
+#include "PathTracing/NEE/Utils.hlsli"
 
 LightSample SampleLight(
     RngValuesAncillary::RngValuesNEE rng,
@@ -35,7 +36,7 @@ LightSample SampleLight(
     float pdf_lsd;
     SampleLSD(rng.LSD, lightIdx, pdf_lsd);
 
-    if (lightIdx < gSettings.LsdBasePunctuals)
+    if (LightIsEnvMap(lightIdx))
     {
         DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(1,0,0),  NEE_LightSampleType);
@@ -43,7 +44,7 @@ LightSample SampleLight(
         lightSample = SampleEnvMap(rng.Light, lightEval);
         DBG_SCALE_INTENSITY_ENV_MAP(lightEval.Radiance);
     }
-    else if (lightIdx < gSettings.LsdBaseEmissives)
+    else if (LightIsPunctual(lightIdx))
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Punctuals), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,1,0),  NEE_LightSampleType);
@@ -62,7 +63,7 @@ LightSample SampleLight(
         lightSample = EvaluatePunctualLight(light, hitPos, lightEval);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
-    else if (lightIdx < gSettings.LsdCount)
+    else if (LightIsEmissive(lightIdx))
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
         DBG_OUTPUT3(float3(0,0,1),  NEE_LightSampleType);
@@ -105,14 +106,14 @@ LightEval EvaluateLight(
 
     LightEval lightEval;
 
-    if (lightSample.Index < gSettings.LsdBasePunctuals)
+    if (LightIsEnvMap(lightSample))
     {
         DBG_ASSERT_EXPR(FEAT_CORE(EnvironmentMap), DISABLED_LIGHT_INDEX);
 
         lightEval = EvaluateEnvMap(lightSample);
         DBG_SCALE_INTENSITY_ENV_MAP(lightEval.Radiance);
     }
-    else if (lightSample.Index < gSettings.LsdBaseEmissives)
+    else if (LightIsPunctual(lightSample))
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Punctuals), DISABLED_LIGHT_INDEX);
 
@@ -122,7 +123,7 @@ LightEval EvaluateLight(
         EvaluatePunctualLight(light, hitPos, lightEval);
         DBG_SCALE_INTENSITY_PUNCTUAL(lightEval.Radiance);
     }
-    else if (lightSample.Index < gSettings.LsdCount)
+    else if (LightIsEmissive(lightSample))
     {
         DBG_ASSERT_EXPR(FEAT_CORE(Emission), DISABLED_LIGHT_INDEX);
         DBG_ASSERT_LT(lightSample.Index, gSettings.LsdCount, OOB_LIGHT_INDEX);
