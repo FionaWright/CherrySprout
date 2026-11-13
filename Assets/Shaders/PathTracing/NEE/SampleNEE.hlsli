@@ -15,15 +15,17 @@ float3 SampleNEE(
     out LightSample lightSample,
     out float lightDistance,
     out float shadowFactor,
-    out float pdf,
+    out float pdf_nee,
+    out float pdf_bxdf,
     out float mis)
 {
     shadowFactor = 0.0f;
-    pdf = 0.0f;
+    pdf_nee = 0.0f;
+    pdf_bxdf = 0.0f;
     mis = 0.0f;
 
     LightEval lightEval;
-    lightSample = SampleLight(rng, hitInfo.HitPos, wo, lightEval);
+    lightSample = SampleLight(rng, hitInfo.HitPos, lightEval);
 
     lightDistance = lightEval.Distance;
 
@@ -54,7 +56,8 @@ float3 SampleNEE(
 
     DBG_OUTPUT1(mis, NEE_MIS);
 
-    pdf = lightEval.PDF;
+    pdf_nee = lightEval.PDF;
+    pdf_bxdf = bxdfEval.PDF;
     return shadowFactor * radiance * NdL;
 }
 
@@ -64,13 +67,14 @@ float3 SampleNEE(
     uint numSamples,
     float3 wo,
 
-    out float pdf,
+    out float pdf_nee,
+    out float pdf_bxdf,
     out float mis)
 {
     LightSample _1;
     float _2;
     float _3;
-    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3, pdf, mis);
+    return SampleNEE(rng, hitInfo, numSamples, wo, _1, _2, _3, pdf_nee, pdf_bxdf, mis);
 }
 
 float3 EvaluateNEE(
@@ -82,15 +86,17 @@ float3 EvaluateNEE(
     LobeTag lobe,
 
     out float shadowFactor,
-    out float pdf,
+    out float pdf_nee,
+    out float pdf_bxdf,
     out float mis,
     out LightEval lightEval)
 {
     shadowFactor = 0.0f;
-    pdf = 0.0f;
+    pdf_nee = 0.0f;
+    pdf_bxdf = 0.0f;
     mis = 0.0f;
 
-    lightEval = EvaluateLight(hitInfo.HitPos, wo, lightSample);
+    lightEval = EvaluateLight(hitInfo.HitPos, lightSample);
 
     float NdL = dot(hitInfo.Ns_ff, lightEval.Direction);
     if (NdL <= 0.0f)
@@ -120,7 +126,8 @@ float3 EvaluateNEE(
         mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
-    pdf = lightEval.PDF;
+    pdf_nee = lightEval.PDF;
+    pdf_bxdf = bxdfEval.PDF;
     return shadowFactor * radiance * NdL;
 }
 
@@ -133,11 +140,12 @@ float3 EvaluateNEE(
     LobeTag lobe,
 
     out float shadowFactor,
-    out float pdf,
+    out float pdf_nee,
+    out float pdf_bxdf,
     out float mis)
 {
     LightEval _1;
-    return EvaluateNEE(hitInfo, numSamples, wo, lightSample, lobe, shadowFactor, pdf, mis, _1);
+    return EvaluateNEE(hitInfo, numSamples, wo, lightSample, lobe, shadowFactor, pdf_nee, pdf_bxdf, mis, _1);
 }
 
 #else
@@ -152,8 +160,9 @@ float3 SampleNEE(
     out LightSample lightSample,
     out float lightDistance,
     out float shadowFactor,
-    out float pdf,
-    out float mis) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; pdf = NAN; mis = NAN; return NAN; }
+    out float pdf_nee,
+    out float pdf_bxdf,
+    out float mis) { lightSample = (LightSample)0; shadowFactor = NAN; lightDistance = NAN; pdf_nee = NAN; pdf_bxdf = NAN; mis = NAN; return NAN; }
 
 float3 SampleNEE(
     RngValuesAncillary::RngValuesNEE rng,
@@ -161,8 +170,9 @@ float3 SampleNEE(
 
     uint numSamples,
     float3 wo,
-    out float pdf,
-    out float mis) { pdf = NAN; mis = NAN; return NAN; }
+    out float pdf_nee,
+    out float pdf_bxdf,
+    out float mis) { pdf_nee = NAN; pdf_bxdf = NAN; mis = NAN; return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
@@ -173,8 +183,9 @@ float3 EvaluateNEE(
     LobeTag lobe,
 
     out float shadowFactor,
-    out float pdf,
-    out float mis) { shadowFactor = NAN; pdf = NAN; mis = NAN; return NAN; }
+    out float pdf_nee,
+    out float pdf_bxdf,
+    out float mis) { shadowFactor = NAN; pdf_nee = NAN; pdf_bxdf = NAN; mis = NAN; return NAN; }
 
 float3 EvaluateNEE(
     HitInfo hitInfo,
@@ -185,9 +196,10 @@ float3 EvaluateNEE(
     LobeTag lobe,
 
     out float shadowFactor,
-    out float pdf,
+    out float pdf_nee,
+    out float pdf_bxdf,
     out float mis,
-    out LightEval lightEval) { shadowFactor = NAN; pdf = NAN; mis = NAN; lightEval = INIT0(LightEval); return NAN; }
+    out LightEval lightEval) { shadowFactor = NAN; pdf_nee = NAN; pdf_bxdf = NAN; mis = NAN; lightEval = INIT0(LightEval); return NAN; }
 
 #endif
 

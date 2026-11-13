@@ -39,8 +39,11 @@ struct PathVertexInfo
 
     float PDF_BXDF;
     float PDF_NEE;
+    float PDF_BXDF_at_NEE; // BxDF eval in light direction
     float MIS;
-    float p;
+
+    hlsl::float3 BetaAtHit; // For shifted NEE
+    float p2;
 };
 
 struct PathVertexList
@@ -66,8 +69,13 @@ enum class ReconnectionState : hlsl::uint
 struct PathStateShifted
 {
     float Jacobian;
+    float LogPathPdfMain;
+    float LogPathPdfShifted;
     float PdfRatio;
+
     bool IsSymmetric;
+    hlsl::float3 SubpathGradients;
+
     ReconnectionState ReconnectionState;
 };
 
@@ -76,6 +84,8 @@ inline PathStateShifted CreatePathStateShifted()
     PathStateShifted pathStateShifted = (PathStateShifted)0;
 
     pathStateShifted.Jacobian = 1.0f;
+    pathStateShifted.LogPathPdfMain = 0.0f;
+    pathStateShifted.LogPathPdfShifted = 0.0f;
     pathStateShifted.PdfRatio = 1.0f;
     pathStateShifted.IsSymmetric = true;
     pathStateShifted.ReconnectionState = ReconnectionState::eUnconnected;

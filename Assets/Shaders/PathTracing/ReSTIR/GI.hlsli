@@ -76,9 +76,9 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
         RngValuesAncillary::RngValuesNEE rngNEE = SampleRngNEE(rngInfo);
 
         float3 wo = -bxdfSample.Wi;
-        float pdf;
+        float pdf, _;
         float mis;
-        float3 radiance = SampleNEE(rngNEE, secondaryHitInfo, 1, wo, pdf, mis);
+        float3 radiance = SampleNEE(rngNEE, secondaryHitInfo, 1, wo, pdf, _, mis);
         E_direct = mis * radiance / max(1e-6f, pdf);
     }
 

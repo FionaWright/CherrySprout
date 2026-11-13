@@ -59,8 +59,10 @@ bool ResolvePathAncillaryVertex(
 
     PathVertexInfo vInfo = INIT0(PathVertexInfo);
 
-    if (FEAT_CORE(HybridShift))
+    if (PATH_VERTICES_REQUIRED && FEAT_CORE(HybridShift))
         vInfo.InitialRngAncillaryState = rngInfo.IndependentRngState;
+    if (PATH_VERTICES_REQUIRED)
+        vInfo.BetaAtHit = pathState.Beta;
 
     RngValuesAncillary rng = INIT0(RngValuesAncillary);
     SampleRngAncillaryBatch1(rngInfo, rng);

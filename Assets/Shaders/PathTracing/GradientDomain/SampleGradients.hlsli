@@ -7,15 +7,14 @@
 #include "PathTracing/Shift/TraceShiftedPath.hlsli"
 #include "PathTracing/MIS.hlsli"
 
-void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 Lo, out float misWeight)
+void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 gradient)
 {
     if (shiftedCoord.x < 0 ||
         shiftedCoord.y < 0 ||
         shiftedCoord.x >= gSettings.FrameDimensions.x ||
         shiftedCoord.y >= gSettings.FrameDimensions.y)
     {
-        Lo = mainPath.Lo;
-        misWeight = 1.0f;
+        gradient = 0.0f;
         return;
     }
 
@@ -33,6 +32,8 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 Lo, 
 	float pdfRatioPrimary = 1.0f;
     DBG_OUTPUT1(pdfRatioPrimary, GD_PrimaryPdfRatio);
 
+    float3 shiftedLo;
+    float3 subpathGradients;
     float jacobian;
     float pdfRatio;
     bool isSymmetric;
@@ -41,30 +42,34 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 Lo, 
         shiftedRayOrigin,
         shiftedRayDirection,
         shiftedCoord,
-        Lo,
+        shiftedLo,
+        subpathGradients,
         jacobian,
         pdfRatio,
         isSymmetric);
 
-    Lo *= jacobian;
+    shiftedLo *= jacobian;
     pdfRatio *= pdfRatioPrimary;
     pdfRatio *= jacobian;
 
-    misWeight = 1.0f;
+    float mis_path = 1.0f;
     if (isSymmetric)
     {
         if (FEAT_DBG(FixedMisHalf))
-            misWeight = 0.5f;
+            mis_path = 0.5f;
         else
-            misWeight = BalanceHeuristicRatio(pdfRatio, 1, 1);
+            mis_path = BalanceHeuristicRatio(pdfRatio, 1, 1);
     }
+
+    gradient = (shiftedLo - mainPath.Lo) * mis_path;
+    gradient += subpathGradients;
 
     // Debug
     {
         DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
         DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
-        DBG_OUTPUT1(misWeight, GD_MIS);
-        DBG_OUTPUT3(Lo, GD_Lo);
+        DBG_OUTPUT1(mis_path, GD_MIS);
+        DBG_OUTPUT3(shiftedLo, GD_Lo);
 
         DBG_OUTPUT_DUMP_DISABLE();
         DBG_OUTPUT1(0.0f, GD_RejectionUninit);
@@ -102,8 +107,7 @@ Gradients SampleGradients(int2 mainCoord, PathSample mainPath)
         int2(0,-1)
     };
 
-    float3 Lo[4];
-    float mis[4];
+    float3 grad[4];
 
     [loop] // Note: Do not unroll, otherwise expensive inlining will occur
     for (int i = 0; i < 4; i++)
@@ -113,16 +117,16 @@ Gradients SampleGradients(int2 mainCoord, PathSample mainPath)
         else
             { DBG_OUTPUT_DISABLE(); }
 
-        EvaluateShiftedPath(mainCoord + offsets[i], mainPath, Lo[i], mis[i]);
+        EvaluateShiftedPath(mainCoord + offsets[i], mainPath, grad[i]);
     }
     DBG_OUTPUT_ENABLE()
 
     Gradients gradients;
-    gradients.XForward = ((Lo[0] - mainPath.Lo) * mis[0]);
-    gradients.XBackward = ((mainPath.Lo - Lo[1]) * mis[1]);
+    gradients.XForward = grad[0];
+    gradients.XBackward = -grad[1];
 
-    gradients.YForward = ((Lo[2] - mainPath.Lo) * mis[2]);
-    gradients.YBackward = ((mainPath.Lo - Lo[3]) * mis[3]);
+    gradients.YForward = grad[2];
+    gradients.YBackward = -grad[3];
     return gradients;
 }
 

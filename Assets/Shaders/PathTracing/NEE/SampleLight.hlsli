@@ -15,8 +15,6 @@
 LightSample SampleLight(
     RngValuesAncillary::RngValuesNEE rng,
     float3 hitPos,
-    float3 wo,
-
     out LightEval lightEval)
 {
     LightSample lightSample = INIT0(LightSample);
@@ -97,8 +95,6 @@ LightSample SampleLight(
 
 LightEval EvaluateLight(
     float3 hitPos,
-    float3 wo,
-
     LightSample lightSample)
 {
     float pdf_lsd;

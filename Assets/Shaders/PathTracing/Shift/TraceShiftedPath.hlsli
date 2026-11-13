@@ -93,6 +93,8 @@ bool ResolveShiftedPathAncillaryVertex(
     if (!pathStateShifted.IsSymmetric)
         return false;
 
+	pathStateShifted.LogPathPdfMain += log(pdfMain);
+	pathStateShifted.LogPathPdfShifted += log(pdfShifted);
 	pathStateShifted.PdfRatio *= (pdfShifted / pdfMain);
 
     pathState.Desc.Direction = wi;
@@ -125,6 +127,7 @@ void TraceShiftedPath(
     int2 pixelCoord,
 
     out float3 Lo,
+    out float3 subpathGradients,
     out float jacobian,
     out float pdfRatio,
     out bool isSymmetric)
@@ -151,6 +154,7 @@ void TraceShiftedPath(
     jacobian = pathStateShifted.Jacobian;
     pdfRatio = pathStateShifted.PdfRatio;
     isSymmetric = pathStateShifted.IsSymmetric;
+    subpathGradients = pathStateShifted.SubpathGradients;
 
     float3 dbgRcStateColor =
         pathStateShifted.ReconnectionState == ReconnectionState::eUnconnected ? float3(1,0,0) :

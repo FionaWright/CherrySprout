@@ -11,14 +11,36 @@ float GenPowerHeuristic(float pdf1, float pdf2, uint N1, uint N2, float P)
     return pdf1_P / (pdf1_P + pdf2_P);
 }
 
+float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4, float P)
+{
+    if (FEAT_DBG(FixedMisHalf))
+        return 0.5f;
+
+    float pdf1_P = pow(pdf1, P) * N1;
+    float pdf2_P = pow(pdf2, P) * N2;
+    float pdf3_P = pow(pdf3, P) * N3;
+    float pdf4_P = pow(pdf4, P) * N4;
+    return pdf1_P / (pdf1_P + pdf2_P + pdf3_P + pdf4_P);
+}
+
 float PowerHeuristic(float pdf1, float pdf2, uint N1, uint N2)
 {
     return GenPowerHeuristic(pdf1, pdf2, N1, N2, 2);
 }
 
+float PowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4)
+{
+    return GenPowerHeuristic(pdf1, pdf2, pdf3, pdf4, N1, N2, N3, N4, 2);
+}
+
 float BalanceHeuristic(float pdf1, float pdf2, uint N1, uint N2)
 {
     return GenPowerHeuristic(pdf1, pdf2, N1, N2, 1);
+}
+
+float BalanceHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4)
+{
+    return GenPowerHeuristic(pdf1, pdf2, pdf3, pdf4, N1, N2, N3, N4, 1);
 }
 
 float BalanceHeuristicRatio(float pdfRatio2_1, uint N1, uint N2)

@@ -25,6 +25,7 @@ float3 SampleDirectLighting(
     float3 radiance = 0.0f;
     float lightDistance = INF;
     float pdf_nee = 1.0f;
+    float pdf_bxdf = 1.0f;
     float mis_nee = 1.0f;
 
     if (FEAT_CORE(RestirDI) && pathState.GetPathFlag(eIsPrimaryRay)) // TODO: PDF
@@ -39,11 +40,11 @@ float3 SampleDirectLighting(
     }
     else
     {
-        radiance = SampleNEE(rng, hitInfo, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor, pdf_nee, mis_nee);
+        radiance = SampleNEE(rng, hitInfo, gSettings.DirectNumSamples, wo, lightSample, lightDistance, shadowFactor, pdf_nee, pdf_bxdf, mis_nee);
 
         if (FEAT_DBG(NeeTestRevaluate))
         {
-            radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, LobeTag::eAll, shadowFactor, pdf_nee, mis_nee);
+            radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, lightSample, LobeTag::eAll, shadowFactor, pdf_nee, pdf_bxdf, mis_nee);
         }
 
         float3 E_nee = mis_nee * radiance / max(1e-6f, pdf_nee);
@@ -61,6 +62,7 @@ float3 SampleDirectLighting(
 	    vInfo.ShadowFactor = shadowFactor;
         vInfo.DirectContribution = radiance;
         vInfo.PDF_NEE = pdf_nee;
+        vInfo.PDF_BXDF_at_NEE = pdf_bxdf;
         vInfo.MIS = mis_nee;
     }
 

@@ -29,7 +29,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI 
 
 void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context)
 {
-    X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, context.Wo, X_i.LightSample);
+    X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, X_i.LightSample);
 }
 
 float Target(CandidateDI X_i, ContextPrimaryRay context)
