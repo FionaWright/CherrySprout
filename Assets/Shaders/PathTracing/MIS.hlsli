@@ -1,7 +1,7 @@
 #ifndef H_POWER_HEURISTIC_H
 #define H_POWER_HEURISTIC_H
 
-float GenPowerHeuristic(float pdf1, float pdf2, uint N1, uint N2, float P)
+float GenPowerHeuristic(float pdf1, float pdf2, float N1, float N2, float P)
 {
     if (FEAT_DBG(FixedMisHalf))
         return 0.5f;
@@ -17,7 +17,7 @@ float GenPowerHeuristic(float pdf1, float pdf2, uint N1, uint N2, float P)
     return pdf1_P / denom;
 }
 
-float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4, float P)
+float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, float N1, float N2, float N3, float N4, float P)
 {
     if (FEAT_DBG(FixedMisHalf))
         return 0.5f;
@@ -35,27 +35,28 @@ float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1,
     return pdf1_P / denom;
 }
 
-float PowerHeuristic(float pdf1, float pdf2, uint N1, uint N2)
+float PowerHeuristic(float pdf1, float pdf2, float N1, float N2)
 {
     return GenPowerHeuristic(pdf1, pdf2, N1, N2, 2);
 }
 
-float PowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4)
+float PowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, float N1, float N2, float N3, float N4)
 {
     return GenPowerHeuristic(pdf1, pdf2, pdf3, pdf4, N1, N2, N3, N4, 2);
 }
 
-float BalanceHeuristic(float pdf1, float pdf2, uint N1, uint N2)
+float BalanceHeuristic(float pdf1, float pdf2, float N1, float N2)
 {
     return GenPowerHeuristic(pdf1, pdf2, N1, N2, 1);
 }
 
-float BalanceHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, uint N1, uint N2, uint N3, uint N4)
+float BalanceHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, float N1, float N2, float N3, float N4)
 {
     return GenPowerHeuristic(pdf1, pdf2, pdf3, pdf4, N1, N2, N3, N4, 1);
 }
 
-float BalanceHeuristicRatio(float pdfRatio2_1, uint N1, uint N2)
+// Selects pdf 1
+float BalanceHeuristicRatio(float pdfRatio2_1, float N1, float N2)
 {
     float NRatio = N2 / N1;
     return 1.0f / (1.0f + pdfRatio2_1 * NRatio);

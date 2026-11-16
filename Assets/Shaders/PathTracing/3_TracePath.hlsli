@@ -33,7 +33,7 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT1(1.0f, KilledByMiss);
 
         if (PATH_VERTICES_REQUIRED)
-            AddVertexEnvMap(vertexList, L_miss, mis_env);
+            AddVertexEnvMap(vertexList, pathState.Beta, L_miss, mis_env);
 
         return false;
     }
@@ -52,17 +52,20 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT1(1.0f, KilledByEmission);
 
         if (PATH_VERTICES_REQUIRED)
-            AddVertexEmissive(vertexList, emission, mis_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
+            AddVertexEmissive(vertexList, pathState.Beta, emission, mis_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
         return false;
     }
+
+	if (pathState.GetPathFlag(PathFlags::eIsTerminalRay))
+		return false;
 
     PathVertexInfo vInfo = INIT0(PathVertexInfo);
 
     if (PATH_VERTICES_REQUIRED && FEAT_CORE(HybridShift))
         vInfo.InitialRngAncillaryState = rngInfo.IndependentRngState;
     if (PATH_VERTICES_REQUIRED)
-        vInfo.BetaAtHit = pathState.Beta;
+        vInfo.InitialBeta = pathState.Beta;
 
     RngValuesAncillary rng = INIT0(RngValuesAncillary);
     SampleRngAncillaryBatch1(rngInfo, rng);

@@ -42,7 +42,7 @@ struct PathVertexInfo
     float PDF_BXDF_at_NEE; // BxDF eval in light direction
     float MIS_NEE;
 
-    hlsl::float3 BetaAtHit; // For shifted NEE
+    hlsl::float3 InitialBeta;
     float p2;
 };
 

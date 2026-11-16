@@ -32,14 +32,14 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
             float pdf_lsd;
             EvaluateLSD(0, pdf_lsd);
 
-            float pdf_env = pdf_lsd * EvaluateEnvMapPdf(uv);
+            float pdf_nee = pdf_lsd * EvaluateEnvMapPdf(uv);
 
             if (FEAT_DBG(FixedMisNeeManual))
                 mis = 1.0f - GetFixedMisNee();
-            else if (lastBxdfPdf <= 0.0f || pdf_env <= 0.0f)
+            else if (lastBxdfPdf <= 0.0f || pdf_nee <= 0.0f)
                 mis = 0.0f;
             else
-                mis = PowerHeuristic(lastBxdfPdf, pdf_env, 1, gSettings.DirectNumSamples);
+                mis = PowerHeuristic(lastBxdfPdf, pdf_nee, 1, gSettings.DirectNumSamples);
         }
 
         DBG_OUTPUT2(uv, EnvironmentMapUV);

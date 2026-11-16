@@ -17,7 +17,11 @@ bool SampleIndirect_S_Connected(
     wi = v1.Wi;
     pdfShifted = v1.PDF_BXDF;
 
-    pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF); // TODO: Missing something? :)
+    pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
+
+    if (FEAT_CORE(NEE))
+        pathState.LastBxdfPdf = v1.PDF_BXDF;
+
     return true;
 }
 
@@ -40,7 +44,7 @@ bool SampleIndirect_S_Semiconnected(
     float NdL = dot(hitInfo.Ns_ff, wi);
     pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6f, v1.PDF_BXDF); // TODO: NDL?
 
-    if (FEAT_CORE(NEE)) // Note: Unused once connected but left in for clarity
+    if (FEAT_CORE(NEE))
         pathState.LastBxdfPdf = bxdfEval.PDF;
 
     pathStateShifted.ReconnectionState = ReconnectionState::eConnected;

@@ -35,7 +35,7 @@ bool SampleDirect_S_Connected(
     // Note: No NEE/BxDF MIS weights applied here
     float3 vertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, mainPDF_NEE);
 
-    float3 mainLo = v1.BetaAtHit * vertexLo;
+    float3 mainLo = v1.InitialBeta * vertexLo;
     float3 shiftedLo = jacobianPath * pathState.Beta * vertexLo;
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
@@ -84,7 +84,7 @@ bool SampleDirect_S_Semiconnected(
     float shiftedPathPDF_BXDF = jacobianPath * shiftedPathPrefixPDF * shiftPDF_BXDF;
     float shiftedPathPDF_NEE = jacobianPath * shiftedPathPrefixPDF * shiftPDF_NEE;
 
-    // Selecting Main - NEE
+    // Selecting (Main, NEE) PDF
     float mis_path = BalanceHeuristic(
         mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
         gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
@@ -93,7 +93,7 @@ bool SampleDirect_S_Semiconnected(
     float3 mainVertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, mainPDF_NEE);
     float3 shiftedVertexLo = v1.ShadowFactor * radiance / max(1e-6f, mainPDF_NEE);
 
-    float3 mainLo = v1.BetaAtHit * mainVertexLo;
+    float3 mainLo = v1.InitialBeta * mainVertexLo;
     float3 shiftedLo = jacobianPath * pathState.Beta * shiftedVertexLo;
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
@@ -131,6 +131,9 @@ bool SampleDirect_S_Unconnected(
         return false;
     }
 
+    // TODO: Forgot to multiply shifted Lo by jacobian
+    // TODO: Forgot to apply firefly threshold
+
     if (v1.PDF_NEE <= 0.0f)
         return true;
 
@@ -155,7 +158,7 @@ bool SampleDirect_S_Unconnected(
     float shiftPDF_BXDF = pdfShifted_BXDF;
     float shiftPDF_NEE = pdfShifted_NEE;
 
-    float jacobianVertex = 1.0f; // TODO
+    float jacobianVertex = 1.0f; // TODO: Only matters for emissives (And maybe punctuals?)
     float jacobianPrefix = pathStateShifted.Jacobian;
     float jacobianPath = jacobianPrefix * jacobianVertex;
 
@@ -176,7 +179,7 @@ bool SampleDirect_S_Unconnected(
     float3 mainVertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, mainPDF_NEE);
     float3 shiftedVertexLo = shadowFactor * radiance / max(1e-6f, mainPDF_NEE);
 
-    float3 mainLo = v1.BetaAtHit * mainVertexLo;
+    float3 mainLo = v1.InitialBeta * mainVertexLo;
     float3 shiftedLo = jacobianPath * pathState.Beta * shiftedVertexLo;
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator

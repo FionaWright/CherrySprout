@@ -14,7 +14,7 @@ void AddVertex(inout PathVertexList vList, PathVertexInfo vInfo)
     DBG_PATH_DUMP_PATH_VERTEX_INFO(vInfo);
 }
 
-void AddVertexEnvMap(inout PathVertexList vList, float3 contrib, float mis_nee)
+void AddVertexEnvMap(inout PathVertexList vList, float3 beta, float3 contrib, float mis_nee)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
@@ -23,11 +23,12 @@ void AddVertexEnvMap(inout PathVertexList vList, float3 contrib, float mis_nee)
     vInfo.Type = VertexType::eEnvironment;
     vInfo.DirectContribution = contrib;
     vInfo.MIS_NEE = mis_nee;
+    vInfo.InitialBeta = beta;
 
     AddVertex(vList, vInfo);
 }
 
-void AddVertexEmissive(inout PathVertexList vList, float3 emission, float mis_nee, float3 hitPos, float3 Ng_ff, float roughness)
+void AddVertexEmissive(inout PathVertexList vList, float3 beta, float3 emission, float mis_nee, float3 hitPos, float3 Ng_ff, float roughness)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
@@ -39,6 +40,7 @@ void AddVertexEmissive(inout PathVertexList vList, float3 emission, float mis_ne
     vInfo.Position = hitPos;
     vInfo.Ng_ff = Ng_ff;
     vInfo.Roughness = roughness;
+    vInfo.InitialBeta = beta;
 
     AddVertex(vList, vInfo);
 }

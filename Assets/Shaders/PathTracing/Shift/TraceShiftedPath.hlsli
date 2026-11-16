@@ -30,7 +30,7 @@ bool ResolveShiftedPathAncillaryVertex(
 
     if (isMiss)
     {
-        Miss_S(pathState, v1, pathStateShifted.ReconnectionState);
+        Miss_S(pathState, pathStateShifted, mainVertices, v1);
         return false;
     }
 

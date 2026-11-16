@@ -49,23 +49,23 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
 
     if (isSymmetric)
     {
-        shiftedLo *= jacobian;
-        pdfRatio *= jacobian;
+        //shiftedLo *= jacobian;
+        //pdfRatio *= jacobian;
 
-        pdfRatio *= pdfRatioPrimary;
+        //pdfRatio *= pdfRatioPrimary;
 
-        float mis_path = 1.0f;
-        if (FEAT_DBG(FixedMisHalf))
-            mis_path = 0.5f;
-        else
-            mis_path = BalanceHeuristicRatio(pdfRatio, 1, 1);
+        //float mis_path = 1.0f;
+        //if (FEAT_DBG(FixedMisHalf))
+        //    mis_path = 0.5f;
+        //else
+        //    mis_path = BalanceHeuristicRatio(pdfRatio, 1, 1);
 
-        gradient = (shiftedLo - mainPath.Lo) * mis_path;
-        gradient += subpathGradients * 0.5f; // TODO: Cheating here, remove
+        //gradient = (shiftedLo - mainPath.Lo) * mis_path;
+        gradient += subpathGradients;
 
         DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
         DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
-        DBG_OUTPUT1(mis_path, GD_MIS);
+        //DBG_OUTPUT1(mis_path, GD_MIS);
         DBG_OUTPUT3(shiftedLo, GD_Lo);
     }
     else
