@@ -124,7 +124,7 @@ Gradients SampleGradients(int2 mainCoord, PathSample mainPath)
     [loop] // Note: Do not unroll, otherwise expensive inlining will occur
     for (int i = 0; i < 4; i++)
     {
-        if (i == 1)
+        if (i == 0)
             { DBG_OUTPUT_ENABLE(); }
         else
             { DBG_OUTPUT_DISABLE(); }

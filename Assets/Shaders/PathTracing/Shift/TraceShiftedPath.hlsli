@@ -75,13 +75,10 @@ bool ResolveShiftedPathAncillaryVertex(
     DBG_OUTPUT1(0.0f, GD_Nee_MIS);
     DBG_OUTPUT1(1.0f, GD_Nee_Jacobian);
 
-    if (pathState.GetPathFlag(eIsTerminalRay))
+    if (pathState.GetPathFlag(eIsTerminalRay)) // TODO: Causes issues when disabled but also heavily reduces noise reduction when enabled
     {
-        if (!FEAT_CORE(NEE))
-        {
-            pathStateShifted.IsSymmetric = false;
-            DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
-        }
+        //pathStateShifted.IsSymmetric = false;
+        //DBG_OUTPUT1(1.0f, GD_RejectionMaxVertex);
         return false;
     }
 

@@ -69,7 +69,7 @@ bool SampleDirect_S_Semiconnected(
     float3 radiance = EvaluateNEE(hitInfo, gSettings.DirectNumSamples, wo, v1.LightSample, LobeTag::eAll, _sf, _pdfnee, pdfShifted_BXDF, _mis, _l);
 
     float shiftPDF_BXDF = pdfShifted_BXDF;
-    float shiftPDF_NEE = v1.PDF_NEE;
+    float shiftPDF_NEE = v1.PDF_NEE; // Note: As vertex position is the same, NEE pdf is the same
 
     float mainPDF_BXDF = v1.PDF_BXDF_at_NEE;
     float mainPDF_NEE = v1.PDF_NEE;
@@ -131,9 +131,6 @@ bool SampleDirect_S_Unconnected(
         return false;
     }
 
-    // TODO: Forgot to multiply shifted Lo by jacobian
-    // TODO: Forgot to apply firefly threshold
-
     if (v1.PDF_NEE <= 0.0f)
         return true;
 
@@ -184,8 +181,6 @@ bool SampleDirect_S_Unconnected(
 
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
     pathStateShifted.SubpathGradients += gradient;
-
-    DBG_FORCE_OUTPUT3(shiftedLo);
 
     DBG_OUTPUT3(mainLo, GD_Nee_MainLo);
     DBG_OUTPUT3(shiftedLo, GD_Nee_ShiftLo);

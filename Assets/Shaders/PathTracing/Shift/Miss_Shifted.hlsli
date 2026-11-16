@@ -126,6 +126,8 @@ float3 Miss_S_Semi_or_Unconnected(
     float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * Li;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
+    //DBG_FORCE_OUTPUT3((shiftedLo - mainLo));
+
     return (shiftedLo - mainLo) * mis_path;
 }
 

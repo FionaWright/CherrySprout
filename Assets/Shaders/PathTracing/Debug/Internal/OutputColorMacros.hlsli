@@ -43,6 +43,9 @@ void dbgOutput3(float value_x, float value_y, float value_z, uint index)
 [noinline]
 void dbgOutput3Force(float value_x, float value_y, float value_z)
 {
+    if (!gDebugOutputEnabled)
+        return;
+
     float3 value = float3(value_x, value_y, value_z);
 
     DBG_PATH_DUMP_FORCED_OUTPUT(value);
