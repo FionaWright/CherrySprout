@@ -20,8 +20,8 @@ float3 Miss_S_Connected(
     float mainPDF_BXDF = v0.PDF_BXDF;
     float shiftPDF_BXDF = pathState.LastBxdfPdf;
 
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
+    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
 
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
@@ -51,7 +51,7 @@ float3 Miss_S_Connected(
             1, 1);
     }
 
-    float3 mainLo = v0.InitialBeta * v1.DirectContribution;
+    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * v1.DirectContribution;
@@ -85,11 +85,9 @@ float3 Miss_S_Semi_or_Unconnected(
     float mainPDF_BXDF = v0.PDF_BXDF;
     float shiftPDF_BXDF = pathState.LastBxdfPdf;
 
-    // TODO: This pdf path already contains bxdf pdf, may have same error in sample direct
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    float mainPathPrefixPDF = 1.0f;
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
-    float shiftedPathPrefixPDF = 1.0f;
+    // TODO: Division is inefficient
+    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
+    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
 
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
@@ -117,13 +115,12 @@ float3 Miss_S_Semi_or_Unconnected(
     else
     {
         // Selecting (Main, BxDF) PDF
-        //mis_path = BalanceHeuristic(
-        //    mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-        //    1, 1);
-        mis_path = 1.0f;
+        mis_path = BalanceHeuristic(
+            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
+            1, 1);
     }
 
-    float3 mainLo = v0.InitialBeta * v1.DirectContribution;
+    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * Li;

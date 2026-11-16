@@ -185,6 +185,8 @@ bool SampleDirect_S_Unconnected(
     float3 gradient = (shiftedLo - mainLo) * mis_path; // Flipped at the end if backwards estimator
     pathStateShifted.SubpathGradients += gradient;
 
+    DBG_FORCE_OUTPUT3(shiftedLo);
+
     DBG_OUTPUT3(mainLo, GD_Nee_MainLo);
     DBG_OUTPUT3(shiftedLo, GD_Nee_ShiftLo);
     DBG_OUTPUT3(gradient, GD_Nee_Gradient);

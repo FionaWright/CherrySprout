@@ -55,6 +55,7 @@ bool ResolveShiftedPathAncillaryVertex(
         return false;
     }
 
+    // TODO: Emissives using outdated gradient compute method, need to use 4-way MIS
     if (isEmissive) // TODO: When connected, reuse v1 emission
     {
         float3 L_sample = pathState.Beta * L_emission;

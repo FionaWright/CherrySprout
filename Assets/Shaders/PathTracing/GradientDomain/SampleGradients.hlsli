@@ -47,8 +47,14 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
         pdfRatio,
         isSymmetric);
 
+    DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
+    DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
+    DBG_OUTPUT3(shiftedLo, GD_Lo);
+
     if (isSymmetric)
     {
+        // TODO: Refactor out old code
+
         //shiftedLo *= jacobian;
         //pdfRatio *= jacobian;
 
@@ -63,10 +69,7 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
         //gradient = (shiftedLo - mainPath.Lo) * mis_path;
         gradient += subpathGradients;
 
-        DBG_OUTPUT1(pdfRatio, GD_PdfRatio);
-        DBG_OUTPUT1(isSymmetric, GD_IsSymmetric);
         //DBG_OUTPUT1(mis_path, GD_MIS);
-        DBG_OUTPUT3(shiftedLo, GD_Lo);
     }
     else
     {
@@ -76,10 +79,7 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
     // Debug
     {
         DBG_OUTPUT_DUMP_DISABLE();
-        DBG_OUTPUT1(1.0f, GD_PdfRatio);
-        DBG_OUTPUT1(0.0f, GD_IsSymmetric);
         DBG_OUTPUT1(0.0f, GD_MIS);
-        DBG_OUTPUT1(0.0f, GD_Lo);
         DBG_OUTPUT1(0.0f, GD_RejectionUninit);
         DBG_OUTPUT1(0.0f, GD_RejectionDirac);
         DBG_OUTPUT1(0.0f, GD_RejectionMaxVertex);
