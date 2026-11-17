@@ -15,8 +15,11 @@ bool SampleDirect_S_Connected(
 {
     float jacobianPath = pathStateShifted.Jacobian; // Jacobian at vertex is 1
 
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
+    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+
+    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain;
+    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted;
 
     float mainPDF_NEE = v1.PDF_NEE;
     float shiftPDF_NEE = v1.PDF_NEE;
@@ -37,6 +40,10 @@ bool SampleDirect_S_Connected(
         mis_path = BalanceHeuristic(
             mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
             gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
     }
     else
     {
@@ -87,8 +94,11 @@ bool SampleDirect_S_Semiconnected(
 
     float jacobianPath = pathStateShifted.Jacobian; // Jacobian at vertex is 1
 
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
+    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+
+    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain;
+    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted;
 
     float mainPDF_NEE = v1.PDF_NEE;
     float shiftPDF_NEE = v1.PDF_NEE; // Note: As vertex position is the same, NEE pdf is the same
@@ -109,6 +119,10 @@ bool SampleDirect_S_Semiconnected(
         mis_path = BalanceHeuristic(
             mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
             gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
     }
     else
     {
@@ -205,8 +219,11 @@ bool SampleDirect_S_Unconnected(
     float jacobianPrefix = pathStateShifted.Jacobian;
     float jacobianPath = jacobianPrefix * jacobianVertex;
 
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
+    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
+
+    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain;
+    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted;
 
     float mainPDF_NEE = v1.PDF_NEE;
     float shiftPDF_NEE = pdfShifted_NEE;
@@ -227,6 +244,10 @@ bool SampleDirect_S_Unconnected(
         mis_path = BalanceHeuristic(
             mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
             gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
     }
     else
     {

@@ -86,8 +86,8 @@ inline PathStateShifted CreatePathStateShifted()
     PathStateShifted pathStateShifted = (PathStateShifted)0;
 
     pathStateShifted.Jacobian = 1.0f;
-    pathStateShifted.LogPathPdfMain = 0.0f;
-    pathStateShifted.LogPathPdfShifted = 0.0f;
+    pathStateShifted.LogPathPdfMain = 1.0f; // TODO
+    pathStateShifted.LogPathPdfShifted = 1.0f;
     pathStateShifted.PdfRatio = 1.0f;
     pathStateShifted.IsSymmetric = true;
     pathStateShifted.IsUsingNeeMis = true;

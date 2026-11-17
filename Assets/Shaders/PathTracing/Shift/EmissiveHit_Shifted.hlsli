@@ -24,8 +24,11 @@ bool EmissiveHit_S_Connected(
     float shiftPDF_BXDF = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
+    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+
+    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain / mainPDF_BXDF;
+    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted / shiftPDF_BXDF;
 
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
@@ -42,6 +45,10 @@ bool EmissiveHit_S_Connected(
         mis_path = BalanceHeuristic(
             mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
             1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
     }
     else
     {
@@ -87,8 +94,11 @@ bool EmissiveHit_S_Semiconnected(
     float shiftPDF_BXDF = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
+    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+
+    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain / mainPDF_BXDF;
+    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted / shiftPDF_BXDF;
 
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
@@ -115,6 +125,10 @@ bool EmissiveHit_S_Semiconnected(
         mis_path = BalanceHeuristic(
             mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
             1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
     }
     else
     {
@@ -166,6 +180,8 @@ bool EmissiveHit_S_Unconnected(
     if (!isEmissive)
         return true;
 
+    DBG_FORCE_OUTPUT3(COLOR_RED);
+
     if (pathState.GetPathFlag(PathFlags::eIsPrimaryRay))
     {
         // Note: beta, jacobian always 1
@@ -175,6 +191,9 @@ bool EmissiveHit_S_Unconnected(
         pathState.Lo = Li_s;
 
         float mis_path = BalanceHeuristic(1.0f, 1.0f, 1, 1);
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
         pathStateShifted.SubpathGradients += (Li_s - Li_m) * mis_path;
         return false;
     }
@@ -185,8 +204,11 @@ bool EmissiveHit_S_Unconnected(
     float shiftPDF_BXDF = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
+    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+
+    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain / mainPDF_BXDF;
+    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted / shiftPDF_BXDF;
 
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
@@ -204,6 +226,10 @@ bool EmissiveHit_S_Unconnected(
         mis_path = BalanceHeuristic(
             mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
             1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+
+#ifdef GDPT_MIS_WEIGHT
+        mis_path = GDPT_MIS_WEIGHT;
+#endif
     }
     else
     {

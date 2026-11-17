@@ -45,7 +45,7 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo, out 
     if (FEAT_DBG(FixedMisNeeManual))
         mis_nee = 1 - GetFixedMisNee();
     else
-        mis_nee = PowerHeuristic(pathState.LastBxdfPdf, pdf_nee, 1, gSettings.DirectNumSamples);
+        mis_nee = BalanceHeuristic(pathState.LastBxdfPdf, pdf_nee, 1, gSettings.DirectNumSamples);
 
     return L_emission;
 }

@@ -62,7 +62,7 @@ float Target(CandidateDI X_i, ContextPrimaryRay context)
     {
         BxdfEval bxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, X_i.LightEval.Direction, LobeTag::eAll);
 
-        m = bxdfEval.Radiance * PowerHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
+        m = bxdfEval.Radiance * BalanceHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
     float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL; // Note: Don't divide by PDF here
@@ -134,7 +134,7 @@ bool TrySampleReservoirDI(
     {
         BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
-        m = bxdfEval.Radiance * PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
+        m = bxdfEval.Radiance * BalanceHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
 
         DBG_OUTPUT3(bxdfEval.Radiance, RESTIRDI_Bxdf);
         DBG_OUTPUT1(bxdfEval.PDF,      RESTIRDI_PDF);

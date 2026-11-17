@@ -67,13 +67,13 @@ void EvaluateShiftedPath(int2 shiftedCoord, PathSample mainPath, out float3 grad
         //    mis_path = BalanceHeuristicRatio(pdfRatio, 1, 1);
 
         //gradient = (shiftedLo - mainPath.Lo) * mis_path;
-        gradient += subpathGradients;
+        gradient += subpathGradients * 0.5f;
 
         //DBG_OUTPUT1(mis_path, GD_MIS);
     }
     else
     {
-        gradient = -mainPath.Lo;
+        gradient = -mainPath.Lo * 0.0f;
     }
 
     // Debug

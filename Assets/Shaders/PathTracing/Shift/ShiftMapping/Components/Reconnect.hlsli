@@ -23,7 +23,7 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3
     float3 wiY = normalize(-y1_x2);
 
     float NdL_Y = dot(y1_Ng, wiY);
-    if (NdL_Y <= 0.0f)
+    if (NdL_Y <= 0.0f) // TODO: Might break with transmission
     {
         result.IsSuccessful = false;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingRecNdL);

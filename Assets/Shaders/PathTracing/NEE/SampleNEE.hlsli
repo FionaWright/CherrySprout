@@ -51,7 +51,7 @@ float3 SampleNEE(
     }
     else
     {
-        mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
+        mis = BalanceHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     DBG_OUTPUT1(mis, NEE_MIS);
@@ -123,7 +123,7 @@ float3 EvaluateNEE(
     }
     else
     {
-        mis = PowerHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
+        mis = BalanceHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
     pdf_nee = lightEval.PDF;
