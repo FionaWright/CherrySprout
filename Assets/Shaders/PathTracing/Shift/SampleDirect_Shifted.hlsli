@@ -3,6 +3,7 @@
 
 #include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
 #include "PathTracing/NEE/Utils.hlsli"
+#include "PathTracing/NEE/SampleNEE.hlsli"
 
 bool SampleDirect_S_Connected(
     inout PathState pathState,

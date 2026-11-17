@@ -25,7 +25,9 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
     if (!FEAT_CORE(NEE))
     {
         float finalMIS; // Always 1, discard
-        EvaluateSubPath(X_i.VertexList, X_i.Lo, X_i.PDF, finalMIS);
+		float pdf;
+        EvaluateSubPath(X_i.VertexList, X_i.Lo, pdf, finalMIS);
+		X_i.W = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
         return;
     }
 
@@ -39,12 +41,15 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 
     for (uint i = 0; i < M; i++)
     {
-        bool terminalVertex = i == M - 1;
-        if (!terminalVertex)
+		LobeTag prevLobe = X_i.VertexList.Array[i].Lobe;
+
+        bool isTerminalVertex = i == M - 1;
+        if (!isTerminalVertex)
         {
-            X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
-            X_i.VertexList.NumVertices = i + 1;
+            X_i.VertexList.Array[i].Lobe = LobeTag::eNEE; // Current sub-candidate is subpath with NEE at vertex i
         }
+
+		X_i.VertexList.NumVertices = i + 1;
 
         float finalMIS;
         EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i], finalMIS);
@@ -56,6 +61,8 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 
         w[i] = mis * pHat * W_X;
         wSum += w[i];
+
+		X_i.VertexList.Array[i].Lobe = prevLobe;
     }
 
     if (wSum <= 0.0f)
@@ -70,15 +77,15 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
         r -= w[i] / wSum;
         if (r <= 0.0f)
         {
-            X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
+			bool isTerminalVertex = i == M - 1;
+        	if (!isTerminalVertex)
+            	X_i.VertexList.Array[i].Lobe = LobeTag::eNEE;
             X_i.VertexList.NumVertices = i + 1;
 
             X_i.Lo = Lo[i];
 
             float pHat = Luminance(Lo[i]);
-            float W_Y = wSum / (float(M) * pHat);
-
-            X_i.PDF = 1.0f / W_Y; // TODO
+            X_i.W = wSum / (float(M) * pHat);
         }
     }
 }
@@ -94,6 +101,10 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     // Primary Ray
     bool proceed;
     {
+		pathState.RaySegmentIdx = 0;
+        pathState.SetPathFlag(eIsPrimaryRay, true);
+        pathState.SetPathFlag(eIsTerminalRay, 0 == gSettings.MaxRayDepth - 1);
+
         proceed = ResolvePathAncillaryVertex(pathState, X_i.VertexList, rngInfo, context.HitInfo, context.IsMiss, pixelCoord);
     }
 
@@ -128,6 +139,10 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
     // Primary Ray
     bool proceed;
     {
+		pathState.RaySegmentIdx = 0;
+        pathState.SetPathFlag(eIsPrimaryRay, true);
+        pathState.SetPathFlag(eIsTerminalRay, 0 == X_i.VertexList.NumVertices - 1);
+
         proceed = ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, X_i.VertexList, context.IsMiss, context.HitInfo);
     }
 
@@ -157,7 +172,7 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 
     X_i.Lo = pathState.Lo;
     X_i.Jacobian = pathStateShifted.Jacobian;
-    X_i.PDF = pathStateShifted.PdfRatio * X_i.PDF;
+    X_i.W = X_i.W / pathStateShifted.PdfRatio; // TODO
 }
 
 float Target(CandidatePT X_i, ContextPrimaryRay context)
@@ -167,7 +182,7 @@ float Target(CandidatePT X_i, ContextPrimaryRay context)
 
 float PDF(CandidatePT X_i, ContextPrimaryRay context)
 {
-    return X_i.PDF;
+    return X_i.W <= 0.0f ? 0.0f : 1.0f / X_i.W;
 }
 
 bool TrySampleReservoirPT(
@@ -181,6 +196,13 @@ bool TrySampleReservoirPT(
     ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
     Y = reservoir.Y;
 
+	DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
+    DBG_OUTPUT1(reservoir.WeightSum,            RESTIR_ReservoirWeightSum);
+    DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
+    DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
+    DBG_OUTPUT1(Y.Jacobian,                     RESTIR_Jacobian);
+    DBG_OUTPUT3(Y.Lo,                           RESTIRPT_Lo);
+
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
@@ -188,13 +210,6 @@ bool TrySampleReservoirPT(
 
     // Debug
     {
-        DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
-        DBG_OUTPUT1(reservoir.WeightSum,            RESTIR_ReservoirWeightSum);
-        DBG_OUTPUT1(reservoir.Confidence / 30,      RESTIR_ReservoirConfidence);
-        DBG_OUTPUT1(reservoir.W_Y,                  RESTIR_W_Y);
-        DBG_OUTPUT1(Y.Jacobian,                     RESTIR_Jacobian);
-
-        DBG_OUTPUT3(Y.Lo,                                             RESTIRPT_Lo);
         DBG_OUTPUT3(Palette(Y.VertexList.NumVertices),                RESTIRPT_NumVertices);
         DBG_OUTPUT3(Palette((uint)Y.VertexList.Array[0].Type),        RESTIRPT_V1Type);
         DBG_OUTPUT3(Y.VertexList.Array[0].Ng_ff,                      RESTIRPT_V1Ng_ff);

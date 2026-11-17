@@ -50,7 +50,7 @@ struct CandidatePT
     // Eval:
     hlsl::float3 Lo;
     float Jacobian;
-    float PDF;
+    float W;
 };
 
 struct CandidateGPT
