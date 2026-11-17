@@ -24,10 +24,9 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 {
     if (!FEAT_CORE(NEE))
     {
-        float finalMIS; // Always 1, discard
-		float pdf;
-        EvaluateSubPath(X_i.VertexList, X_i.Lo, pdf, finalMIS);
-		X_i.W = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
+        float mis_nee; // Always 1, discard
+        EvaluateSubPath(X_i.VertexList, X_i.Lo, X_i.PDF, mis_nee);
+		X_i.W = X_i.PDF <= 0.0f ? 0.0f : 1.0f / X_i.PDF;
         return;
     }
 
@@ -51,9 +50,9 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 
 		X_i.VertexList.NumVertices = i + 1;
 
-        float finalMIS;
-        EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i], finalMIS);
-        //Lo[i] *= finalMIS;
+        float mis_nee;
+        EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i], mis_nee);
+        //Lo[i] *= mis_nee;
 
         float mis = 1.0f; // TODO: Generate BxDF candidate for each NEE candidate
         float W_X = pdf[i] <= 0.0f ? 0.0f : 1.0f / pdf[i];
@@ -83,6 +82,7 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
             X_i.VertexList.NumVertices = i + 1;
 
             X_i.Lo = Lo[i];
+			X_i.PDF = pdf[i];
 
             float pHat = Luminance(Lo[i]);
             X_i.W = wSum / (float(M) * pHat);
@@ -136,6 +136,8 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
     PathState pathState = CreatePathState(origin, -context.Wo);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
+    pathStateShifted.IsUsingNeeMis = false;
+
     // Primary Ray
     bool proceed;
     {
@@ -172,7 +174,9 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 
     X_i.Lo = pathState.Lo;
     X_i.Jacobian = pathStateShifted.Jacobian;
-    X_i.W = X_i.W / pathStateShifted.PdfRatio; // TODO
+
+	// TODO: Does it matter that X_i.W doesn't get updated? Only could be used for reservoir MIS weights
+    X_i.PDF = X_i.PDF * pathStateShifted.PdfRatio; // pdfMain * (pdfShifted / pdfMain)
 }
 
 float Target(CandidatePT X_i, ContextPrimaryRay context)
@@ -206,7 +210,7 @@ bool TrySampleReservoirPT(
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    Lo = Y.Lo * reservoir.W_Y;
+    Lo = Y.Lo * reservoir.W_Y; // TODO: Jacobian
 
     // Debug
     {

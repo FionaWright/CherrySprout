@@ -73,10 +73,12 @@ struct PathStateShifted
     float LogPathPdfShifted;
     float PdfRatio;
 
-    bool IsSymmetric;
+    hlsl::uint IsSymmetric;
     hlsl::float3 SubpathGradients;
 
+    hlsl::uint IsUsingNeeMis;
     ReconnectionState ReconnectionState;
+    hlsl::float2 p;
 };
 
 inline PathStateShifted CreatePathStateShifted()
@@ -88,6 +90,8 @@ inline PathStateShifted CreatePathStateShifted()
     pathStateShifted.LogPathPdfShifted = 0.0f;
     pathStateShifted.PdfRatio = 1.0f;
     pathStateShifted.IsSymmetric = true;
+    pathStateShifted.IsUsingNeeMis = true;
+    pathStateShifted.SubpathGradients = hlsl::float3(0,0,0);
     pathStateShifted.ReconnectionState = ReconnectionState::eUnconnected;
 
     return pathStateShifted;

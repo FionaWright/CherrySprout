@@ -87,26 +87,6 @@ bool ResolvePathAncillaryVertex(
     if (FEAT_CORE(Transient))
         pathState.RollingPathDistance += hitInfo.RayT;
 
-    if (FEAT_CORE(RestirGI) && pathState.GetPathFlag(eIsPrimaryRay))
-    {
-        CandidateGI Y;
-        float3 L_gi;
-        if (TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
-        {
-            //L_gi *= 0.5f;
-            pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
-            DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
-            return false;
-        }
-
-        /*
-            TODO:
-            Consider how this contribution should fit into the path-tracer
-            Do I need MIS? Or randomly select one estimator? Or fixed weights (0.5,0.5)?
-            How does it interact with ReSTIR DI? Is that another estimator to keep track of?
-        */
-    }
-
     float3 L_sample;
     Hit(pathState, rng, hitInfo, pixelCoord, L_sample, vInfo);
 
@@ -135,6 +115,19 @@ bool ResolvePathAncillaryVertex(
             return false;
         }
         pathState.Beta /= p;
+    }
+
+	if (FEAT_CORE(RestirGI) && pathState.GetPathFlag(eIsPrimaryRay))
+    {
+        CandidateGI Y;
+        float3 L_gi;
+        if (TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
+        {
+            //L_gi *= 0.5f;
+            pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);
+            DBG_OUTPUT3(L_gi, RESTIRGI_GiLo);
+            return false;
+        }
     }
 
     DBG_PATH_DUMP_PATH_STATE(pathState);

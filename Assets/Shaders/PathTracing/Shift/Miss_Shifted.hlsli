@@ -27,7 +27,7 @@ float3 Miss_S_Connected(
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
     float mis_path = 1.0f;
-    if (FEAT_CORE(NEE))
+    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
     {
         // Note: When connected, always has same wi
         float pdf_lsd;
@@ -56,6 +56,8 @@ float3 Miss_S_Connected(
 
     float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
+
+    pathState.Lo = shiftedLo;
 
     return (shiftedLo - mainLo) * mis_path;
 }
@@ -93,7 +95,7 @@ float3 Miss_S_Semi_or_Unconnected(
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
     float mis_path = 1.0f;
-    if (FEAT_CORE(NEE))
+    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
     {
         float pdf_lsd;
         EvaluateLSD(0, pdf_lsd);
@@ -125,6 +127,8 @@ float3 Miss_S_Semi_or_Unconnected(
 
     float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * Li;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
+
+    pathState.Lo = shiftedLo;
 
     //DBG_FORCE_OUTPUT3((shiftedLo - mainLo));
 

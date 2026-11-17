@@ -51,6 +51,7 @@ struct CandidatePT
     hlsl::float3 Lo;
     float Jacobian;
     float W;
+    float PDF;
 };
 
 struct CandidateGPT
