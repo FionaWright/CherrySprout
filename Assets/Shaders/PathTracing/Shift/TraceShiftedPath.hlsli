@@ -48,6 +48,9 @@ bool ResolveShiftedPathAncillaryVertex(
     {
         if (!SampleDirect_S(pathState, pathStateShifted, v1, hitInfo, wo))
             return false;
+
+        if (v1.Lobe == LobeTag::eNEE)
+            return false;
     }
 
     DBG_OUTPUT1(0.0f, GD_Nee_MainLo);

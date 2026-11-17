@@ -181,7 +181,27 @@ bool SampleDirect_S_Unconnected(
         return false;
     }
 
-    float jacobianVertex = 1.0f; // TODO: Only matters for emissives (And maybe punctuals?)
+    float jacobianVertex = 1.0f;
+    bool isEmissiveLight = v1.LightSample.Index >= gSettings.LsdBaseEmissives;
+    if (isEmissiveLight)
+    {
+        float3 x1 = v1.Position;
+        float3 y1 = hitInfo.HitPos;
+        float3 x2 = y1 + lightEval.Direction * lightEval.Distance;
+        float3 y1_Ng = hitInfo.Ng_ff;
+        float3 x2_Ng = lightEval.Ng;
+        ShiftResult shiftResultEmissive = ShiftReconnect(x1, y1, y1_Ng, x2, x2_Ng);
+
+        if (!shiftResultEmissive.IsSuccessful)
+        {
+            pathStateShifted.IsSymmetric = false;
+            DBG_OUTPUT1(1.0f, GD_RejectionNEE);
+            return false;
+        }
+
+        jacobianVertex = shiftResultEmissive.Jacobian;
+    }
+
     float jacobianPrefix = pathStateShifted.Jacobian;
     float jacobianPath = jacobianPrefix * jacobianVertex;
 

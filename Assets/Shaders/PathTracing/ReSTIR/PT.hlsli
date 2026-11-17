@@ -86,6 +86,7 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 
             float pHat = Luminance(Lo[i]);
             X_i.W = wSum / (float(M) * pHat);
+            break;
         }
     }
 }
@@ -210,7 +211,7 @@ bool TrySampleReservoirPT(
     if (reservoir.Confidence <= 0.0f || reservoir.W_Y <= 0.0f)
         return false;
 
-    Lo = Y.Lo * reservoir.W_Y; // TODO: Jacobian
+    Lo = Y.Lo * reservoir.W_Y * Y.Jacobian;
 
     // Debug
     {

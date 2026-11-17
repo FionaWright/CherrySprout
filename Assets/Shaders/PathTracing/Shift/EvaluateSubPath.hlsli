@@ -26,8 +26,11 @@ bool EvaluateSubPathAncillaryVertex(
 {
     finalMIS = 1.0f;
 
-    if (pathState.GetPathFlag(eIsTerminalRay) && vertex.Type == VertexType::eEnvironment)
+    if (vertex.Type == VertexType::eEnvironment)
     {
+        if (!pathState.GetPathFlag(eIsTerminalRay))
+            pathState.Lo = NAN;
+
         float3 L_direct = pathState.Beta * vertex.DirectContribution;
         pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 
@@ -38,8 +41,11 @@ bool EvaluateSubPathAncillaryVertex(
         return false;
     }
 
-    if (pathState.GetPathFlag(eIsTerminalRay) && vertex.Type == VertexType::eEmission)
+    if (vertex.Type == VertexType::eEmission)
     {
+        if (!pathState.GetPathFlag(eIsTerminalRay))
+            pathState.Lo = NAN;
+
         float3 L_sample = pathState.Beta * vertex.DirectContribution;
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
@@ -52,8 +58,11 @@ bool EvaluateSubPathAncillaryVertex(
     if (vertex.Type != VertexType::eStandard)
         return false;
 
-    if (pathState.GetPathFlag(eIsTerminalRay) && vertex.Lobe == LobeTag::eNEE)
+    if (vertex.Lobe == LobeTag::eNEE)
     {
+        if (!pathState.GetPathFlag(eIsTerminalRay))
+            pathState.Lo = NAN;
+
         float3 L_sample = vertex.ShadowFactor * pathState.Beta * vertex.DirectContribution / float(gSettings.DirectNumSamples);
         pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
 
