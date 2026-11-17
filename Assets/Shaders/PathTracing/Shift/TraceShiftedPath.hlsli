@@ -3,6 +3,7 @@
 
 #include "PathTracing/Shift/SampleDirect_Shifted.hlsli"
 #include "PathTracing/Shift/SampleIndirect_Shifted.hlsli"
+#include "PathTracing/Shift/EmissiveHit_Shifted.hlsli"
 #include "PathTracing/Shift/Miss_Shifted.hlsli"
 #include "PathTracing/EvaluateHitEmission.hlsli"
 #include "PathTracing/4_ComputeRayHit.hlsli"
@@ -36,32 +37,12 @@ bool ResolveShiftedPathAncillaryVertex(
 
     float3 wo = -pathState.Desc.Direction;
 
-    float mis_emission;
-    float3 L_emission = EvaluateHitEmission(hitInfo, pathState, wo, mis_emission);
-    if (v1.Lobe != LobeTag::eNEE)
-        L_emission *= mis_emission;
-
-    DBG_OUTPUT3(L_emission, GD_Emission);
     DBG_OUTPUT3(wo, GD_V_w);
     DBG_OUTPUT3(hitInfo.SFrame.ToLocal(wo), GD_V_s);
     DBG_OUTPUT3(pathState.Beta, GD_BetaEarly);
 
-    bool isEmissive = any(L_emission > 0.0f);
-    bool mainIsEmissive = v1.Type == VertexType::eEmission;
-    if (isEmissive != mainIsEmissive)
-    {
-        pathStateShifted.IsSymmetric = false;
-        DBG_OUTPUT1(1.0f, GD_RejectionEmission);
+    if (!EmissiveHit_S(pathState, pathStateShifted, hitInfo, mainVertices, v1))
         return false;
-    }
-
-    // TODO: Emissives using outdated gradient compute method, need to use 4-way MIS
-    if (isEmissive) // TODO: When connected, reuse v1 emission
-    {
-        float3 L_sample = pathState.Beta * L_emission;
-        pathState.Lo += ApplyFireflyThreshold(L_sample, gSettings.FireflyThreshold);
-        return false;
-    }
 
     if (FEAT_CORE(NEE) && !pathState.GetPathFlag(eIsTerminalRay))
     {

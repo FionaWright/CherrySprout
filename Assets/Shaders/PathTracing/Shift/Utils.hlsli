@@ -3,7 +3,9 @@
 
 #include "PathTracing/Shift/Structs.h"
 
-void AddVertex(inout PathVertexList vList, PathVertexInfo vInfo)
+void AddVertex(
+    inout PathVertexList vList,
+    PathVertexInfo vInfo)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
@@ -14,7 +16,11 @@ void AddVertex(inout PathVertexList vList, PathVertexInfo vInfo)
     DBG_PATH_DUMP_PATH_VERTEX_INFO(vInfo);
 }
 
-void AddVertexEnvMap(inout PathVertexList vList, float3 beta, float3 contrib, float mis_nee)
+void AddVertexEnvMap(
+    inout PathVertexList vList,
+    float3 beta,
+    float3 contrib,
+    float mis_nee)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
@@ -28,7 +34,15 @@ void AddVertexEnvMap(inout PathVertexList vList, float3 beta, float3 contrib, fl
     AddVertex(vList, vInfo);
 }
 
-void AddVertexEmissive(inout PathVertexList vList, float3 beta, float3 emission, float mis_nee, float3 hitPos, float3 Ng_ff, float roughness)
+void AddVertexEmissive(
+    inout PathVertexList vList,
+    float3 beta,
+    float3 emission,
+    float pdf_nee,
+    float mis_nee,
+    float3 hitPos,
+    float3 Ng_ff,
+    float roughness)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
@@ -36,6 +50,7 @@ void AddVertexEmissive(inout PathVertexList vList, float3 beta, float3 emission,
     PathVertexInfo vInfo = (PathVertexInfo)0;
     vInfo.Type = VertexType::eEmission;
     vInfo.DirectContribution = emission;
+    vInfo.PDF_NEE = pdf_nee;
     vInfo.MIS_NEE = mis_nee;
     vInfo.Position = hitPos;
     vInfo.Ng_ff = Ng_ff;

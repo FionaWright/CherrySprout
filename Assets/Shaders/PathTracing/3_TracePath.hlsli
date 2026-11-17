@@ -40,9 +40,9 @@ bool ResolvePathAncillaryVertex(
 
     float3 wo = -pathState.Desc.Direction;
 
-    float mis_emission;
-    float3 emission = EvaluateHitEmission(hitInfo, pathState, wo, mis_emission);
-    float3 L_emission = emission * mis_emission;
+    float pdf_nee_emission, mis_nee_emission;
+    float3 emission = EvaluateHitEmission(hitInfo, pathState, wo, pdf_nee_emission, mis_nee_emission);
+    float3 L_emission = emission * mis_nee_emission;
     bool isEmissive = any(L_emission > 0.0f);
     if (isEmissive)
     {
@@ -52,7 +52,7 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT1(1.0f, KilledByEmission);
 
         if (PATH_VERTICES_REQUIRED)
-            AddVertexEmissive(vertexList, pathState.Beta, emission, mis_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
+            AddVertexEmissive(vertexList, pathState.Beta, emission, pdf_nee_emission, mis_nee_emission, hitInfo.HitPos, hitInfo.Ng_ff, hitInfo.Mat.Roughness);
 
         return false;
     }

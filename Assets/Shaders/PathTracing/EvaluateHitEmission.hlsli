@@ -7,9 +7,10 @@
 #include "PathTracing/Debug/Scales.hlsli"
 #include "PathTracing/Debug/SettingGuards.hlsli"
 
-float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo, out float mis)
+float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo, out float pdf_nee, out float mis_nee)
 {
-    mis = 1.0f;
+    pdf_nee = 0.0f;
+    mis_nee = 1.0f;
 
     if (!FEAT_CORE(Emission))
         return 0.0f;
@@ -38,12 +39,13 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo, out 
     float pdf_lsd;
     EvaluateLSD(lightIdx, pdf_lsd);
 
-    float pdf_emissive = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
+    // Note: wo is already from perspective of light
+    pdf_nee = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
 
     if (FEAT_DBG(FixedMisNeeManual))
-        mis = 1 - GetFixedMisNee();
+        mis_nee = 1 - GetFixedMisNee();
     else
-        mis = PowerHeuristic(pathState.LastBxdfPdf, pdf_emissive, 1, gSettings.DirectNumSamples);
+        mis_nee = PowerHeuristic(pathState.LastBxdfPdf, pdf_nee, 1, gSettings.DirectNumSamples);
 
     return L_emission;
 }

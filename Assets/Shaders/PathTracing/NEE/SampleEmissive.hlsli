@@ -8,10 +8,8 @@
 
 // TODO: Build PDF over emissive triangles instead of emissive instances
 
-// TODO: Option to disable NEE when ray segment idx == max depth
-
 // Note: Ng, wo from perspective of the light
-float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, float3 wo, float distance)
+float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 lightNg, float3 lightWo, float distance)
 {
     float pdf_prim = 1.0f / (float)primitiveCount;
 
@@ -23,7 +21,7 @@ float EvaluateEmissivePdf(uint primitiveCount, float triangleArea, float3 Ng, fl
     DBG_OUTPUT1(pdf_bary, NEE_BaryPdf);
     DBG_OUTPUT1(triangleArea, NEE_TriangleArea);
 
-    float NdL = abs(dot(Ng, wo));
+    float NdL = abs(dot(lightNg, lightWo));
     return PdfAreaToSolidAngle(pdf_area, NdL, distance);
 }
 

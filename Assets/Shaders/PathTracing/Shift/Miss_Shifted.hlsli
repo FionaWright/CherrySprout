@@ -6,7 +6,7 @@
 
 // TODO: Furnace Tests, dir lights
 
-float3 Miss_S_Connected(
+void Miss_S_Connected(
     inout PathState pathState,
     inout PathStateShifted pathStateShifted,
 
@@ -54,15 +54,17 @@ float3 Miss_S_Connected(
     float3 mainLo = v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
-    float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * v1.DirectContribution;
+    float3 shiftedLo = pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;
 
-    return (shiftedLo - mainLo) * mis_path;
+    shiftedLo *= pathStateShifted.Jacobian;
+
+    pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
 }
 
-float3 Miss_S_Semi_or_Unconnected(
+void Miss_S_Semi_or_Unconnected(
     inout PathState pathState,
     inout PathStateShifted pathStateShifted,
 
@@ -78,8 +80,11 @@ float3 Miss_S_Semi_or_Unconnected(
         float3 Li_s = ApplyFireflyThreshold(Li, gSettings.FireflyThreshold);
         float3 Li_m = ApplyFireflyThreshold(v1.DirectContribution, gSettings.FireflyThreshold);
 
+        pathState.Lo = Li_s;
+
         float mis_path = BalanceHeuristic(1.0f, 1.0f, 1, 1);
-        return (Li_s - Li_m) * mis_path;
+        pathStateShifted.SubpathGradients += (Li_s - Li_m) * mis_path;
+        return;
     }
 
     PathVertexInfo v0 = mainVertices.Array[pathState.RaySegmentIdx-1];
@@ -125,14 +130,16 @@ float3 Miss_S_Semi_or_Unconnected(
     float3 mainLo = v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
-    float3 shiftedLo = pathStateShifted.Jacobian * pathState.Beta * Li;
+    float3 shiftedLo = pathState.Beta * Li;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;
 
+    shiftedLo *= pathStateShifted.Jacobian; // TODO: Make sure jacobian is being applied for ReSTIR
+
     //DBG_FORCE_OUTPUT3((shiftedLo - mainLo));
 
-    return (shiftedLo - mainLo) * mis_path;
+    pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
 }
 
 void Miss_S(
@@ -142,18 +149,14 @@ void Miss_S(
     PathVertexList mainVertices,
     PathVertexInfo v1)
 {
-    float3 gradient;
-
     if (pathStateShifted.ReconnectionState == ReconnectionState::eConnected)
     {
-        gradient = Miss_S_Connected(pathState, pathStateShifted, mainVertices, v1);
+        Miss_S_Connected(pathState, pathStateShifted, mainVertices, v1);
     }
     else
     {
-        gradient = Miss_S_Semi_or_Unconnected(pathState, pathStateShifted, mainVertices, v1);
+        Miss_S_Semi_or_Unconnected(pathState, pathStateShifted, mainVertices, v1);
     }
-
-    pathStateShifted.SubpathGradients += gradient;
 }
 
 #endif
