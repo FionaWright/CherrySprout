@@ -33,6 +33,8 @@ bool EmissiveHit_S_Connected(
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
+	float mis_nee_s = 1.0f;
+	float mis_nee_m = 1.0f;
     float mis_path = 1.0f;
     if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
     {
@@ -42,9 +44,22 @@ bool EmissiveHit_S_Connected(
         float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * PDF_NEE;
 
         // Selecting (Main, BxDF) PDF
+        //mis_path = BalanceHeuristic(
+        //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
+        //    1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+
+		// Selecting (Main, BxDF) PDF
         mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+            mainPathPrefixPDF, pathStateShifted.Jacobian * shiftedPathPrefixPDF,
+            1, 1);
+
+		mis_nee_m = BalanceHeuristic(
+            mainPDF_BXDF, PDF_NEE,
+            1, 1); // TODO: Multiple samples
+
+		mis_nee_s = BalanceHeuristic(
+            shiftPDF_BXDF, PDF_NEE,
+            1, 1);
 
 #ifdef GDPT_MIS_WEIGHT
         mis_path = GDPT_MIS_WEIGHT;
@@ -52,16 +67,20 @@ bool EmissiveHit_S_Connected(
     }
     else
     {
-        // Selecting (Main, BxDF) PDF
+        // Selecting (Main) PDF
         mis_path = BalanceHeuristic(
             mainPathPDF_BXDF, shiftedPathPDF_BXDF,
             1, 1);
+
+#ifdef GDPT_MIS_WEIGHT_NO_NEE
+        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
+#endif
     }
 
-    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
-    float3 shiftedLo = pathState.Beta * v1.DirectContribution;
+    float3 shiftedLo = mis_nee_s * pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;
@@ -103,6 +122,8 @@ bool EmissiveHit_S_Semiconnected(
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
+	float mis_nee_s = 1.0f;
+	float mis_nee_m = 1.0f;
     float mis_path = 1.0f;
     if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
     {
@@ -122,9 +143,22 @@ bool EmissiveHit_S_Semiconnected(
         float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_NEE;
 
         // Selecting (Main, BxDF) PDF
+        //mis_path = BalanceHeuristic(
+        //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
+        //    1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+
+		// Selecting (Main, BxDF) PDF
         mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+            mainPathPrefixPDF, pathStateShifted.Jacobian * shiftedPathPrefixPDF,
+            1, 1);
+
+		mis_nee_m = BalanceHeuristic(
+            mainPDF_BXDF, mainPDF_NEE,
+            1, 1); // TODO: Multiple samples
+
+		mis_nee_s = BalanceHeuristic(
+            shiftPDF_BXDF, shiftPDF_NEE,
+            1, 1);
 
 #ifdef GDPT_MIS_WEIGHT
         mis_path = GDPT_MIS_WEIGHT;
@@ -136,12 +170,16 @@ bool EmissiveHit_S_Semiconnected(
         mis_path = BalanceHeuristic(
             mainPathPDF_BXDF, shiftedPathPDF_BXDF,
             1, 1);
+
+#ifdef GDPT_MIS_WEIGHT_NO_NEE
+        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
+#endif
     }
 
-    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
-    float3 shiftedLo = pathState.Beta * v1.DirectContribution;
+    float3 shiftedLo = mis_nee_s * pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;
@@ -213,6 +251,8 @@ bool EmissiveHit_S_Unconnected(
     float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
     float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
+	float mis_nee_s = 1.0f;
+	float mis_nee_m = 1.0f;
     float mis_path = 1.0f;
     if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
     {
@@ -223,9 +263,22 @@ bool EmissiveHit_S_Unconnected(
         float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_NEE;
 
         // Selecting (Main, BxDF) PDF
+        //mis_path = BalanceHeuristic(
+        //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
+        //    1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+
+		// Selecting (Main) PDF
         mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
+            mainPathPrefixPDF, pathStateShifted.Jacobian * shiftedPathPrefixPDF,
+            1, 1);
+
+		mis_nee_m = BalanceHeuristic(
+            mainPDF_BXDF, mainPDF_NEE,
+            1, 1); // TODO: Multiple samples
+
+		mis_nee_s = BalanceHeuristic(
+            shiftPDF_BXDF, shiftPDF_NEE,
+            1, 1);
 
 #ifdef GDPT_MIS_WEIGHT
         mis_path = GDPT_MIS_WEIGHT;
@@ -233,16 +286,20 @@ bool EmissiveHit_S_Unconnected(
     }
     else
     {
-        // Selecting (Main, BxDF) PDF
+        // Selecting (Main) PDF
         mis_path = BalanceHeuristic(
             mainPathPDF_BXDF, shiftedPathPDF_BXDF,
             1, 1);
+
+#ifdef GDPT_MIS_WEIGHT_NO_NEE
+        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
+#endif
     }
 
-    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
-    float3 shiftedLo = pathState.Beta * Li;
+    float3 shiftedLo = mis_nee_s * pathState.Beta * Li;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;

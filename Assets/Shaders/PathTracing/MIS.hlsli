@@ -1,7 +1,8 @@
 #ifndef H_POWER_HEURISTIC_H
 #define H_POWER_HEURISTIC_H
 
-#define GDPT_MIS_WEIGHT 0.25f
+//#define GDPT_MIS_WEIGHT 0.25f
+//#define GDPT_MIS_WEIGHT_NO_NEE 0.5f
 
 float GenPowerHeuristic(float pdf1, float pdf2, float N1, float N2, float P)
 {

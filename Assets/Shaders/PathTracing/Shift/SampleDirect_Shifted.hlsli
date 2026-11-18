@@ -27,19 +27,32 @@ bool SampleDirect_S_Connected(
     float mainPathPDF_NEE = mainPathPrefixPDF * mainPDF_NEE;
     float shiftedPathPDF_NEE = jacobianPath * shiftedPathPrefixPDF * shiftPDF_NEE;
 
+	float mis_nee_m = 1.0f;
+	float mis_nee_s = 1.0f;
     float mis_path = 1.0f;
     if (pathStateShifted.IsUsingNeeMis)
     {
-        float mainPDF_BXDF = v1.PDF_BXDF_at_NEE;
-        float shiftPDF_BXDF = v1.PDF_BXDF_at_NEE;
+        float PDF_BXDF = v1.PDF_BXDF_at_NEE;
 
-        float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
-        float shiftedPathPDF_BXDF = jacobianPath * shiftedPathPrefixPDF * shiftPDF_BXDF;
+        float mainPathPDF_BXDF = mainPathPrefixPDF * PDF_BXDF;
+        float shiftedPathPDF_BXDF = jacobianPath * shiftedPathPrefixPDF * PDF_BXDF;
 
         // Selecting (Main, NEE) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+        //mis_path = BalanceHeuristic(
+        //    mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
+        //    gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+
+		mis_path = BalanceHeuristic(
+            mainPathPrefixPDF, jacobianPath * shiftedPathPrefixPDF,
+            gSettings.DirectNumSamples, gSettings.DirectNumSamples);
+
+		mis_nee_m = BalanceHeuristic(
+            mainPDF_NEE, PDF_BXDF,
+            gSettings.DirectNumSamples, 1);
+
+		mis_nee_s = BalanceHeuristic(
+            shiftPDF_NEE, PDF_BXDF,
+            gSettings.DirectNumSamples, 1);
 
 #ifdef GDPT_MIS_WEIGHT
         mis_path = GDPT_MIS_WEIGHT;
@@ -57,8 +70,8 @@ bool SampleDirect_S_Connected(
     // Note: No NEE/BxDF MIS weights applied here
     float3 vertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, mainPDF_NEE);
 
-    float3 mainLo = v1.InitialBeta * vertexLo;
-    float3 shiftedLo = jacobianPath * pathState.Beta * vertexLo;
+    float3 mainLo = mis_nee_m * v1.InitialBeta * vertexLo;
+    float3 shiftedLo = mis_nee_s * jacobianPath * pathState.Beta * vertexLo;
 
     pathState.Lo = shiftedLo;
 
@@ -106,6 +119,8 @@ bool SampleDirect_S_Semiconnected(
     float mainPathPDF_NEE = mainPathPrefixPDF * mainPDF_NEE;
     float shiftedPathPDF_NEE = jacobianPath * shiftedPathPrefixPDF * shiftPDF_NEE;
 
+	float mis_nee_s = 1.0f;
+	float mis_nee_m = 1.0f;
     float mis_path = 1.0f;
     if (pathStateShifted.IsUsingNeeMis)
     {
@@ -116,9 +131,21 @@ bool SampleDirect_S_Semiconnected(
         float shiftedPathPDF_BXDF = jacobianPath * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
         // Selecting (Main, NEE) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+        //mis_path = BalanceHeuristic(
+        //    mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
+        //    gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+
+		mis_path = BalanceHeuristic(
+            mainPathPrefixPDF, jacobianPath * shiftedPathPrefixPDF,
+            gSettings.DirectNumSamples, gSettings.DirectNumSamples);
+
+		mis_nee_m = BalanceHeuristic(
+            mainPDF_NEE, mainPDF_BXDF,
+            gSettings.DirectNumSamples, 1);
+
+		mis_nee_s = BalanceHeuristic(
+            shiftPDF_NEE, shiftPDF_BXDF,
+            gSettings.DirectNumSamples, 1);
 
 #ifdef GDPT_MIS_WEIGHT
         mis_path = GDPT_MIS_WEIGHT;
@@ -136,8 +163,8 @@ bool SampleDirect_S_Semiconnected(
     float3 mainVertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, mainPDF_NEE);
     float3 shiftedVertexLo = v1.ShadowFactor * radiance / max(1e-6f, mainPDF_NEE);
 
-    float3 mainLo = v1.InitialBeta * mainVertexLo;
-    float3 shiftedLo = jacobianPath * pathState.Beta * shiftedVertexLo;
+    float3 mainLo = mis_nee_m * v1.InitialBeta * mainVertexLo;
+    float3 shiftedLo = mis_nee_s * jacobianPath * pathState.Beta * shiftedVertexLo;
 
     pathState.Lo = shiftedLo;
 
@@ -231,6 +258,8 @@ bool SampleDirect_S_Unconnected(
     float mainPathPDF_NEE = mainPathPrefixPDF * mainPDF_NEE;
     float shiftedPathPDF_NEE = jacobianPath * shiftedPathPrefixPDF * shiftPDF_NEE;
 
+	float mis_nee_m = 1.0f;
+	float mis_nee_s = 1.0f;
     float mis_path = 1.0f;
     if (pathStateShifted.IsUsingNeeMis)
     {
@@ -241,9 +270,21 @@ bool SampleDirect_S_Unconnected(
         float shiftedPathPDF_BXDF = jacobianPath * shiftedPathPrefixPDF * shiftPDF_BXDF;
 
         // Selecting (Main, NEE) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+        //mis_path = BalanceHeuristic(
+        //    mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
+        //    gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
+
+		mis_path = BalanceHeuristic(
+            mainPathPrefixPDF, jacobianPath * shiftedPathPrefixPDF,
+            gSettings.DirectNumSamples, gSettings.DirectNumSamples);
+
+		mis_nee_m = BalanceHeuristic(
+            mainPDF_NEE, mainPDF_BXDF,
+            gSettings.DirectNumSamples, 1);
+
+		mis_nee_s = BalanceHeuristic(
+            shiftPDF_NEE, shiftPDF_BXDF,
+            gSettings.DirectNumSamples, 1);
 
 #ifdef GDPT_MIS_WEIGHT
         mis_path = GDPT_MIS_WEIGHT;
@@ -261,8 +302,8 @@ bool SampleDirect_S_Unconnected(
     float3 mainVertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, mainPDF_NEE);
     float3 shiftedVertexLo = shadowFactor * radiance / max(1e-6f, mainPDF_NEE);
 
-    float3 mainLo = v1.InitialBeta * mainVertexLo;
-    float3 shiftedLo = jacobianPath * pathState.Beta * shiftedVertexLo;
+    float3 mainLo = mis_nee_m * v1.InitialBeta * mainVertexLo;
+    float3 shiftedLo = mis_nee_s * jacobianPath * pathState.Beta * shiftedVertexLo;
 
     pathState.Lo = shiftedLo;
 
