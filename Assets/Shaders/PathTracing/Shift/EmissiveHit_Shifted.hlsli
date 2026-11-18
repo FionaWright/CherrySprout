@@ -3,6 +3,67 @@
 
 #include "PathTracing/EvaluateHitEmission.hlsli"
 
+void getMisWeights_Emissive(
+	PathStateShifted pathStateShifted,
+	float pdf_prefix_m,
+	float pdf_prefix_s,
+	float pdf_bxdf_m,
+    float pdf_bxdf_s,
+    float pdf_nee_m,
+    float pdf_nee_s,
+	float jacobian,
+
+    out float mis_nee_s,
+    out float mis_nee_m,
+    out float mis_path)
+{
+	float mainPathPDF_BXDF = pdf_prefix_m * pdf_bxdf_m;
+    float shiftedPathPDF_BXDF = jacobian * pdf_prefix_s * pdf_bxdf_s;
+
+	if (!FEAT_CORE(NEE) || !pathStateShifted.IsUsingNeeMis)
+	{
+		// Selecting (Main) PDF
+        mis_path = BalanceHeuristic(
+            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
+            1, 1);
+
+		mis_nee_s = 1.0f;
+		mis_nee_m = 1.0f;
+
+#ifdef GDPT_MIS_WEIGHT_NO_NEE
+        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
+#endif
+		return;
+	}
+
+    float mainPathPDF_NEE = pdf_prefix_m * pdf_nee_m;
+    float shiftedPathPDF_NEE = jacobian * pdf_prefix_s * pdf_nee_s;
+
+    //mis_path = BalanceHeuristic(
+    //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_BXDF, shiftedPathPDF_NEE,
+    //    1, gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples);
+
+    //mis_path = BalanceHeuristic(
+    //    pdf_prefix_m, jacobian * pdf_prefix_s,
+    //    1, 1);
+
+	mis_path = BalanceHeuristic(
+        mainPathPDF_BXDF, shiftedPathPDF_BXDF,
+        1, 1);
+
+	mis_nee_m = BalanceHeuristic(
+        pdf_bxdf_m, pdf_nee_m,
+        1, gSettings.DirectNumSamples);
+
+	mis_nee_s = BalanceHeuristic(
+        pdf_bxdf_s, pdf_nee_s,
+        1, gSettings.DirectNumSamples);
+
+#ifdef GDPT_MIS_WEIGHT
+    mis_path = GDPT_MIS_WEIGHT;
+#endif
+}
+
 bool EmissiveHit_S_Connected(
     inout PathState pathState,
     inout PathStateShifted pathStateShifted,
@@ -20,62 +81,22 @@ bool EmissiveHit_S_Connected(
 
     PathVertexInfo v0 = mainVertices.Array[pathState.RaySegmentIdx-1];
 
-    float mainPDF_BXDF = v0.PDF_BXDF;
-    float shiftPDF_BXDF = pathState.LastBxdfPdf;
+    float pdf_bxdf_m = v0.PDF_BXDF;
+    float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
     //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
     //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
 
-    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted / shiftPDF_BXDF;
+    float pdf_prefix_m = pathStateShifted.LogPathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
 
-    float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
-    float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
+	float pdf_nee = v1.PDF_NEE;
 
-	float mis_nee_s = 1.0f;
-	float mis_nee_m = 1.0f;
-    float mis_path = 1.0f;
-    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
-    {
-        float PDF_NEE = v1.PDF_NEE;
-
-        float mainPathPDF_NEE = mainPathPrefixPDF * PDF_NEE;
-        float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * PDF_NEE;
-
-        // Selecting (Main, BxDF) PDF
-        //mis_path = BalanceHeuristic(
-        //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-        //    1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
-
-		// Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPrefixPDF, pathStateShifted.Jacobian * shiftedPathPrefixPDF,
-            1, 1);
-
-		mis_nee_m = BalanceHeuristic(
-            mainPDF_BXDF, PDF_NEE,
-            1, 1); // TODO: Multiple samples
-
-		mis_nee_s = BalanceHeuristic(
-            shiftPDF_BXDF, PDF_NEE,
-            1, 1);
-
-#ifdef GDPT_MIS_WEIGHT
-        mis_path = GDPT_MIS_WEIGHT;
-#endif
-    }
-    else
-    {
-        // Selecting (Main) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-            1, 1);
-
-#ifdef GDPT_MIS_WEIGHT_NO_NEE
-        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
-#endif
-    }
+	float mis_nee_s;
+	float mis_nee_m;
+    float mis_path;
+    getMisWeights_Emissive(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee, pdf_nee, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
     float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
@@ -109,25 +130,21 @@ bool EmissiveHit_S_Semiconnected(
 
     PathVertexInfo v0 = mainVertices.Array[pathState.RaySegmentIdx-1];
 
-    float mainPDF_BXDF = v0.PDF_BXDF;
-    float shiftPDF_BXDF = pathState.LastBxdfPdf;
+    float pdf_bxdf_m = v0.PDF_BXDF;
+    float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
     //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
     //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
 
-    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted / shiftPDF_BXDF;
+    float pdf_prefix_m = pathStateShifted.LogPathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
 
-    float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
-    float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
-
-	float mis_nee_s = 1.0f;
-	float mis_nee_m = 1.0f;
-    float mis_path = 1.0f;
-    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
-    {
-        float pdf_lsd;
+	float pdf_nee_m = v1.PDF_NEE;
+	float pdf_nee_s = 1.0f;
+	if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
+	{
+		float pdf_lsd;
         {
             int emissiveIdx = gInstanceToEmissiveInstanceMap[hitInfo.InstanceIdx];
             DBG_ASSERT_NEQ(emissiveIdx, -1, EMISSIVE_NOT_MAPPED);
@@ -136,45 +153,13 @@ bool EmissiveHit_S_Semiconnected(
         }
 
         // Note: wo is already from perspective of light
-        float mainPDF_NEE = v1.PDF_NEE;
-        float shiftPDF_NEE = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
+        pdf_nee_s = pdf_lsd * EvaluateEmissivePdf(hitInfo.PrimitiveCount, hitInfo.TriangleArea, hitInfo.Ng_ff, wo, hitInfo.RayT);
+	}
 
-        float mainPathPDF_NEE = mainPathPrefixPDF * mainPDF_NEE;
-        float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_NEE;
-
-        // Selecting (Main, BxDF) PDF
-        //mis_path = BalanceHeuristic(
-        //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-        //    1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
-
-		// Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPrefixPDF, pathStateShifted.Jacobian * shiftedPathPrefixPDF,
-            1, 1);
-
-		mis_nee_m = BalanceHeuristic(
-            mainPDF_BXDF, mainPDF_NEE,
-            1, 1); // TODO: Multiple samples
-
-		mis_nee_s = BalanceHeuristic(
-            shiftPDF_BXDF, shiftPDF_NEE,
-            1, 1);
-
-#ifdef GDPT_MIS_WEIGHT
-        mis_path = GDPT_MIS_WEIGHT;
-#endif
-    }
-    else
-    {
-        // Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-            1, 1);
-
-#ifdef GDPT_MIS_WEIGHT_NO_NEE
-        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
-#endif
-    }
+	float mis_nee_s;
+	float mis_nee_m;
+    float mis_path;
+    getMisWeights_Emissive(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
     float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
@@ -238,63 +223,23 @@ bool EmissiveHit_S_Unconnected(
 
     PathVertexInfo v0 = mainVertices.Array[pathState.RaySegmentIdx-1];
 
-    float mainPDF_BXDF = v0.PDF_BXDF;
-    float shiftPDF_BXDF = pathState.LastBxdfPdf;
+    float pdf_bxdf_m = v0.PDF_BXDF;
+    float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
     //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
     //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
 
-    float mainPathPrefixPDF = pathStateShifted.LogPathPdfMain / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = pathStateShifted.LogPathPdfShifted / shiftPDF_BXDF;
+    float pdf_prefix_m = pathStateShifted.LogPathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
 
-    float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
-    float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
+	float pdf_nee_m = v1.PDF_NEE;
+	float pdf_nee_s = pdfShifted_NEE;
 
-	float mis_nee_s = 1.0f;
-	float mis_nee_m = 1.0f;
-    float mis_path = 1.0f;
-    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
-    {
-        float mainPDF_NEE = v1.PDF_NEE;
-        float shiftPDF_NEE = pdfShifted_NEE;
-
-        float mainPathPDF_NEE = mainPathPrefixPDF * mainPDF_NEE;
-        float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_NEE;
-
-        // Selecting (Main, BxDF) PDF
-        //mis_path = BalanceHeuristic(
-        //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-        //    1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
-
-		// Selecting (Main) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPrefixPDF, pathStateShifted.Jacobian * shiftedPathPrefixPDF,
-            1, 1);
-
-		mis_nee_m = BalanceHeuristic(
-            mainPDF_BXDF, mainPDF_NEE,
-            1, 1); // TODO: Multiple samples
-
-		mis_nee_s = BalanceHeuristic(
-            shiftPDF_BXDF, shiftPDF_NEE,
-            1, 1);
-
-#ifdef GDPT_MIS_WEIGHT
-        mis_path = GDPT_MIS_WEIGHT;
-#endif
-    }
-    else
-    {
-        // Selecting (Main) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-            1, 1);
-
-#ifdef GDPT_MIS_WEIGHT_NO_NEE
-        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
-#endif
-    }
+	float mis_nee_s;
+	float mis_nee_m;
+    float mis_path;
+    getMisWeights_Emissive(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
     float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
     mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
