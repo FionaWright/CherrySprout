@@ -791,8 +791,8 @@ void Greenhouse::renderGuiSceneData()
             {
                 ImGui::Indent(IM_GUI_INDENTATION/4);
                 ImGui::Text("Material Index: %i", sceneCPU.Objects[i].MaterialIndex);
-                ImGui::Text("Index Count: %i", sceneCPU.Objects[i].MegaBufferIndexCount);
-                ImGui::Text("Vertex Count: %i", sceneCPU.Objects[i].MegaBufferVertexCount);
+                ImGui::Text("Index Count: %i", sceneCPU.Objects[i].IndexCount);
+                ImGui::Text("Vertex Count: %i", sceneCPU.Objects[i].VertexCount);
                 ImGui::Text("Index Offset: %i", sceneCPU.Objects[i].MegaBufferIndexOffset);
                 ImGui::Text("Vertex Offset: %i", sceneCPU.Objects[i].MegaBufferVertexOffset);
 

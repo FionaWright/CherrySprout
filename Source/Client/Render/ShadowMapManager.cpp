@@ -184,7 +184,7 @@ void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* c
         cbv.MaterialIdx = obj.MaterialIndex;
         m_rootConstants.Bind_Graphics(cmdList, &cbv);
 
-        cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
+        cmdList->DrawIndexedInstanced(obj.IndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
     }
 }
 

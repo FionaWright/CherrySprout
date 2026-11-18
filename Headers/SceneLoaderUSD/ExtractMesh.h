@@ -23,6 +23,8 @@
 #include "pxr/base/gf/vec3f.h"
 #include "pxr/base/tf/token.h"
 #include "pxr/usd/sdf/assetPath.h"
+#include <pxr/usd/usdSkel/bindingAPI.h>
+#include <pxr/usd/usdSkel/skeleton.h>
 
 #pragma warning(pop)
 
@@ -48,6 +50,7 @@ namespace SceneLoaderUSD
 
     inline std::vector<ImporterObject> ExtractMesh(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
                                       const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const std::unordered_map<std::string, size_t>& skelePathToIdxMap,
                                       const pxr::GfMatrix4d& globalXForm)
     {
         pxr::GfMatrix4d xform = xformCache.GetLocalToWorldTransform(pxr::UsdGeomMesh(prim).GetPrim());
@@ -59,13 +62,30 @@ namespace SceneLoaderUSD
         const ExtractedBuffers buffers = ExtractGeometry(prim, matPathToIdxMap, flip, materialDebugName);
         std::vector<ImporterObject> objects;
 
+        // TODO: Assuming submeshes always have the same skeleton, likely not accurate
+        int skeleIdx = -1;
+        {
+            pxr::UsdSkelBindingAPI binding(prim);
+            pxr::UsdSkelSkeleton skeleton = binding.GetInheritedSkeleton();
+            if (skeleton)
+            {
+                const std::string skeletonPath = skeleton.GetPrim().GetPath().GetString();
+                const auto it = skelePathToIdxMap.find(skeletonPath);
+
+                if (it != skelePathToIdxMap.end())
+                    skeleIdx = static_cast<int>(it->second);
+            }
+        }
+
         for (int i = 0; i < buffers.Indices2D.size(); i++)
         {
             ImporterObject obj;
             obj.Name = prim.GetName().GetString() + "_" + materialDebugName;
             obj.Vertices = buffers.Vertices;
+            obj.BoneWeights = buffers.BoneWeights;
             obj.Indices = buffers.Indices2D[i];
             obj.MaterialIndex = buffers.MaterialIndices[i];
+            obj.SkeletonIndex = skeleIdx;
 
             for (int r = 0; r < 4; r++)
                 for (int c = 0; c < 4; c++)
@@ -82,6 +102,7 @@ namespace SceneLoaderUSD
 
     inline std::vector<ImporterObject> ExtractInstance(const pxr::UsdPrim& prim, pxr::UsdGeomXformCache& xformCache,
                                       const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const std::unordered_map<std::string, size_t>& skelePathToIdxMap,
                                       const pxr::GfMatrix4d& globalXForm)
     {
         std::vector<ImporterObject> objects;
@@ -92,6 +113,21 @@ namespace SceneLoaderUSD
         instanceXForm = instanceXForm * globalXForm;
 
         const bool flip = doFlip(prim, instanceXForm, globalXForm);
+
+        // TODO: Assuming submeshes always have the same skeleton, likely not accurate
+        int skeleIdx = -1;
+        {
+            pxr::UsdSkelBindingAPI binding(prim);
+            pxr::UsdSkelSkeleton skeleton = binding.GetInheritedSkeleton();
+            if (skeleton)
+            {
+                const std::string skeletonPath = skeleton.GetPrim().GetPath().GetString();
+                const auto it = skelePathToIdxMap.find(skeletonPath);
+
+                if (it != skelePathToIdxMap.end())
+                    skeleIdx = static_cast<int>(it->second);
+            }
+        }
 
         for (const pxr::UsdPrim& childPrim : pxr::UsdPrimRange(prototype))
         {
@@ -126,6 +162,7 @@ namespace SceneLoaderUSD
     inline void ExtractPointInstancer(ImporterContext* ctx, const pxr::UsdStageRefPtr& stage, const pxr::UsdPrim& prim,
                                       pxr::UsdGeomXformCache& xformCache,
                                       const std::unordered_map<std::string, size_t>& matPathToIdxMap,
+                                      const std::unordered_map<std::string, size_t>& skelePathToIdxMap,
                                       const pxr::GfMatrix4d& globalXForm)
     {
         pxr::UsdGeomPointInstancer instancer(prim);
@@ -156,7 +193,7 @@ namespace SceneLoaderUSD
                 if (!childPrim.IsA<pxr::UsdGeomMesh>())
                     continue;
 
-                std::vector<ImporterObject> objectsVec = ExtractMesh(childPrim, xformCache, matPathToIdxMap, globalXForm);
+                std::vector<ImporterObject> objectsVec = ExtractMesh(childPrim, xformCache, matPathToIdxMap, skelePathToIdxMap, globalXForm);
                 for (int i = 0; i < objectsVec.size(); i++)
                     objects.emplace_back(std::move(objectsVec[i]));
             }

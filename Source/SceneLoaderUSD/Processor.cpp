@@ -17,21 +17,27 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
 
     *scene = {};
 
-    scene->MegaBufferMaterials = new Material[importerContext.Materials.size()];
-    scene->MegaBufferMaterialsCount = importerContext.Materials.size();
-    memcpy(scene->MegaBufferMaterials, importerContext.Materials.data(), scene->MegaBufferMaterialsCount * sizeof(Material));
-
-    const std::wstring sceneDir = std::filesystem::path(usdPath).parent_path().wstring();
-
-    scene->TextureFilepathCount = importerContext.TextureFilePaths.size();
-    scene->TextureFilepaths = static_cast<wchar_t**>(malloc(scene->TextureFilepathCount * sizeof(wchar_t*)));
-    for (size_t i = 0; i < scene->TextureFilepathCount; i++)
+    // Materials
     {
-        std::wstring path = importerContext.TextureFilePaths[i];
-        if (path.starts_with('.'))
-            path = path.replace(0, 1, sceneDir);
+        scene->MegaBufferMaterials = new Material[importerContext.Materials.size()];
+        scene->MegaBufferMaterialsCount = importerContext.Materials.size();
+        memcpy(scene->MegaBufferMaterials, importerContext.Materials.data(), scene->MegaBufferMaterialsCount * sizeof(Material));
+    }
 
-        scene->TextureFilepaths[i] = _wcsdup(path.c_str());
+    // Textures
+    {
+        const std::wstring sceneDir = std::filesystem::path(usdPath).parent_path().wstring();
+
+        scene->TextureFilepathCount = importerContext.TextureFilePaths.size();
+        scene->TextureFilepaths = static_cast<wchar_t**>(malloc(scene->TextureFilepathCount * sizeof(wchar_t*)));
+        for (size_t i = 0; i < scene->TextureFilepathCount; i++)
+        {
+            std::wstring path = importerContext.TextureFilePaths[i];
+            if (path.starts_with('.'))
+                path = path.replace(0, 1, sceneDir);
+
+            scene->TextureFilepaths[i] = _wcsdup(path.c_str());
+        }
     }
 
     size_t totalVertexCount = 0;
@@ -43,6 +49,44 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
     }
     scene->MegaBufferVertex = new Vertex[totalVertexCount];
     scene->MegaBufferIndex = new uint32_t[totalIndexCount];
+
+    bool animationInScene = false;
+    for (const auto& impObj : importerContext.Objects)
+    {
+        if (impObj.BoneWeights.size() > 0)
+        {
+            animationInScene = true;
+            break;
+        }
+    }
+
+    uint32_t totalBoneCount = 0;
+    for (size_t i = 0; i < importerContext.Skeletons.size(); i++)
+    {
+        totalBoneCount += importerContext.Skeletons[i].BoneInfos.size();
+    }
+    animationInScene &= totalBoneCount > 0;
+
+    std::vector<uint32_t> skeletonBoneBufferOffsets;
+    if (animationInScene)
+    {
+        scene->MegaBufferVertexBoneWeights = new VertexBoneWeights[totalVertexCount];
+        scene->MegaBufferBoneInfos = new BoneInfo[totalBoneCount];
+
+        skeletonBoneBufferOffsets.resize(importerContext.Skeletons.size());
+
+        for (size_t i = 0; i < importerContext.Skeletons.size(); i++)
+        {
+            const uint32_t boneOffset = scene->MegaBufferBonesCount;
+
+            scene->MegaBufferBonesCount += importerContext.Skeletons[i].BoneInfos.size();
+
+            BoneInfo* addr = scene->MegaBufferBoneInfos + boneOffset;
+            memcpy(addr, importerContext.Skeletons[i].BoneInfos.data(), importerContext.Skeletons[i].BoneInfos.size() * sizeof(BoneInfo));
+
+            skeletonBoneBufferOffsets[i] = boneOffset;
+        }
+    }
 
     scene->ObjectCount = importerContext.Objects.size();
     scene->Objects = new Object[scene->ObjectCount];
@@ -57,8 +101,8 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
 
         obj.MegaBufferVertexOffset  = static_cast<uint32_t>(scene->MegaBufferVertexCount);
         obj.MegaBufferIndexOffset   = static_cast<uint32_t>(scene->MegaBufferIndexCount);
-        obj.MegaBufferVertexCount   = static_cast<uint32_t>(impObj.Vertices.size());
-        obj.MegaBufferIndexCount    = static_cast<uint32_t>(impObj.Indices.size());
+        obj.VertexCount   = static_cast<uint32_t>(impObj.Vertices.size());
+        obj.IndexCount    = static_cast<uint32_t>(impObj.Indices.size());
 
         Vertex* vAddr = scene->MegaBufferVertex + obj.MegaBufferVertexOffset;
         uint32_t* iAddr = scene->MegaBufferIndex + obj.MegaBufferIndexOffset;
@@ -67,7 +111,31 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
         scene->MegaBufferVertexCount += impObj.Vertices.size();
         scene->MegaBufferIndexCount += impObj.Indices.size();
 
-        memcpy(obj.M, impObj.M, sizeof(float)*16);
+        if (animationInScene)
+        {
+            VertexBoneWeights* vbwAddr = scene->MegaBufferVertexBoneWeights + obj.MegaBufferVertexOffset;
+            memcpy(vbwAddr, impObj.BoneWeights.data(), impObj.BoneWeights.size() * sizeof(VertexBoneWeights));
+            for (size_t bw = impObj.BoneWeights.size(); bw < impObj.Vertices.size(); bw++)
+            {
+                vbwAddr[bw].BoneIndices[0] = UINT_MAX;
+                vbwAddr[bw].BoneWeights[0] = NAN;
+            }
+
+            if (impObj.SkeletonIndex != -1)
+            {
+                obj.AnimationClipCount = importerContext.Skeletons[impObj.SkeletonIndex].AnimationClipCount;
+                obj.MegaBufferAnimationClipOffset = importerContext.Skeletons[impObj.SkeletonIndex].AnimationClipOffset;
+                obj.MegaBufferBoneOffset = skeletonBoneBufferOffsets[impObj.SkeletonIndex];
+                obj.BoneCount = importerContext.Skeletons[impObj.SkeletonIndex].BoneInfos.size();
+            }
+        }
+
+        obj.M = DirectX::XMMatrixSet(
+            impObj.M[0], impObj.M[1], impObj.M[2], impObj.M[3],
+            impObj.M[4], impObj.M[5], impObj.M[6], impObj.M[7],
+            impObj.M[8], impObj.M[9], impObj.M[10], impObj.M[11],
+            impObj.M[12], impObj.M[13], impObj.M[14], impObj.M[15]
+        );
 
         obj.MaterialIndex = impObj.MaterialIndex;
 
@@ -90,6 +158,34 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
         scene->MegaBufferPunctualLightsCount = importerContext.PunctualLights.size();
         scene->MegaBufferPunctualLights = new PunctualLight[importerContext.PunctualLights.size()];
         memcpy(scene->MegaBufferPunctualLights, importerContext.PunctualLights.data(), importerContext.PunctualLights.size() * sizeof(PunctualLight));
+    }
+
+    if (importerContext.KeyFrames.empty())
+    {
+        scene->MegaBufferKeyFramesCount = 1;
+        scene->MegaBufferKeyFrames = new KeyFrame[1];
+        scene->MegaBufferKeyFrames[0] = KeyFrame();
+        std::cout << "No key frames in scene, added dummy" << std::endl;
+    }
+    else
+    {
+        scene->MegaBufferKeyFramesCount = importerContext.KeyFrames.size();
+        scene->MegaBufferKeyFrames = new KeyFrame[importerContext.KeyFrames.size()];
+        memcpy(scene->MegaBufferKeyFrames, importerContext.KeyFrames.data(), importerContext.KeyFrames.size() * sizeof(PunctualLight));
+    }
+
+    if (importerContext.AnimationClips.empty())
+    {
+        scene->MegaBufferAnimationClipsCount = 1;
+        scene->MegaBufferAnimationClips = new AnimationClip[1];
+        scene->MegaBufferAnimationClips[0] = AnimationClip();
+        std::cout << "No animation clips in scene, added dummy" << std::endl;
+    }
+    else
+    {
+        scene->MegaBufferAnimationClipsCount = importerContext.AnimationClips.size();
+        scene->MegaBufferAnimationClips = new AnimationClip[importerContext.AnimationClips.size()];
+        memcpy(scene->MegaBufferAnimationClips, importerContext.AnimationClips.data(), importerContext.AnimationClips.size() * sizeof(PunctualLight));
     }
 
     std::cout << "Scene processed" << std::endl;

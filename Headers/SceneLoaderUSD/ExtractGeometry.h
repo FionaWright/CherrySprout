@@ -19,15 +19,22 @@
 #include "pxr/usd/usdShade/material.h"
 #include "pxr/usd/usdShade/materialBindingAPI.h"
 #include "pxr/base/gf/matrix4d.h"
+#include "pxr/base/gf/matrix4f.h"
 #include "pxr/base/gf/rotation.h"
 #include "pxr/base/gf/vec3f.h"
 #include "pxr/base/tf/token.h"
 #include "pxr/usd/sdf/assetPath.h"
+#include <pxr/usd/usdSkel/cache.h>
+#include <pxr/usd/usdSkel/root.h>
+#include <pxr/usd/usdSkel/skeleton.h>
+#include <pxr/usd/usdSkel/animation.h>
+#include <pxr/usd/usdSkel/bindingAPI.h>
 
 #pragma warning(pop)
 
 #include "Importer.h"
 #include "SceneLoaderUSD.h"
+#include "ExtractAnimation.h"
 
 namespace SceneLoaderUSD
 {
@@ -134,11 +141,14 @@ namespace SceneLoaderUSD
         std::vector<Vertex> Vertices;
         std::vector<std::vector<uint32_t>> Indices2D;
         std::vector<int> MaterialIndices;
+        std::vector<VertexBoneWeights> BoneWeights;
     };
 
     inline ExtractedBuffers ExtractGeometry(const pxr::UsdPrim& prim, const std::unordered_map<std::string, size_t>& matPathToIdxMap, const bool flip, std::string& materialDebugName)
     {
         ExtractedBuffers buffers;
+
+        ExtractBoneWeights(prim, buffers.BoneWeights);
 
         pxr::UsdGeomMesh mesh(prim);
 

@@ -259,6 +259,6 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         matricesM.MaterialIdx = obj.MaterialIndex;
         m_rootConstants.Bind_Graphics(cmdList, &matricesM);
 
-        cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
+        cmdList->DrawIndexedInstanced(obj.IndexCount, 1, obj.MegaBufferIndexOffset, obj.MegaBufferVertexOffset, 0);
     }
 }

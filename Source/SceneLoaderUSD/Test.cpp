@@ -89,7 +89,7 @@ void PrintSceneDebug(const SceneCPU* scene)
             << "Material=" << obj.MaterialIndex
             << " VertOffset=" << obj.MegaBufferVertexOffset
             << " IdxOffset=" << obj.MegaBufferIndexOffset
-            << " IdxCount=" << obj.MegaBufferIndexCount
+            << " IdxCount=" << obj.IndexCount
             << '\n';
 
         if (obj.MaterialIndex >= scene->MegaBufferMaterialsCount)
@@ -198,7 +198,7 @@ int main(const int argc, char** argv)
 
         assert(obj.MegaBufferVertexOffset < scene.MegaBufferVertexCount);
         assert(obj.MegaBufferIndexOffset < scene.MegaBufferIndexCount);
-        assert(obj.MegaBufferIndexOffset + obj.MegaBufferIndexCount <= scene.MegaBufferIndexCount);
+        assert(obj.MegaBufferIndexOffset + obj.IndexCount <= scene.MegaBufferIndexCount);
     }
 
     PrintSceneDebug(&scene);

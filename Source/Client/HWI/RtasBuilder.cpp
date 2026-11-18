@@ -96,12 +96,12 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     geomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress() + vertexByteOffset;
     geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
-    geomDesc.Triangles.VertexCount = object->MegaBufferVertexCount;
+    geomDesc.Triangles.VertexCount = object->VertexCount;
     geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
     geomDesc.Triangles.IndexBuffer = indexBuffer->GetGPUVirtualAddress() + indexByteOffset;
     geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
-    geomDesc.Triangles.IndexCount = object->MegaBufferIndexCount;
+    geomDesc.Triangles.IndexCount = object->IndexCount;
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;

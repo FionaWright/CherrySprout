@@ -18,8 +18,8 @@ struct ShadowMapConfig
 {
     uint32_t CascadeCount;
 
-    float Width = 1.0f;
-    float Height = 1.0f;
+    float Width = 2.0f;
+    float Height = 2.0f;
     float Near = 0.01f;
     float Far = 100.0f;
     float DirDist = 8.0f;

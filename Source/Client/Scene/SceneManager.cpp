@@ -86,21 +86,14 @@ void SceneManager::LoadScene(const char* filepath, const float sceneScale)
     for (int i = 0; i < m_scene.CPU.ObjectCount; i++)
     {
         const Object& obj = m_scene.CPU.Objects[i];
-
-        const XMMATRIX M = XMMatrixSet(
-            obj.M[0], obj.M[1], obj.M[2], obj.M[3],
-            obj.M[4], obj.M[5], obj.M[6], obj.M[7],
-            obj.M[8], obj.M[9], obj.M[10], obj.M[11],
-            obj.M[12], obj.M[13], obj.M[14], obj.M[15]
-        );
-        const XMMATRIX MTI = XMMatrixTranspose(XMMatrixInverse(nullptr, M));
+        const XMMATRIX MTI = XMMatrixTranspose(XMMatrixInverse(nullptr, obj.M));
 
         InstanceData instanceData{};
-        XMStoreFloat4x4(&instanceData.M, M);
+        XMStoreFloat4x4(&instanceData.M, obj.M);
         XMStoreFloat4x4(&instanceData.MTI, MTI);
         instanceData.MegaBufferOffsetVertex = obj.MegaBufferVertexOffset;
         instanceData.MegaBufferOffsetIndex = obj.MegaBufferIndexOffset;
-        instanceData.MegaBufferCountIndex = obj.MegaBufferIndexCount;
+        instanceData.MegaBufferCountIndex = obj.IndexCount;
         instanceData.MaterialIndex = obj.MaterialIndex;
         m_megaBufferInstanceData.emplace_back(instanceData);
     }

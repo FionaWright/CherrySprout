@@ -186,7 +186,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
         perInstance.InstanceIdx = i;
         m_rootConstants.Bind_Graphics(cmdList, &perInstance);
 
-        cmdList->DrawIndexedInstanced(obj.MegaBufferIndexCount, 1, obj.MegaBufferIndexOffset,
+        cmdList->DrawIndexedInstanced(obj.IndexCount, 1, obj.MegaBufferIndexOffset,
                                       obj.MegaBufferVertexOffset, 0);
     }
 }

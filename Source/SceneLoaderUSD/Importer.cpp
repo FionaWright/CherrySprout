@@ -49,21 +49,6 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
         std::cout << "USD Plugin Registered: " << plugin->GetName() << std::endl;
     }
 
-    context.Materials.emplace_back(); // Assign default fallback material for objects missing materials
-
-    std::unordered_map<std::string, size_t> matPathToIdxMap;
-    for (const pxr::UsdPrim& prim : stage->Traverse())
-    {
-        if (prim.IsA<pxr::UsdShadeMaterial>())
-        {
-            matPathToIdxMap[prim.GetPath().GetString()] = context.Materials.size();
-            const Material mat = ExtractMaterial(pxr::UsdShadeMaterial(prim), context.TextureFilePaths);
-            context.Materials.emplace_back(mat);
-
-            std::cout << "Imported Material: " << prim.GetPath().GetString() << std::endl;
-        }
-    }
-
     pxr::UsdGeomXformCache xformCache(pxr::UsdTimeCode::Default());
 
     std::unordered_set<pxr::SdfPath, pxr::SdfPath::Hash> prototypePaths;
@@ -101,6 +86,36 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
     pxr::GfMatrix4d globalXform = SceneScale * ToYUp * RhToLh;
 
+    context.Materials.emplace_back(); // Assign default fallback material for objects missing materials
+
+    std::unordered_map<std::string, size_t> matPathToIdxMap;
+    std::unordered_map<std::string, size_t> skelePathToIdx;
+    for (const pxr::UsdPrim& prim : stage->Traverse())
+    {
+        if (prim.IsA<pxr::UsdShadeMaterial>())
+        {
+            matPathToIdxMap[prim.GetPath().GetString()] = context.Materials.size();
+
+            const Material mat = ExtractMaterial(pxr::UsdShadeMaterial(prim), context.TextureFilePaths);
+            context.Materials.emplace_back(mat);
+
+            std::cout << "Imported Material: " << prim.GetPath().GetString() << std::endl;
+            continue;
+        }
+
+        if (prim.IsA<pxr::UsdSkelSkeleton>())
+        {
+            // TODO: Global xform
+            skelePathToIdx[prim.GetPath().GetString()] = context.Skeletons.size();
+
+            const ImporterSkeleton impSkeleton = ExtractSkeleton(prim, context.KeyFrames, context.AnimationClips);
+            context.Skeletons.emplace_back(std::move(impSkeleton));
+
+            std::cout << "Imported Skeleton" << prim.GetPath().GetString() << std::endl;
+            continue;
+        }
+    }
+
     const pxr::Usd_PrimFlagsPredicate predicate = pxr::UsdPrimIsActive && pxr::UsdPrimIsDefined && !pxr::UsdPrimIsAbstract;
     for (const pxr::UsdPrim& prim : stage->Traverse(predicate))
     {
@@ -121,7 +136,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
         if (prim.IsA<pxr::UsdGeomPointInstancer>())
         {
-            ExtractPointInstancer(&context, stage, prim, xformCache, matPathToIdxMap, globalXform);
+            ExtractPointInstancer(&context, stage, prim, xformCache, matPathToIdxMap, skelePathToIdx, globalXform);
             std::cout << "Extracted Point Instancer: " << prim.GetName().GetString() << std::endl;
             continue;
         }
@@ -131,7 +146,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
         if (prim.IsInstance())
         {
-            std::vector<ImporterObject> objects = ExtractInstance(prim, xformCache, matPathToIdxMap, globalXform);
+            std::vector<ImporterObject> objects = ExtractInstance(prim, xformCache, matPathToIdxMap, skelePathToIdx, globalXform);
             for (auto & object : objects)
             {
                 context.Objects.emplace_back(std::move(object));
@@ -142,7 +157,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
 
         if (prim.IsA<pxr::UsdGeomMesh>())
         {
-            std::vector<ImporterObject> objects = ExtractMesh(prim, xformCache, matPathToIdxMap, globalXform);
+            std::vector<ImporterObject> objects = ExtractMesh(prim, xformCache, matPathToIdxMap, skelePathToIdx, globalXform);
             for (int i = 0; i < objects.size(); ++i)
             {
                 std::cout << "Extracted Mesh: " << objects[i].Name << std::endl;

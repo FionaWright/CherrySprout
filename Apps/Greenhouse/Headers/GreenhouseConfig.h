@@ -181,8 +181,8 @@ struct ForwardConfig
     uint32_t SmCascadeCount = 1;
     uint32_t SmPcfCount = 16;
 
-    float SmWidth = 1.0f;
-    float SmHeight = 1.0f;
+    float SmWidth = 2.0f;
+    float SmHeight = 2.0f;
     float SmNear = 0.01f;
     float SmFar = 100.0f;
     float SmDirDist = 50.0f;
