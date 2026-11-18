@@ -30,8 +30,8 @@ void getMisWeights_Emissive(
 		mis_nee_s = 1.0f;
 		mis_nee_m = 1.0f;
 
-#ifdef GDPT_MIS_WEIGHT_NO_NEE
-        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
+#ifdef GDPT_MIS_WEIGHT_PATH
+        mis_path = GDPT_MIS_WEIGHT_PATH;
 #endif
 		return;
 	}
@@ -59,8 +59,12 @@ void getMisWeights_Emissive(
         pdf_bxdf_s, pdf_nee_s,
         1, gSettings.DirectNumSamples);
 
-#ifdef GDPT_MIS_WEIGHT
-    mis_path = GDPT_MIS_WEIGHT;
+#ifdef GDPT_MIS_WEIGHT_PATH
+    mis_path = GDPT_MIS_WEIGHT_PATH;
+#endif
+#ifdef GDPT_MIS_WEIGHT_NEE
+	mis_nee_m = GDPT_MIS_WEIGHT_NEE;
+	mis_nee_s = GDPT_MIS_WEIGHT_NEE;
 #endif
 }
 
@@ -141,7 +145,7 @@ bool EmissiveHit_S_Semiconnected(
     float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
 
 	float pdf_nee_m = v1.PDF_NEE;
-	float pdf_nee_s = 1.0f;
+	float pdf_nee_s = NAN;
 	if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
 	{
 		float pdf_lsd;

@@ -32,8 +32,8 @@ void getMisWeights_NEE(
 		mis_nee_s = 1.0f;
 		mis_nee_m = 1.0f;
 
-#ifdef GDPT_MIS_WEIGHT_NO_NEE
-        mis_path = GDPT_MIS_WEIGHT_NO_NEE;
+#ifdef GDPT_MIS_WEIGHT_PATH
+    	mis_path = GDPT_MIS_WEIGHT_PATH;
 #endif
 		return;
 	}
@@ -61,8 +61,12 @@ void getMisWeights_NEE(
         pdf_nee_s, pdf_bxdf_s,
         gSettings.DirectNumSamples, 1);
 
-#ifdef GDPT_MIS_WEIGHT
-    mis_path = GDPT_MIS_WEIGHT;
+#ifdef GDPT_MIS_WEIGHT_PATH
+    mis_path = GDPT_MIS_WEIGHT_PATH;
+#endif
+#ifdef GDPT_MIS_WEIGHT_NEE
+	mis_nee_m = GDPT_MIS_WEIGHT_NEE;
+	mis_nee_s = GDPT_MIS_WEIGHT_NEE;
 #endif
 }
 
@@ -200,13 +204,6 @@ bool SampleDirect_S_Unconnected(
     bool v1Dirac = MaterialIsDirac(v1.Roughness);
     bool isDirac = MaterialIsDirac(hitInfo.Mat.Roughness);
     if (!LightIsPunctual(v1.LightSample) && (v1Dirac || isDirac)) // TODO: This feels wrong
-    {
-        pathStateShifted.IsSymmetric = false;
-        DBG_OUTPUT1(1.0f, GD_RejectionNEE);
-        return false;
-    }
-
-    if (shadowFactor <= 0.0f)
     {
         pathStateShifted.IsSymmetric = false;
         DBG_OUTPUT1(1.0f, GD_RejectionNEE);

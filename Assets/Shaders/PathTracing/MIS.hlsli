@@ -1,8 +1,8 @@
 #ifndef H_POWER_HEURISTIC_H
 #define H_POWER_HEURISTIC_H
 
-//#define GDPT_MIS_WEIGHT 0.25f
-//#define GDPT_MIS_WEIGHT_NO_NEE 0.5f
+//#define GDPT_MIS_WEIGHT_PATH 0.5f
+//#define GDPT_MIS_WEIGHT_NEE 0.5f
 
 float GenPowerHeuristic(float pdf1, float pdf2, float N1, float N2, float P)
 {
@@ -23,7 +23,7 @@ float GenPowerHeuristic(float pdf1, float pdf2, float N1, float N2, float P)
 float GenPowerHeuristic(float pdf1, float pdf2, float pdf3, float pdf4, float N1, float N2, float N3, float N4, float P)
 {
     if (FEAT_DBG(FixedMisHalf))
-        return 0.5f;
+        return 0.25f;
 
     float pdf1_P = pow(pdf1, P) * N1;
     float pdf2_P = pow(pdf2, P) * N2;
