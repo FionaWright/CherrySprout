@@ -33,7 +33,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
 {
     CherryPrint("Building RTAS...");
 
-    scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    scene->GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     m_blasList.clear();
@@ -44,7 +44,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
-        buildBlas(device, cmdList, scene->GPU.MegaBufferVertex.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i]);
+        buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i]);
     }
 
     std::vector<D3D12_RAYTRACING_INSTANCE_DESC> blasInstances;
@@ -53,15 +53,8 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         const Object& obj = scene->CPU.Objects[i];
         const D12Resource& blasResult = m_blasList[i].Result;
 
-        const XMMATRIX M = XMMatrixSet(
-            obj.M[0], obj.M[1], obj.M[2], obj.M[3],
-            obj.M[4], obj.M[5], obj.M[6], obj.M[7],
-            obj.M[8], obj.M[9], obj.M[10], obj.M[11],
-            obj.M[12], obj.M[13], obj.M[14], obj.M[15]
-        );
-
         XMFLOAT3X4 M3x4{};
-        XMStoreFloat3x4(&M3x4, M);
+        XMStoreFloat3x4(&M3x4, obj.M);
 
         D3D12_RAYTRACING_INSTANCE_DESC blasInstance = {};
         for (int c = 0; c < 3; c++)

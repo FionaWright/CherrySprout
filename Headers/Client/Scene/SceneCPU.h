@@ -16,7 +16,7 @@ struct Object
     char* DebugName = nullptr;
 #endif
 
-    XMMATRIX M;
+    DirectX::XMMATRIX M{};
     uint32_t MaterialIndex{};
 
     uint32_t MegaBufferVertexOffset{};

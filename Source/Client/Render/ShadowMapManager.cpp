@@ -172,15 +172,7 @@ void ShadowMapManager::renderSceneObjectsToBoundMap(ID3D12GraphicsCommandList* c
     {
         const Object& obj = scene->CPU.Objects[i];
 
-        // TODO: Cache
-        const XMMATRIX M = XMMatrixSet(
-            obj.M[0], obj.M[1], obj.M[2], obj.M[3],
-            obj.M[4], obj.M[5], obj.M[6], obj.M[7],
-            obj.M[8], obj.M[9], obj.M[10], obj.M[11],
-            obj.M[12], obj.M[13], obj.M[14], obj.M[15]
-        );
-
-        XMStoreFloat4x4(&cbv.M, M);
+        XMStoreFloat4x4(&cbv.M, obj.M);
         cbv.MaterialIdx = obj.MaterialIndex;
         m_rootConstants.Bind_Graphics(cmdList, &cbv);
 
@@ -330,11 +322,11 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, cons
     {
         D3D12_VERTEX_BUFFER_VIEW viewV;
         D3D12_INDEX_BUFFER_VIEW viewI;
-        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertex, &scene->GPU.MegaBufferIndex,
+        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertexSkinned, &scene->GPU.MegaBufferIndex,
             scene->CPU.MegaBufferVertexCount, sizeof(Vertex), scene->CPU.MegaBufferIndexCount,
                     viewV, viewI);
 
-        scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        scene->GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
         m_set.TransitionAllSRVToShaderResource(cmdList);
 

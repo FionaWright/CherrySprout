@@ -26,7 +26,8 @@ void SceneManager::AssignScene(const Scene& scene)
 void SceneManager::LoadScene(const char* filepath, const float sceneScale)
 {
     {
-        m_scene.GPU.MegaBufferVertex.Reset();
+        m_scene.GPU.MegaBufferVertexBind.Reset();
+        m_scene.GPU.MegaBufferVertexSkinned.Reset();
         m_scene.GPU.MegaBufferIndex.Reset();
         m_scene.GPU.MegaBufferMaterials.Reset();
         m_scene.GPU.MegaBufferPunctualLights.Reset();
@@ -113,14 +114,15 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
     const size_t megaBufferPunctualBytes = m_scene.CPU.MegaBufferPunctualLightsCount * sizeof(PunctualLight);
     const size_t megaBufferInstanceDataBytes = m_scene.CPU.ObjectCount * sizeof(InstanceData);
 
-    m_scene.GPU.MegaBufferVertex.Init_Buffer("Mega Buffer Vertex", d3d->GetDevice(), megaBufferVertexBytes);
+    m_scene.GPU.MegaBufferVertexBind.Init_Buffer("Mega Buffer Vertex (Bind)", d3d->GetDevice(), megaBufferVertexBytes);
+    m_scene.GPU.MegaBufferVertexSkinned.Init_Buffer("Mega Buffer Vertex (Skinned)", d3d->GetDevice(), megaBufferVertexBytes);
     m_scene.GPU.MegaBufferIndex.Init_Buffer("Mega Buffer Index", d3d->GetDevice(), megaBufferIndexBytes);
     m_scene.GPU.MegaBufferMaterials.Init_Buffer("Mega Buffer Materials", d3d->GetDevice(), megaBufferMaterialsBytes);
     m_scene.GPU.MegaBufferPunctualLights.Init_Buffer("Mega Buffer Punctual Lights", d3d->GetDevice(), megaBufferPunctualBytes);
     m_scene.GPU.MegaBufferInstanceData.Init_Buffer("Mega Buffer Instance Data", d3d->GetDevice(), megaBufferInstanceDataBytes);
 
     size_t uploadHeapRequiredSize = 0;
-    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferVertex.GetIntermediateSize(), 512);
+    uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferVertexBind.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferIndex.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferMaterials.GetIntermediateSize(), 512);
     uploadHeapRequiredSize += Align(m_scene.GPU.MegaBufferPunctualLights.GetIntermediateSize(), 512);
@@ -152,9 +154,13 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
 
             m_scene.GPU.MegaBufferIndex.            UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
             m_scene.GPU.MegaBufferMaterials.        UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
-            m_scene.GPU.MegaBufferVertex.           UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
+            m_scene.GPU.MegaBufferVertexBind.       UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
             m_scene.GPU.MegaBufferPunctualLights.   UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
             m_scene.GPU.MegaBufferInstanceData.     UploadBuffer(cmdList, &uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataBytes);
+
+            m_scene.GPU.MegaBufferVertexBind.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            m_scene.GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+            cmdList->CopyBufferRegion(m_scene.GPU.MegaBufferVertexSkinned.GetResource(), 0, m_scene.GPU.MegaBufferVertexBind.GetResource(), 0, megaBufferVertexBytes);
 
             for (int i = 0; i < textureCount; i++)
             {

@@ -10,10 +10,15 @@ void GradientManager::Init(const D3D* d3d)
 
     // TODO: Not being lazy loaded
 
-    m_gradientXF.Release();
-    m_gradientXB.Release();
-    m_gradientYF.Release();
-    m_gradientYB.Release();
+    m_gradientXF.Reset();
+    m_gradientXB.Reset();
+    m_gradientYF.Reset();
+    m_gradientYB.Reset();
+
+    m_gradientXFSS.Reset();
+    m_gradientXBSS.Reset();
+    m_gradientYFSS.Reset();
+    m_gradientYBSS.Reset();
 
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;

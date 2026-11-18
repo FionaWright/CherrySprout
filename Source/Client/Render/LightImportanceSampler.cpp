@@ -225,7 +225,7 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
 
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-        m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, 2, &scene->GPU.MegaBufferVertex, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
+        m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, 2, &scene->GPU.MegaBufferVertexSkinned, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, 3, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
         m_setEmissivePdf.SetSRV_Buffer(d3d->GetDevice(), 0, 4, &m_emissiveToInstanceMap, m_numEmissiveInstances, sizeof(uint32_t));
         m_setEmissivePdf.SetUAV_Buffer(d3d->GetDevice(), 0, 0, &m_emissivePdfRW, m_numEmissiveInstances, sizeof(float));

@@ -176,6 +176,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_lightImportanceSampler.MarkSceneDataDirty();
         m_lsdDirty = true;
         m_gbufferDirty = true;
+        m_renderBackendSceneDataDirty = true;
     }
 
     if (m_gbufferDirty && GBufferRequired())

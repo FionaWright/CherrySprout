@@ -261,7 +261,7 @@ namespace SceneLoaderUSD
         pxr::VtArray<pxr::GfMatrix4d> restTransforms;
         skeleton.GetRestTransformsAttr().Get(&restTransforms);
 
-        bones.resize(joints.size());
+        impSkeleton.BoneInfos.resize(joints.size());
 
         std::unordered_map<std::string, uint32_t> jointLookup;
 

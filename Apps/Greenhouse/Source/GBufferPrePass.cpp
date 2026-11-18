@@ -150,11 +150,11 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
     {
         D3D12_VERTEX_BUFFER_VIEW viewV;
         D3D12_INDEX_BUFFER_VIEW viewI;
-        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertex, &scene->GPU.MegaBufferIndex,
+        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertexSkinned, &scene->GPU.MegaBufferIndex,
                                   scene->CPU.MegaBufferVertexCount, sizeof(Vertex), scene->CPU.MegaBufferIndexCount,
                                   viewV, viewI);
 
-        scene->GPU.MegaBufferVertex.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        scene->GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
         m_set.TransitionAllSRVToShaderResource(cmdList);
 

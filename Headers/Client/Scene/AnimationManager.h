@@ -11,7 +11,7 @@
 class AnimationManager
 {
 public:
-    void Init(D3D* d3d, );
+    //void Init(D3D* d3d, );
 
 private:
     D12Resource m_vertexSkinnedMegaBuffer;
