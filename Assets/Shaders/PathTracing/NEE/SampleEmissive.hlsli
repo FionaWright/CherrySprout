@@ -64,7 +64,7 @@ LightSample SampleEmissive(float2 rng, uint emissiveIdx, float3 hitPos, out Ligh
 
     float3 emissionMat = material.EmissiveColor * material.EmissiveStrength;
     float3 emissionSample = SampleSceneTexture3(uv, material.TexIdxEmissive, 1);
-    float3 emission = SRGB_to_LRGB(emissionSample) * emissionMat;
+    float3 emission = SRGB_to_LRGB(emissionSample) * emissionMat * 0.5f; // 0.5 term due it being two-sided
 
     float3 wi = normalize(destPos - hitPos);
     float dist = length(destPos - hitPos);

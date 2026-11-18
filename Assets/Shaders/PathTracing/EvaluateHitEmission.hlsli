@@ -15,7 +15,7 @@ float3 EvaluateHitEmission(HitInfo hitInfo, PathState pathState, float3 wo, out 
     if (!FEAT_CORE(Emission))
         return 0.0f;
 
-    float3 L_emission = hitInfo.Emission;
+    float3 L_emission = hitInfo.Emission * 0.5f; // 0.5 term due all emissive surfaces being two-sided
     DBG_SCALE_INTENSITY_EMISSION(L_emission);
 
     if (!FEAT_CORE(NEE))
