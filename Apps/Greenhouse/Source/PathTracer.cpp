@@ -142,6 +142,8 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
 {
     IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler, gbuffer);
 
+    CherryPrint("PathTracer: LoadSceneData");
+
     {
         m_rtasBuilder.FlushAndBuild(d3d, scene);
     }

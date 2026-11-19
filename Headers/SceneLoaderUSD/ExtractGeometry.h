@@ -148,7 +148,9 @@ namespace SceneLoaderUSD
     {
         ExtractedBuffers buffers;
 
-        ExtractBoneWeights(prim, buffers.BoneWeights);
+        std::vector<VertexBoneWeights> extractedBoneWeights;
+        ExtractBoneWeights(prim, extractedBoneWeights);
+        const bool isAnimated = extractedBoneWeights.size() > 0;
 
         pxr::UsdGeomMesh mesh(prim);
 
@@ -334,6 +336,22 @@ namespace SceneLoaderUSD
 
                     buffers.Vertices.emplace_back(vertex);
                     vertexLookup.emplace(vertex, newIndex);
+
+                    if (isAnimated)
+                    {
+                        if (ptIdx >= buffers.BoneWeights.size())
+                        {
+                            VertexBoneWeights dummyWeights;
+                            for (uint32_t bw = 0; bw < MAX_BONE_WEIGHTS_PER_VERTEX; bw++)
+                            {
+                                dummyWeights.BoneIndices[bw] = UINT_MAX;
+                                dummyWeights.BoneWeights[bw] = -1;
+                            }
+                            buffers.BoneWeights.emplace_back(dummyWeights);
+                        }
+                        else
+                            buffers.BoneWeights.emplace_back(extractedBoneWeights[ptIdx]);
+                    }
 
                     if (containsSubmeshes)
                         faceInfo.faceIndices.emplace_back(newIndex);

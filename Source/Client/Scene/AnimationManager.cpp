@@ -28,6 +28,8 @@ void AnimationManager::Init(const D3D* d3d, Heap* heap)
 
 void AnimationManager::LoadSceneData(const D3D* d3d, Scene* scene)
 {
+    CherryPrint("AnimationManager: LoadSceneData");
+    
     m_cpuMegaBufferBoneTransforms.resize(scene->CPU.MegaBufferBonesCount);
 
     m_gpuMegaBufferBoneTransforms.Reset();
@@ -89,10 +91,10 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
             const float timeT = framePosition - static_cast<float>(localKeyFrameIdx0);
 
-            CherryPrint("Time: " << timeWrapped << ", percent: " << clipPercent << ", timeT: " << timeT);
-            CherryPrint("Local KeyFrame Idx (0): " << localKeyFrameIdx0);
-            CherryPrint("Global KeyFrame Base (0)" << globalKeyFrameBaseIdx0);
-            CherryPrint("Global KeyFrame Base (1)" << globalKeyFrameBaseIdx1);
+            //CherryPrint("Time: " << timeWrapped << ", percent: " << clipPercent << ", timeT: " << timeT);
+            //CherryPrint("Local KeyFrame Idx (0): " << localKeyFrameIdx0);
+            //CherryPrint("Global KeyFrame Base (0)" << globalKeyFrameBaseIdx0);
+            //CherryPrint("Global KeyFrame Base (1)" << globalKeyFrameBaseIdx1);
 
             std::vector<XMMATRIX> topologicalTransforms;
             topologicalTransforms.resize(clip.BoneCount);
@@ -100,7 +102,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
             // TODO: Need to reorder joints topologically in scene loader
             for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
             {
-                CherryPrint("Bone: " << localBoneIdx);
+                //CherryPrint("Bone: " << localBoneIdx);
 
                 //PrintMatrix("Model Matrix", obj.M);
 
@@ -117,8 +119,8 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                     const KeyFrame& keyFrame0 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx0];
                     const KeyFrame& keyFrame1 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx1];
 
-                    CherryPrint("KeyFrame 0 Rotation: " << keyFrame0.Rotation[0] << ", " << keyFrame0.Rotation[1] << ", " << keyFrame0.Rotation[2] << ", " << keyFrame0.Rotation[3]);
-                    CherryPrint("KeyFrame 1 Rotation: " << keyFrame1.Rotation[0] << ", " << keyFrame1.Rotation[1] << ", " << keyFrame1.Rotation[2] << ", " << keyFrame1.Rotation[3]);
+                    //CherryPrint("KeyFrame 0 Rotation: " << keyFrame0.Rotation[0] << ", " << keyFrame0.Rotation[1] << ", " << keyFrame0.Rotation[2] << ", " << keyFrame0.Rotation[3]);
+                    //CherryPrint("KeyFrame 1 Rotation: " << keyFrame1.Rotation[0] << ", " << keyFrame1.Rotation[1] << ", " << keyFrame1.Rotation[2] << ", " << keyFrame1.Rotation[3]);
 
                     const float tx = std::lerp(keyFrame0.Translation[0], keyFrame1.Translation[0], timeT);
                     const float ty = std::lerp(keyFrame0.Translation[1], keyFrame1.Translation[1], timeT);
@@ -136,13 +138,13 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                     const XMMATRIX S = XMMatrixScaling(sx, sy, sz);
 
                     //PrintMatrix("Translation", T);
-                    PrintMatrix("Rotation", R);
+                    //PrintMatrix("Rotation", R);
                     //PrintMatrix("Scale", S);
 
                     TRS = S * R * T;
                 }
 
-                PrintMatrix("TRS", TRS);
+                //PrintMatrix("TRS", TRS);
 
                 XMMATRIX transform = TRS;
 
@@ -150,7 +152,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                 {
                     transform = transform * topologicalTransforms[boneInfo.BoneParentIdxLocal];
 
-                    PrintMatrix("Parent", topologicalTransforms[boneInfo.BoneParentIdxLocal]);
+                    //PrintMatrix("Parent", topologicalTransforms[boneInfo.BoneParentIdxLocal]);
                     //PrintMatrix("TRS * Parent", transform);
                 }
 
@@ -159,7 +161,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
             for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
             {
-                CherryPrint("Bone: " << localBoneIdx);
+                //CherryPrint("Bone: " << localBoneIdx);
 
                 const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
                 const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
@@ -167,8 +169,8 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                 const XMMATRIX inverseBind = XMLoadFloat4x4(&boneInfo.InverseBindTransform);
                 const XMMATRIX transform = inverseBind * topologicalTransforms[localBoneIdx];
 
-                PrintMatrix("Inverse Bind", inverseBind);
-                PrintMatrix("Final Bone Transform", transform);
+                //PrintMatrix("Inverse Bind", inverseBind);
+                //PrintMatrix("Final Bone Transform", transform);
 
                 XMStoreFloat4x4(&m_cpuMegaBufferBoneTransforms[globalBoneIdx].Transform, transform);
             }

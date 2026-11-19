@@ -35,6 +35,7 @@ namespace SceneLoaderUSD
         uint32_t AnimationClipCount;
 
         std::vector<BoneInfo> BoneInfos;
+        std::vector<uint32_t> BoneRemapToSorted;
     };
 
     struct ImporterContext

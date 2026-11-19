@@ -40,6 +40,7 @@ namespace SceneLoaderUSD
     inline bool ExtractAnimation(
         const pxr::UsdSkelAnimation& animation,
         const pxr::UsdSkelSkeleton& skeleton,
+        const std::vector<uint32_t>& boneRemapToSorted,
         const float sampleRate,
         std::vector<KeyFrame>& keyFrames,
         std::vector<AnimationClip>& animationClips)
@@ -60,9 +61,10 @@ namespace SceneLoaderUSD
         std::unordered_map<std::string, uint32_t> skeletonJointLookup;
         skeletonJointLookup.reserve(boneCount);
 
-        for (uint32_t i = 0; i < boneCount; ++i)
+        for (uint32_t unsortedBoneIdx = 0; unsortedBoneIdx < boneCount; ++unsortedBoneIdx)
         {
-            skeletonJointLookup.emplace(skeletonJoints[i].GetString(), i);
+            uint32_t sortedBoneIdx = boneRemapToSorted[unsortedBoneIdx];
+            skeletonJointLookup.emplace(skeletonJoints[unsortedBoneIdx].GetString(), sortedBoneIdx);
         }
 
         pxr::VtArray<pxr::TfToken> animationJoints;
@@ -80,7 +82,8 @@ namespace SceneLoaderUSD
             if (it == skeletonJointLookup.end())
                 return false;
 
-            animationToSkeleton.emplace_back(it->second);
+            const uint32_t sortedBoneIdx = it->second;
+            animationToSkeleton.emplace_back(sortedBoneIdx);
         }
 
         pxr::UsdAttribute translationsAttr = animation.GetTranslationsAttr();
@@ -194,9 +197,9 @@ namespace SceneLoaderUSD
 
             for (uint32_t j = 0; j < animationToSkeleton.size(); ++j)
             {
-                const uint32_t bone = animationToSkeleton[j];
+                const uint32_t sortedBoneIdx = animationToSkeleton[j];
 
-                KeyFrame& key = frameKeyFrames[bone];
+                KeyFrame& key = frameKeyFrames[sortedBoneIdx];
 
                 if (j < translations.size())
                 {
@@ -235,6 +238,7 @@ namespace SceneLoaderUSD
         return true;
     }
 
+
     inline ImporterSkeleton ExtractSkeleton(
         const pxr::UsdPrim& prim,
         std::vector<KeyFrame>& keyFrames,
@@ -247,7 +251,7 @@ namespace SceneLoaderUSD
 
         ImporterSkeleton impSkeleton{};
 
-        if (joints.size() == 0)
+        if (joints.empty())
             return impSkeleton;
 
         pxr::VtArray<pxr::GfMatrix4d> bindTransforms;
@@ -256,48 +260,121 @@ namespace SceneLoaderUSD
         pxr::VtArray<pxr::GfMatrix4d> restTransforms;
         skeleton.GetRestTransformsAttr().Get(&restTransforms);
 
-        impSkeleton.BoneInfos.resize(joints.size());
+        const uint32_t boneCount = static_cast<uint32_t>(joints.size());
 
+        // Build original joint lookup.
         std::unordered_map<std::string, uint32_t> jointLookup;
 
-        for (uint32_t i = 0; i < joints.size(); ++i)
+        for (uint32_t i = 0; i < boneCount; ++i)
             jointLookup[joints[i].GetString()] = i;
 
-        for (uint32_t i = 0; i < joints.size(); ++i)
+        // Find original parent indices.
+        std::vector<uint32_t> originalParents(boneCount, UINT32_MAX);
+
+        std::vector<std::vector<uint32_t>> children(boneCount);
+        std::vector<uint32_t> inDegree(boneCount, 0);
+
+        for (uint32_t i = 0; i < boneCount; ++i)
         {
-            BoneInfo bone{};
-
             const std::string jointPath = joints[i].GetString();
-
             const size_t separator = jointPath.find_last_of('/');
 
             if (separator == std::string::npos)
+                continue;
+
+            const std::string parentPath = jointPath.substr(0, separator);
+
+            auto it = jointLookup.find(parentPath);
+
+            if (it == jointLookup.end())
             {
-                bone.BoneParentIdxLocal = UINT32_MAX;
-            }
-            else
-            {
-                const std::string parentPath = jointPath.substr(0, separator);
-                bone.BoneParentIdxLocal = jointLookup.at(parentPath);
+                assert(false && "Joint parent not found");
+                continue;
             }
 
-            assert(i < bindTransforms.size());
+            const uint32_t parentIdx = it->second;
 
-            const pxr::GfMatrix4f inverseBind = pxr::GfMatrix4f(bindTransforms[i].GetInverse());
-            memcpy(&bone.InverseBindTransform, inverseBind.GetArray(), sizeof(float) * 16);
-
-            impSkeleton.BoneInfos[i] = bone;
+            originalParents[i] = parentIdx;
+            children[parentIdx].push_back(i);
+            inDegree[i] = 1;
         }
 
+        std::vector<uint32_t> queue;
+        queue.reserve(boneCount);
+
+        for (uint32_t i = 0; i < boneCount; ++i)
+        {
+            if (inDegree[i] == 0)
+                queue.push_back(i);
+        }
+
+        std::vector<uint32_t> sortedBones;
+        sortedBones.reserve(boneCount);
+
+        for (size_t head = 0; head < queue.size(); ++head)
+        {
+            const uint32_t boneIdx = queue[head];
+
+            sortedBones.push_back(boneIdx);
+
+            for (uint32_t childIdx : children[boneIdx])
+            {
+                if (--inDegree[childIdx] == 0)
+                    queue.push_back(childIdx);
+            }
+        }
+
+        assert(sortedBones.size() == boneCount);
+
+        impSkeleton.BoneRemapToSorted.resize(boneCount);
+        for (uint32_t newIdx = 0; newIdx < boneCount; ++newIdx)
+            impSkeleton.BoneRemapToSorted[sortedBones[newIdx]] = newIdx;
+
+        impSkeleton.BoneInfos.resize(boneCount);
+
+        for (uint32_t newIdx = 0; newIdx < boneCount; ++newIdx)
+        {
+            const uint32_t originalIdx = sortedBones[newIdx];
+
+            BoneInfo bone{};
+
+            const uint32_t originalParent = originalParents[originalIdx];
+
+            bone.BoneParentIdxLocal =
+                originalParent == UINT32_MAX
+                    ? UINT32_MAX
+                    : impSkeleton.BoneRemapToSorted[originalParent];
+
+            assert(originalIdx < bindTransforms.size());
+
+            const pxr::GfMatrix4f inverseBind =
+                pxr::GfMatrix4f(bindTransforms[originalIdx].GetInverse());
+
+            memcpy(
+                &bone.InverseBindTransform,
+                inverseBind.GetArray(),
+                sizeof(float) * 16);
+
+            impSkeleton.BoneInfos[newIdx] = bone;
+        }
+
+        // Extract animation.
         pxr::UsdSkelBindingAPI binding(skeleton.GetPrim());
 
         pxr::UsdPrim animPrim;
         binding.GetAnimationSource(&animPrim);
+
         pxr::UsdSkelAnimation animation(animPrim);
 
         impSkeleton.AnimationClipOffset = animationClips.size();
 
-        ExtractAnimation(animation, skeleton, 30.0f, keyFrames, animationClips);
+        ExtractAnimation(
+            animation,
+            skeleton,
+            impSkeleton.BoneRemapToSorted,
+            30.0f,
+            keyFrames,
+            animationClips);
 
         impSkeleton.AnimationClipCount = animationClips.size() - impSkeleton.AnimationClipOffset;
 
@@ -318,14 +395,12 @@ namespace SceneLoaderUSD
             return;
 
         const int influencesPerVertex = binding.GetJointIndicesPrimvar().GetElementSize();
-        const int maxInfluences = std::min(4, influencesPerVertex);
-
-        const size_t vertexCount = jointIndices.size() / influencesPerVertex;
+        const int maxInfluences = std::min(MAX_BONE_WEIGHTS_PER_VERTEX, influencesPerVertex);
 
         if (influencesPerVertex <= 0 || jointIndices.size() != jointWeights.size() || jointIndices.size() % influencesPerVertex != 0)
-        {
             return;
-        }
+
+        const size_t vertexCount = jointIndices.size() / influencesPerVertex;
 
         output.resize(vertexCount);
 
@@ -337,7 +412,7 @@ namespace SceneLoaderUSD
                 output[i].BoneWeights[j] = jointWeights[i * influencesPerVertex + j];
             }
 
-            for (int j = influencesPerVertex; j < 4; ++j)
+            for (int j = influencesPerVertex; j < MAX_BONE_WEIGHTS_PER_VERTEX; ++j)
             {
                 output[i].BoneIndices[j] = UINT_MAX;
                 output[i].BoneWeights[j] = -1.0f;

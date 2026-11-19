@@ -82,6 +82,8 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
 void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
 {
+    CherryPrint("GBufferPrePass: LoadSceneData");
+
     CherryAssert(scene->GPU.MegaBufferInstanceData.GetResource());
     CherryAssert(scene->GPU.MegaBufferMaterials.GetResource());
 

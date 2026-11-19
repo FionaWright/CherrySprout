@@ -119,23 +119,39 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
         scene->MegaBufferVertexCount += impObj.Vertices.size();
         scene->MegaBufferIndexCount += impObj.Indices.size();
 
-        if (animationInScene)
+        if (animationInScene && impObj.SkeletonIndex != -1)
         {
-            VertexBoneWeights* vbwAddr = scene->MegaBufferVertexBoneWeights + obj.MegaBufferVertexOffset;
-            memcpy(vbwAddr, impObj.BoneWeights.data(), impObj.BoneWeights.size() * sizeof(VertexBoneWeights));
-            for (size_t bw = impObj.BoneWeights.size(); bw < impObj.Vertices.size(); bw++)
+            const ImporterSkeleton& impSkeleton = importerContext.Skeletons[impObj.SkeletonIndex];
+
+            std::vector<VertexBoneWeights> boneWeights = impObj.BoneWeights;
+
+            assert(impObj.BoneWeights.size() == impObj.Vertices.size());
+
+            // Remap indices
+            for (VertexBoneWeights& weights : boneWeights)
             {
-                vbwAddr[bw].BoneIndices[0] = UINT_MAX;
-                vbwAddr[bw].BoneWeights[0] = NAN;
+                for (uint32_t ind = 0; ind < MAX_BONE_WEIGHTS_PER_VERTEX; ind++)
+                {
+                    const uint32_t boneIdx = weights.BoneIndices[ind];
+                    if (boneIdx == UINT_MAX)
+                        break;
+
+                    weights.BoneIndices[ind] = impSkeleton.BoneRemapToSorted[boneIdx];
+                }
             }
 
-            if (impObj.SkeletonIndex != -1)
+            VertexBoneWeights* vbwAddr = scene->MegaBufferVertexBoneWeights + obj.MegaBufferVertexOffset;
+            memcpy(vbwAddr, boneWeights.data(), boneWeights.size() * sizeof(VertexBoneWeights));
+            for (size_t bw = boneWeights.size(); bw < impObj.Vertices.size(); bw++)
             {
-                obj.AnimationClipCount = importerContext.Skeletons[impObj.SkeletonIndex].AnimationClipCount;
-                obj.MegaBufferAnimationClipOffset = importerContext.Skeletons[impObj.SkeletonIndex].AnimationClipOffset;
-                obj.MegaBufferBoneOffset = skeletonBoneBufferOffsets[impObj.SkeletonIndex];
-                obj.BoneCount = importerContext.Skeletons[impObj.SkeletonIndex].BoneInfos.size();
+                vbwAddr[bw].BoneIndices[0] = UINT_MAX;
+                vbwAddr[bw].BoneWeights[0] = -1;
             }
+
+            obj.AnimationClipCount = impSkeleton.AnimationClipCount;
+            obj.MegaBufferAnimationClipOffset = impSkeleton.AnimationClipOffset;
+            obj.MegaBufferBoneOffset = skeletonBoneBufferOffsets[impObj.SkeletonIndex];
+            obj.BoneCount = impSkeleton.BoneInfos.size();
 
             obj.SelectedAnimationClipIdx = 0;
         }

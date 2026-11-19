@@ -238,6 +238,7 @@ void D12Resource::Reset()
     m_uploadBufferAssignedOffset = 0;
 
 #if !NDEBUG
+    m_name = "";
     m_initialized = false;
 #endif
 }
