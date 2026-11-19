@@ -160,9 +160,13 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
             m_scene.GPU.MegaBufferIndex.             UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferIndex, megaBufferIndexBytes);
             m_scene.GPU.MegaBufferMaterials.         UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferMaterials, megaBufferMaterialsBytes);
             m_scene.GPU.MegaBufferVertexBind.        UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertex, megaBufferVertexBytes);
-            m_scene.GPU.MegaBufferVertexBoneWeights. UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertexBoneWeights, megaBufferVertexBoneWeightsBytes);
             m_scene.GPU.MegaBufferPunctualLights.    UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
             m_scene.GPU.MegaBufferInstanceData.      UploadBuffer(cmdList, &uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataBytes);
+
+            if (m_scene.CPU.IsAnimationEnabled)
+            {
+                m_scene.GPU.MegaBufferVertexBoneWeights. UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertexBoneWeights, megaBufferVertexBoneWeightsBytes);
+            }
 
             m_scene.GPU.MegaBufferVertexBind.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
             m_scene.GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);

@@ -322,16 +322,30 @@ namespace SceneLoaderUSD
         if (jointIndices.size() != jointWeights.size())
             return;
 
-        const size_t vertexCount = jointIndices.size() / 4; // TODO: May break when model storing >4 weights
+        const int influencesPerVertex = binding.GetJointIndicesPrimvar().GetElementSize();
+        const int maxInfluences = std::min(4, influencesPerVertex);
+
+        const size_t vertexCount = jointIndices.size() / influencesPerVertex;
+
+        if (influencesPerVertex <= 0 || jointIndices.size() != jointWeights.size() || jointIndices.size() % influencesPerVertex != 0)
+        {
+            return;
+        }
 
         output.resize(vertexCount);
 
         for (size_t i = 0; i < vertexCount; ++i)
         {
-            for (int j = 0; j < 4; ++j)
+            for (int j = 0; j < maxInfluences; ++j)
             {
-                output[i].BoneIndices[j] = static_cast<uint32_t>(jointIndices[i * 4 + j]);
-                output[i].BoneWeights[j] = jointWeights[i * 4 + j];
+                output[i].BoneIndices[j] = static_cast<uint32_t>(jointIndices[i * influencesPerVertex + j]);
+                output[i].BoneWeights[j] = jointWeights[i * influencesPerVertex + j];
+            }
+
+            for (int j = influencesPerVertex; j < 4; ++j)
+            {
+                output[i].BoneIndices[j] = UINT_MAX;
+                output[i].BoneWeights[j] = -1.0f;
             }
         }
     }

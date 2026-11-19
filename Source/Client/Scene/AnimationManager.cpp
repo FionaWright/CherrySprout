@@ -46,7 +46,8 @@ void AnimationManager::LoadSceneData(const D3D* d3d, Scene* scene)
 
 void AnimationManager::Update(const double deltaTime_s)
 {
-    m_time_s += deltaTime_s;
+#define ANIMATION_SPEED 0.25f
+    m_time_s += deltaTime_s * ANIMATION_SPEED;
 }
 
 void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap)
@@ -70,63 +71,92 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
             CherryAssert(clip.BoneCount == obj.BoneCount);
 
-            const double timeWrapped = fmod(m_time_s, clip.Duration);
+            double timeWrapped = fmod(m_time_s, clip.Duration);
+            if (timeWrapped < 0.0)
+                timeWrapped += clip.Duration;
+
             const double clipPercent = timeWrapped / clip.Duration;
+            const double framePosition = clipPercent * clip.MegaBufferKeyFrameCount;
 
-            const uint32_t localIdx0 = std::floor(clipPercent * clip.MegaBufferKeyFrameCount);
+            const uint32_t localIdx0 = static_cast<uint32_t>(std::floor(framePosition));
             const uint32_t globalIdx0 = localIdx0 + clip.MegaBufferKeyFrameOffset;
-            const uint32_t globalIdx1 = (localIdx0 == clip.MegaBufferKeyFrameCount - 1) ? 0 : globalIdx0 + clip.BoneCount;
+            const uint32_t globalIdx1 = (localIdx0 == clip.MegaBufferKeyFrameCount - 1) ? clip.MegaBufferKeyFrameOffset : globalIdx0 + clip.BoneCount;
 
-            const double timeAt0 = (localIdx0 / float(clip.MegaBufferKeyFrameCount)) * clip.Duration;
-            const double timeAt1 = ((localIdx0+1) / float(clip.MegaBufferKeyFrameCount)) * clip.Duration;
-            const double timeT = (timeWrapped - timeAt0) / (timeAt1 - timeAt0);
+            const float timeT = static_cast<float>(framePosition - localIdx0);
 
-            CherryAssert(timeAt0 != timeAt1);
+            std::vector<XMMATRIX> topologicalTransforms;
+            topologicalTransforms.resize(clip.BoneCount);
 
             // TODO: Need to reorder joints topologically in scene loader
             for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
             {
+                CherryPrint("Bone: " << localBoneIdx);
+
+                PrintMatrix("Model Matrix", obj.M);
+
                 const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
 
                 const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[localBoneIdx];
 
-                const uint32_t globalKeyFrameIdx0 = globalIdx0 + localBoneIdx;
-                const uint32_t globalKeyFrameIdx1 = globalIdx1 + localBoneIdx;
+                // Keyframe Interpolation (LBS)
+                XMMATRIX TRS;
+                {
+                    const uint32_t globalKeyFrameIdx0 = globalIdx0 + localBoneIdx;
+                    const uint32_t globalKeyFrameIdx1 = globalIdx1 + localBoneIdx;
 
-                const KeyFrame& keyFrame0 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx0];
-                const KeyFrame& keyFrame1 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx1];
+                    const KeyFrame& keyFrame0 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx0];
+                    const KeyFrame& keyFrame1 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx1];
 
-                const float tx = std::lerp(keyFrame0.Translation[0], keyFrame1.Translation[0], timeT);
-                const float ty = std::lerp(keyFrame0.Translation[1], keyFrame1.Translation[1], timeT);
-                const float tz = std::lerp(keyFrame0.Translation[2], keyFrame1.Translation[2], timeT);
-                const XMMATRIX T = XMMatrixTranslation(tx, ty, tz);
+                    const float tx = std::lerp(keyFrame0.Translation[0], keyFrame1.Translation[0], timeT);
+                    const float ty = std::lerp(keyFrame0.Translation[1], keyFrame1.Translation[1], timeT);
+                    const float tz = std::lerp(keyFrame0.Translation[2], keyFrame1.Translation[2], timeT);
+                    const XMMATRIX T = XMMatrixTranslation(tx, ty, tz);
 
-                const XMVECTOR q0 = XMVectorSet(keyFrame0.Rotation[0], keyFrame0.Rotation[1], keyFrame0.Rotation[2], keyFrame0.Rotation[3]);
-                const XMVECTOR q1 = XMVectorSet(keyFrame1.Rotation[0], keyFrame1.Rotation[1], keyFrame1.Rotation[2], keyFrame1.Rotation[3]);
-                const XMVECTOR r = XMQuaternionSlerp(q0, q1, static_cast<float>(timeT));
-                const XMMATRIX R = XMMatrixRotationQuaternion(r);
+                    const XMVECTOR q0 = XMVectorSet(keyFrame0.Rotation[0], keyFrame0.Rotation[1], keyFrame0.Rotation[2], keyFrame0.Rotation[3]);
+                    const XMVECTOR q1 = XMVectorSet(keyFrame1.Rotation[0], keyFrame1.Rotation[1], keyFrame1.Rotation[2], keyFrame1.Rotation[3]);
+                    const XMVECTOR r = XMQuaternionSlerp(q0, q1, static_cast<float>(timeT));
+                    const XMMATRIX R = XMMatrixRotationQuaternion(r);
 
-                const float sx = std::lerp(keyFrame0.Scale[0], keyFrame1.Scale[0], timeT);
-                const float sy = std::lerp(keyFrame0.Scale[1], keyFrame1.Scale[1], timeT);
-                const float sz = std::lerp(keyFrame0.Scale[2], keyFrame1.Scale[2], timeT);
-                const XMMATRIX S = XMMatrixScaling(sx, sy, sz);
+                    const float sx = std::lerp(keyFrame0.Scale[0], keyFrame1.Scale[0], timeT);
+                    const float sy = std::lerp(keyFrame0.Scale[1], keyFrame1.Scale[1], timeT);
+                    const float sz = std::lerp(keyFrame0.Scale[2], keyFrame1.Scale[2], timeT);
+                    const XMMATRIX S = XMMatrixScaling(sx, sy, sz);
 
-                const XMMATRIX TRS = T * R * S; // TODO: Order?
+                    PrintMatrix("Translation", T);
+                    PrintMatrix("Rotation", R);
+                    PrintMatrix("Scale", S);
 
-                XMMATRIX finalMatrix = TRS;
+                    TRS = S * R * T;
+                }
+
+                PrintMatrix("TRS", TRS);
+
+                XMMATRIX transform = TRS;
 
                 if (boneInfo.BoneParentIdxLocal != UINT_MAX)
                 {
                     const uint32_t globalParentBoneIdx = boneInfo.BoneParentIdxLocal + obj.MegaBufferBoneOffset;
+                    transform = transform * topologicalTransforms[globalParentBoneIdx];
 
-                    const XMMATRIX parentTransform = XMLoadFloat4x4(&m_cpuMegaBufferBoneTransforms[globalParentBoneIdx].Transform);
-                    finalMatrix = finalMatrix * parentTransform;
+                    PrintMatrix("Parent", topologicalTransforms[globalParentBoneIdx]);
+                    PrintMatrix("TRS * Parent", transform);
                 }
 
-                const XMMATRIX inverseBind = XMLoadFloat4x4(&boneInfo.InverseBindTransform);
-                finalMatrix = inverseBind * finalMatrix;
+                topologicalTransforms[globalBoneIdx] = transform;
+            }
 
-                XMStoreFloat4x4(&m_cpuMegaBufferBoneTransforms[globalBoneIdx].Transform, finalMatrix);
+            for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
+            {
+                const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
+                const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[localBoneIdx];
+
+                const XMMATRIX inverseBind = XMLoadFloat4x4(&boneInfo.InverseBindTransform);
+                const XMMATRIX transform = topologicalTransforms[globalBoneIdx] * inverseBind;
+
+                PrintMatrix("Inverse Bind", inverseBind);
+                PrintMatrix("Inverse Bind * TRS * Parent", transform);
+
+                XMStoreFloat4x4(&m_cpuMegaBufferBoneTransforms[globalBoneIdx].Transform, transform);
             }
         }
 
@@ -163,5 +193,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
             DispatchOverRegion(cmdList, 64, obj.VertexCount);
         }
+
+        scene->GPU.MegaBufferVertexSkinned.UavBarrier(cmdList);
     }
 }

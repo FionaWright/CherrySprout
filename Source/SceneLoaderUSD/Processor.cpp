@@ -89,6 +89,12 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
             skeletonBoneBufferOffsets[i] = boneOffset;
         }
     }
+    else
+    {
+        scene->MegaBufferVertexBoneWeights = new VertexBoneWeights[1];
+        scene->MegaBufferBoneInfos = new BoneInfo[1];
+        scene->MegaBufferBonesCount = 1;
+    }
 
     scene->ObjectCount = importerContext.Objects.size();
     scene->Objects = new Object[scene->ObjectCount];

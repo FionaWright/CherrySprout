@@ -350,4 +350,10 @@ inline void PrintMatrix(const XMMATRIX& matrix)
     CherryPrint(m._11 << ' ' << m._12 << ' ' << m._13 << ' ' << m._14 << '\n' << m._21 << ' ' << m._22 << ' ' << m._23 << ' ' << m._24 << '\n' << m._31 << ' ' << m._32 << ' ' << m._33 << ' ' << m._34 << '\n' << m._41 << ' ' << m._42 << ' ' << m._43 << ' ' << m._44 << '\n');
 }
 
+inline void PrintMatrix(const char* name, const XMMATRIX& matrix)
+{
+    CherryPrint(name << ":\n");
+    PrintMatrix(matrix);
+}
+
 #endif
