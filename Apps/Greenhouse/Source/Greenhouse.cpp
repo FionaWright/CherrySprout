@@ -177,7 +177,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneManager.UploadScene(d3d);
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
 
-        if (m_sceneManager.GetScene().CPU.IsAnimationEnabled)
+        if (m_sceneManager.GetScene().CPU.IsAnimationInScene)
         {
             m_animationManager.LoadSceneData(d3d, &m_sceneManager.GetScene());
         }
@@ -188,7 +188,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_renderBackendSceneDataDirty = true;
     }
 
-    if (m_sceneManager.GetScene().CPU.IsAnimationEnabled)
+    if (m_sceneManager.GetScene().CPU.IsAnimationInScene)
     {
         m_animationManager.Update(deltaTime_s);
     }
@@ -289,7 +289,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
 void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
-    if (m_sceneManager.GetScene().CPU.IsAnimationEnabled)
+    if (m_sceneManager.GetScene().CPU.IsAnimationInScene)
     {
         m_animationManager.Skin(cmdList, &m_sceneManager.GetScene(), &m_heap);
     }

@@ -163,7 +163,7 @@ void SceneManager::UploadScene(D3D* d3d, const bool tryOverloadDDS)
             m_scene.GPU.MegaBufferPunctualLights.    UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferPunctualLights, megaBufferPunctualBytes);
             m_scene.GPU.MegaBufferInstanceData.      UploadBuffer(cmdList, &uploadHeap, m_megaBufferInstanceData.data(), megaBufferInstanceDataBytes);
 
-            if (m_scene.CPU.IsAnimationEnabled)
+            if (m_scene.CPU.IsAnimationInScene)
             {
                 m_scene.GPU.MegaBufferVertexBoneWeights. UploadBuffer(cmdList, &uploadHeap, m_scene.CPU.MegaBufferVertexBoneWeights, megaBufferVertexBoneWeightsBytes);
             }

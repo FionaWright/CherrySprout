@@ -29,7 +29,7 @@ void AnimationManager::Init(const D3D* d3d, Heap* heap)
 void AnimationManager::LoadSceneData(const D3D* d3d, Scene* scene)
 {
     CherryPrint("AnimationManager: LoadSceneData");
-    
+
     m_cpuMegaBufferBoneTransforms.resize(scene->CPU.MegaBufferBonesCount);
 
     m_gpuMegaBufferBoneTransforms.Reset();
@@ -141,7 +141,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                     //PrintMatrix("Rotation", R);
                     //PrintMatrix("Scale", S);
 
-                    TRS = S * R * T;
+                    TRS = S * R * T; // Correct
                 }
 
                 //PrintMatrix("TRS", TRS);
@@ -150,7 +150,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
                 if (boneInfo.BoneParentIdxLocal != UINT_MAX)
                 {
-                    transform = transform * topologicalTransforms[boneInfo.BoneParentIdxLocal];
+                    transform = transform * topologicalTransforms[boneInfo.BoneParentIdxLocal]; // Correct
 
                     //PrintMatrix("Parent", topologicalTransforms[boneInfo.BoneParentIdxLocal]);
                     //PrintMatrix("TRS * Parent", transform);
@@ -167,7 +167,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                 const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
 
                 const XMMATRIX inverseBind = XMLoadFloat4x4(&boneInfo.InverseBindTransform);
-                const XMMATRIX transform = inverseBind * topologicalTransforms[localBoneIdx];
+                const XMMATRIX transform = inverseBind * topologicalTransforms[localBoneIdx]; // Correct
 
                 //PrintMatrix("Inverse Bind", inverseBind);
                 //PrintMatrix("Final Bone Transform", transform);

@@ -70,7 +70,7 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
     std::vector<uint32_t> skeletonBoneBufferOffsets;
     if (animationInScene)
     {
-        scene->IsAnimationEnabled = true;
+        scene->IsAnimationInScene = true;
 
         scene->MegaBufferVertexBoneWeights = new VertexBoneWeights[totalVertexCount];
         scene->MegaBufferBoneInfos = new BoneInfo[totalBoneCount];

@@ -221,6 +221,13 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
+    if (scene->CPU.IsAnimationInScene)
+    {
+        ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+        V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
+        m_rtasBuilder.Update(cmdList4.Get(), scene);
+    }
+
     size_t frameIdx = renderInfo.FrameIndex;
     XMFLOAT3 camPos = renderInfo.Camera->GetPosition();
     XMMATRIX invV = renderInfo.InvV;

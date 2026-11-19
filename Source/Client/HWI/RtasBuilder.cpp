@@ -44,10 +44,9 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
-        buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i]);
+        buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i], scene->CPU.IsAnimationInScene);
     }
 
-    std::vector<D3D12_RAYTRACING_INSTANCE_DESC> blasInstances;
     for (int i = 0; i < m_blasList.size(); i++)
     {
         const Object& obj = scene->CPU.Objects[i];
@@ -65,19 +64,21 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         blasInstance.InstanceMask = 0xFF;
         blasInstance.AccelerationStructure = blasResult.GetResource()->GetGPUVirtualAddress();
         blasInstance.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        blasInstances.emplace_back(blasInstance);
+        m_blasInstances.emplace_back(blasInstance);
     }
 
-    buildTlas(device, cmdList, blasInstances);
+    buildTlas(device, cmdList, m_blasInstances);
 
     CherryPrint("RTAS Built.");
 }
 
-void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object* object)
+void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object* object, bool isAnimationInScene)
 {
-    D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
-    geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+    BlasEntry entry = {};
+    entry.GeomDesc = {};
+    
+    entry.GeomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+    entry.GeomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
     const size_t vertexByteOffset = object->MegaBufferVertexOffset * sizeof(Vertex);
     const size_t indexByteOffset = object->MegaBufferIndexOffset * sizeof(uint32_t);
@@ -87,27 +88,28 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
     CherryAssert(vertexByteOffset < vertexBuffer->GetDesc().Width);
     CherryAssert(indexByteOffset < indexBuffer->GetDesc().Width);
 
-    geomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress() + vertexByteOffset;
-    geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
-    geomDesc.Triangles.VertexCount = object->VertexCount;
-    geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+    entry.GeomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress() + vertexByteOffset;
+    entry.GeomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
+    entry.GeomDesc.Triangles.VertexCount = object->VertexCount;
+    entry.GeomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
-    geomDesc.Triangles.IndexBuffer = indexBuffer->GetGPUVirtualAddress() + indexByteOffset;
-    geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
-    geomDesc.Triangles.IndexCount = object->IndexCount;
+    entry.GeomDesc.Triangles.IndexBuffer = indexBuffer->GetGPUVirtualAddress() + indexByteOffset;
+    entry.GeomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
+    entry.GeomDesc.Triangles.IndexCount = object->IndexCount;
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-    inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+    if (isAnimationInScene)
+        inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE | D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
+    else
+        inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
     inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
     inputs.NumDescs = 1;
-    inputs.pGeometryDescs = &geomDesc;
+    inputs.pGeometryDescs = &entry.GeomDesc;
 
     // Compute GPU memory size needed
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
     device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
-
-    BlasEntry entry;
 
     CherryAssert(prebuildInfo.ScratchDataSizeInBytes > 0);
     CherryAssert(prebuildInfo.ResultDataMaxSizeInBytes > 0);
@@ -139,6 +141,8 @@ void RtasBuilder::buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
     m_tlasInstanceBuffer.UploadBuffer(cmdList, &m_uploadHeap, blasInstances.data(), bufferSize);
     m_tlasInstanceBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
+    // Note: Rigid body animation not supported, so TLAS never needs to be rebuilt
+
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
@@ -167,4 +171,40 @@ void RtasBuilder::buildTlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     barrier.UAV.pResource = nullptr;
     cmdList->ResourceBarrier(1, &barrier);
+}
+
+void RtasBuilder::updateBlas(ID3D12GraphicsCommandList4* cmdList, const BlasEntry& entry)
+{
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+    inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+    inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE | D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+    inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+    inputs.NumDescs = 1;
+    inputs.pGeometryDescs = &entry.GeomDesc;
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
+    buildDesc.Inputs = inputs;
+
+    buildDesc.SourceAccelerationStructureData = entry.Result.GetResource()->GetGPUVirtualAddress();
+    buildDesc.DestAccelerationStructureData = entry.Result.GetResource()->GetGPUVirtualAddress();
+
+    buildDesc.ScratchAccelerationStructureData = entry.Scratch.GetResource()->GetGPUVirtualAddress();
+
+    cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.UAV.pResource = nullptr;
+    cmdList->ResourceBarrier(1, &barrier);
+}
+
+void RtasBuilder::Update(ID3D12GraphicsCommandList4* cmdList, Scene* scene)
+{
+    scene->GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+    for (int i = 0; i < m_blasList.size(); i++)
+    {
+        updateBlas(cmdList, m_blasList[i]);
+    }
 }

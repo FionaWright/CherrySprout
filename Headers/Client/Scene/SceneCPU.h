@@ -56,7 +56,7 @@ struct SceneCPU
 
     // ============= Animation =============
 
-    bool IsAnimationEnabled = false;
+    bool IsAnimationInScene = false;
 
     AnimationClip* MegaBufferAnimationClips = nullptr;
     size_t MegaBufferAnimationClipsCount = 0;
