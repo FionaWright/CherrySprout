@@ -29,6 +29,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float4x4 skinningTransform = (float4x4)0;
 
+    bool foundBones = false;
+
     [unroll]
     for (int i = 0; i < MAX_BONE_WEIGHTS_PER_VERTEX; i++)
     {
@@ -40,14 +42,30 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
         uint globalBoneIdx = localBoneIdx + gCBV.MegaBufferBonesOffset;
 
+        uint boneCount, _2;
+        gMegaBufferBoneTransforms.GetDimensions(boneCount, _2);
+        if (globalBoneIdx >= boneCount)
+            continue;
+
         float4x4 boneTransform = gMegaBufferBoneTransforms[globalBoneIdx].Transform;
         skinningTransform += boneTransform * weight;
+
+        foundBones = true;
     }
+
+    if (!foundBones)
+        skinningTransform = float4x4(1, 0, 0, 0,
+                                     0, 1, 0, 0,
+                                     0, 0, 1, 0,
+                                     0, 0, 0, 1);
 
     Vertex vertexSkinned = vertexBind;
 
-    vertexSkinned.Position = mul(skinningTransform, float4(vertexBind.Position, 1.0f)).xyz;
-    vertexSkinned.Normal = normalize(mul((float3x3)skinningTransform, vertexBind.Normal));
+    //vertexSkinned.Position = mul(skinningTransform, float4(vertexBind.Position, 1.0f)).xyz;
+    //vertexSkinned.Normal = normalize(mul((float3x3)skinningTransform, vertexBind.Normal));
+
+    vertexSkinned.Position = mul(float4(vertexBind.Position, 1.0f), skinningTransform).xyz;
+    vertexSkinned.Normal = normalize(mul(vertexBind.Normal, (float3x3)skinningTransform));
 
     gMegaBufferVertexSkinned[globalVertexIdx] = vertexSkinned;
 }

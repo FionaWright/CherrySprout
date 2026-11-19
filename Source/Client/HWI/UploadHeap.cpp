@@ -31,6 +31,18 @@ UploadHeap::~UploadHeap()
     }
 }
 
+void UploadHeap::Reset()
+{
+    if (m_resource.GetResource())
+    {
+        m_resource.GetResource()->Unmap(0, nullptr);
+        m_resource.Reset();
+        m_mappedPointer = nullptr;
+    }
+
+    m_currUploadOffset = 0;
+}
+
 // CBVs must be 256-aligned
 // ? must be 16-aligned
 size_t UploadHeap::GetAssignedUploadOffset(const size_t size, const size_t alignmentRequirement)

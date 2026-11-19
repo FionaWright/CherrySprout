@@ -15,6 +15,7 @@ class UploadHeap
 public:
     void Init(ID3D12Device* device, size_t maxUploadSize);
     ~UploadHeap();
+    void Reset();
 
     size_t GetAssignedUploadOffset(size_t size, size_t alignmentRequirement);
     ID3D12Resource* GetUploadResource() const { return m_resource.GetResource(); }

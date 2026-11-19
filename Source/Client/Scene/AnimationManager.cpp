@@ -41,12 +41,13 @@ void AnimationManager::LoadSceneData(const D3D* d3d, Scene* scene)
 
     m_setSkinning.SetUAV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferVertexSkinned, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
 
+    m_boneUploadHeap.Reset();
     m_boneUploadHeap.Init(d3d->GetDevice(), scene->CPU.MegaBufferBonesCount * sizeof(BoneTransform));
 }
 
 void AnimationManager::Update(const double deltaTime_s)
 {
-#define ANIMATION_SPEED 0.25f
+#define ANIMATION_SPEED 1.0f
     m_time_s += deltaTime_s * ANIMATION_SPEED;
 }
 
@@ -78,11 +79,20 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
             const double clipPercent = timeWrapped / clip.Duration;
             const double framePosition = clipPercent * clip.MegaBufferKeyFrameCount;
 
-            const uint32_t localIdx0 = static_cast<uint32_t>(std::floor(framePosition));
-            const uint32_t globalIdx0 = localIdx0 + clip.MegaBufferKeyFrameOffset;
-            const uint32_t globalIdx1 = (localIdx0 == clip.MegaBufferKeyFrameCount - 1) ? clip.MegaBufferKeyFrameOffset : globalIdx0 + clip.BoneCount;
+            const uint32_t localKeyFrameIdx0 = static_cast<uint32_t>(std::floor(framePosition));
 
-            const float timeT = static_cast<float>(framePosition - localIdx0);
+            const uint32_t globalKeyFrameBaseIdx0 = (localKeyFrameIdx0 * clip.BoneCount) + clip.MegaBufferKeyFrameOffset;
+
+            const uint32_t globalKeyFrameBaseIdx1 =
+                (localKeyFrameIdx0 == clip.MegaBufferKeyFrameCount - 1) ? clip.MegaBufferKeyFrameOffset
+                : globalKeyFrameBaseIdx0 + clip.BoneCount;
+
+            const float timeT = framePosition - static_cast<float>(localKeyFrameIdx0);
+
+            CherryPrint("Time: " << timeWrapped << ", percent: " << clipPercent << ", timeT: " << timeT);
+            CherryPrint("Local KeyFrame Idx (0): " << localKeyFrameIdx0);
+            CherryPrint("Global KeyFrame Base (0)" << globalKeyFrameBaseIdx0);
+            CherryPrint("Global KeyFrame Base (1)" << globalKeyFrameBaseIdx1);
 
             std::vector<XMMATRIX> topologicalTransforms;
             topologicalTransforms.resize(clip.BoneCount);
@@ -92,20 +102,23 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
             {
                 CherryPrint("Bone: " << localBoneIdx);
 
-                PrintMatrix("Model Matrix", obj.M);
+                //PrintMatrix("Model Matrix", obj.M);
 
                 const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
 
-                const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[localBoneIdx];
+                const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
 
                 // Keyframe Interpolation (LBS)
                 XMMATRIX TRS;
                 {
-                    const uint32_t globalKeyFrameIdx0 = globalIdx0 + localBoneIdx;
-                    const uint32_t globalKeyFrameIdx1 = globalIdx1 + localBoneIdx;
+                    const uint32_t globalKeyFrameIdx0 = globalKeyFrameBaseIdx0 + localBoneIdx;
+                    const uint32_t globalKeyFrameIdx1 = globalKeyFrameBaseIdx1 + localBoneIdx;
 
                     const KeyFrame& keyFrame0 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx0];
                     const KeyFrame& keyFrame1 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx1];
+
+                    CherryPrint("KeyFrame 0 Rotation: " << keyFrame0.Rotation[0] << ", " << keyFrame0.Rotation[1] << ", " << keyFrame0.Rotation[2] << ", " << keyFrame0.Rotation[3]);
+                    CherryPrint("KeyFrame 1 Rotation: " << keyFrame1.Rotation[0] << ", " << keyFrame1.Rotation[1] << ", " << keyFrame1.Rotation[2] << ", " << keyFrame1.Rotation[3]);
 
                     const float tx = std::lerp(keyFrame0.Translation[0], keyFrame1.Translation[0], timeT);
                     const float ty = std::lerp(keyFrame0.Translation[1], keyFrame1.Translation[1], timeT);
@@ -122,9 +135,9 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                     const float sz = std::lerp(keyFrame0.Scale[2], keyFrame1.Scale[2], timeT);
                     const XMMATRIX S = XMMatrixScaling(sx, sy, sz);
 
-                    PrintMatrix("Translation", T);
+                    //PrintMatrix("Translation", T);
                     PrintMatrix("Rotation", R);
-                    PrintMatrix("Scale", S);
+                    //PrintMatrix("Scale", S);
 
                     TRS = S * R * T;
                 }
@@ -135,26 +148,27 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
                 if (boneInfo.BoneParentIdxLocal != UINT_MAX)
                 {
-                    const uint32_t globalParentBoneIdx = boneInfo.BoneParentIdxLocal + obj.MegaBufferBoneOffset;
-                    transform = transform * topologicalTransforms[globalParentBoneIdx];
+                    transform = transform * topologicalTransforms[boneInfo.BoneParentIdxLocal];
 
-                    PrintMatrix("Parent", topologicalTransforms[globalParentBoneIdx]);
-                    PrintMatrix("TRS * Parent", transform);
+                    PrintMatrix("Parent", topologicalTransforms[boneInfo.BoneParentIdxLocal]);
+                    //PrintMatrix("TRS * Parent", transform);
                 }
 
-                topologicalTransforms[globalBoneIdx] = transform;
+                topologicalTransforms[localBoneIdx] = transform;
             }
 
             for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
             {
+                CherryPrint("Bone: " << localBoneIdx);
+
                 const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
-                const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[localBoneIdx];
+                const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
 
                 const XMMATRIX inverseBind = XMLoadFloat4x4(&boneInfo.InverseBindTransform);
-                const XMMATRIX transform = topologicalTransforms[globalBoneIdx] * inverseBind;
+                const XMMATRIX transform = inverseBind * topologicalTransforms[localBoneIdx];
 
                 PrintMatrix("Inverse Bind", inverseBind);
-                PrintMatrix("Inverse Bind * TRS * Parent", transform);
+                PrintMatrix("Final Bone Transform", transform);
 
                 XMStoreFloat4x4(&m_cpuMegaBufferBoneTransforms[globalBoneIdx].Transform, transform);
             }

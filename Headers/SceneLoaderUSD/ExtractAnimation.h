@@ -124,10 +124,7 @@ namespace SceneLoaderUSD
 
         const float duration = static_cast<float>(durationInTimeCodes / timeCodesPerSecond);
 
-        const uint32_t keyFrameCount = std::max(
-            1u,
-            static_cast<uint32_t>(
-                std::ceil(duration * sampleRate)) + 1u);
+        const uint32_t keyFrameCount = std::max(1u, static_cast<uint32_t>(std::ceil(duration * sampleRate)));
 
         if (keyFrameCount > std::numeric_limits<uint32_t>::max() / boneCount)
         {
@@ -158,9 +155,7 @@ namespace SceneLoaderUSD
 
         for (uint32_t frame = 0; frame < keyFrameCount; ++frame)
         {
-            const double frameOffset = static_cast<double>(frame) / sampleRate;
-
-            const double sampleTime = std::min(startTime + frameOffset * timeCodesPerSecond, endTime);
+            const double sampleTime = startTime + static_cast<double>(frame) / sampleRate * timeCodesPerSecond;
 
             const pxr::UsdTimeCode usdTime(sampleTime);
 
@@ -221,7 +216,7 @@ namespace SceneLoaderUSD
                     key.Rotation[0] = imaginary[0];
                     key.Rotation[1] = imaginary[1];
                     key.Rotation[2] = imaginary[2];
-                    key.Rotation[3] = r.GetReal(); // TODO: Was there something here about USD having quaternions in a different order?
+                    key.Rotation[3] = r.GetReal();
                 }
 
                 if (j < scales.size())
