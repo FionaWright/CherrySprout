@@ -60,6 +60,8 @@ private:
     RestirManager m_restirManager;
     GradientManager m_gradientManager;
 
+    uint32_t m_rtasAnimationRebuildTimer = 0;
+
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_set;

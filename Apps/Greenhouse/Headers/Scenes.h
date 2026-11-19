@@ -229,7 +229,7 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .Filepath = "Scenes/USD/Animation/Elephant/Elephant.usda",
         .CameraPosition = {0.0, 1.0, -2.75},
         .CameraPitchYaw = {0.0f, 0.0f},
-        .SceneScale = 1.0f
+        .SceneScale = 10.0f
     },
 };
 

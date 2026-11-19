@@ -214,6 +214,17 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
         m_restirManager.PostUpdate(d3d);
     }
 #endif
+
+    if (renderInfo.IsAnimationEnabled)
+    {
+        m_rtasAnimationRebuildTimer++;
+        if (m_rtasAnimationRebuildTimer >= 30)
+        {
+            m_rtasBuilder.FlushAndBuild(d3d, renderInfo.Scene, true);
+            m_set.SetSRV_RTAS  (d3d->GetDevice(), SPACE_T_DEFAULT, 0, m_rtasBuilder.GetRtasResource());
+            m_rtasAnimationRebuildTimer = 0;
+        }
+    }
 }
 
 void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle)
@@ -348,7 +359,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         m_primal.Transition                             (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         m_accum.Transition                              (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        scene->GPU.MegaBufferVertexSkinned.Transition   (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        D12Resource* vertexBuffer = renderInfo.IsAnimationEnabled ? &scene->GPU.MegaBufferVertexSkinned : &scene->GPU.MegaBufferVertexBind;
+
+        vertexBuffer->Transition   (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferIndex.Transition           (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferInstanceData.Transition    (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene->GPU.MegaBufferMaterials.Transition       (cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);

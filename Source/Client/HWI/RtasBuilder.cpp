@@ -47,6 +47,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i], isAnimationEnabled);
     }
 
+    std::vector<D3D12_RAYTRACING_INSTANCE_DESC> blasInstances;
     for (int i = 0; i < m_blasList.size(); i++)
     {
         const Object& obj = scene->CPU.Objects[i];
@@ -64,10 +65,10 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
         blasInstance.InstanceMask = 0xFF;
         blasInstance.AccelerationStructure = blasResult.GetResource()->GetGPUVirtualAddress();
         blasInstance.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        m_blasInstances.emplace_back(blasInstance);
+        blasInstances.emplace_back(blasInstance);
     }
 
-    buildTlas(device, cmdList, m_blasInstances);
+    buildTlas(device, cmdList, blasInstances);
 
     CherryPrint("RTAS Built.");
 }
@@ -207,4 +208,9 @@ void RtasBuilder::Update(ID3D12GraphicsCommandList4* cmdList, Scene* scene)
     {
         updateBlas(cmdList, m_blasList[i]);
     }
+
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.UAV.pResource = nullptr;
+    cmdList->ResourceBarrier(1, &barrier);
 }

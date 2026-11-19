@@ -44,7 +44,6 @@ private:
     D12Resource m_tlasInstanceBuffer;
 
     std::vector<BlasEntry> m_blasList;
-    std::vector<D3D12_RAYTRACING_INSTANCE_DESC> m_blasInstances;
 };
 
 
