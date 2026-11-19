@@ -109,7 +109,7 @@ ImporterContext SceneLoaderUSD::Import(const char* usdPath, float sceneScale)
             skelePathToIdx[prim.GetPath().GetString()] = context.Skeletons.size();
 
             const ImporterSkeleton impSkeleton = ExtractSkeleton(prim, context.KeyFrames, context.AnimationClips);
-            context.Skeletons.emplace_back(std::move(impSkeleton));
+            context.Skeletons.emplace_back(impSkeleton);
 
             std::cout << "Imported Skeleton" << prim.GetPath().GetString() << std::endl;
             continue;

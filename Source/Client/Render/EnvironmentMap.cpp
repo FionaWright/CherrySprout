@@ -78,7 +78,7 @@ void EnvironmentMap::Init(D3D* d3d, Heap* heap, const std::wstring& filePath, co
         cmdList->SetPipelineState(m_pipelinePanoToEA.GetPSO());
         m_setPanoToEA.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
+        DispatchOverRegion(cmdList, 16, m_ea.GetDesc().Width, m_ea.GetDesc().Height);
 
         m_ea.Transition(cmdList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
@@ -243,7 +243,7 @@ void EnvironmentMap::ComputeMipMapsCubemap(ID3D12Device* device, ID3D12GraphicsC
 
         set.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 8, dstWidth, dstHeight, 1);
+        DispatchOverRegion(cmdList, 8, dstWidth, dstHeight, 1);
 
         m_cubemap.UavBarrier(cmdList);
     }

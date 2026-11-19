@@ -85,7 +85,7 @@ void RestirManager::PrePasses(D3D* d3d, ID3D12GraphicsCommandList* cmdList, cons
     auto dispatchRestirPass = [&](const Pipeline* pipeline, const D12Resource* resource = nullptr)
     {
         cmdList->SetPipelineState(pipeline->GetPSO());
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         if (resource)
             resource->UavBarrier(cmdList);

@@ -292,4 +292,12 @@ struct CbvPostProcessing
     hlsl::float2 p;
 };
 
+struct CbvSkinning
+{
+    hlsl::uint MegaBufferVertexOffset;
+    hlsl::uint MegaBufferVertexCount;
+    hlsl::uint MegaBufferBonesOffset;
+    float p;
+};
+
 #endif

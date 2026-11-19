@@ -150,7 +150,7 @@ void LightImportanceSampler::buildPunctualDistributions(D3D* d3d, const Heap* he
             cmdList->SetPipelineState(m_pipelinePunctualPdf.GetPSO());
             m_setPunctualPdf.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 64, m_numPunctuals);
+            DispatchOverRegion(cmdList, 64, m_numPunctuals);
 
             m_punctualPdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
             m_punctualPdfReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -239,7 +239,7 @@ void LightImportanceSampler::buildEmissiveDistributions(D3D* d3d, const Heap* he
         cmdList->SetPipelineState(m_pipelineEmissivePdf.GetPSO());
         m_setEmissivePdf.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 32, m_numEmissiveInstances);
+        DispatchOverRegion(cmdList, 32, m_numEmissiveInstances);
 
         m_emissivePdfReadback.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
         m_emissivePdfRW.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -325,7 +325,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, const Heap* heap
             m_setEnvMapPdf.TransitionAllSRVToShaderResource(cmdList);
             m_setEnvMapPdf.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 16, envMap->GetDesc().Width, envMap->GetDesc().Height);
+            DispatchOverRegion(cmdList, 16, envMap->GetDesc().Width, envMap->GetDesc().Height);
         }
 
         // CDF Conditional Pass
@@ -340,7 +340,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, const Heap* heap
             m_setEnvMapCdfConditional.TransitionAllSRVToShaderResource(cmdList);
             m_setEnvMapCdfConditional.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 64, m_envMapPdf.GetDesc().Width);
+            DispatchOverRegion(cmdList, 64, m_envMapPdf.GetDesc().Width);
 
             m_envMapCdfConditional.UavBarrier(cmdList);
         }
@@ -373,7 +373,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, const Heap* heap
             cmdList->SetPipelineState(m_pipelineEnvMapCdfConditionalNormalize.GetPSO());
             m_setEnvMapCdfConditionalNormalize.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 64, m_envMapCdfConditional.GetDesc().Width);
+            DispatchOverRegion(cmdList, 64, m_envMapCdfConditional.GetDesc().Width);
 
             m_envMapCdfConditional.UavBarrier(cmdList);
         }
@@ -389,7 +389,7 @@ void LightImportanceSampler::buildEnvMapDistributions(D3D* d3d, const Heap* heap
             cmdList->SetPipelineState(m_pipelineCdfNormalize1D.GetPSO());
             m_setCdfNormalize1D.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 64, m_envMapCdfMarginal.GetDesc().Width);
+            DispatchOverRegion(cmdList, 64, m_envMapCdfMarginal.GetDesc().Width);
 
             m_envMapCdfMarginal.UavBarrier(cmdList);
         }

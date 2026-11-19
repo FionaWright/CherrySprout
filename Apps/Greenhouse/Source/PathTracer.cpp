@@ -401,7 +401,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         heap->BindSceneTextures_Compute(cmdList, m_rootSig.GetParamIndexSrvBindless(0));
         m_set.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
     }
 
     m_finalHdrOutput = &m_primal;
@@ -431,7 +431,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
         m_setPostProcess.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
     }
 
     // Copy to RTV

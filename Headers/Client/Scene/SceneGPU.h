@@ -15,7 +15,7 @@ struct SceneGPU
     D12Resource MegaBufferInstanceData;
     D12Resource MegaBufferMaterials;
     D12Resource MegaBufferPunctualLights;
-    D12Resource MegaBufferBoneTransforms;
+    D12Resource MegaBufferVertexBoneWeights;
 
     std::vector<D12Resource> SceneTextures;
 };

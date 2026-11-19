@@ -10,7 +10,7 @@ struct AnimationClip
     float Duration;
 
     hlsl::uint MegaBufferKeyFrameOffset;
-    hlsl::uint MegaBufferKeyCount;
+    hlsl::uint MegaBufferKeyFrameCount;
     hlsl::uint BoneCount;
 };
 
@@ -21,10 +21,11 @@ struct KeyFrame
     float Scale[3];
 };
 
+#define MAX_BONE_WEIGHTS_PER_VERTEX 4
 struct VertexBoneWeights
 {
-    hlsl::uint BoneIndices[4];
-    float BoneWeights[4];
+    hlsl::uint BoneIndices[MAX_BONE_WEIGHTS_PER_VERTEX];
+    float BoneWeights[MAX_BONE_WEIGHTS_PER_VERTEX];
 };
 
 struct BoneInfo

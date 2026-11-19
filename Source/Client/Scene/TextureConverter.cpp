@@ -51,5 +51,5 @@ void TextureConverter::Convert(const D3D* d3d, Heap* heap, ID3D12GraphicsCommand
     set.TransitionAllSRVToShaderResource(cmdList);
     set.SetDescriptorTables_Compute(cmdList);
 
-    DispatchOverTexture(cmdList, 16, source->GetDesc().Width, source->GetDesc().Height);
+    DispatchOverRegion(cmdList, 16, source->GetDesc().Width, source->GetDesc().Height);
 }

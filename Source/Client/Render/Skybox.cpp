@@ -164,7 +164,7 @@ void Skybox::GenerateIrradianceMap(D3D* d3d, const Heap* heap)
         cmdList->SetPipelineState(m_pipelineGenIrr.GetPSO());
         m_setGenIrr.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 8, m_texIrradianceIBL.GetDesc().Width, m_texIrradianceIBL.GetDesc().Height, 1);
+        DispatchOverRegion(cmdList, 8, m_texIrradianceIBL.GetDesc().Width, m_texIrradianceIBL.GetDesc().Height, 1);
     }
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);

@@ -146,9 +146,9 @@ namespace SceneLoaderUSD
             AnimationClip clip{};
 
             clip.Duration = duration;
-            clip.MegaBufferKeyFrameOffset = UINT_MAX; // Note: Will be set later when all objects combined
+            clip.MegaBufferKeyFrameOffset = keyFrames.size();
 
-            clip.MegaBufferKeyCount = keyFrameCount;
+            clip.MegaBufferKeyFrameCount = keyFrameCount;
             clip.BoneCount = boneCount;
 
             animationClips.emplace_back(clip);
@@ -322,18 +322,16 @@ namespace SceneLoaderUSD
         if (jointIndices.size() != jointWeights.size())
             return;
 
-        const size_t vertexCount = jointIndices.size() / 4;
+        const size_t vertexCount = jointIndices.size() / 4; // TODO: May break when model storing >4 weights
 
         output.resize(vertexCount);
 
         for (size_t i = 0; i < vertexCount; ++i)
         {
-            VertexBoneWeights& weights = output[i];
-
             for (int j = 0; j < 4; ++j)
             {
-                weights.BoneIndices[j] = static_cast<uint32_t>(jointIndices[i * 4 + j]);
-                weights.BoneWeights[j] = jointWeights[i * 4 + j];
+                output[i].BoneIndices[j] = static_cast<uint32_t>(jointIndices[i * 4 + j]);
+                output[i].BoneWeights[j] = jointWeights[i * 4 + j];
             }
         }
     }

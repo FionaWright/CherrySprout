@@ -70,6 +70,8 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
     std::vector<uint32_t> skeletonBoneBufferOffsets;
     if (animationInScene)
     {
+        scene->IsAnimationEnabled = true;
+
         scene->MegaBufferVertexBoneWeights = new VertexBoneWeights[totalVertexCount];
         scene->MegaBufferBoneInfos = new BoneInfo[totalBoneCount];
 
@@ -128,7 +130,11 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
                 obj.MegaBufferBoneOffset = skeletonBoneBufferOffsets[impObj.SkeletonIndex];
                 obj.BoneCount = importerContext.Skeletons[impObj.SkeletonIndex].BoneInfos.size();
             }
+
+            obj.SelectedAnimationClipIdx = 0;
         }
+        else
+            obj.SelectedAnimationClipIdx = -1;
 
         obj.M = DirectX::XMMatrixSet(
             impObj.M[0], impObj.M[1], impObj.M[2], impObj.M[3],
@@ -171,7 +177,7 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
     {
         scene->MegaBufferKeyFramesCount = importerContext.KeyFrames.size();
         scene->MegaBufferKeyFrames = new KeyFrame[importerContext.KeyFrames.size()];
-        memcpy(scene->MegaBufferKeyFrames, importerContext.KeyFrames.data(), importerContext.KeyFrames.size() * sizeof(PunctualLight));
+        memcpy(scene->MegaBufferKeyFrames, importerContext.KeyFrames.data(), importerContext.KeyFrames.size() * sizeof(KeyFrame));
     }
 
     if (importerContext.AnimationClips.empty())
@@ -185,7 +191,7 @@ void SceneLoaderUSD::Process(const char* usdPath, const ImporterContext& importe
     {
         scene->MegaBufferAnimationClipsCount = importerContext.AnimationClips.size();
         scene->MegaBufferAnimationClips = new AnimationClip[importerContext.AnimationClips.size()];
-        memcpy(scene->MegaBufferAnimationClips, importerContext.AnimationClips.data(), importerContext.AnimationClips.size() * sizeof(PunctualLight));
+        memcpy(scene->MegaBufferAnimationClips, importerContext.AnimationClips.data(), importerContext.AnimationClips.size() * sizeof(AnimationClip));
     }
 
     std::cout << "Scene processed" << std::endl;

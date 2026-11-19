@@ -8,7 +8,7 @@
 #include "System/Config.h"
 #include "System/Input.h"
 
-bool CameraController::UpdateCamera(const double deltaTime_ms)
+bool CameraController::UpdateCamera(const double deltaTime_s)
 {
     const bool mouseOverGUI = Input::GetMousePos().x < Config::GetSystem().WindowAppGuiWidth || Input::GetMousePos().x > Config::GetSystem().WindowAppGuiWidth + Config::GetSystem().RtvWidth;
     const bool inTextField = ImGui::GetIO().WantCaptureKeyboard;
@@ -51,7 +51,7 @@ bool CameraController::UpdateCamera(const double deltaTime_ms)
     if (!mouseOverGUI)
         forwardScalar = Input::GetMouseWheelDelta() * m_speedScroll;
 
-    const float speedPerFrameWASD = m_speedWASD * deltaTime_ms;
+    const float speedPerFrameWASD = m_speedWASD * deltaTime_s;
 
     if (Input::IsKey(KeyCode::W))
     {

@@ -59,7 +59,7 @@ void RmseTool::StoreTextureToSlot(D3D* d3d, Heap* heap, D12Resource* texture, co
         m_setBlit.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, slot, slot->GetDesc().Format);
         m_setBlit.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
     }
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);

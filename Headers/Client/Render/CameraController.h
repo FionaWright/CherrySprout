@@ -11,7 +11,7 @@ class CameraController
 {
 public:
     void Init(const XMFLOAT3& pos, const float pitch, const float yaw) { m_camera.Init(pos, pitch, yaw); }
-    bool UpdateCamera(double deltaTime_ms);
+    bool UpdateCamera(double deltaTime_s);
 
     [[nodiscard]] XMMATRIX GetViewMatrix() const { return m_camera.GetViewMatrix(); }
     [[nodiscard]] Camera& GetCamera() { return m_camera; }

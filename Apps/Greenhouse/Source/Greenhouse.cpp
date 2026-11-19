@@ -81,6 +81,8 @@ void Greenhouse::Init(D3D* d3d)
 
     m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
 
+    m_animationManager.Init(d3d, &m_heap);
+
     const std::wstring envMapDir = std::wstring(BUILD_DIR_W) + L"/Assets/Textures/EnvMaps";
     const wchar_t* defaultEnvMap = L"autumn_field_puresky_4k.hdr";
     for (const auto& entry : std::filesystem::directory_iterator(envMapDir))
@@ -103,6 +105,8 @@ void Greenhouse::Init(D3D* d3d)
 
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
+    const double deltaTime_s = timeArgs.ElapsedTime_ms / 1000.0f;
+
     if (m_envMapDirty)
     {
         const wchar_t* envMap = m_environmentMapFiles.at(m_currentEnvMapIdx).c_str();
@@ -173,10 +177,20 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_sceneManager.UploadScene(d3d);
         m_sceneManager.AddSceneTexturesToHeap(d3d, &m_heap);
 
+        if (m_sceneManager.GetScene().CPU.IsAnimationEnabled)
+        {
+            m_animationManager.LoadSceneData(d3d, &m_sceneManager.GetScene());
+        }
+
         m_lightImportanceSampler.MarkSceneDataDirty();
         m_lsdDirty = true;
         m_gbufferDirty = true;
         m_renderBackendSceneDataDirty = true;
+    }
+
+    if (m_sceneManager.GetScene().CPU.IsAnimationEnabled)
+    {
+        m_animationManager.Update(deltaTime_s);
     }
 
     if (m_gbufferDirty && GBufferRequired())
@@ -221,7 +235,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_renderBackendSceneDataDirty = false;
     }
 
-    if (m_cameraController.UpdateCamera(timeArgs.ElapsedTime_ms / 1000.0f))
+    if (m_cameraController.UpdateCamera(deltaTime_s))
     {
         m_renderInfo.V = m_cameraController.GetViewMatrix();
         m_renderInfo.InvV = XMMatrixInverse(nullptr, m_renderInfo.V);
@@ -275,6 +289,11 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 
 void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
+    if (m_sceneManager.GetScene().CPU.IsAnimationEnabled)
+    {
+        m_animationManager.Skin(cmdList, &m_sceneManager.GetScene(), &m_heap);
+    }
+
     // GBuffer Pass
     {
         if (GBufferRequired())

@@ -27,6 +27,7 @@ struct Object
 
     uint32_t MegaBufferAnimationClipOffset{};
     uint32_t AnimationClipCount{};
+    int SelectedAnimationClipIdx;
 
     uint32_t MegaBufferBoneOffset{};
     uint32_t BoneCount{};
@@ -54,6 +55,8 @@ struct SceneCPU
     size_t MegaBufferPunctualLightsCount = 0;
 
     // ============= Animation =============
+
+    bool IsAnimationEnabled = false;
 
     AnimationClip* MegaBufferAnimationClips = nullptr;
     size_t MegaBufferAnimationClipsCount = 0;

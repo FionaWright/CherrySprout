@@ -83,7 +83,7 @@ D12Resource* PoissonSolver::Solve(ID3D12GraphicsCommandList* cmdList,
         m_setJacobi0to1.SetDescriptorTables_Compute(cmdList);
         m_setJacobi0to1.TransitionAllSRVToShaderResource(cmdList);
 
-        DispatchOverTexture(cmdList, 16, m_gradientTerms.GetDesc().Width, m_gradientTerms.GetDesc().Height);
+        DispatchOverRegion(cmdList, 16, m_gradientTerms.GetDesc().Width, m_gradientTerms.GetDesc().Height);
     }
 
     // Solve
@@ -113,7 +113,7 @@ D12Resource* PoissonSolver::Solve(ID3D12GraphicsCommandList* cmdList,
 
             set.SetDescriptorTables_Compute(cmdList);
 
-            DispatchOverTexture(cmdList, 16, next.GetDesc().Width, next.GetDesc().Height);
+            DispatchOverRegion(cmdList, 16, next.GetDesc().Width, next.GetDesc().Height);
 
             next.UavBarrier(cmdList);
         }

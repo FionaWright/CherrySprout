@@ -191,6 +191,46 @@ inline std::vector<SceneConfig> s_sceneConfigs = {
         .CameraPitchYaw = {0.0f, 0.0f},
         .SceneScale = 1.0f
     },
+
+    {
+        .Name = "SimpleSkin",
+        .Filepath = "Scenes/USD/Animation/SimpleSkin/SimpleSkin.usda",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
+
+    {
+        .Name = "RiggedFigure",
+        .Filepath = "Scenes/USD/Animation/RiggedFigure/RiggedFigure.usda",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
+
+    {
+        .Name = "BoxAnimated",
+        .Filepath = "Scenes/USD/Animation/BoxAnimated/BoxAnimated.usdc",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
+
+    {
+        .Name = "CesiumMan",
+        .Filepath = "Scenes/USD/Animation/CesiumMan/CesiumMan.usda",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
+
+    {
+        .Name = "Elephant",
+        .Filepath = "Scenes/USD/Animation/Elephant/Elephant.usda",
+        .CameraPosition = {0.0, 1.0, -2.75},
+        .CameraPitchYaw = {0.0f, 0.0f},
+        .SceneScale = 1.0f
+    },
 };
 
 #endif

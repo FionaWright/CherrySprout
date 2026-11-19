@@ -87,7 +87,7 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
         }
         m_setGradientsSS.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
         if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_OutputColor))
@@ -151,7 +151,7 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
 
         m_setGradientsCombine.SetDescriptorTables_Compute(cmdList);
 
-        DispatchOverTexture(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
         if (renderInfo.PathTracerConfig->DisplayGradientX)
             return &m_debugGradientX;

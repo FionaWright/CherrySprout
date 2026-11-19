@@ -9,6 +9,7 @@
 #include "Render/CameraController.h"
 #include "Render/EnvironmentMap.h"
 #include "Render/LightImportanceSampler.h"
+#include "Scene/AnimationManager.h"
 #include "Scene/SceneManager.h"
 #include "System/App.h"
 
@@ -75,6 +76,7 @@ private:
     bool m_renderBackendSceneDataDirty = false;
 
     CameraController m_cameraController;
+    AnimationManager m_animationManager;
 
 #if !NDEBUG
     GizmoManager m_gizmoManager;
