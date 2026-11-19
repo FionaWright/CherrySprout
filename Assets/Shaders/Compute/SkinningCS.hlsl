@@ -24,7 +24,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (localVertexIdx >= gCBV.MegaBufferVertexCount || globalVertexIdx >= size)
         return;
 
-    Vertex vertexBind = gMegaBufferVertexBind[globalVertexIdx];
     VertexBoneWeights boneWeights = gMegaBufferBoneWeights[globalVertexIdx];
 
     float4x4 skinningTransform = (float4x4)0;
@@ -59,13 +58,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
                                      0, 0, 1, 0,
                                      0, 0, 0, 1);
 
+    Vertex vertexBind = gMegaBufferVertexBind[globalVertexIdx];
     Vertex vertexSkinned = vertexBind;
 
     vertexSkinned.Position = mul(skinningTransform, float4(vertexBind.Position, 1.0f)).xyz;
     vertexSkinned.Normal = normalize(mul((float3x3)skinningTransform, vertexBind.Normal));
-
-    //vertexSkinned.Position = mul(float4(vertexBind.Position, 1.0f), skinningTransform).xyz;
-    //vertexSkinned.Normal = normalize(mul(vertexBind.Normal, (float3x3)skinningTransform));
 
     gMegaBufferVertexSkinned[globalVertexIdx] = vertexSkinned;
 }

@@ -36,6 +36,8 @@
 #include "SceneLoaderUSD.h"
 #include "ExtractAnimation.h"
 
+#define VERTEX_DEDUPLICATION_ENABLED 1
+
 namespace SceneLoaderUSD
 {
     struct VertexHasher
@@ -227,9 +229,18 @@ namespace SceneLoaderUSD
                     {
                         uvIdx = uvIndices.empty() ? pvIdx : uvIndices[pvIdx];
                     }
-                    else if (uvInterp == pxr::UsdGeomTokens->vertex)
+                    else if (uvInterp == pxr::UsdGeomTokens->vertex ||
+                             uvInterp == pxr::UsdGeomTokens->varying)
                     {
-                        uvIdx = uvIndices.empty() ? ptIdx : uvIndices[pvIdx];
+                        uvIdx = uvIndices.empty() ? ptIdx : uvIndices[ptIdx];
+                    }
+                    else if (uvInterp == pxr::UsdGeomTokens->uniform)
+                    {
+                        uvIdx = uvIndices.empty() ? faceIdx : uvIndices[faceIdx];
+                    }
+                    else if (uvInterp == pxr::UsdGeomTokens->constant)
+                    {
+                        uvIdx = uvIndices.empty() ? 0 : uvIndices[0];
                     }
 
                     if (uvIdx >= 0 && uvIdx < uvs.size())
@@ -321,8 +332,8 @@ namespace SceneLoaderUSD
 
                     vertex.Normal = {(float)N[0], (float)N[1], (float)N[2]};
 
+#if VERTEX_DEDUPLICATION_ENABLED
                     auto it = vertexLookup.find(vertex);
-
                     if (it != vertexLookup.end())
                     {
                         if (containsSubmeshes)
@@ -331,6 +342,7 @@ namespace SceneLoaderUSD
                             indices.emplace_back(it->second);
                         continue;
                     }
+#endif
 
                     const uint32_t newIndex = static_cast<uint32_t>(buffers.Vertices.size());
 
@@ -339,7 +351,7 @@ namespace SceneLoaderUSD
 
                     if (isAnimated)
                     {
-                        if (ptIdx >= buffers.BoneWeights.size())
+                        if (ptIdx >= extractedBoneWeights.size())
                         {
                             VertexBoneWeights dummyWeights;
                             for (uint32_t bw = 0; bw < MAX_BONE_WEIGHTS_PER_VERTEX; bw++)
