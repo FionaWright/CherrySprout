@@ -218,6 +218,8 @@ struct GreenhouseConfig
 {
     RenderBackendMode RenderBackend = RenderBackendMode::ePathTracer;
 
+    bool AnimationEnabled = true;
+
     RenderBackendConfig RenderBackendConfig{};
     PathTracerConfig PathTracerConfig{};
     ForwardConfig ForwardConfig{};

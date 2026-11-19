@@ -106,8 +106,8 @@ void DescriptorSet::SetSRV(ID3D12Device* device, const uint32_t spaceIdx, const 
     ID3D12Resource* resource = d12Resource ? d12Resource->GetResource() : nullptr;
 
     SRV& srv = m_srvs[spaceIdx].at(srvIdx);
-    if (resource && srv.Resource == resource)
-        return;
+    //if (resource && srv.Resource == resource)
+    //    return;
 
     srv.D12Resource = d12Resource;
     srv.Resource = resource;

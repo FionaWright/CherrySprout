@@ -23,7 +23,8 @@ interface IRenderBackend
     virtual ~IRenderBackend() = default;
 
     virtual void Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV) { m_isInitialized = true; }
-    virtual void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer) { m_currentlyLoadedScene = scene->Filepath; }
+    virtual void LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler*
+                               lightImportanceSampler, GBufferPrePass* gbuffer, const bool isAnimationEnabled) { m_currentlyLoadedScene = scene->Filepath; }
     virtual void Update(D3D* d3d, Heap* heap, TimeArgs timeArgs) = 0;
     virtual void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) = 0;
     virtual void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle) = 0;

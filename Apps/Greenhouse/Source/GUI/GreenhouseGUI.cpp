@@ -85,8 +85,8 @@ void Greenhouse::renderGuiCore()
     ImGui::SeparatorText("Info");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-        ImGui::Text("Frames : %zu", m_renderInfo.FrameIndex);
-        ImGui::Text("Samples: %zu", m_renderInfo.FrameIndex * m_config.PathTracerConfig.SPP);
+        ImGui::Text("Frames : %ull", m_renderInfo.FrameIndex);
+        ImGui::Text("Samples: %ull", m_renderInfo.FrameIndex * m_config.PathTracerConfig.SPP);
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
@@ -96,6 +96,10 @@ void Greenhouse::renderGuiCore()
 #if !NDEBUG
         ImGui::Checkbox("Gizmos Enabled", &m_gizmosEnabled);
 #endif
+        if (m_sceneManager.GetScene().CPU.IsAnimationInScene)
+        {
+            m_renderBackendSceneDataDirty |= ImGui::Checkbox("Animation Enabled", &m_config.AnimationEnabled);
+        }
         ImGui::Spacing();
 
         if (ImGui::Button("Reset Camera to Default"))

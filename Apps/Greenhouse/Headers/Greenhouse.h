@@ -19,6 +19,8 @@
 
 struct GreenHouseRenderInfo
 {
+    bool IsAnimationEnabled;
+    
     Camera* Camera;
     XMMATRIX V;
     XMMATRIX InvV;

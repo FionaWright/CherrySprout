@@ -138,14 +138,14 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     CherryPrint("Path-Tracer Initialized");
 }
 
-void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer)
+void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* uploadHeapCBV, EnvironmentMap* envMap, LightImportanceSampler* lightImportanceSampler, GBufferPrePass* gbuffer, const bool isAnimationEnabled)
 {
-    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler, gbuffer);
+    IRenderBackend::LoadSceneData(d3d, scene, heap, uploadHeapCBV, envMap, lightImportanceSampler, gbuffer, isAnimationEnabled);
 
     CherryPrint("PathTracer: LoadSceneData");
 
     {
-        m_rtasBuilder.FlushAndBuild(d3d, scene);
+        m_rtasBuilder.FlushAndBuild(d3d, scene, isAnimationEnabled);
     }
 
     m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 0, &m_accum, m_accum.GetDesc().Format);
@@ -166,8 +166,10 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
     m_set.SetUAV_ByteAddressBuffer(d3d->GetDevice(), SPACE_U_DEBUG, 3, m_debugManager.GetBufferPerPixelMutex(), Config::GetSystem().RtvHeight * Config::GetSystem().RtvWidth * sizeof(uint32_t));
 #endif
 
+    D12Resource* vertexBuffer = isAnimationEnabled ? &scene->GPU.MegaBufferVertexSkinned : &scene->GPU.MegaBufferVertexBind;
+
     m_set.SetSRV_RTAS  (d3d->GetDevice(), SPACE_T_DEFAULT, 0, m_rtasBuilder.GetRtasResource());
-    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 1, &scene->GPU.MegaBufferVertexSkinned, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
+    m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 1, vertexBuffer, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
     m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 2, &scene->GPU.MegaBufferIndex, scene->CPU.MegaBufferIndexCount, sizeof(uint32_t));
     m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 3, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
     m_set.SetSRV_Buffer(d3d->GetDevice(), SPACE_T_DEFAULT, 4, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
@@ -221,7 +223,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     Scene* scene = renderInfo.Scene;
     const Heap* heap = renderInfo.Heap;
 
-    if (scene->CPU.IsAnimationInScene)
+    if (renderInfo.IsAnimationEnabled)
     {
         ComPtr<ID3D12GraphicsCommandList4> cmdList4;
         V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));

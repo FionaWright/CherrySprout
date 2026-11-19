@@ -10,7 +10,7 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Helper.h"
 
-void RtasBuilder::FlushAndBuild(D3D* d3d, Scene* scene)
+void RtasBuilder::FlushAndBuild(D3D* d3d, Scene* scene, const bool isAnimationEnabled)
 {
     // Note: Direct queue is required as you can't transition from D3D12_RESOURCE_STATE_INDEX_BUFFER in a compute queue. Buffer may be left in that state from previous rasterization passes
     d3d->Flush();
@@ -22,14 +22,14 @@ void RtasBuilder::FlushAndBuild(D3D* d3d, Scene* scene)
         ComPtr<ID3D12GraphicsCommandList4> cmdList4;
         V(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
-        Build(device5.Get(), cmdList4.Get(), scene);
+        Build(device5.Get(), cmdList4.Get(), scene, isAnimationEnabled);
     }
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
 }
 
-void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene)
+void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Scene* scene, const bool isAnimationEnabled)
 {
     CherryPrint("Building RTAS...");
 
@@ -44,7 +44,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
-        buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i], scene->CPU.IsAnimationInScene);
+        buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i], isAnimationEnabled);
     }
 
     for (int i = 0; i < m_blasList.size(); i++)
@@ -72,7 +72,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
     CherryPrint("RTAS Built.");
 }
 
-void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object* object, bool isAnimationInScene)
+void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vertexBuffer, ID3D12Resource* indexBuffer, Object* object, bool isAnimationEnabled)
 {
     BlasEntry entry = {};
     entry.GeomDesc = {};
@@ -99,7 +99,7 @@ void RtasBuilder::buildBlas(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-    if (isAnimationInScene)
+    if (isAnimationEnabled)
         inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE | D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
     else
         inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
