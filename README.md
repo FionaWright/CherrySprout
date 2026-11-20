@@ -25,6 +25,8 @@ Using CMAKE, C++, HLSL and Python
 - Mip Map Support
 - Forward/Reverse Z Depth Buffer Options
 - Environment Map Switching
+- 6 Tone-mapping Operators for each RGB/Luminance/Jodie
+- Blend Skinning Animation (LBS and DQS)
 
 ### Path-Tracer
 
