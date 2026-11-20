@@ -25,6 +25,8 @@ struct ShadowMapConfig
     float DirDist = 8.0f;
 
     XMFLOAT3 DirLightDir;
+
+    bool IsAnimationEnabled = true;
 };
 
 struct ShadowMap

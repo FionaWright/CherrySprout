@@ -320,13 +320,15 @@ void ShadowMapManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, cons
 
     // Bind VB/IB
     {
+        D12Resource* vertexBuffer = config.IsAnimationEnabled ? &scene->GPU.MegaBufferVertexSkinned : &scene->GPU.MegaBufferVertexBind;
+
         D3D12_VERTEX_BUFFER_VIEW viewV;
         D3D12_INDEX_BUFFER_VIEW viewI;
-        VertexIndexBuffersToViews(&scene->GPU.MegaBufferVertexSkinned, &scene->GPU.MegaBufferIndex,
+        VertexIndexBuffersToViews(vertexBuffer, &scene->GPU.MegaBufferIndex,
             scene->CPU.MegaBufferVertexCount, sizeof(Vertex), scene->CPU.MegaBufferIndexCount,
                     viewV, viewI);
 
-        scene->GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        vertexBuffer->Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_INDEX_BUFFER);
         m_set.TransitionAllSRVToShaderResource(cmdList);
 

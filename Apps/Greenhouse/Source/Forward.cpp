@@ -142,6 +142,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
         config.Far = renderInfo.ForwardConfig->SmFar;
         config.DirDist = renderInfo.ForwardConfig->SmDirDist;
         config.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
+        config.IsAnimationEnabled = renderInfo.IsAnimationEnabled;
         m_shadowMapManager.Render(d3d, cmdList, heap, scene, config);
     }
 

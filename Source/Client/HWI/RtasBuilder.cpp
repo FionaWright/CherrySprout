@@ -33,7 +33,9 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
 {
     CherryPrint("Building RTAS...");
 
-    scene->GPU.MegaBufferVertexSkinned.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    D12Resource* vertexBuffer = isAnimationEnabled ? &scene->GPU.MegaBufferVertexSkinned : &scene->GPU.MegaBufferVertexBind;
+
+    vertexBuffer->Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     scene->GPU.MegaBufferIndex.Transition(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     m_blasList.clear();
@@ -44,7 +46,7 @@ void RtasBuilder::Build(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdLi
 
     for (int i = 0; i < scene->CPU.ObjectCount; i++)
     {
-        buildBlas(device, cmdList, scene->GPU.MegaBufferVertexSkinned.GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i], isAnimationEnabled);
+        buildBlas(device, cmdList, vertexBuffer->GetResource(), scene->GPU.MegaBufferIndex.GetResource(), &scene->CPU.Objects[i], isAnimationEnabled);
     }
 
     std::vector<D3D12_RAYTRACING_INSTANCE_DESC> blasInstances;
