@@ -48,6 +48,18 @@ private:
     bool m_shadowMapsEnabled = true;
     bool m_dirLightEnabled = true;
 
+    uint32_t m_smPcfCount = 16;
+    float m_smWidth = 2.0f;
+    float m_smHeight = 2.0f;
+    float m_smNear = 0.01f;
+    float m_smFar = 100.0f;
+    float m_smDirDist = 50.0f;
+    float m_smPcfRadius = 1.5f;
+    float m_smBiasDepthDistant = 0.000001f;
+    float m_smBiasDepthPoint = 0.001f;
+    float m_smBiasNormalDistant = 0.01f;
+    float m_smBiasNormalPoint = 0.001f;
+
     EnvironmentMap m_envMap;
     Skybox m_skybox;
     D12Resource m_brdfIntMap;

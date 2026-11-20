@@ -13,6 +13,7 @@
 #include "Scene/SceneCPU.h"
 #include "System/FileHelper.h"
 #include "System/Gui.h"
+#include "System/GuiUtils.h"
 #include "System/HighResolutionClock.h"
 #include "System/TextureLoader.h"
 #include "Utils/Constants.h"
@@ -59,21 +60,14 @@ void Lab4::Init(D3D* d3d)
 
     // Scene
     {
-        SceneConfig sceneConfigChess = {
-            .Name = "Chess",
-            .Filepath = "Scenes/USD/OpenChessSet/chess_set.usda",
+        SceneConfig sceneConfigRobot = {
+            .Name = "Robot",
+            .Filepath = "Scenes/USD/TCD/Robot.usdc",
             .CameraPosition = {-0.114393, 0.159540, -0.291603},
             .CameraPitchYaw = {0.251301, 0.375632},
+            .SceneScale = 0.1f
         };
-        SceneConfig sceneConfigCornell = {
-            .Name = "Cornell (Punc)",
-            .Filepath = "Scenes/USD/Cornell/CornellPunc.usdc",
-            .CameraPosition = {0.0, 1.0, -2.75},
-            .CameraPitchYaw = {0.0f, 0.0f},
-            .SceneScale = 1.0f
-        };
-        SceneConfig sceneConfig = sceneConfigChess;
-        //SceneConfig sceneConfig = sceneConfigCornell;
+        SceneConfig sceneConfig = sceneConfigRobot;
 
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str(), sceneConfig.SceneScale);
         m_sceneManager.UploadScene(d3d, true);
@@ -227,12 +221,12 @@ void Lab4::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     if (m_shadowMapsEnabled)
     {
         ShadowMapConfig config;
-        config.Width = 1.0f;
-        config.Height = 1.0f;
+        config.Width = m_smWidth;
+        config.Height = m_smHeight;
         config.CascadeCount = 1;
-        config.Near = 0.01f;
-        config.Far = 100.0f;
-        config.DirDist = 80.0f;
+        config.Near = m_smNear;
+        config.Far = m_smFar;
+        config.DirDist = m_smDirDist;
         config.DirLightDir = m_dirLightDir;
         config.IsAnimationEnabled = true;
         m_shadowMapManager.Render(d3d, cmdList, &m_heap, &m_sceneManager.GetScene(), config);
@@ -316,13 +310,13 @@ void Lab4::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
     XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
     cbvShadow.TexelSize = XMFLOAT2(1.0f / dim.x, 1.0f / dim.y);
-    cbvShadow.BiasDepthDistant = 0.000001f;
-    cbvShadow.BiasDepthPoint = 0.001f;
+    cbvShadow.BiasDepthDistant = m_smBiasDepthDistant;
+    cbvShadow.BiasDepthPoint = m_smBiasDepthPoint;
     cbvShadow.CascadeCount = 1;
-    cbvShadow.NormalBiasDistant = 0.01f;
-    cbvShadow.NormalBiasPoint = 0.001f;
-    cbvShadow.PcfSampleCount = 32;
-    cbvShadow.PcfRadius = 1.5f;
+    cbvShadow.NormalBiasDistant = m_smBiasNormalDistant;
+    cbvShadow.NormalBiasPoint = m_smBiasNormalPoint;
+    cbvShadow.PcfSampleCount = m_smPcfCount;
+    cbvShadow.PcfRadius = m_smPcfRadius;
     auto poissonDisc = m_shadowMapManager.GetPoissonSamples();
     for (uint32_t i = 0; i < POISSON_DISC_COUNT; i++)
     {
@@ -408,18 +402,44 @@ void Lab4::RenderGUI()
     ImGui::Unindent(IM_GUI_INDENTATION);
     ImGui::Spacing();
 
+    bool shadowMatricesDirty = false;
+
     ImGui::SeparatorText("Flags");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
         ImGui::Checkbox("Environment Map", &m_skyboxEnabled);
         ImGui::Checkbox("PunctualLights", &m_punctualsEnabled);
+        shadowMatricesDirty |= ImGui::Checkbox("ShadowMaps", &m_shadowMapsEnabled);
         ImGui::Checkbox("DirectionalLight", &m_dirLightEnabled);
         ImGui::Checkbox("Ambient", &m_ambientEnabled);
-
-        if (ImGui::Checkbox("ShadowMaps", &m_shadowMapsEnabled))
-            m_shadowMapManager.MarkMatricesDirty();
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
+
+    if (m_shadowMapsEnabled)
+    {
+        ImGui::SeparatorText("Shadow Map");
+        ImGui::Indent(IM_GUI_INDENTATION);
+        {
+            shadowMatricesDirty |= GuiUtils::FwInputFloat("Width##SM", &m_smWidth);
+            shadowMatricesDirty |= GuiUtils::FwInputFloat("Height##SM", &m_smHeight);
+            shadowMatricesDirty |= GuiUtils::FwInputFloat("Near Plane##SM", &m_smNear);
+            shadowMatricesDirty |= GuiUtils::FwInputFloat("Far Plane##SM", &m_smFar);
+            shadowMatricesDirty |= GuiUtils::FwInputFloat("Distance##SM", &m_smDirDist);
+
+            GuiUtils::FwInputFloat("Depth Bias Distant##SM", &m_smBiasDepthDistant, 0, 0, "%f");
+            GuiUtils::FwInputFloat("Normal Bias Distant##SM", &m_smBiasNormalDistant, 0, 0, "%f");
+
+            GuiUtils::FwInputFloat("Depth Bias Point##SM", &m_smBiasDepthPoint, 0, 0, "%f");
+            GuiUtils::FwInputFloat("Normal Bias Point##SM", &m_smBiasNormalPoint, 0, 0, "%f");
+
+            GuiUtils::FwInputUInt("PCF Count", &m_smPcfCount);
+            GuiUtils::FwInputFloat("PCF Radius##SM", &m_smPcfRadius);
+        }
+        ImGui::Unindent(IM_GUI_INDENTATION);
+    }
+
+    if (shadowMatricesDirty)
+        m_shadowMapManager.MarkMatricesDirty();
 
     Gui::EndWindow();
 }
