@@ -72,8 +72,8 @@ void Lab4::Init(D3D* d3d)
             .CameraPitchYaw = {0.0f, 0.0f},
             .SceneScale = 1.0f
         };
-        //SceneConfig sceneConfig = sceneConfigChess;
-        SceneConfig sceneConfig = sceneConfigCornell;
+        SceneConfig sceneConfig = sceneConfigChess;
+        //SceneConfig sceneConfig = sceneConfigCornell;
 
         m_sceneManager.LoadScene(sceneConfig.Filepath.c_str(), sceneConfig.SceneScale);
         m_sceneManager.UploadScene(d3d, true);
@@ -105,6 +105,7 @@ void Lab4::Init(D3D* d3d)
     // Animation
     {
         m_animationManager.Init(d3d, &m_heap);
+        m_animationManager.LoadSceneData(d3d, &m_sceneManager.GetScene());
     }
 
     // BRDF Integration Map
@@ -217,14 +218,13 @@ void Lab4::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
     GPU_SCOPE(cmdList, "Forward Backend");
 
-    const bool punctualShowcaseEnabled = true;
-
     // Animation
     {
         m_animationManager.Skin(cmdList, &m_sceneManager.GetScene(), &m_heap, m_animType);
     }
 
     // Shadow Map
+    if (m_shadowMapsEnabled)
     {
         ShadowMapConfig config;
         config.Width = 1.0f;
@@ -234,6 +234,7 @@ void Lab4::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
         config.Far = 100.0f;
         config.DirDist = 80.0f;
         config.DirLightDir = m_dirLightDir;
+        config.IsAnimationEnabled = true;
         m_shadowMapManager.Render(d3d, cmdList, &m_heap, &m_sceneManager.GetScene(), config);
     }
 
@@ -253,7 +254,7 @@ void Lab4::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 
     m_heap.Bind(cmdList);
 
-    if (!punctualShowcaseEnabled)
+    if (m_skyboxEnabled)
     {
         GPU_SCOPE(cmdList, "Skybox Pass");
         m_skybox.RenderForward(cmdList, &m_V, &m_P);
@@ -304,11 +305,11 @@ void Lab4::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
     cbvForward.DirLightDir = m_dirLightDir;
     cbvForward.MaxCubemapMipMaps = m_envMap.GetCubemap()->GetDesc().MipLevels;
     cbvForward.Flags = ForwardFlags::eNone;
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, !punctualShowcaseEnabled);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::ePunctualLights, true);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, !punctualShowcaseEnabled);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eShadowMaps, true);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, !punctualShowcaseEnabled);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, m_skyboxEnabled);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::ePunctualLights, m_punctualsEnabled);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, m_dirLightEnabled);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eShadowMaps, m_shadowMapsEnabled);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, m_ambientEnabled);
     m_set.UpdateCBV(0, 1, &cbvForward);
 
     CbvShadowMapSample cbvShadow{};
@@ -406,6 +407,19 @@ void Lab4::RenderGUI()
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
     ImGui::Spacing();
+
+    ImGui::SeparatorText("Flags");
+    ImGui::Indent(IM_GUI_INDENTATION);
+    {
+        ImGui::Checkbox("Environment Map", &m_skyboxEnabled);
+        ImGui::Checkbox("PunctualLights", &m_punctualsEnabled);
+        ImGui::Checkbox("DirectionalLight", &m_dirLightEnabled);
+        ImGui::Checkbox("Ambient", &m_ambientEnabled);
+
+        if (ImGui::Checkbox("ShadowMaps", &m_shadowMapsEnabled))
+            m_shadowMapManager.MarkMatricesDirty();
+    }
+    ImGui::Unindent(IM_GUI_INDENTATION);
 
     Gui::EndWindow();
 }

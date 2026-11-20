@@ -42,6 +42,11 @@ private:
     AnimationType m_animType = AnimationType::eLBS;
 
     bool m_cameraDirty = true;
+    bool m_skyboxEnabled = true;
+    bool m_punctualsEnabled = true;
+    bool m_ambientEnabled = true;
+    bool m_shadowMapsEnabled = true;
+    bool m_dirLightEnabled = true;
 
     EnvironmentMap m_envMap;
     Skybox m_skybox;
