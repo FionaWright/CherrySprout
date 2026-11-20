@@ -20,7 +20,7 @@ public:
     void Init(const D3D* d3d, Heap* heap);
     void LoadSceneData(const D3D* d3d, Scene* scene);
     void Update(double deltaTime_s);
-    void Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap);
+    void Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap, AnimationType animType);
 
 private:
     UploadHeap m_boneUploadHeap;
@@ -30,8 +30,10 @@ private:
     RootConstants m_rootConstantsSkinning;
     DescriptorSet m_setSkinning;
 
-    std::vector<BoneTransform> m_cpuMegaBufferBoneTransforms;
-    D12Resource m_gpuMegaBufferBoneTransforms;
+    std::vector<BoneTransform> m_cpuMegaBufferBoneTransformsLBS;
+    std::vector<DualQuaternion> m_cpuMegaBufferBoneTransformsDQS;
+    D12Resource m_gpuMegaBufferBoneTransformsLBS;
+    D12Resource m_gpuMegaBufferBoneTransformsDQS;
 
     double m_time_s = 0.0f;
 };

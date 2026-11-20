@@ -16,7 +16,7 @@ void AnimationManager::Init(const D3D* d3d, Heap* heap)
     m_rootConstantsSkinning.Init(0, 0, sizeof(CbvSkinning));
 
     m_rootSigSkinning.AddRootConstants(&m_rootConstantsSkinning);
-    m_rootSigSkinning.AddSrvRange(0, 3);
+    m_rootSigSkinning.AddSrvRange(0, 4);
     m_rootSigSkinning.AddUavRange(0, 1);
     m_rootSigSkinning.Init(d3d->GetDevice());
 
@@ -30,16 +30,26 @@ void AnimationManager::LoadSceneData(const D3D* d3d, Scene* scene)
 {
     CherryPrint("AnimationManager: LoadSceneData");
 
-    m_cpuMegaBufferBoneTransforms.resize(scene->CPU.MegaBufferBonesCount);
+    m_cpuMegaBufferBoneTransformsLBS.resize(scene->CPU.MegaBufferBonesCount);
+    m_cpuMegaBufferBoneTransformsDQS.resize(scene->CPU.MegaBufferBonesCount);
 
-    m_gpuMegaBufferBoneTransforms.Reset();
+    m_gpuMegaBufferBoneTransformsLBS.Reset();
+    m_gpuMegaBufferBoneTransformsDQS.Reset();
 
-    const size_t boneTransformBytes = scene->CPU.MegaBufferBonesCount * sizeof(BoneTransform);
-    m_gpuMegaBufferBoneTransforms.Init_Buffer("Bone Transforms", d3d->GetDevice(), boneTransformBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    {
+        const size_t boneTransformBytes = scene->CPU.MegaBufferBonesCount * sizeof(BoneTransform);
+        m_gpuMegaBufferBoneTransformsLBS.Init_Buffer("Bone Transforms", d3d->GetDevice(), boneTransformBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    }
+
+    {
+        const size_t boneTransformBytes = scene->CPU.MegaBufferBonesCount * sizeof(DualQuaternion);
+        m_gpuMegaBufferBoneTransformsDQS.Init_Buffer("Dual Quaternions", d3d->GetDevice(), boneTransformBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    }
 
     m_setSkinning.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferVertexBind, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
-    m_setSkinning.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &m_gpuMegaBufferBoneTransforms, scene->CPU.MegaBufferBonesCount, sizeof(BoneTransform));
-    m_setSkinning.SetSRV_Buffer(d3d->GetDevice(), 0, 2, &scene->GPU.MegaBufferVertexBoneWeights, scene->CPU.MegaBufferVertexCount, sizeof(VertexBoneWeights));
+    m_setSkinning.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &m_gpuMegaBufferBoneTransformsLBS, scene->CPU.MegaBufferBonesCount, sizeof(BoneTransform));
+    m_setSkinning.SetSRV_Buffer(d3d->GetDevice(), 0, 2, &m_gpuMegaBufferBoneTransformsDQS, scene->CPU.MegaBufferBonesCount, sizeof(DualQuaternion));
+    m_setSkinning.SetSRV_Buffer(d3d->GetDevice(), 0, 3, &scene->GPU.MegaBufferVertexBoneWeights, scene->CPU.MegaBufferVertexCount, sizeof(VertexBoneWeights));
 
     m_setSkinning.SetUAV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferVertexSkinned, scene->CPU.MegaBufferVertexCount, sizeof(Vertex));
 
@@ -53,7 +63,29 @@ void AnimationManager::Update(const double deltaTime_s)
     m_time_s += deltaTime_s * ANIMATION_SPEED;
 }
 
-void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap)
+DualQuaternion toDualQuaternion(FXMVECTOR rotation, FXMVECTOR translation)
+{
+    const XMVECTOR real = XMQuaternionNormalize(rotation);
+
+    const XMVECTOR translationQuat = XMVectorSet(
+        XMVectorGetX(translation),
+        XMVectorGetY(translation),
+        XMVectorGetZ(translation),
+        0.0f
+    );
+
+    const XMVECTOR dual = XMVectorScale(
+        XMQuaternionMultiply(real, translationQuat),
+        0.5f
+    );
+
+    DualQuaternion result;
+    XMStoreFloat4(&result.Real, real);
+    XMStoreFloat4(&result.Dual, dual);
+    return result;
+}
+
+void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, Heap* heap, AnimationType animType)
 {
     // Bone Pass
     {
@@ -91,21 +123,11 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
             const float timeT = framePosition - static_cast<float>(localKeyFrameIdx0);
 
-            //CherryPrint("Time: " << timeWrapped << ", percent: " << clipPercent << ", timeT: " << timeT);
-            //CherryPrint("Local KeyFrame Idx (0): " << localKeyFrameIdx0);
-            //CherryPrint("Global KeyFrame Base (0)" << globalKeyFrameBaseIdx0);
-            //CherryPrint("Global KeyFrame Base (1)" << globalKeyFrameBaseIdx1);
-
             std::vector<XMMATRIX> topologicalTransforms;
             topologicalTransforms.resize(clip.BoneCount);
 
-            // TODO: Need to reorder joints topologically in scene loader
             for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
             {
-                //CherryPrint("Bone: " << localBoneIdx);
-
-                //PrintMatrix("Model Matrix", obj.M);
-
                 const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
 
                 const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
@@ -119,9 +141,6 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                     const KeyFrame& keyFrame0 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx0];
                     const KeyFrame& keyFrame1 = scene->CPU.MegaBufferKeyFrames[globalKeyFrameIdx1];
 
-                    //CherryPrint("KeyFrame 0 Rotation: " << keyFrame0.Rotation[0] << ", " << keyFrame0.Rotation[1] << ", " << keyFrame0.Rotation[2] << ", " << keyFrame0.Rotation[3]);
-                    //CherryPrint("KeyFrame 1 Rotation: " << keyFrame1.Rotation[0] << ", " << keyFrame1.Rotation[1] << ", " << keyFrame1.Rotation[2] << ", " << keyFrame1.Rotation[3]);
-
                     const float tx = std::lerp(keyFrame0.Translation[0], keyFrame1.Translation[0], timeT);
                     const float ty = std::lerp(keyFrame0.Translation[1], keyFrame1.Translation[1], timeT);
                     const float tz = std::lerp(keyFrame0.Translation[2], keyFrame1.Translation[2], timeT);
@@ -132,28 +151,25 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
                     const XMVECTOR r = XMQuaternionSlerp(q0, q1, static_cast<float>(timeT));
                     const XMMATRIX R = XMMatrixRotationQuaternion(r);
 
-                    const float sx = std::lerp(keyFrame0.Scale[0], keyFrame1.Scale[0], timeT);
-                    const float sy = std::lerp(keyFrame0.Scale[1], keyFrame1.Scale[1], timeT);
-                    const float sz = std::lerp(keyFrame0.Scale[2], keyFrame1.Scale[2], timeT);
-                    const XMMATRIX S = XMMatrixScaling(sx, sy, sz);
+                    XMMATRIX S = XMMatrixIdentity();
+                    if (animType != AnimationType::eDQS)
+                    {
+                        const float sx = std::lerp(keyFrame0.Scale[0], keyFrame1.Scale[0], timeT);
+                        const float sy = std::lerp(keyFrame0.Scale[1], keyFrame1.Scale[1], timeT);
+                        const float sz = std::lerp(keyFrame0.Scale[2], keyFrame1.Scale[2], timeT);
+                        S = XMMatrixScaling(sx, sy, sz);
+                    }
 
-                    //PrintMatrix("Translation", T);
-                    //PrintMatrix("Rotation", R);
-                    //PrintMatrix("Scale", S);
-
-                    TRS = S * R * T; // Correct
+                    TRS = S * R * T;
                 }
-
-                //PrintMatrix("TRS", TRS);
 
                 XMMATRIX transform = TRS;
 
                 if (boneInfo.BoneParentIdxLocal != UINT_MAX)
                 {
-                    transform = transform * topologicalTransforms[boneInfo.BoneParentIdxLocal]; // Correct
+                    CherryAssert(boneInfo.BoneParentIdxLocal < localBoneIdx);
 
-                    //PrintMatrix("Parent", topologicalTransforms[boneInfo.BoneParentIdxLocal]);
-                    //PrintMatrix("TRS * Parent", transform);
+                    transform *= topologicalTransforms[boneInfo.BoneParentIdxLocal];
                 }
 
                 topologicalTransforms[localBoneIdx] = transform;
@@ -161,27 +177,46 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
             for (uint32_t localBoneIdx = 0; localBoneIdx < clip.BoneCount; localBoneIdx++)
             {
-                //CherryPrint("Bone: " << localBoneIdx);
-
                 const uint32_t globalBoneIdx = localBoneIdx + obj.MegaBufferBoneOffset;
                 const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
 
                 const XMMATRIX inverseBind = XMLoadFloat4x4(&boneInfo.InverseBindTransform);
-                const XMMATRIX transform = inverseBind * topologicalTransforms[localBoneIdx]; // Correct
+                const XMMATRIX transform = inverseBind * topologicalTransforms[localBoneIdx];
 
-                //PrintMatrix("Inverse Bind", inverseBind);
-                //PrintMatrix("Final Bone Transform", transform);
+                if (animType == AnimationType::eLBS)
+                {
+                    XMStoreFloat4x4(&m_cpuMegaBufferBoneTransformsLBS[globalBoneIdx].Transform, transform);
+                }
+                else if (animType == AnimationType::eDQS)
+                {
+                    XMVECTOR scale;
+                    XMVECTOR rotation;
+                    XMVECTOR translation;
+                    if (!XMMatrixDecompose(&scale, &rotation, &translation, transform))
+                        continue;
+                    rotation = XMQuaternionNormalize(rotation);
 
-                XMStoreFloat4x4(&m_cpuMegaBufferBoneTransforms[globalBoneIdx].Transform, transform);
+                    m_cpuMegaBufferBoneTransformsDQS[globalBoneIdx] = toDualQuaternion(rotation, translation);
+                }
             }
         }
 
         m_boneUploadHeap.FreeAssignedData();
 
-        m_gpuMegaBufferBoneTransforms.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+        if (animType == AnimationType::eLBS)
+        {
+            m_gpuMegaBufferBoneTransformsLBS.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        const size_t boneTransformBytes = scene->CPU.MegaBufferBonesCount * sizeof(BoneTransform);
-        m_gpuMegaBufferBoneTransforms.UploadBuffer(cmdList, &m_boneUploadHeap, m_cpuMegaBufferBoneTransforms.data(), boneTransformBytes);
+            const size_t boneTransformBytes = scene->CPU.MegaBufferBonesCount * sizeof(BoneTransform);
+            m_gpuMegaBufferBoneTransformsLBS.UploadBuffer(cmdList, &m_boneUploadHeap, m_cpuMegaBufferBoneTransformsLBS.data(), boneTransformBytes);
+        }
+        else if (animType == AnimationType::eDQS)
+        {
+            m_gpuMegaBufferBoneTransformsDQS.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+            const size_t boneTransformBytes = scene->CPU.MegaBufferBonesCount * sizeof(DualQuaternion);
+            m_gpuMegaBufferBoneTransformsDQS.UploadBuffer(cmdList, &m_boneUploadHeap, m_cpuMegaBufferBoneTransformsDQS.data(), boneTransformBytes);
+        }
     }
 
     // Skinning Pass
@@ -200,7 +235,8 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
         {
             const Object& obj = scene->CPU.Objects[i];
 
-            CbvSkinning cbv;
+            CbvSkinning cbv{};
+            cbv.AnimType = animType;
             cbv.MegaBufferVertexCount = obj.VertexCount;
             cbv.MegaBufferVertexOffset = obj.MegaBufferVertexOffset;
             cbv.MegaBufferBonesOffset = obj.MegaBufferBoneOffset;

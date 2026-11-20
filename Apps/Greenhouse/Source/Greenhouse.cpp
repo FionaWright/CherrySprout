@@ -292,7 +292,7 @@ void Greenhouse::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList)
 {
     if (m_renderInfo.IsAnimationEnabled)
     {
-        m_animationManager.Skin(cmdList, &m_sceneManager.GetScene(), &m_heap);
+        m_animationManager.Skin(cmdList, &m_sceneManager.GetScene(), &m_heap, m_config.AnimType);
     }
 
     // GBuffer Pass

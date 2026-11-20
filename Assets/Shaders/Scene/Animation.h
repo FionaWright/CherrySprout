@@ -39,4 +39,26 @@ struct BoneTransform
     hlsl::float4x4 Transform; // TODO: Can be affine3x4
 };
 
+struct DualQuaternion
+{
+    hlsl::float4 Real;
+    hlsl::float4 Dual;
+};
+
+enum class AnimationType : uint32_t
+{
+    eNone,
+    eLBS,
+    eDQS,
+    eCOR,
+
+    eCount
+};
+
+#ifdef __cplusplus
+static const char* s_animTypeNames[static_cast<uint32_t>(AnimationType::eCount)] = {
+    "None", "LBS", "DQS", "CoR"
+};
+#endif
+
 #endif

@@ -4,6 +4,7 @@
 #include "Utils/HlslGlue.h"
 
 #include "../PathTracing/FeatFlags/Internal/Interpretations.h"
+#include "Scene/Animation.h"
 
 struct CbvPathTracingSettings
 {
@@ -294,10 +295,10 @@ struct CbvPostProcessing
 
 struct CbvSkinning
 {
+    AnimationType AnimType;
     hlsl::uint MegaBufferVertexOffset;
     hlsl::uint MegaBufferVertexCount;
     hlsl::uint MegaBufferBonesOffset;
-    float p;
 };
 
 #endif

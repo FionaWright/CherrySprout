@@ -85,8 +85,8 @@ void Greenhouse::renderGuiCore()
     ImGui::SeparatorText("Info");
     ImGui::Indent(IM_GUI_INDENTATION);
     {
-        ImGui::Text("Frames : %ull", m_renderInfo.FrameIndex);
-        ImGui::Text("Samples: %ull", m_renderInfo.FrameIndex * m_config.PathTracerConfig.SPP);
+        ImGui::Text("Frames : %u", m_renderInfo.FrameIndex);
+        ImGui::Text("Samples: %u", m_renderInfo.FrameIndex * m_config.PathTracerConfig.SPP);
     }
     ImGui::Unindent(IM_GUI_INDENTATION);
 
@@ -99,6 +99,22 @@ void Greenhouse::renderGuiCore()
         if (m_sceneManager.GetScene().CPU.IsAnimationInScene)
         {
             m_renderBackendSceneDataDirty |= ImGui::Checkbox("Animation Enabled", &m_config.AnimationEnabled);
+
+            ImGui::Text("Skinning Type:");
+            ImGui::Indent(IM_GUI_INDENTATION);
+            {
+                static int e = static_cast<int>(m_config.AnimType);
+                int c = 0;
+                for (auto& name : s_animTypeNames)
+                {
+                    if (c != 0)
+                        ImGui::SameLine();
+                    ImGui::RadioButton(name, &e, c++);
+                }
+                m_config.AnimType = static_cast<AnimationType>(e);
+            }
+            ImGui::Unindent(IM_GUI_INDENTATION);
+            ImGui::Spacing();
         }
         ImGui::Spacing();
 
@@ -139,11 +155,11 @@ void Greenhouse::renderGuiCore()
             {
                 static int e = static_cast<int>(m_config.PathTracerConfig.BxdfMode);
                 int c = 0;
-                for (auto & s_bxdfName : s_bxdfNames)
+                for (auto& name : s_bxdfNames)
                 {
                     if (c != 0)
                         ImGui::SameLine();
-                    m_ptPipelineDirty |= ImGui::RadioButton(s_bxdfName, &e, c++);
+                    m_ptPipelineDirty |= ImGui::RadioButton(name, &e, c++);
                 }
                 m_config.PathTracerConfig.BxdfMode = static_cast<BxdfMode>(e);
             }
