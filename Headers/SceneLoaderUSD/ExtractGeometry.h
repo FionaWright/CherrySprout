@@ -182,8 +182,13 @@ namespace SceneLoaderUSD
 
         if (stPrimvar && stPrimvar.IsDefined())
         {
-            stPrimvar.Get(&uvs);
-            stPrimvar.GetIndices(&uvIndices);
+            stPrimvar.Get(&uvs, pxr::UsdTimeCode::Default());
+            stPrimvar.GetIndices(&uvIndices, pxr::UsdTimeCode::Default());
+            if (uvIndices.empty())
+            {
+                pxr::UsdTimeCode timeCode(0.0);
+                stPrimvar.GetIndices(&uvIndices, timeCode);
+            }
             uvInterp = stPrimvar.GetInterpolation();
             hasUV = !uvs.empty();
         }

@@ -107,8 +107,6 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
     const double deltaTime_s = timeArgs.ElapsedTime_ms / 1000.0f;
 
-    m_renderInfo.IsAnimationEnabled = m_config.AnimationEnabled && m_sceneManager.GetScene().CPU.IsAnimationInScene;
-
     if (m_envMapDirty)
     {
         const wchar_t* envMap = m_environmentMapFiles.at(m_currentEnvMapIdx).c_str();
@@ -190,6 +188,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_renderBackendSceneDataDirty = true;
     }
 
+    m_renderInfo.IsAnimationEnabled = m_config.AnimationEnabled && m_sceneManager.GetScene().CPU.IsAnimationInScene;
     if (m_renderInfo.IsAnimationEnabled)
     {
         m_animationManager.Update(deltaTime_s);

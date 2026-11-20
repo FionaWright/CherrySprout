@@ -59,10 +59,11 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
                                      0, 0, 0, 1);
 
     Vertex vertexBind = gMegaBufferVertexBind[globalVertexIdx];
-    Vertex vertexSkinned = vertexBind;
+    Vertex vertexSkinned;
 
     vertexSkinned.Position = mul(skinningTransform, float4(vertexBind.Position, 1.0f)).xyz;
     vertexSkinned.Normal = normalize(mul((float3x3)skinningTransform, vertexBind.Normal));
+	vertexSkinned.UV = vertexBind.UV;
 
     gMegaBufferVertexSkinned[globalVertexIdx] = vertexSkinned;
 }
