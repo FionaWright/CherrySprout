@@ -52,7 +52,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     ContextScreenSpace context = (ContextScreenSpace)0;
     context.IsMiss = isMiss;
     context.DepthNonLinear = depthNonLinear;
-    context.Wo = -rayDirection;
+    context.CenterRayDirection = rayDirection;
 
     if (isMiss)
     {

@@ -95,10 +95,10 @@ void SetUCW(inout Reservoir<TCandidate> reservoir)
     reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat);
 }
 
-template<typename TCandidate, typename TContext>
+template<typename TCandidate, typename TContext, typename TPixelInfo>
 void WRS(
     inout RngInfo rngInfo,
-    inout Reservoir<TCandidate> reservoir,
+    inout Reservoir<TCandidate, TPixelInfo> reservoir,
     uint M,
     TContext context)
 {

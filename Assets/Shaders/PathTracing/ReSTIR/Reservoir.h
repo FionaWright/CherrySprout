@@ -1,10 +1,11 @@
 #ifndef H_RESERVOIR_H
 #define H_RESERVOIR_H
 
-template<typename TCandidate>
+template<typename TCandidate, typename TPixelInfo>
 struct Reservoir
 {
     TCandidate Y;
+    TPixelInfo PixelInfo;
 
     float W_Y;
     float WeightSum;
@@ -12,10 +13,10 @@ struct Reservoir
     float PHat;
 };
 
-template<typename TCandidate>
-Reservoir<TCandidate> CreateReservoir()
+template<typename TC, typename TP>
+Reservoir<TC, TP> CreateReservoir()
 {
-    return (Reservoir<TCandidate>)0;
+    return (Reservoir<TC, TP>)0;
 }
 
 #endif

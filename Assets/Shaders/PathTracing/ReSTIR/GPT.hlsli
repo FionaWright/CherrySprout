@@ -24,7 +24,7 @@
 void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGPT X_i)
 {
     float3 origin = NAN;
-    PathState pathState = CreatePathState(origin, -context.Wo);
+    PathState pathState = CreatePathState(origin, context.CenterRayDirection);
     PathVertexList vertexList = CreatePathVertexList();
     //pathState.DivideByPdfEnabled = false;
 
@@ -85,7 +85,7 @@ void Shift(inout CandidateGPT X_i, ContextScreenSpace context)
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
-    PathState pathState = CreatePathState(origin, -context.Wo);
+    PathState pathState = CreatePathState(origin, context.CenterRayDirection);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
     //pathState.DivideByPdfEnabled = false;
@@ -189,12 +189,14 @@ float3 SampleRestirPT(uint2 pixelCoord)
     ContextScreenSpace context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
     {
-        return Miss(-context.Wo, 1.0f, true, false);
+        return Miss(context.CenterRayDirection, 1.0f, true, false);
     }
+
+    float3 wo = -context.CenterRayDirection;
 
     CandidateGPT Y;
     float3 Lo;
-    bool found = TrySampleReservoirPT(context.HitInfo, pixelCoord, context.Wo, Y, Lo);
+    bool found = TrySampleReservoirPT(context.HitInfo, pixelCoord, wo, Y, Lo);
 
     DBG_OUTPUT_DUMP_DISABLE();
     {

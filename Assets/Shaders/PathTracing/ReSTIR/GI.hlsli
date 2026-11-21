@@ -26,8 +26,10 @@ void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGI
 {
     RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
 
+    float3 wo = -context.CenterRayDirection;
+
     BxdfEval bxdfEval;
-    BxdfSample bxdfSample = BxDF::Sample(rngBxDF, context.HitInfo, context.Wo, bxdfEval);
+    BxdfSample bxdfSample = BxDF::Sample(rngBxDF, context.HitInfo, wo, bxdfEval);
 
     // TODO: Simpler function that doesn't extract everything?
     bool isMiss;
@@ -121,7 +123,9 @@ void Shift(inout CandidateGI X_i, ContextScreenSpace context)
         return;
     }
 
-    X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, wi, LobeTag::eAll);
+    float3 wo = -context.CenterRayDirection;
+
+    X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, wo, wi, LobeTag::eAll);
 
     float3 x1 = X_i.SourcePositionBiased;
     float3 y1 = context.HitInfo.HitPosBiased;

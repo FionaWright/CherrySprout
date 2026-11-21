@@ -12,14 +12,14 @@ struct ContextScreenSpace
 {
     HitInfo HitInfo; // TODO: Very heavy, use material index?
 
-    hlsl::float3 Wo; // TODO: Need to figure out how ray direction now being modifiable changes things
+    hlsl::float3 CenterRayDirection;
     hlsl::uint IsMiss;
     float DepthNonLinear;
 };
 
 struct PixelInfoPoint
 {
-    hlsl::float3 RayDirection;
+    // None
 };
 
 struct PixelInfoArea
@@ -79,12 +79,21 @@ struct CandidateGPT
     float InnerJacobian;
 };
 
-typedef Reservoir<CandidateDI> ReservoirDI;
-typedef Reservoir<CandidateGI> ReservoirGI;
-typedef Reservoir<CandidatePT> ReservoirPT;
+#define ReservoirX Reservoir<TCandidate, PixelInfoPoint>
+#define ReservoirX_Area Reservoir<TCandidate, PixelInfoArea>
 
-typedef Reservoir<CandidateGPT> ReservoirGPT;
-typedef Reservoir<CandidateGPT> ReservoirGPT_Pos;
-typedef Reservoir<CandidateGPT> ReservoirGPT_Neg;
+typedef Reservoir<CandidateDI, PixelInfoPoint> ReservoirDI;
+typedef Reservoir<CandidateGI, PixelInfoPoint> ReservoirGI;
+typedef Reservoir<CandidatePT, PixelInfoPoint> ReservoirPT;
+typedef Reservoir<CandidateGPT, PixelInfoPoint> ReservoirGPT;
+typedef Reservoir<CandidateGPT, PixelInfoPoint> ReservoirGPT_Pos; // TODO
+typedef Reservoir<CandidateGPT, PixelInfoPoint> ReservoirGPT_Neg;
+
+typedef Reservoir<CandidateDI, PixelInfoArea> ReservoirDI_Area;
+typedef Reservoir<CandidateGI, PixelInfoArea> ReservoirGI_Area;
+typedef Reservoir<CandidatePT, PixelInfoArea> ReservoirPT_Area;
+typedef Reservoir<CandidateGPT, PixelInfoArea> ReservoirGPT_Area;
+typedef Reservoir<CandidateGPT, PixelInfoArea> ReservoirGPT_Pos_Area;
+typedef Reservoir<CandidateGPT, PixelInfoArea> ReservoirGPT_Neg_Area;
 
 #endif

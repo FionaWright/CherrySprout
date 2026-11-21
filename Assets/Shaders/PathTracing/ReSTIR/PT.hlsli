@@ -95,7 +95,7 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
 void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidatePT X_i)
 {
     float3 origin = NAN;
-    PathState pathState = CreatePathState(origin, -context.Wo);
+    PathState pathState = CreatePathState(origin, context.CenterRayDirection);
     X_i.VertexList = CreatePathVertexList();
 
     uint2 pixelCoord = uint2(0,0); // TODO: Needed to combine ReSTIR types, ignore for now
@@ -135,7 +135,7 @@ void Shift(inout CandidatePT X_i, ContextScreenSpace context)
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
-    PathState pathState = CreatePathState(origin, -context.Wo);
+    PathState pathState = CreatePathState(origin, context.CenterRayDirection);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
     pathStateShifted.IsUsingNeeMis = false;
@@ -250,13 +250,15 @@ float3 SampleRestirPT(uint2 pixelCoord)
     if (context.IsMiss)
     {
         float mis, _;
-        float3 L_miss = Miss(-context.Wo, 1.0f, true, false, mis, _);
+        float3 L_miss = Miss(context.CenterRayDirection, 1.0f, true, false, mis, _);
         return mis * L_miss;
     }
 
+    float3 wo = -context.CenterRayDirection;
+
     CandidatePT Y;
     float3 Lo;
-    bool found = TrySampleReservoirPT(context.HitInfo, pixelCoord, context.Wo, Y, Lo);
+    bool found = TrySampleReservoirPT(context.HitInfo, pixelCoord, wo, Y, Lo);
 
     DBG_OUTPUT_DUMP_DISABLE();
     {

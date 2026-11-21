@@ -60,7 +60,9 @@ float Target(CandidateDI X_i, ContextScreenSpace context)
     }
     else
     {
-        BxdfEval bxdfEval = BxDF::Evaluate(context.HitInfo, context.Wo, X_i.LightEval.Direction, LobeTag::eAll);
+        // TODO: This is outdated, needs changing
+        float3 wo = -context.CenterRayDirection;
+        BxdfEval bxdfEval = BxDF::Evaluate(context.HitInfo, wo, X_i.LightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * BalanceHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }

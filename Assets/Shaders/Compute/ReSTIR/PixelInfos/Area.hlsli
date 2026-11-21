@@ -41,16 +41,85 @@ PixelInfoArea InitPixelInfo(inout RngInfo rngInfo, ContextScreenSpace context)
 }
 
 template <typename TCandidate>
-Reservoir<TCandidate> FindTemporalReservoir(PixelInfoArea pixelInfo, RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, float2 mv, float)
+ReservoirX_Area FindTemporalReservoir(inout RngInfo rngInfo, PixelInfoArea pixelInfo, RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoord, float2 mv)
 {
-    int2 prevPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
+    float2 dimensions = gSettings.FrameDimensions;
 
-    bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
+    float2 pixelUV = pixelCoord + 0.5f;
+    float2 currUV = pixelUV / dimensions;
+    float2 prevUV = currUV - mv;
+
+    float2 supportCenter = prevUV * dimensions;
+    float2 supportBase = supportCenter - 0.5f;
+    float2 supportTop = supportBase + 1.0f;
+
+    float2 pixel2x2Base = floor(supportBase);
+
+    bool validPrevPixel = all(pixel2x2Base >= 0) && all(pixel2x2Base < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
     {
         buffer[reservoirIdxOut] = reservoir;
         TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
         return;
+    }
+
+    float2 jitterFromCenter = pixelInfo.RngPrimary.Jitter - 0.5f;
+    float2 samplePosition = supportCenter + jitterFromCenter;
+
+    ReservoirX_Area samples[4];
+
+    const uint2 OFFSETS[4] = {
+        uint2(0,0),
+        uint2(1,0),
+        uint2(0,1),
+        uint2(1,1)
+    };
+
+    if (FEAT_CORE(AreaRestirRobust)
+    {
+    }
+    else
+    {
+        [unroll]
+        for (int i = 0; i < 4; i++)
+        {
+            uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
+            uint reservoirIdx = GetReservoirBufferIndex_Previous(prevPixelCoord);
+            samples[i] = buffer[reservoirIdx];
+
+            float2 candidateJitterFromCenter = samples[i].PixelInfo.RngPrimary.Jitter - 0.5f;
+            float2 candidatePosition = float2(coord) + 0.5f + candidateJitterFromCenter;
+
+            bool rejectCandidate =
+                any(candidatePosition < supportBase) ||
+                any(candidatePosition > supportTop);
+            if (rejectCandidate)
+            {
+                samples[i].PHat = 0.0f;
+            }
+        }
+    }
+
+    // RIS
+    {
+        [unroll]
+        for (int i = 0; i < 4; i++)
+        {
+            uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
+            uint reservoirIdx = GetReservoirBufferIndex_Previous(prevPixelCoord);
+            samples[i] = buffer[reservoirIdx];
+
+            float2 candidateJitterFromCenter = samples[i].PixelInfo.RngPrimary.Jitter - 0.5f;
+            float2 candidatePosition = float2(coord) + 0.5f + candidateJitterFromCenter;
+
+            bool rejectCandidate =
+                any(candidatePosition < supportBase) ||
+                any(candidatePosition > supportTop);
+            if (rejectCandidate)
+            {
+                samples[i].PHat = 0.0f;
+            }
+        }
     }
 
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
