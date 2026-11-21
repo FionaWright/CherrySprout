@@ -21,7 +21,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI 
     RngValuesAncillary::RngValuesNEE rng = SampleRngNEE(rngInfo);
 
     LightEval lightEval;
-    LightSample lightSample = SampleLight(rng, context.HitInfo.HitPos, context.Wo, lightEval);
+    LightSample lightSample = SampleLight(rng, context.HitInfo.HitPos, lightEval);
 
     X_i.LightSample = lightSample;
     X_i.LightEval = lightEval;

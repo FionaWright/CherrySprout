@@ -2,73 +2,9 @@
 #define H_NEE_SHIFTED_UNCONNECTED_H
 
 #include "PathTracing/Shift/ShiftMapping/Components/Reconnect.hlsli"
+#include "PathTracing/Shift/MIS.hlsli"
 #include "PathTracing/NEE/Utils.hlsli"
 #include "PathTracing/NEE/SampleNEE.hlsli"
-
-void getMisWeights_NEE(
-	PathStateShifted pathStateShifted,
-	float pdf_prefix_m,
-	float pdf_prefix_s,
-	float pdf_bxdf_m,
-    float pdf_bxdf_s,
-    float pdf_nee_m,
-    float pdf_nee_s,
-	float jacobian,
-
-    out float mis_nee_s,
-    out float mis_nee_m,
-    out float mis_path)
-{
-	float mainPathPDF_NEE = pdf_prefix_m * pdf_nee_m;
-    float shiftedPathPDF_NEE = jacobian * pdf_prefix_s * pdf_nee_s;
-
-	if (!FEAT_CORE(NEE) || !pathStateShifted.IsUsingNeeMis)
-	{
-		// Selecting (Main) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_NEE, shiftedPathPDF_NEE,
-            1, 1);
-
-		mis_nee_s = 1.0f;
-		mis_nee_m = 1.0f;
-
-#ifdef GDPT_MIS_WEIGHT_PATH
-    	mis_path = GDPT_MIS_WEIGHT_PATH;
-#endif
-		return;
-	}
-
-    float mainPathPDF_BXDF = pdf_prefix_m * pdf_bxdf_m;
-    float shiftedPathPDF_BXDF = jacobian * pdf_prefix_s * pdf_bxdf_s;
-
-    //mis_path = BalanceHeuristic(
-    //    mainPathPDF_NEE, mainPathPDF_BXDF, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-    //    gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples, 1);
-
-    //mis_path = BalanceHeuristic(
-    //    pdf_prefix_m, jacobian * pdf_prefix_s,
-    //    1, 1);
-
-	mis_path = BalanceHeuristic(
-        mainPathPDF_NEE, shiftedPathPDF_NEE,
-        1, 1);
-
-	mis_nee_m = BalanceHeuristic(
-        pdf_nee_m, pdf_bxdf_m,
-        gSettings.DirectNumSamples, 1);
-
-	mis_nee_s = BalanceHeuristic(
-        pdf_nee_s, pdf_bxdf_s,
-        gSettings.DirectNumSamples, 1);
-
-#ifdef GDPT_MIS_WEIGHT_PATH
-    mis_path = GDPT_MIS_WEIGHT_PATH;
-#endif
-#ifdef GDPT_MIS_WEIGHT_NEE
-	mis_nee_m = GDPT_MIS_WEIGHT_NEE;
-	mis_nee_s = GDPT_MIS_WEIGHT_NEE;
-#endif
-}
 
 bool SampleDirect_S_Connected(
     inout PathState pathState,
@@ -80,11 +16,8 @@ bool SampleDirect_S_Connected(
 {
     float jacobianPath = pathStateShifted.Jacobian; // Jacobian at vertex is 1
 
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
-
-    float pdf_prefix_m = pathStateShifted.LogPathPdfMain;
-    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted;
 
     float pdf_nee_m = v1.PDF_NEE;
     float pdf_nee_s = v1.PDF_NEE;
@@ -94,7 +27,7 @@ bool SampleDirect_S_Connected(
 	float mis_nee_m;
 	float mis_nee_s;
     float mis_path;
-	getMisWeights_NEE(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf, pdf_bxdf, pdf_nee_m, pdf_nee_s, jacobianPath, mis_nee_s, mis_nee_m, mis_path);
+	getMisWeights_NeeSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf, pdf_bxdf, pdf_nee_m, pdf_nee_s, jacobianPath, mis_nee_s, mis_nee_m, mis_path);
 
     // Note: No NEE/BxDF MIS weights applied here
     float3 vertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, pdf_nee_m);
@@ -136,11 +69,8 @@ bool SampleDirect_S_Semiconnected(
 
     float jacobianPath = pathStateShifted.Jacobian; // Jacobian at vertex is 1
 
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
-
-    float pdf_prefix_m = pathStateShifted.LogPathPdfMain;
-    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted;
 
     float pdf_nee_m = v1.PDF_NEE;
     //float pdf_nee_s = v1.PDF_NEE; // Note: As vertex position is the same, NEE pdf is the same
@@ -152,7 +82,7 @@ bool SampleDirect_S_Semiconnected(
     float mis_nee_m;
 	float mis_nee_s;
     float mis_path;
-	getMisWeights_NEE(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, jacobianPath, mis_nee_s, mis_nee_m, mis_path);
+	getMisWeights_NeeSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, jacobianPath, mis_nee_s, mis_nee_m, mis_path);
 
     // Note: No NEE/BxDF MIS weights applied here
     float3 mainVertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, pdf_nee_m);
@@ -234,11 +164,8 @@ bool SampleDirect_S_Unconnected(
     float jacobianPrefix = pathStateShifted.Jacobian;
     float jacobianPath = jacobianPrefix * jacobianVertex;
 
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain);
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted);
-
-    float pdf_prefix_m = pathStateShifted.LogPathPdfMain;
-    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted;
 
     float pdf_nee_m = v1.PDF_NEE;
     float pdf_nee_s = pdfShifted_NEE;
@@ -249,10 +176,12 @@ bool SampleDirect_S_Unconnected(
 	float mis_nee_m;
 	float mis_nee_s;
     float mis_path;
-	getMisWeights_NEE(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, jacobianPath, mis_nee_s, mis_nee_m, mis_path);
+	getMisWeights_NeeSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, jacobianPath, mis_nee_s, mis_nee_m, mis_path);
 
     float3 mainVertexLo = v1.ShadowFactor * v1.DirectContribution / max(1e-6f, pdf_nee_m);
     float3 shiftedVertexLo = shadowFactor * radiance / max(1e-6f, pdf_nee_m);
+
+    // TODO: DivideLoByPdf
 
     float3 mainLo = mis_nee_m * v1.InitialBeta * mainVertexLo;
     float3 shiftedLo = mis_nee_s * jacobianPath * pathState.Beta * shiftedVertexLo;

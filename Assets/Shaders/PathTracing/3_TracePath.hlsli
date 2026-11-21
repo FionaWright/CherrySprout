@@ -25,7 +25,8 @@ bool ResolvePathAncillaryVertex(
     if (isMiss)
     {
         float mis_env;
-        float3 L_miss = Miss(pathState, mis_env);
+        float pdf_nee;
+        float3 L_miss = Miss(pathState, mis_env, pdf_nee);
         float3 L_direct = pathState.Beta * L_miss * mis_env;
         pathState.Lo += ApplyFireflyThreshold(L_direct, gSettings.FireflyThreshold);
 
@@ -33,7 +34,7 @@ bool ResolvePathAncillaryVertex(
         DBG_OUTPUT1(1.0f, KilledByMiss);
 
         if (PATH_VERTICES_REQUIRED)
-            AddVertexEnvMap(vertexList, pathState.Beta, L_miss, mis_env);
+            AddVertexEnvMap(vertexList, pathState.Beta, L_miss, mis_env, pdf_nee);
 
         return false;
     }

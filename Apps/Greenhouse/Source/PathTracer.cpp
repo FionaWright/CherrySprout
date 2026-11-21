@@ -538,10 +538,10 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
             if (m_set.GetSRV(0, 6))
             {
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 5, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
             }
         }
     }

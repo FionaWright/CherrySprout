@@ -17,7 +17,12 @@ bool SampleIndirect_S_Connected(
     wi = v1.Wi;
     pdfShifted = v1.PDF_BXDF;
 
-    pathState.Beta *= v1.IndirectContribution / max(1e-6f, v1.PDF_BXDF);
+    float3 E_indirect = v1.IndirectContribution;
+
+    if (pathStateShifted.DivideLoByPdf)
+        E_indirect /= max(1e-6f, v1.PDF_BXDF);
+
+    pathState.Beta *= E_indirect;
 
     pathState.LastBxdfPdf = v1.PDF_BXDF;
 
@@ -41,7 +46,12 @@ bool SampleIndirect_S_Semiconnected(
     pdfShifted = bxdfEval.PDF;
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-    pathState.Beta *= bxdfEval.Radiance * abs(NdL) / max(1e-6f, v1.PDF_BXDF); // TODO: NDL?
+    float3 E_indirect = bxdfEval.Radiance * abs(NdL);
+
+    if (pathStateShifted.DivideLoByPdf)
+        E_indirect /= max(1e-6f, v1.PDF_BXDF);
+
+    pathState.Beta *= E_indirect;
 
     pathState.LastBxdfPdf = bxdfEval.PDF;
 
@@ -91,7 +101,10 @@ bool SampleIndirect_S_Unconnected(
     pdfShifted = bxdfEval.PDF;
 
     float NdL = dot(hitInfo.Ns_ff, wi);
-    float3 E_indirect = bxdfEval.Radiance * abs(NdL) / max(1e-6, v1.PDF_BXDF);
+    float3 E_indirect = bxdfEval.Radiance * abs(NdL);
+
+    if (pathStateShifted.DivideLoByPdf)
+        E_indirect /= max(1e-6f, v1.PDF_BXDF);
 
     pathState.Beta *= E_indirect;
 

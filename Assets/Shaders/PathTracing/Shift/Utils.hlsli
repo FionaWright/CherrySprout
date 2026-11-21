@@ -20,7 +20,8 @@ void AddVertexEnvMap(
     inout PathVertexList vList,
     float3 beta,
     float3 contrib,
-    float mis_nee)
+    float mis_nee,
+    float pdf_nee)
 {
     if (vList.NumVertices == MAX_RAY_DEPTH_SHIFT-1)
         return;
@@ -29,6 +30,7 @@ void AddVertexEnvMap(
     vInfo.Type = VertexType::eEnvironment;
     vInfo.DirectContribution = contrib;
     vInfo.MIS_NEE = mis_nee;
+    vInfo.PDF_NEE = pdf_nee;
     vInfo.InitialBeta = beta;
 
     AddVertex(vList, vInfo);

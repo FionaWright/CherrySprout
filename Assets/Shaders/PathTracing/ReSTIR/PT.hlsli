@@ -54,6 +54,7 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
         EvaluateSubPath(X_i.VertexList, Lo[i], pdf[i], mis_nee);
         //Lo[i] *= mis_nee;
 
+        // TODO: THIS IS REQUIRED FOR NEE, NOT AN OPTIMIZATION
         float mis = 1.0f; // TODO: Generate BxDF candidate for each NEE candidate
         float W_X = pdf[i] <= 0.0f ? 0.0f : 1.0f / pdf[i];
         float pHat = Luminance(Lo[i]);
@@ -138,6 +139,7 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
     pathStateShifted.IsUsingNeeMis = false;
+    pathStateShifted.DivideLoByPdf = false;
 
     // Primary Ray
     bool proceed;
@@ -169,9 +171,6 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
         X_i.Lo = 0.0f;
         return;
     }
-
-    //float mis = BalanceHeuristicRatio(pathStateShifted.PdfRatio, 1, 1);
-    //pathState.Lo *= mis;
 
     X_i.Lo = pathState.Lo;
     X_i.Jacobian = pathStateShifted.Jacobian;
@@ -249,8 +248,8 @@ float3 SampleRestirPT(uint2 pixelCoord)
     ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
     {
-        float mis;
-        float3 L_miss = Miss(-context.Wo, 1.0f, true, false, mis);
+        float mis, _;
+        float3 L_miss = Miss(-context.Wo, 1.0f, true, false, mis, _);
         return mis * L_miss;
     }
 

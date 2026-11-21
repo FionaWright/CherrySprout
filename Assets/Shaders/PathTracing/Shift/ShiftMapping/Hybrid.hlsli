@@ -53,6 +53,7 @@ ShiftResult ShiftMapHybrid(
     // TODO: Some of these conditions can be computed earlier on the main path to avoid work
     // TODO: Jacobian denominator can also be computed earlier
 
+    // TODO: If distance threshold fails, should use random replay rather than reject
 #define DISTANCE_THRESHOLD 0.001f // TODO
 #define SQR_DISTANCE_THRESHOLD (DISTANCE_THRESHOLD*DISTANCE_THRESHOLD)
 

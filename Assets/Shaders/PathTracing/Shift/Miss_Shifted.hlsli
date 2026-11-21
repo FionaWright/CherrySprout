@@ -17,49 +17,28 @@ void Miss_S_Connected(
 
     PathVertexInfo v0 = mainVertices.Array[pathState.RaySegmentIdx-1];
 
-    float mainPDF_BXDF = v0.PDF_BXDF;
-    float shiftPDF_BXDF = pathState.LastBxdfPdf;
+    float pdf_bxdf_m = v0.PDF_BXDF;
+    float pdf_bxdf_s = pathState.LastBxdfPdf;
 
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+    float pdf_nee = v1.PDF_NEE;
 
-    float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
-    float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted / pdf_bxdf_s;
 
-    float mis_path = 1.0f;
-    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
-    {
-        // Note: When connected, always has same wi
-        float pdf_lsd;
-        EvaluateLSD(0, pdf_lsd);
-        float2 uv = EaSphereToSquare(pathState.Desc.Direction);
-        float PDF_NEE = pdf_lsd * EvaluateEnvMapPdf(uv);
+    float mis_nee_s;
+    float mis_nee_m;
+    float mis_path;
+    getMisWeights_BxdfSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee, pdf_nee, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
-        float mainPathPDF_NEE = mainPathPrefixPDF * PDF_NEE;
-        float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * PDF_NEE;
-
-        // Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
-    }
-    else
-    {
-        // Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-            1, 1);
-    }
-
-    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
-    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
-
-    float3 shiftedLo = pathState.Beta * v1.DirectContribution;
+    float3 shiftedLo = mis_nee_s * pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;
 
     shiftedLo *= pathStateShifted.Jacobian;
+
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
+    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
 }
@@ -71,8 +50,8 @@ void Miss_S_Semi_or_Unconnected(
     PathVertexList mainVertices,
     PathVertexInfo v1)
 {
-    float _; // Discarded
-    float3 Li = Miss(pathState, _);
+    float _, pdf_nee_s;
+    float3 Li = Miss(pathState, _, pdf_nee_s);
 
     if (pathState.GetPathFlag(PathFlags::eIsPrimaryRay))
     {
@@ -89,55 +68,29 @@ void Miss_S_Semi_or_Unconnected(
 
     PathVertexInfo v0 = mainVertices.Array[pathState.RaySegmentIdx-1];
 
-    float mainPDF_BXDF = v0.PDF_BXDF;
-    float shiftPDF_BXDF = pathState.LastBxdfPdf;
+    float pdf_bxdf_m = v0.PDF_BXDF;
+    float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted / pdf_bxdf_s;
 
-    float mainPathPDF_BXDF = mainPathPrefixPDF * mainPDF_BXDF;
-    float shiftedPathPDF_BXDF = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_BXDF;
+    float pdf_nee_m = v1.PDF_NEE;
 
-    float mis_path = 1.0f;
-    if (FEAT_CORE(NEE) && pathStateShifted.IsUsingNeeMis)
-    {
-        float pdf_lsd;
-        EvaluateLSD(0, pdf_lsd);
+    float mis_nee_s;
+    float mis_nee_m;
+    float mis_path;
+    getMisWeights_BxdfSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
-        float2 uv_main = EaSphereToSquare(v0.Wi);
-        float2 uv_shift = EaSphereToSquare(pathState.Desc.Direction);
-
-        float mainPDF_NEE = pdf_lsd * EvaluateEnvMapPdf(uv_main);
-        float shiftPDF_NEE = pdf_lsd * EvaluateEnvMapPdf(uv_shift);
-
-        float mainPathPDF_NEE = mainPathPrefixPDF * mainPDF_NEE;
-        float shiftedPathPDF_NEE = pathStateShifted.Jacobian * shiftedPathPrefixPDF * shiftPDF_NEE;
-
-        // Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_NEE, shiftedPathPDF_BXDF,
-            1, gSettings.DirectNumSamples, gSettings.DirectNumSamples, 1);
-    }
-    else
-    {
-        // Selecting (Main, BxDF) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-            1, 1);
-    }
-
-    float3 mainLo = v1.InitialBeta * v1.DirectContribution;
-    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
-
-    float3 shiftedLo = pathState.Beta * Li;
+    float3 shiftedLo = mis_nee_s * pathState.Beta * Li;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
 
     pathState.Lo = shiftedLo;
 
-    shiftedLo *= pathStateShifted.Jacobian; // TODO: Make sure jacobian is being applied for ReSTIR
+    shiftedLo *= pathStateShifted.Jacobian;
 
-    //DBG_FORCE_OUTPUT3((shiftedLo - mainLo));
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
+    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
 }

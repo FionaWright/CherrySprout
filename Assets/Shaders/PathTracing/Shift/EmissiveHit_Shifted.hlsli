@@ -2,71 +2,7 @@
 #define H_EMISSION_SHIFTED_H
 
 #include "PathTracing/EvaluateHitEmission.hlsli"
-
-void getMisWeights_Emissive(
-	PathStateShifted pathStateShifted,
-	float pdf_prefix_m,
-	float pdf_prefix_s,
-	float pdf_bxdf_m,
-    float pdf_bxdf_s,
-    float pdf_nee_m,
-    float pdf_nee_s,
-	float jacobian,
-
-    out float mis_nee_s,
-    out float mis_nee_m,
-    out float mis_path)
-{
-	float mainPathPDF_BXDF = pdf_prefix_m * pdf_bxdf_m;
-    float shiftedPathPDF_BXDF = jacobian * pdf_prefix_s * pdf_bxdf_s;
-
-	if (!FEAT_CORE(NEE) || !pathStateShifted.IsUsingNeeMis)
-	{
-		// Selecting (Main) PDF
-        mis_path = BalanceHeuristic(
-            mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-            1, 1);
-
-		mis_nee_s = 1.0f;
-		mis_nee_m = 1.0f;
-
-#ifdef GDPT_MIS_WEIGHT_PATH
-        mis_path = GDPT_MIS_WEIGHT_PATH;
-#endif
-		return;
-	}
-
-    float mainPathPDF_NEE = pdf_prefix_m * pdf_nee_m;
-    float shiftedPathPDF_NEE = jacobian * pdf_prefix_s * pdf_nee_s;
-
-    //mis_path = BalanceHeuristic(
-    //    mainPathPDF_BXDF, mainPathPDF_NEE, shiftedPathPDF_BXDF, shiftedPathPDF_NEE,
-    //    1, gSettings.DirectNumSamples, 1, gSettings.DirectNumSamples);
-
-    //mis_path = BalanceHeuristic(
-    //    pdf_prefix_m, jacobian * pdf_prefix_s,
-    //    1, 1);
-
-	mis_path = BalanceHeuristic(
-        mainPathPDF_BXDF, shiftedPathPDF_BXDF,
-        1, 1);
-
-	mis_nee_m = BalanceHeuristic(
-        pdf_bxdf_m, pdf_nee_m,
-        1, gSettings.DirectNumSamples);
-
-	mis_nee_s = BalanceHeuristic(
-        pdf_bxdf_s, pdf_nee_s,
-        1, gSettings.DirectNumSamples);
-
-#ifdef GDPT_MIS_WEIGHT_PATH
-    mis_path = GDPT_MIS_WEIGHT_PATH;
-#endif
-#ifdef GDPT_MIS_WEIGHT_NEE
-	mis_nee_m = GDPT_MIS_WEIGHT_NEE;
-	mis_nee_s = GDPT_MIS_WEIGHT_NEE;
-#endif
-}
+#include "PathTracing/Shift/MIS.hlsli"
 
 bool EmissiveHit_S_Connected(
     inout PathState pathState,
@@ -89,21 +25,15 @@ bool EmissiveHit_S_Connected(
     float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
-
-    float pdf_prefix_m = pathStateShifted.LogPathPdfMain / pdf_bxdf_m;
-    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted / pdf_bxdf_s;
 
 	float pdf_nee = v1.PDF_NEE;
 
 	float mis_nee_s;
 	float mis_nee_m;
     float mis_path;
-    getMisWeights_Emissive(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee, pdf_nee, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
-
-    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
-    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
+    getMisWeights_BxdfSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee, pdf_nee, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
     float3 shiftedLo = mis_nee_s * pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
@@ -111,6 +41,9 @@ bool EmissiveHit_S_Connected(
     pathState.Lo = shiftedLo;
 
     shiftedLo *= pathStateShifted.Jacobian;
+
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
+    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
     return false;
@@ -138,11 +71,8 @@ bool EmissiveHit_S_Semiconnected(
     float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
-
-    float pdf_prefix_m = pathStateShifted.LogPathPdfMain / pdf_bxdf_m;
-    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted / pdf_bxdf_s;
 
 	float pdf_nee_m = v1.PDF_NEE;
 	float pdf_nee_s = NAN;
@@ -163,10 +93,7 @@ bool EmissiveHit_S_Semiconnected(
 	float mis_nee_s;
 	float mis_nee_m;
     float mis_path;
-    getMisWeights_Emissive(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
-
-    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
-    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
+    getMisWeights_BxdfSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
     float3 shiftedLo = mis_nee_s * pathState.Beta * v1.DirectContribution;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
@@ -174,6 +101,9 @@ bool EmissiveHit_S_Semiconnected(
     pathState.Lo = shiftedLo;
 
     shiftedLo *= pathStateShifted.Jacobian;
+
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
+    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
     return false;
@@ -231,11 +161,8 @@ bool EmissiveHit_S_Unconnected(
     float pdf_bxdf_s = pathState.LastBxdfPdf;
 
     // TODO: Division is inefficient
-    //float mainPathPrefixPDF = exp(pathStateShifted.LogPathPdfMain) / mainPDF_BXDF;
-    //float shiftedPathPrefixPDF = exp(pathStateShifted.LogPathPdfShifted) / shiftPDF_BXDF;
-
-    float pdf_prefix_m = pathStateShifted.LogPathPdfMain / pdf_bxdf_m;
-    float pdf_prefix_s = pathStateShifted.LogPathPdfShifted / pdf_bxdf_s;
+    float pdf_prefix_m = pathStateShifted.PathPdfMain / pdf_bxdf_m;
+    float pdf_prefix_s = pathStateShifted.PathPdfShifted / pdf_bxdf_s;
 
 	float pdf_nee_m = v1.PDF_NEE;
 	float pdf_nee_s = pdfShifted_NEE;
@@ -243,10 +170,7 @@ bool EmissiveHit_S_Unconnected(
 	float mis_nee_s;
 	float mis_nee_m;
     float mis_path;
-    getMisWeights_Emissive(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
-
-    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
-    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
+    getMisWeights_BxdfSubpath(pathStateShifted, pdf_prefix_m, pdf_prefix_s, pdf_bxdf_m, pdf_bxdf_s, pdf_nee_m, pdf_nee_s, pathStateShifted.Jacobian, mis_nee_s, mis_nee_m, mis_path);
 
     float3 shiftedLo = mis_nee_s * pathState.Beta * Li;
     shiftedLo = ApplyFireflyThreshold(shiftedLo, gSettings.FireflyThreshold);
@@ -254,6 +178,9 @@ bool EmissiveHit_S_Unconnected(
     pathState.Lo = shiftedLo;
 
     shiftedLo *= pathStateShifted.Jacobian;
+
+    float3 mainLo = mis_nee_m * v1.InitialBeta * v1.DirectContribution;
+    mainLo = ApplyFireflyThreshold(mainLo, gSettings.FireflyThreshold);
 
     pathStateShifted.SubpathGradients += (shiftedLo - mainLo) * mis_path;
     return false;

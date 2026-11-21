@@ -81,11 +81,8 @@ bool ResolveShiftedPathAncillaryVertex(
     if (!pathStateShifted.IsSymmetric)
         return false;
 
-	//pathStateShifted.LogPathPdfMain += log(pdfMain);
-	//pathStateShifted.LogPathPdfShifted += log(pdfShifted);
-
-    pathStateShifted.LogPathPdfMain *= pdfMain;
-	pathStateShifted.LogPathPdfShifted *= pdfShifted;
+    pathStateShifted.PathPdfMain *= pdfMain;
+	pathStateShifted.PathPdfShifted *= pdfShifted;
 
 	pathStateShifted.PdfRatio *= (pdfShifted / pdfMain);
 

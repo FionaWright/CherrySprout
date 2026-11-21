@@ -8,9 +8,10 @@
 #include "PathTracing/Debug/SettingGuards.hlsli"
 
 // TODO: When both env map and dir light enabled at same time, MIS value is incorrect. It's an output from this function for ReSTIR reasons
-float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDelta, out float mis)
+float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDelta, out float mis, out float pdf_nee)
 {
     mis = 1.0f;
+    pdf_nee = 1.0f;
 
     if (FEAT_DBG(FurnaceTestHHE))
         return 0.0f;
@@ -31,8 +32,7 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
         {
             float pdf_lsd;
             EvaluateLSD(0, pdf_lsd);
-
-            float pdf_nee = pdf_lsd * EvaluateEnvMapPdf(uv);
+            pdf_nee = pdf_lsd * EvaluateEnvMapPdf(uv);
 
             if (FEAT_DBG(FixedMisNeeManual))
                 mis = 1.0f - GetFixedMisNee();
@@ -62,11 +62,11 @@ float3 Miss(float3 wi, float lastBxdfPdf, bool isPrimaryRay, bool lastRayDiracDe
     return Li;
 }
 
-float3 Miss(PathState pathState, out float mis)
+float3 Miss(PathState pathState, out float mis, out float pdf_nee)
 {
     bool isPrimaryRay = pathState.GetPathFlag(eIsPrimaryRay);
     bool lastRayDirac = pathState.GetPathFlag(eLastRayWasDirac);
-    return Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, isPrimaryRay, lastRayDirac, mis);
+    return Miss(pathState.Desc.Direction, pathState.LastBxdfPdf, isPrimaryRay, lastRayDirac, mis, pdf_nee);
 }
 
 #endif

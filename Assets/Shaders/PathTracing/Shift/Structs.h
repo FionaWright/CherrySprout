@@ -69,16 +69,17 @@ enum class ReconnectionState : hlsl::uint
 struct PathStateShifted
 {
     float Jacobian;
-    float LogPathPdfMain;
-    float LogPathPdfShifted;
+    float PathPdfMain;
+    float PathPdfShifted;
     float PdfRatio;
 
     hlsl::uint IsSymmetric;
     hlsl::float3 SubpathGradients;
 
     hlsl::uint IsUsingNeeMis;
+    hlsl::uint DivideLoByPdf;
     ReconnectionState ReconnectionState;
-    hlsl::float2 p;
+    float p;
 };
 
 inline PathStateShifted CreatePathStateShifted()
@@ -86,11 +87,12 @@ inline PathStateShifted CreatePathStateShifted()
     PathStateShifted pathStateShifted = (PathStateShifted)0;
 
     pathStateShifted.Jacobian = 1.0f;
-    pathStateShifted.LogPathPdfMain = 1.0f; // TODO
-    pathStateShifted.LogPathPdfShifted = 1.0f;
+    pathStateShifted.PathPdfMain = 1.0f;
+    pathStateShifted.PathPdfShifted = 1.0f;
     pathStateShifted.PdfRatio = 1.0f;
     pathStateShifted.IsSymmetric = true;
     pathStateShifted.IsUsingNeeMis = true;
+    pathStateShifted.DivideLoByPdf = true;
     pathStateShifted.SubpathGradients = hlsl::float3(0,0,0);
     pathStateShifted.ReconnectionState = ReconnectionState::eUnconnected;
 
