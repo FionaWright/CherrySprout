@@ -1,4 +1,5 @@
 #include "Utils/HlslUtils.hlsli"
+#include "PostProcessing/GammaCorrect.hlsli"
 
 Texture2D<float4> gSource : register(t0);
 RWTexture2D<float4> gDest : register(u0);

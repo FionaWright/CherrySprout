@@ -60,20 +60,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_outputRgba8Unorm.Init("Output", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
     }
 
-    {
-        D3D12_RESOURCE_DESC desc = {};
-        desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        desc.Width = Config::GetSystem().RtvWidth;
-        desc.Height = Config::GetSystem().RtvHeight;
-        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        desc.DepthOrArraySize = 1;
-        desc.MipLevels = 1;
-        desc.SampleDesc.Count = 1;
-        m_accum.Release();
-        m_accum.Init("Accum", d3d->GetDevice(), desc, D3D12_RESOURCE_STATE_COMMON);
-    }
-
 #if CHERRY_DEBUG_FEATURES_ENABLED
     if (!m_debugManager.IsInitialized())
         m_debugManager.Init(d3d, heap);
@@ -148,16 +134,15 @@ void PathTracer::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* u
         m_rtasBuilder.FlushAndBuild(d3d, scene, isAnimationEnabled);
     }
 
-    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 0, &m_accum, m_accum.GetDesc().Format);
-    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 1, &m_primal, m_primal.GetDesc().Format);
-    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 2, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
-    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 3, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
-    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 4, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
-    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 5, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
-    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
-    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
-    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 8, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
-    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 9, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 0, &m_primal, m_primal.GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 1, m_gradientManager.GetGradientXF(), m_gradientManager.GetGradientXF()->GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 2, m_gradientManager.GetGradientXB(), m_gradientManager.GetGradientXB()->GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 3, m_gradientManager.GetGradientYF(), m_gradientManager.GetGradientYF()->GetDesc().Format);
+    m_set.SetUAV_Tex2D (d3d->GetDevice(), SPACE_U_DEFAULT, 4, m_gradientManager.GetGradientYB(), m_gradientManager.GetGradientYB()->GetDesc().Format);
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 5, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
+    m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEFAULT, 8, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextPrimaryRay));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_set.SetUAV_Buffer(d3d->GetDevice(), SPACE_U_DEBUG, 0, m_debugManager.GetBufferGPUErrorInfoRW(), _countof(s_debugIdList), sizeof(DebugErrorInfo));
@@ -357,7 +342,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     {
         m_primal.Transition                             (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_accum.Transition                              (cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         D12Resource* vertexBuffer = renderInfo.IsAnimationEnabled ? &scene->GPU.MegaBufferVertexSkinned : &scene->GPU.MegaBufferVertexBind;
 
@@ -476,7 +460,6 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 void PathTracer::UnreserveData()
 {
     m_primal.Release();
-    m_accum.Release();
     m_outputRgba8Unorm.Release();
 #if CHERRY_DEBUG_FEATURES_ENABLED
     m_debugManager.UnreserveData();

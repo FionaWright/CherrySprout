@@ -48,7 +48,6 @@ public:
     }
 
     D12Resource* GetTexPrimal() { return &m_primal; }
-    D12Resource* GetTexAccum() { return &m_accum; }
     D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
 
     void ScheduleRestirClear() { m_restirClearScheduled = true; }
@@ -65,7 +64,7 @@ private:
     Pipeline m_pipeline;
     RootSig m_rootSig;
     DescriptorSet m_set;
-    D12Resource m_primal, m_accum;
+    D12Resource m_primal;
     D12Resource m_outputRgba8Unorm;
     D12Resource* m_finalHdrOutput = nullptr;
 

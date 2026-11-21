@@ -10,7 +10,7 @@
 float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
 {
     bool isAccumUninit = gSettings.FrameIdx == 0 || !FEAT_CORE(Accumulation);
-    float3 accumColor = isAccumUninit ? 0 : gTexAccumulation.Load(pixelCoord).rgb;
+    float3 accumColor = isAccumUninit ? 0 : gTexPrimal.Load(pixelCoord).rgb;
 
     // Instead of averaging samples, replace the accum value whenever a valid one is found
     // Useful for when chosen ray depth > 0 and many debug outputs will often return NAN
@@ -18,14 +18,14 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
     {
         if (isAccumUninit || (IsNaN3(accumColor) && IsNaN3(primal)))
         {
-            gTexAccumulation[pixelCoord].rgb = NAN;
+            gTexPrimal[pixelCoord].rgb = NAN;
             return GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
         }
 
         if (IsNaN3(primal))
             return accumColor;
 
-        gTexAccumulation[pixelCoord].rgb = primal;
+        gTexPrimal[pixelCoord].rgb = primal;
         if (!IsNaN3(accumColor))
             primal = (primal + accumColor) / 2.0f; // We can't average over the total number of samples as accumFrameCount is different per-pixel, so we average 2 samples
         return primal;
@@ -39,13 +39,13 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
         if (IsNaN3(primal) || IsNaN3(accumColor))
         {
             if (FEAT_CORE(Accumulation))
-                gTexAccumulation[pixelCoord].rgb = NAN;
+                gTexPrimal[pixelCoord].rgb = NAN;
             return GetNaNVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
         }
         else if (IsInf3(primal) || IsInf3(accumColor))
         {
             if (FEAT_CORE(Accumulation))
-                gTexAccumulation[pixelCoord].rgb = INF;
+                gTexPrimal[pixelCoord].rgb = INF;
             return GetInfVisualizerColor(pixelCoord, gSettings.FrameIdx, gSettings.FrameDimensions);
         }
     }
@@ -57,8 +57,6 @@ float3 AccumulateAndFetch(uint2 pixelCoord, float3 primal)
     float totalFrames = accumFrameCount + 1.0f;
 
     float3 average = (accumColor * accumFrameCount + primal) / totalFrames;
-    gTexAccumulation[pixelCoord].rgb = average;
-
     return average;
 }
 

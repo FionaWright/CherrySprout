@@ -132,7 +132,7 @@ void AnimationManager::Skin(ID3D12GraphicsCommandList* cmdList, Scene* scene, He
 
                 const BoneInfo& boneInfo = scene->CPU.MegaBufferBoneInfos[globalBoneIdx];
 
-                // Keyframe Interpolation (LBS)
+                // Keyframe Interpolation
                 XMMATRIX TRS;
                 {
                     const uint32_t globalKeyFrameIdx0 = globalKeyFrameBaseIdx0 + localBoneIdx;

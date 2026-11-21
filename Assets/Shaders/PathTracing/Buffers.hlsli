@@ -65,16 +65,15 @@ Texture2D<float4>                                   gSceneTextures[]        : re
 
 // =================== U Registers ===============================================================================
 
-RWTexture2D<float4>                                 gTexAccumulation        : register(u0, SPACE_U_DEFAULT);
-RWTexture2D<float4>                                 gTexPrimal              : register(u1, SPACE_U_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientXF          : register(u2, SPACE_U_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientXB          : register(u3, SPACE_U_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientYF          : register(u4, SPACE_U_DEFAULT);
-RWTexture2D<float4>                                 gTexGradientYB          : register(u5, SPACE_U_DEFAULT);
-RWStructuredBuffer<ReservoirDI>                     gReservoirBufferDI      : register(u6, SPACE_U_DEFAULT);
-RWStructuredBuffer<ReservoirGI>                     gReservoirBufferGI      : register(u7, SPACE_U_DEFAULT);
-RWStructuredBuffer<ReservoirPT>                     gReservoirBufferPT      : register(u8, SPACE_U_DEFAULT);
-RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : register(u9, SPACE_U_DEFAULT);
+RWTexture2D<float4>                                 gTexPrimal              : register(u0, SPACE_U_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientXF          : register(u1, SPACE_U_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientXB          : register(u2, SPACE_U_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientYF          : register(u3, SPACE_U_DEFAULT);
+RWTexture2D<float4>                                 gTexGradientYB          : register(u4, SPACE_U_DEFAULT);
+RWStructuredBuffer<ReservoirDI>                     gReservoirBufferDI      : register(u5, SPACE_U_DEFAULT);
+RWStructuredBuffer<ReservoirGI>                     gReservoirBufferGI      : register(u6, SPACE_U_DEFAULT);
+RWStructuredBuffer<ReservoirPT>                     gReservoirBufferPT      : register(u7, SPACE_U_DEFAULT);
+RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : register(u8, SPACE_U_DEFAULT);
 
 // =================== U Registers (Debug) =======================================================================
 #if (FEAT_FLAGS_COMP_DBG != 0)
