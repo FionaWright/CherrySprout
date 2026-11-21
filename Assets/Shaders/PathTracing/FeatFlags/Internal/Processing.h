@@ -1,8 +1,8 @@
 // ReSharper disable once CppMissingIncludeGuard
 #include "Utils/HlslGlue.h"
 
-#define FEAT_FLAG_TYPE_CORE hlsl::uint
-#define FEAT_FLAG_TYPE_DBG hlsl::uint
+#define FEAT_FLAG_TYPE_CORE hlsl::uint64
+#define FEAT_FLAG_TYPE_DBG hlsl::uint64
 
 // ====================== Guards ======================
 
@@ -58,10 +58,10 @@
 #elif defined(FLAGS_PROCESS_AS_FLAG)
 #   ifdef FLAGS_PROCESSING_DEBUG
 #       define __IDX_DBG(x) (hlsl::uint)Internal_FeatFlagIndicesDbg::Idx_##x
-#       define FLAG_PROCESS(flag, isQuickSwitchable) eDebug_##flag = 1u << __IDX_DBG(flag),
+#       define FLAG_PROCESS(flag, isQuickSwitchable) eDebug_##flag = (FEAT_FLAG_TYPE_DBG)(1) << __IDX_DBG(flag),
 #   else
 #       define __IDX_CORE(x) (hlsl::uint)Internal_FeatFlagIndicesCore::Idx_##x
-#       define FLAG_PROCESS(flag, isQuickSwitchable) eCore_##flag = 1u << __IDX_CORE(flag),
+#       define FLAG_PROCESS(flag, isQuickSwitchable) eCore_##flag = (FEAT_FLAG_TYPE_CORE)(1) << __IDX_CORE(flag),
 #   endif
 
 #elif defined(FLAGS_PROCESS_AS_STRING)

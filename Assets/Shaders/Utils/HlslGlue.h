@@ -68,6 +68,7 @@ namespace hlsl
     typedef DirectX::XMFLOAT3 float3;
     typedef DirectX::XMFLOAT4 float4;
     typedef uint32_t uint;
+    typedef uint64_t uint64;
 
     typedef struct uint2
     {
@@ -237,6 +238,7 @@ namespace hlsl
     typedef uint2 uint2;
     typedef uint3 uint3;
     typedef uint4 uint4;
+    typedef uint64_t uint64;
     typedef int2 int2;
     typedef int3 int3;
     typedef int4 int4;

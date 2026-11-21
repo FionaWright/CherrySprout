@@ -45,3 +45,6 @@ FLAG_PROCESS(RestirTargetVisibility, true)
 
 FLAG_PROCESS(Transient, true)
 FLAG_PROCESS(ToneMapping, true)
+
+FLAG_PROCESS(AreaRestir, false)
+FLAG_PROCESS(AreaRestirRobust, false)
