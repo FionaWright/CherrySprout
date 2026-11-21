@@ -20,28 +20,57 @@
 
     Wo / RngPrimary needs to be updatable candidate information, not context information from now on
     Given that then each candidate has its own jitter, do I need to do anything special to use it in the actual path? (DI)
+
+    Area restir requires primary hits to be re-traced for each candidate, as such there is basically no context
+    One idea is to have it so Area ReSTIR has no context and uses the existing pixel info system
+    The other idea is to put that information into a new context and recompute context every candidate (Messy)
+
+    I think keeping it in a pixel info inside the reservoir is a good idea, and then Area ReSTIR can basically just ignore the context which will be empty
 */
 
-PixelInfoArea InitPixelInfo(inout RngInfo rngInfo, ContextScreenSpace context)
+// TODO: Disable normal/depth rejection heuristics
+// TODO: Requires new special shift mappings for first vertex?
+
+PreCandidateArea GeneratePreCandidate(inout RngInfo rngInfo, ContextScreenSpaceArea _)
 {
-    RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
+    PreCandidateArea preCandidate = INIT0(PreCandidateArea);
+
+    preCandidate.RngPrimary = SampleRngPrimary(rngInfo);
 
     float3 rayOrigin;
-    float3 rayDirection;
     GetPrimaryRay(
-        rngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        preCandidate.RngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
         pixelCoord, gSettings.InvV, gSettings.InvP,
         gSettings.DofFocalDist, gSettings.DofLensRadius,
-        rayOrigin, rayDirection);
+        rayOrigin, preCandidate.CenterRayDirection);
 
-    PixelInfoPoint pixelInfo;
-    pixelInfo.RayDirection = rayDirection;
-    pixelInfo.RngPrimary = rngPrimary;
-    return pixelInfo;
+    PathState pathState = CreatePathState(rayOrigin, preCandidate.CenterRayDirection);
+
+    RayQuery<RAY_FLAGS> q;
+    q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, pathState.Desc);
+    while (q.Proceed()) {}
+
+    preCandidate.IsMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
+
+    if (!preCandidate.IsMiss)
+        GetHitInfo(q, preCandidate.HitInfo);
+
+    return preCandidate;
 }
 
+// TODO: Shift() should re-trace primary ray with new jitter, possibly with a jacobian
+
 template <typename TCandidate>
-ReservoirX_Area FindTemporalReservoir(inout RngInfo rngInfo, PixelInfoArea pixelInfo, RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoord, float2 mv)
+bool TryFindTemporalReservoir(
+    inout RngInfo rngInfo,
+
+    RWStructuredBuffer< ReservoirX_Area > buffer,
+    ContextScreenSpaceArea _,
+    PreCandidateArea preCandidate,
+    uint2 pixelCoord,
+    float2 mv,
+
+    out ReservoirX_Area temporalReservoir)
 {
     float2 dimensions = gSettings.FrameDimensions;
 
@@ -57,13 +86,9 @@ ReservoirX_Area FindTemporalReservoir(inout RngInfo rngInfo, PixelInfoArea pixel
 
     bool validPrevPixel = all(pixel2x2Base >= 0) && all(pixel2x2Base < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
-    {
-        buffer[reservoirIdxOut] = reservoir;
-        TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
-        return;
-    }
+        return false;
 
-    float2 jitterFromCenter = pixelInfo.RngPrimary.Jitter - 0.5f;
+    float2 jitterFromCenter = preCandidate.RngPrimary.Jitter - 0.5f;
     float2 samplePosition = supportCenter + jitterFromCenter;
 
     ReservoirX_Area samples[4];
@@ -77,11 +102,12 @@ ReservoirX_Area FindTemporalReservoir(inout RngInfo rngInfo, PixelInfoArea pixel
 
     if (FEAT_CORE(AreaRestirRobust)
     {
+        // TODO
     }
     else
     {
         [unroll]
-        for (int i = 0; i < 4; i++)
+        for (uint i = 0; i < 4; i++)
         {
             uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
             uint reservoirIdx = GetReservoirBufferIndex_Previous(prevPixelCoord);
@@ -99,31 +125,44 @@ ReservoirX_Area FindTemporalReservoir(inout RngInfo rngInfo, PixelInfoArea pixel
             }
         }
     }
+
+    uint2 selectedPixelCoord = uint2(UINT_MAX, UINT_MAX);
 
     // RIS
     {
+        float w[4];
+        float wSum = 0.0f;
+
+        uint M = 4;
+
         [unroll]
-        for (int i = 0; i < 4; i++)
+        for (uint i = 0; i < M; i++)
         {
-            uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
-            uint reservoirIdx = GetReservoirBufferIndex_Previous(prevPixelCoord);
-            samples[i] = buffer[reservoirIdx];
+            float mis = 1.0f;
+            w[i] = mis * samples[i].PHat * samples[i].W_Y; // TODO: Correct to use W_Y?
+            wSum += w[i];
+        }
 
-            float2 candidateJitterFromCenter = samples[i].PixelInfo.RngPrimary.Jitter - 0.5f;
-            float2 candidatePosition = float2(coord) + 0.5f + candidateJitterFromCenter;
+        if (wSum <= 0.0f)
+            return false;
 
-            bool rejectCandidate =
-                any(candidatePosition < supportBase) ||
-                any(candidatePosition > supportTop);
-            if (rejectCandidate)
+        float r = Rand01(rngInfo);
+        for (uint i = 0; i < M; i++)
+        {
+            r -= w[i] / wSum;
+            if (r <= 0.0f)
             {
-                samples[i].PHat = 0.0f;
+                float3 W_Y = wSum / (float(M) * samples[i].PHat); // TODO: Do something with this?
+
+                uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
+                uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(coord);
+                temporalReservoir = buffer[reservoirIdxPrevIn];
+                return true;
             }
         }
     }
 
-    uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    return buffer[reservoirIdxPrevIn];
+    return false;
 }
 
 #endif

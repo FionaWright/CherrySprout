@@ -22,7 +22,7 @@
 #define MISS_SAMPLES_VALID 1
 #define NON_MISS_SAMPLES_VALID 1
 
-void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGI X_i)
+void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i)
 {
     RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
 
@@ -93,7 +93,7 @@ void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGI
     X_i.Jacobian = 1.0f;
 }
 
-void Shift(inout CandidateGI X_i, ContextScreenSpace context)
+void Shift(inout CandidateGI X_i, ContextSSPoint context)
 {
 #if !MISS_SAMPLES_VALID
     if (X_i.IsMiss)
@@ -160,7 +160,7 @@ void Shift(inout CandidateGI X_i, ContextScreenSpace context)
     X_i.Jacobian = shiftResult.Jacobian;
 }
 
-float Target(CandidateGI X_i, ContextScreenSpace context)
+float Target(CandidateGI X_i, ContextSSPoint context)
 {
 #if !MISS_SAMPLES_VALID
     if (X_i.IsMiss)
@@ -208,7 +208,7 @@ float Target(CandidateGI X_i, ContextScreenSpace context)
     return Luminance(Lo) * X_i.Jacobian;
 }
 
-float PDF(CandidateGI X_i, ContextScreenSpace context)
+float PDF(CandidateGI X_i, ContextSSPoint context)
 {
     return X_i.BxdfEval.PDF;
 }
@@ -289,10 +289,10 @@ bool TrySampleReservoirGI(
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGI X_i) { X_i = (CandidateGI)0; }
-void Shift(inout CandidateGI X_i, ContextScreenSpace context) {}
-float Target(CandidateGI X_i, ContextScreenSpace context) { return NAN; }
-float PDF(CandidateGI X_i, ContextScreenSpace context) { return NAN; }
+void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i) { X_i = (CandidateGI)0; }
+void Shift(inout CandidateGI X_i, ContextSSPoint context) {}
+float Target(CandidateGI X_i, ContextSSPoint context) { return NAN; }
+float PDF(CandidateGI X_i, ContextSSPoint context) { return NAN; }
 bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,

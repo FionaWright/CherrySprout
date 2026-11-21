@@ -10,11 +10,51 @@
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Utils.hlsli"
 
+void InitContext(uint2 pixelCoord, out ContextSSPoint context)
+{
+    // TODO: Option to trace primary ray?
+
+    // TODO: Option to re-use context in core PT instead of primary ray
+
+    HitInfo hitInfo;
+    bool isMiss;
+    float depthNonLinear;
+    ReconstructPrimaryRayHit(
+        gSettings.CameraPositionWorld,
+        pixelCoord,
+        gGBufferMaterialIdx,
+        gGBufferNormalsUv,
+        gGBufferDepth,
+        gMegaBufferMaterials,
+        hitInfo,
+        isMiss,
+        depthNonLinear
+    );
+
+    RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
+    RngValuesPrimary rngPrimary = SampleRngPrimary(rngInfo);
+
+    float3 rayOrigin;
+    float3 rayDirection;
+    GetPrimaryRay(
+        rngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        pixelCoord, gSettings.InvV, gSettings.InvP,
+        gSettings.DofFocalDist, gSettings.DofLensRadius,
+        rayOrigin, rayDirection);
+
+    context.IsMiss = isMiss;
+    context.DepthNonLinear = depthNonLinear;
+    context.CenterRayDirection = rayDirection;
+
+    if (!isMiss)
+        context.HitInfo = hitInfo;
+}
+
 template <typename TCandidate>
-void GenerateCandidates(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, uint seedDecorrelator)
+void GenerateCandidates(RWStructuredBuffer< ReservoirX > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextScreenSpace context = gContextsPrimaryRay[contextIdx];
+    ContextSSPoint context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
         return;
 
@@ -23,7 +63,7 @@ void GenerateCandidates(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint
     if (seedDecorrelator == 0)
         SampleRngPrimary(rngInfo);
 
-    Reservoir<TCandidate> reservoir = CreateReservoir<TCandidate>();
+    ReservoirX reservoir = CreateReservoir<TCandidate, PreCandidatePoint>();
     WRS(rngInfo, reservoir, gRestirSettings.GenCandidatesCount, context);
 
     uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
@@ -31,15 +71,15 @@ void GenerateCandidates(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint
 }
 
 template <typename TCandidate>
-void TemporalReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, uint seedDecorrelator)
+void TemporalReuse(RWStructuredBuffer< ReservoirX > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextScreenSpace context = gContextsPrimaryRay[contextIdx];
+    ContextSSPoint context = gContextsPrimaryRay[contextIdx];
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
 
-    Reservoir<TCandidate> reservoir = buffer[reservoirIdxIn];
+    ReservoirX reservoir = buffer[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
@@ -62,10 +102,10 @@ void TemporalReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pix
     }
 
     uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    Reservoir<TCandidate> reservoirPrev = buffer[reservoirIdxPrevIn];
+    ReservoirX reservoirPrev = buffer[reservoirIdxPrevIn];
 
     uint contextIdxOther = GetContextBufferIndex_Prev(prevPixelCoord);
-    ContextScreenSpace contextOther = gContextsPrimaryRay[contextIdxOther];
+    ContextSSPoint contextOther = gContextsPrimaryRay[contextIdxOther];
 
     float3 normalMain = context.HitInfo.Ns_ff;
     float3 normalOther = contextOther.HitInfo.Ns_ff;
@@ -100,14 +140,14 @@ void TemporalReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pix
 }
 
 template <typename TCandidate>
-void SpatialReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixelCoord, uint seedDecorrelator)
+void SpatialReuse(RWStructuredBuffer< ReservoirX > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    Reservoir<TCandidate> reservoir = buffer[reservoirIdxIn];
+    ReservoirX reservoir = buffer[reservoirIdxIn];
 
     uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextScreenSpace context = gContextsPrimaryRay[contextIdx];
+    ContextSSPoint context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
     {
         buffer[reservoirIdxOut] = reservoir;
@@ -134,7 +174,7 @@ void SpatialReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixe
                 continue;
         }
 
-        ContextScreenSpace contextOther;
+        ContextSSPoint contextOther;
         {
             uint contextIdxOther = GetContextBufferIndex_Prev(coord);
             contextOther = gContextsPrimaryRay[contextIdxOther];
@@ -151,7 +191,7 @@ void SpatialReuse(RWStructuredBuffer< Reservoir<TCandidate> > buffer, uint2 pixe
             continue;
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        Reservoir<TCandidate> reservoirNeighbour = buffer[idx];
+        ReservoirX reservoirNeighbour = buffer[idx];
 
         Shift(reservoirNeighbour.Y, context);
         ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);

@@ -11,14 +11,14 @@ RngValuesPrimary SampleRngPrimary(inout RngInfo rngInfo)
 
     if (FEAT_CORE(JitterPerPixel))
     {
-        r.Jitter.x = Rand01(rngInfo);
-        r.Jitter.y = Rand01(rngInfo);
+        r.Jitter.x = Rand01Ex(rngInfo);
+        r.Jitter.y = Rand01Ex(rngInfo);
     }
 
     if (FEAT_CORE(DepthOfField))
     {
-        r.DoF.x = Rand01(rngInfo);
-        r.DoF.y = Rand01(rngInfo);
+        r.DoF.x = Rand01Ex(rngInfo);
+        r.DoF.y = Rand01Ex(rngInfo);
     }
 
     return r;

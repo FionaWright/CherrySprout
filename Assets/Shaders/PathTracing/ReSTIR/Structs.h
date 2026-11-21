@@ -8,25 +8,44 @@
 
 #include "PathTracing/ReSTIR/Reservoir.h"
 
-struct ContextScreenSpace
+struct ContextSSPoint
 {
     HitInfo HitInfo; // TODO: Very heavy, use material index?
-
     hlsl::float3 CenterRayDirection;
     hlsl::uint IsMiss;
     float DepthNonLinear;
 };
 
-struct PixelInfoPoint
+struct ContextSSArea
 {
     // None
+    bool _;
 };
 
-struct PixelInfoArea
+struct PreCandidatePoint
 {
-    RngValuesPrimary RngPrimary;
-    hlsl::float3 RayDirection;
+    // None
+    // Implicit pixel position (0.5,0.5)
+    bool _;
 };
+
+struct PreCandidateArea
+{
+    // Sample:
+    RngValuesPrimary RngPrimary;
+
+    // Eval:
+    HitInfo HitInfo; // TODO: Very heavy, use material index?
+    hlsl::float3 CenterRayDirection;
+    hlsl::uint IsMiss;
+    float DepthNonLinear;
+};
+
+#if FEAT_CORE_D(AreaRestir)
+#   define PRIMARY_RAY_INFO PreCandidateArea
+#else
+#   define PRIMARY_RAY_INFO ContextSSPoint
+#endif
 
 struct CandidateDI
 {
@@ -79,21 +98,21 @@ struct CandidateGPT
     float InnerJacobian;
 };
 
-#define ReservoirX Reservoir<TCandidate, PixelInfoPoint>
-#define ReservoirX_Area Reservoir<TCandidate, PixelInfoArea>
+#define ReservoirX Reservoir<TCandidate, PreCandidatePoint>
+#define ReservoirX_Area Reservoir<TCandidate, PreCandidateArea>
 
-typedef Reservoir<CandidateDI, PixelInfoPoint> ReservoirDI;
-typedef Reservoir<CandidateGI, PixelInfoPoint> ReservoirGI;
-typedef Reservoir<CandidatePT, PixelInfoPoint> ReservoirPT;
-typedef Reservoir<CandidateGPT, PixelInfoPoint> ReservoirGPT;
-typedef Reservoir<CandidateGPT, PixelInfoPoint> ReservoirGPT_Pos; // TODO
-typedef Reservoir<CandidateGPT, PixelInfoPoint> ReservoirGPT_Neg;
+typedef Reservoir<CandidateDI, PreCandidatePoint> ReservoirDI;
+typedef Reservoir<CandidateGI, PreCandidatePoint> ReservoirGI;
+typedef Reservoir<CandidatePT, PreCandidatePoint> ReservoirPT;
+typedef Reservoir<CandidateGPT, PreCandidatePoint> ReservoirGPT;
+typedef Reservoir<CandidateGPT, PreCandidatePoint> ReservoirGPT_Pos; // TODO
+typedef Reservoir<CandidateGPT, PreCandidatePoint> ReservoirGPT_Neg;
 
-typedef Reservoir<CandidateDI, PixelInfoArea> ReservoirDI_Area;
-typedef Reservoir<CandidateGI, PixelInfoArea> ReservoirGI_Area;
-typedef Reservoir<CandidatePT, PixelInfoArea> ReservoirPT_Area;
-typedef Reservoir<CandidateGPT, PixelInfoArea> ReservoirGPT_Area;
-typedef Reservoir<CandidateGPT, PixelInfoArea> ReservoirGPT_Pos_Area;
-typedef Reservoir<CandidateGPT, PixelInfoArea> ReservoirGPT_Neg_Area;
+typedef Reservoir<CandidateDI, PreCandidateArea> ReservoirDI_Area;
+typedef Reservoir<CandidateGI, PreCandidateArea> ReservoirGI_Area;
+typedef Reservoir<CandidatePT, PreCandidateArea> ReservoirPT_Area;
+typedef Reservoir<CandidateGPT, PreCandidateArea> ReservoirGPT_Area;
+typedef Reservoir<CandidateGPT, PreCandidateArea> ReservoirGPT_Pos_Area;
+typedef Reservoir<CandidateGPT, PreCandidateArea> ReservoirGPT_Neg_Area;
 
 #endif

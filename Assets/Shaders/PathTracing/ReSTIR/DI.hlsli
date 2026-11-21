@@ -16,25 +16,25 @@
 #include "PathTracing/Debug/Assert.hlsli"
 #include "PathTracing/Debug/SettingGuards.hlsli"
 
-void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateDI X_i)
+void Generate(inout RngInfo rngInfo, PRIMARY_RAY_INFO primaryRayInfo, out CandidateDI X_i)
 {
     RngValuesAncillary::RngValuesNEE rng = SampleRngNEE(rngInfo);
 
     LightEval lightEval;
-    LightSample lightSample = SampleLight(rng, context.HitInfo.HitPos, lightEval);
+    LightSample lightSample = SampleLight(rng, primaryRayInfo.HitInfo.HitPos, lightEval);
 
     X_i.LightSample = lightSample;
     X_i.LightEval = lightEval;
 }
 
-void Shift(inout CandidateDI X_i, ContextScreenSpace context)
+void Shift(inout CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
 {
-    X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, X_i.LightSample);
+    X_i.LightEval = EvaluateLight(primaryRayInfo.HitInfo.HitPos, X_i.LightSample);
 }
 
-float Target(CandidateDI X_i, ContextScreenSpace context)
+float Target(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
 {
-    float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, X_i.LightEval.Direction));
+    float NdL = max(0.0f, dot(primaryRayInfo.HitInfo.Ns_ff, X_i.LightEval.Direction));
     if (NdL <= 0)
         return 0.0f;
 
@@ -44,7 +44,7 @@ float Target(CandidateDI X_i, ContextScreenSpace context)
     float shadowFactor = 1.0f;
     if (FEAT_CORE(RestirTargetVisibility))
     {
-        TraceRayShadow(context.HitInfo.HitPosBiased, X_i.LightEval.Direction, X_i.LightEval.Distance, shadowFactor);
+        TraceRayShadow(primaryRayInfo.HitInfo.HitPosBiased, X_i.LightEval.Direction, X_i.LightEval.Distance, shadowFactor);
         if (shadowFactor <= 0.0f)
             return 0;
     }
@@ -61,8 +61,8 @@ float Target(CandidateDI X_i, ContextScreenSpace context)
     else
     {
         // TODO: This is outdated, needs changing
-        float3 wo = -context.CenterRayDirection;
-        BxdfEval bxdfEval = BxDF::Evaluate(context.HitInfo, wo, X_i.LightEval.Direction, LobeTag::eAll);
+        float3 wo = -primaryRayInfo.CenterRayDirection;
+        BxdfEval bxdfEval = BxDF::Evaluate(primaryRayInfo.HitInfo, wo, X_i.LightEval.Direction, LobeTag::eAll);
 
         m = bxdfEval.Radiance * BalanceHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
@@ -71,7 +71,7 @@ float Target(CandidateDI X_i, ContextScreenSpace context)
     return Luminance(radiance);
 }
 
-float PDF(CandidateDI X_i, ContextScreenSpace context)
+float PDF(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
 {
     return X_i.LightEval.PDF;
 }
@@ -125,8 +125,6 @@ bool TrySampleReservoirDI(
     if (shadowFactor <= 0.0f)
         return false;
 
-    //DBG_ASSERT_APPROX(length(wi), 1.0f, 0.02f, RESTIR_DIR_NORM); // TODO: Seems to cause issues for some reason
-
     float3 m;
     if (lightEval.IsDelta)
     {
@@ -136,6 +134,7 @@ bool TrySampleReservoirDI(
     {
         BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
+        // TODO: Outdated here too
         m = bxdfEval.Radiance * BalanceHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
 
         DBG_OUTPUT3(bxdfEval.Radiance, RESTIRDI_Bxdf);
@@ -148,10 +147,10 @@ bool TrySampleReservoirDI(
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateDI X_i) { X_i = (CandidateDI)0; }
-void Shift(inout CandidateDI X_i, ContextScreenSpace context) {}
-float Target(CandidateDI X_i, ContextScreenSpace context) { return NAN; }
-float PDF(CandidateDI X_i, ContextScreenSpace context) { return NAN; }
+void Generate(inout RngInfo rngInfo, PRIMARY_RAY_INFO primaryRayInfo, out CandidateDI X_i) { X_i = (CandidateDI)0; }
+void Shift(inout CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo) {}
+float Target(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo) { return NAN; }
+float PDF(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo) { return NAN; }
 bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,

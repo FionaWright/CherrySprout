@@ -21,7 +21,7 @@
 #include "Utils/Debug/Palette.h"
 #include "PathTracing/Debug/Assert.hlsli"
 
-void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGPT X_i)
+void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGPT X_i)
 {
     float3 origin = NAN;
     PathState pathState = CreatePathState(origin, context.CenterRayDirection);
@@ -80,7 +80,7 @@ void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGP
     X_i.FiniteDifference = ((Lo - primalPathSample.Lo) * mis); // XF
 }
 
-void Shift(inout CandidateGPT X_i, ContextScreenSpace context)
+void Shift(inout CandidateGPT X_i, ContextSSPoint context)
 {
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
@@ -120,12 +120,12 @@ void Shift(inout CandidateGPT X_i, ContextScreenSpace context)
     X_i.PDF = pathStateShifted.PdfRatio * X_i.PDF;
 }
 
-float Target(CandidateGPT X_i, ContextScreenSpace context)
+float Target(CandidateGPT X_i, ContextSSPoint context)
 {
     return Luminance(X_i.Lo) * X_i.Jacobian;
 }
 
-float PDF(CandidateGPT X_i, ContextScreenSpace context)
+float PDF(CandidateGPT X_i, ContextSSPoint context)
 {
     return X_i.PDF;
 }
@@ -186,7 +186,7 @@ bool TrySampleReservoirPT(
 float3 SampleRestirPT(uint2 pixelCoord)
 {
     uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextScreenSpace context = gContextsPrimaryRay[contextIdx];
+    ContextSSPoint context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
     {
         return Miss(context.CenterRayDirection, 1.0f, true, false);
@@ -233,10 +233,10 @@ float3 SampleRestirPT(uint2 pixelCoord)
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGPT X_i) { X_i = (CandidateGPT)0; }
-void Shift(inout CandidateGPT X_i, ContextScreenSpace context) {}
-float Target(CandidateGPT X_i, ContextScreenSpace context) { return NAN; }
-float PDF(CandidateGPT X_i, ContextScreenSpace context) { return NAN; }
+void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGPT X_i) { X_i = (CandidateGPT)0; }
+void Shift(inout CandidateGPT X_i, ContextSSPoint context) {}
+float Target(CandidateGPT X_i, ContextSSPoint context) { return NAN; }
+float PDF(CandidateGPT X_i, ContextSSPoint context) { return NAN; }
 bool TrySampleReservoirPT(
     HitInfo hitInfo,
     uint2 pixelCoord,

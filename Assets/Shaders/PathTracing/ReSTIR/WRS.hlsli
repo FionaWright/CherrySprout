@@ -95,10 +95,10 @@ void SetUCW(inout Reservoir<TCandidate> reservoir)
     reservoir.W_Y = reservoir.WeightSum / (reservoir.PHat);
 }
 
-template<typename TCandidate, typename TContext, typename TPixelInfo>
+template<typename TCandidate, typename TContext, typename TPreCandidate>
 void WRS(
     inout RngInfo rngInfo,
-    inout Reservoir<TCandidate, TPixelInfo> reservoir,
+    inout Reservoir<TCandidate, TPreCandidate> reservoir,
     uint M,
     TContext context)
 {
@@ -109,6 +109,8 @@ void WRS(
 
     for (uint i = 0; i < M; i++)
     {
+        TPreCandidate preX_i = GeneratePreCandidate(rngInfo, context);
+
         TCandidate X_i;
         Generate(rngInfo, context, X_i);
 
