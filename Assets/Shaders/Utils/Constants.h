@@ -72,4 +72,8 @@
 
 #define COLOR_BLACK     float3(0,0,0)
 
+// ============ MISC =============
+
+#define MOTION_VECTOR_OFFSCREEN 100.0f
+
 #endif

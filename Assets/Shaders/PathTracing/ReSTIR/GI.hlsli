@@ -22,7 +22,7 @@
 #define MISS_SAMPLES_VALID 1
 #define NON_MISS_SAMPLES_VALID 1
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i)
+void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGI X_i)
 {
     RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
 
@@ -67,8 +67,8 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
     float3 E_direct = 0.0f;
     if (isMiss)
     {
-        float mis;
-        E_direct = Miss(bxdfSample.Wi, bxdfEval.PDF, false, bxdfSample.IsDirac, mis);
+        float mis, _;
+        E_direct = Miss(bxdfSample.Wi, bxdfEval.PDF, false, bxdfSample.IsDirac, mis, _);
         E_direct *= mis;
     }
     else if (FEAT_CORE(NEE))
@@ -91,7 +91,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI 
     X_i.Jacobian = 1.0f;
 }
 
-void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
+void Shift(inout CandidateGI X_i, ContextScreenSpace context)
 {
 #if !MISS_SAMPLES_VALID
     if (X_i.IsMiss)
@@ -156,7 +156,7 @@ void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context)
     X_i.Jacobian = shiftResult.Jacobian;
 }
 
-float Target(CandidateGI X_i, ContextPrimaryRay context)
+float Target(CandidateGI X_i, ContextScreenSpace context)
 {
 #if !MISS_SAMPLES_VALID
     if (X_i.IsMiss)
@@ -204,7 +204,7 @@ float Target(CandidateGI X_i, ContextPrimaryRay context)
     return Luminance(Lo) * X_i.Jacobian;
 }
 
-float PDF(CandidateGI X_i, ContextPrimaryRay context)
+float PDF(CandidateGI X_i, ContextScreenSpace context)
 {
     return X_i.BxdfEval.PDF;
 }
@@ -285,10 +285,10 @@ bool TrySampleReservoirGI(
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateGI X_i) { X_i = (CandidateGI)0; }
-void ReEvaluate(inout CandidateGI X_i, ContextPrimaryRay context) {}
-float Target(CandidateGI X_i, ContextPrimaryRay context) { return NAN; }
-float PDF(CandidateGI X_i, ContextPrimaryRay context) { return NAN; }
+void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateGI X_i) { X_i = (CandidateGI)0; }
+void Shift(inout CandidateGI X_i, ContextScreenSpace context) {}
+float Target(CandidateGI X_i, ContextScreenSpace context) { return NAN; }
+float PDF(CandidateGI X_i, ContextScreenSpace context) { return NAN; }
 bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,

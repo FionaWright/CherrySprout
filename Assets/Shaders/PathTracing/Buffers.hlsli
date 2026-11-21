@@ -73,7 +73,7 @@ RWTexture2D<float4>                                 gTexGradientYB          : re
 RWStructuredBuffer<ReservoirDI>                     gReservoirBufferDI      : register(u5, SPACE_U_DEFAULT);
 RWStructuredBuffer<ReservoirGI>                     gReservoirBufferGI      : register(u6, SPACE_U_DEFAULT);
 RWStructuredBuffer<ReservoirPT>                     gReservoirBufferPT      : register(u7, SPACE_U_DEFAULT);
-RWStructuredBuffer<ContextPrimaryRay>               gContextsPrimaryRay     : register(u8, SPACE_U_DEFAULT);
+RWStructuredBuffer<ContextScreenSpace>               gContextsPrimaryRay     : register(u8, SPACE_U_DEFAULT);
 
 // =================== U Registers (Debug) =======================================================================
 #if (FEAT_FLAGS_COMP_DBG != 0)

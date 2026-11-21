@@ -8,13 +8,24 @@
 
 #include "PathTracing/ReSTIR/Reservoir.h"
 
-struct ContextPrimaryRay
+struct ContextScreenSpace
 {
     HitInfo HitInfo; // TODO: Very heavy, use material index?
 
-    hlsl::float3 Wo;
+    hlsl::float3 Wo; // TODO: Need to figure out how ray direction now being modifiable changes things
     hlsl::uint IsMiss;
     float DepthNonLinear;
+};
+
+struct PixelInfoPoint
+{
+    hlsl::float3 RayDirection;
+};
+
+struct PixelInfoArea
+{
+    RngValuesPrimary RngPrimary;
+    hlsl::float3 RayDirection;
 };
 
 struct CandidateDI

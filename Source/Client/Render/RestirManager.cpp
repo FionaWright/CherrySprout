@@ -18,7 +18,7 @@ void RestirManager::Init(ID3D12Device* device)
         m_reservoirBufferDi.Init_Buffer("Reservoir DI", device, sizeof(ReservoirDI), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_reservoirBufferGi.Init_Buffer("Reservoir GI", device, sizeof(ReservoirGI), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_reservoirBufferPt.Init_Buffer("Reservoir PT", device, sizeof(ReservoirPT), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, sizeof(ContextPrimaryRay), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, sizeof(ContextScreenSpace), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
         m_numReservoirs = 1;
         m_numContexts = 1;
@@ -37,7 +37,7 @@ void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* roo
     const size_t reservoirBufferSizeDI = m_numReservoirs * sizeof(ReservoirDI);
     const size_t reservoirBufferSizeGI = m_numReservoirs * sizeof(ReservoirGI);
     const size_t reservoirBufferSizePT = m_numReservoirs * sizeof(ReservoirPT);
-    const size_t contextBufferSize = m_numContexts * sizeof(ContextPrimaryRay);
+    const size_t contextBufferSize = m_numContexts * sizeof(ContextScreenSpace);
 
     if (m_contextsPrimaryRay.GetDesc().Width != contextBufferSize)
     {

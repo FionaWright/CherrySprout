@@ -16,7 +16,7 @@
 #include "PathTracing/Debug/Assert.hlsli"
 #include "PathTracing/Debug/SettingGuards.hlsli"
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI X_i)
+void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateDI X_i)
 {
     RngValuesAncillary::RngValuesNEE rng = SampleRngNEE(rngInfo);
 
@@ -27,12 +27,12 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI 
     X_i.LightEval = lightEval;
 }
 
-void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context)
+void Shift(inout CandidateDI X_i, ContextScreenSpace context)
 {
     X_i.LightEval = EvaluateLight(context.HitInfo.HitPos, X_i.LightSample);
 }
 
-float Target(CandidateDI X_i, ContextPrimaryRay context)
+float Target(CandidateDI X_i, ContextScreenSpace context)
 {
     float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, X_i.LightEval.Direction));
     if (NdL <= 0)
@@ -69,7 +69,7 @@ float Target(CandidateDI X_i, ContextPrimaryRay context)
     return Luminance(radiance);
 }
 
-float PDF(CandidateDI X_i, ContextPrimaryRay context)
+float PDF(CandidateDI X_i, ContextScreenSpace context)
 {
     return X_i.LightEval.PDF;
 }
@@ -146,10 +146,10 @@ bool TrySampleReservoirDI(
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidateDI X_i) { X_i = (CandidateDI)0; }
-void ReEvaluate(inout CandidateDI X_i, ContextPrimaryRay context) {}
-float Target(CandidateDI X_i, ContextPrimaryRay context) { return NAN; }
-float PDF(CandidateDI X_i, ContextPrimaryRay context) { return NAN; }
+void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidateDI X_i) { X_i = (CandidateDI)0; }
+void Shift(inout CandidateDI X_i, ContextScreenSpace context) {}
+float Target(CandidateDI X_i, ContextScreenSpace context) { return NAN; }
+float PDF(CandidateDI X_i, ContextScreenSpace context) { return NAN; }
 bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,

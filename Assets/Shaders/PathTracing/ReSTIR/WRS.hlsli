@@ -53,8 +53,8 @@ bool ReservoirMerge(
     float pHat = Target(other.Y, context);
 
     // Naive:
-    float mis1 = 1 / M;
-    float mis2 = 1 / M;
+    float mis1 = 1 / M; // c1 / (c1 + c2)
+    float mis2 = 1 / M; // c2 / (c1 + c2)
 
     // Balance:
     //float pdf1 = max(1e-6f, PDF(reservoir.Y, context));
@@ -83,7 +83,7 @@ bool ReservoirMerge(
 }
 
 template<typename TCandidate>
-void NormalizeUnbiasedContributionWeight(inout Reservoir<TCandidate> reservoir)
+void SetUCW(inout Reservoir<TCandidate> reservoir)
 {
     if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
     {
@@ -133,7 +133,7 @@ void WRS(
         return;
     }
 
-    NormalizeUnbiasedContributionWeight(reservoir);
+    SetUCW(reservoir);
 }
 
 #endif

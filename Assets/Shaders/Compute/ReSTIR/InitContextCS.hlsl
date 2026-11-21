@@ -49,7 +49,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
         gSettings.DofFocalDist, gSettings.DofLensRadius,
         rayOrigin, rayDirection);
 
-    ContextPrimaryRay context = (ContextPrimaryRay)0;
+    ContextScreenSpace context = (ContextScreenSpace)0;
     context.IsMiss = isMiss;
     context.DepthNonLinear = depthNonLinear;
     context.Wo = -rayDirection;

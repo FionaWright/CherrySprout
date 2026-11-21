@@ -92,7 +92,7 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
     }
 }
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i)
+void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidatePT X_i)
 {
     float3 origin = NAN;
     PathState pathState = CreatePathState(origin, -context.Wo);
@@ -130,7 +130,7 @@ void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT 
     selectSubPathRIS(rngInfo, X_i);
 }
 
-void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
+void Shift(inout CandidatePT X_i, ContextScreenSpace context)
 {
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
@@ -177,14 +177,15 @@ void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context)
 
 	// TODO: Does it matter that X_i.W doesn't get updated? Only could be used for reservoir MIS weights
     X_i.PDF = X_i.PDF * pathStateShifted.PdfRatio; // pdfMain * (pdfShifted / pdfMain)
+    //X_i.W = X_i.PDF <= 0.0f ? 0.0f : 1.0f / X_i.PDF;
 }
 
-float Target(CandidatePT X_i, ContextPrimaryRay context)
+float Target(CandidatePT X_i, ContextScreenSpace context)
 {
     return Luminance(X_i.Lo) * X_i.Jacobian;
 }
 
-float PDF(CandidatePT X_i, ContextPrimaryRay context)
+float PDF(CandidatePT X_i, ContextScreenSpace context)
 {
     return X_i.W <= 0.0f ? 0.0f : 1.0f / X_i.W;
 }
@@ -245,7 +246,7 @@ bool TrySampleReservoirPT(
 float3 SampleRestirPT(uint2 pixelCoord)
 {
     uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextPrimaryRay context = gContextsPrimaryRay[contextIdx];
+    ContextScreenSpace context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
     {
         float mis, _;
@@ -308,10 +309,10 @@ float3 SampleRestirPT(uint2 pixelCoord)
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextPrimaryRay context, out CandidatePT X_i) { X_i = (CandidatePT)0; }
-void ReEvaluate(inout CandidatePT X_i, ContextPrimaryRay context) {}
-float Target(CandidatePT X_i, ContextPrimaryRay context) { return NAN; }
-float PDF(CandidatePT X_i, ContextPrimaryRay context) { return NAN; }
+void Generate(inout RngInfo rngInfo, ContextScreenSpace context, out CandidatePT X_i) { X_i = (CandidatePT)0; }
+void Shift(inout CandidatePT X_i, ContextScreenSpace context) {}
+float Target(CandidatePT X_i, ContextScreenSpace context) { return NAN; }
+float PDF(CandidatePT X_i, ContextScreenSpace context) { return NAN; }
 bool TrySampleReservoirPT(
     HitInfo hitInfo,
     uint2 pixelCoord,

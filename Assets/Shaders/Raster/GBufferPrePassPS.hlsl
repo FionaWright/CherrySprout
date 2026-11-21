@@ -33,7 +33,7 @@ float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
 {
     if (abs(clipPos.w) < 1e-6f || abs(prevClipPos.w) < 1e-6f)
     {
-        return float2(10.0f, 10.0f);
+        return float2(MOTION_VECTOR_OFFSCREEN, MOTION_VECTOR_OFFSCREEN);
     }
 
     float2 ndc = clipPos.xy / clipPos.w;
@@ -46,7 +46,7 @@ float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
     ndcPrev = RemapStoU(ndcPrev);
 
     if (ndcPrev.x < 0.0f || ndcPrev.x > 1.0f || ndcPrev.y < 0.0f || ndcPrev.y > 1.0f)
-        return float2(10.0f, 10.0f);
+        return float2(MOTION_VECTOR_OFFSCREEN, MOTION_VECTOR_OFFSCREEN);
 
     return ndc - ndcPrev;
 }
