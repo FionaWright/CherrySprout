@@ -27,6 +27,7 @@ Using CMAKE, C++, HLSL and Python
 - Environment Map Switching
 - 6 Tone-mapping Operators for each RGB/Luminance/Jodie
 - Blend Skinning Animation (LBS and DQS)
+- Shadow mapping for directional lights and point lights with stochastic PCF
 
 ### Path-Tracer
 
