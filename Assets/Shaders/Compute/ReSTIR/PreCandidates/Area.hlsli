@@ -1,6 +1,9 @@
 #ifndef H_PIXELINFO_AREA_H
 #define H_PIXELINFO_AREA_H
 
+#include "PathTracing/HitInfo/GetHitInfo.hlsli"
+#include "PathTracing/3_GetPrimaryRay.hlsli"
+
 /*
     TODO:
     Fast Method:
@@ -31,7 +34,7 @@
 // TODO: Disable normal/depth rejection heuristics
 // TODO: Requires new special shift mappings for first vertex?
 
-PreCandidateArea GeneratePreCandidate(inout RngInfo rngInfo, ContextScreenSpaceArea _)
+PreCandidateArea GeneratePreCandidate(inout RngInfo rngInfo, uint2 pixelCoord, ContextSSArea _)
 {
     PreCandidateArea preCandidate = INIT0(PreCandidateArea);
 
@@ -65,7 +68,7 @@ bool TryFindTemporalReservoir(
     inout RngInfo rngInfo,
 
     RWStructuredBuffer< TReservoir > buffer,
-    ContextScreenSpaceArea _,
+    ContextSSArea _,
     TPreCandidate preCandidate,
     uint2 pixelCoord,
     float2 mv,
@@ -103,7 +106,7 @@ bool TryFindTemporalReservoir(
         uint2(1,1)
     };
 
-    if (FEAT_ADV(AreaRestirRobust)
+    if (FEAT_ADV(AreaRestirRobust))
     {
         // TODO
     }
@@ -116,7 +119,7 @@ bool TryFindTemporalReservoir(
             uint reservoirIdx = GetReservoirBufferIndex_Previous(coord);
             samples[i] = buffer[reservoirIdx];
 
-            float2 candidateJitterFromCenter = samples[i].PixelInfo.RngPrimary.Jitter - 0.5f;
+            float2 candidateJitterFromCenter = samples[i].PreCandidate.RngPrimary.Jitter - 0.5f;
             float2 candidatePosition = float2(coord) + 0.5f + candidateJitterFromCenter;
 
             bool rejectCandidate =

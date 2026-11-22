@@ -194,13 +194,14 @@ float PDF(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo)
     return X_i.W <= 0.0f ? 0.0f : 1.0f / X_i.W;
 }
 
+template <typename TReservoir>
 bool TrySampleReservoirPT(
     uint2 pixelCoord,
     out CandidatePT Y,
     out float3 Lo)
 {
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
+    TReservoir reservoir = gReservoirBufferPT[reservoirIdx];
     Y = reservoir.Y;
 
 	DBG_OUTPUT3(Palette(reservoirIdx),          RESTIR_ReservoirIdx);
@@ -249,7 +250,7 @@ float3 SampleRestirPT(uint2 pixelCoord)
 {
 #if FEAT_ADV_D(AreaRestir)
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
+    ReservoirPT_Area reservoir = gReservoirBufferPT[reservoirIdx];
     if (reservoir.PreCandidate.IsMiss)
     {
         float mis, _;
@@ -259,7 +260,7 @@ float3 SampleRestirPT(uint2 pixelCoord)
 
     CandidatePT Y;
     float3 Lo;
-    bool found = TrySampleReservoirPT(pixelCoord, Y, Lo);
+    bool found = TrySampleReservoirPT<ReservoirPT_Area>(pixelCoord, Y, Lo);
 #else
     uint contextIdx = GetContextBufferIndex(pixelCoord);
     ContextSSPoint context = gContextsPrimaryRay[contextIdx];
@@ -272,7 +273,7 @@ float3 SampleRestirPT(uint2 pixelCoord)
 
     CandidatePT Y;
     float3 Lo;
-    bool found = TrySampleReservoirPT(pixelCoord, Y, Lo);
+    bool found = TrySampleReservoirPT<ReservoirPT>(pixelCoord, Y, Lo);
 #endif
 
     DBG_OUTPUT_DUMP_DISABLE();

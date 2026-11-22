@@ -31,10 +31,11 @@ static constexpr auto s_defaultFeatFlagsADV = static_cast<FeatFlagsADV>(
         eADV_GdptShiftRec |
         eADV_GdptShiftHalf |
         eADV_HybridShift |
-        eADV_RestirDI
+        eADV_RestirDI |
         //eADV_RestirGI |
+        eADV_RestirTargetVisibility |
         //eADV_RestirPT |
-        //eADV_AreaRestir |
+        eADV_AreaRestir
     );
 
 static constexpr auto s_defaultFeatFlagsADVQS = static_cast<FeatFlagsADV>(~0);

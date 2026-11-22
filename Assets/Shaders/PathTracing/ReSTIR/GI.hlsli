@@ -217,6 +217,7 @@ float PDF(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
     return X_i.BxdfEval.PDF;
 }
 
+template <typename TReservoir>
 bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,
@@ -228,7 +229,7 @@ bool TrySampleReservoirGI(
     Lo = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirGI reservoir = gReservoirBufferGI[reservoirIdx];
+    TReservoir reservoir = gReservoirBufferGI[reservoirIdx];
     Y = reservoir.Y;
 
 #if !MISS_SAMPLES_VALID
@@ -297,7 +298,7 @@ template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimar
 template <typename TPrimaryRayInfo> void Shift(inout CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) {}
 template <typename TPrimaryRayInfo> float Target(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
 template <typename TPrimaryRayInfo> float PDF(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
-bool TrySampleReservoirGI(
+template <typename TReservoir> bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,
     uint2 pixelCoord,

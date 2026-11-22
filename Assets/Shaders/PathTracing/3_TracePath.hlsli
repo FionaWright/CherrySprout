@@ -122,7 +122,11 @@ bool ResolvePathAncillaryVertex(
     {
         CandidateGI Y;
         float3 L_gi;
-        if (TrySampleReservoirGI(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
+#if FEAT_ADV_D(AreaRestir)
+        if (TrySampleReservoirGI<ReservoirGI_Area>(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
+#else
+        if (TrySampleReservoirGI<ReservoirGI>(hitInfo, pathState.Beta, pixelCoord, wo, Y, L_gi))
+#endif
         {
             //L_gi *= 0.5f;
             pathState.Lo += ApplyFireflyThreshold(L_gi, gSettings.FireflyThreshold);

@@ -81,6 +81,7 @@ float PDF(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
     return X_i.LightEval.PDF;
 }
 
+template <typename TReservoir>
 bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,
@@ -93,7 +94,7 @@ bool TrySampleReservoirDI(
     E_direct = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
-    ReservoirDI reservoir = gReservoirBufferDI[reservoirIdx];
+    TReservoir reservoir = gReservoirBufferDI[reservoirIdx];
 
     Y = reservoir.Y;
     float3 wi = Y.LightEval.Direction;
@@ -125,7 +126,7 @@ bool TrySampleReservoirDI(
         return false;
 
     float shadowFactor;
-    TraceRayShadow(hitInfo.HitPosBiased, wi, lightDistance, shadowFactor);
+    TraceRayShadow(hitInfo.HitPosBiased, wi, Y.LightEval.Distance, shadowFactor);
     DBG_OUTPUT1(shadowFactor, RESTIRDI_ShadowFactor);
     if (shadowFactor <= 0.0f)
         return false;
@@ -156,7 +157,7 @@ template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimar
 template <typename TPrimaryRayInfo> void Shift(inout CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) {}
 template <typename TPrimaryRayInfo> float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
 template <typename TPrimaryRayInfo> float PDF(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
-bool TrySampleReservoirDI(
+template <typename TReservoir> bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,
     float3 wo,

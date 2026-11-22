@@ -1,7 +1,7 @@
 #ifndef H_PIXELINFO_POINT_H
 #define H_PIXELINFO_POINT_H
 
-PreCandidatePoint GeneratePreCandidate(inout RngInfo rngInfo, ContextSSPoint context)
+PreCandidatePoint GeneratePreCandidate(inout RngInfo rngInfo, uint2 pixelCoord, ContextSSPoint context)
 {
     return INIT0(PreCandidatePoint);
 }

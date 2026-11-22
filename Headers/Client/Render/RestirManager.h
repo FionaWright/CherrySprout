@@ -26,7 +26,7 @@ struct RestirConfig
 class RestirManager
 {
 public:
-    void Init(ID3D12Device* device);
+    void Init(ID3D12Device* device, bool enabledArea);
     void UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* rootSig, const std::vector<std::string>& compileArgs,
                                    const RestirConfig& config);
 
@@ -40,9 +40,9 @@ public:
     D12Resource* GetReservoirBufferPT() { return &m_reservoirBufferPt; }
     D12Resource* GetContextsBuffer() { return &m_contextsPrimaryRay; }
 
-    [[nodiscard]] size_t GetNumReservoirsDI() const { return m_reservoirBufferDi.GetDesc().Width > sizeof(ReservoirDI) ? m_numReservoirs : 1; }
-    [[nodiscard]] size_t GetNumReservoirsGI() const { return m_reservoirBufferGi.GetDesc().Width > sizeof(ReservoirGI) ? m_numReservoirs : 1; }
-    [[nodiscard]] size_t GetNumReservoirsPT() const { return m_reservoirBufferPt.GetDesc().Width > sizeof(ReservoirPT) ? m_numReservoirs : 1; }
+    [[nodiscard]] size_t GetNumReservoirsDI() const { return m_numReservoirsDI; }
+    [[nodiscard]] size_t GetNumReservoirsGI() const { return m_numReservoirsGI; }
+    [[nodiscard]] size_t GetNumReservoirsPT() const { return m_numReservoirsPT; }
     [[nodiscard]] size_t GetNumContexts() const { return m_numContexts; }
 
 private:
@@ -51,6 +51,9 @@ private:
     D12Resource m_reservoirBufferPt;
     D12Resource m_contextsPrimaryRay;
     size_t m_numReservoirs = 0;
+    size_t m_numReservoirsDI = 1;
+    size_t m_numReservoirsGI = 1;
+    size_t m_numReservoirsPT = 1;
     size_t m_numContexts = 1;
 
     Pipeline m_pipelineInitContext;

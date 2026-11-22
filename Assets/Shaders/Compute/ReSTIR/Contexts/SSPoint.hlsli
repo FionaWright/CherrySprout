@@ -72,7 +72,7 @@ void GenerateCandidates(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoor
         SampleRngPrimary(rngInfo);
 
     TReservoir reservoir = INIT0(TReservoir);
-    WRS(rngInfo, reservoir, gRestirSettings.GenCandidatesCount, context);
+    WRS(rngInfo, reservoir, pixelCoord, gRestirSettings.GenCandidatesCount, context);
 
     uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     buffer[reservoirIdxOut] = reservoir;

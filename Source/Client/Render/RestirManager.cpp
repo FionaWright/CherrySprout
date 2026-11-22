@@ -11,13 +11,17 @@
 #define NUM_RESERVOIR_SUB_BUFFERS 3 // Ping, Pong, Prev
 #define NUM_CONTEXT_SUB_BUFFERS 2 // Curr, Prev
 
-void RestirManager::Init(ID3D12Device* device)
+void RestirManager::Init(ID3D12Device* device, bool enabledArea)
 {
     if (!m_reservoirBufferDi.IsInitialized())
     {
-        m_reservoirBufferDi.Init_Buffer("Reservoir DI", device, sizeof(ReservoirDI), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_reservoirBufferGi.Init_Buffer("Reservoir GI", device, sizeof(ReservoirGI), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        m_reservoirBufferPt.Init_Buffer("Reservoir PT", device, sizeof(ReservoirPT), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        const size_t reservoirSizeDI = enabledArea ? sizeof(ReservoirDI_Area) : sizeof(ReservoirDI);
+        const size_t reservoirSizeGI = enabledArea ? sizeof(ReservoirGI_Area) : sizeof(ReservoirGI);
+        const size_t reservoirSizePT = enabledArea ? sizeof(ReservoirPT_Area) : sizeof(ReservoirPT);
+
+        m_reservoirBufferDi.Init_Buffer("Reservoir DI", device, reservoirSizeDI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_reservoirBufferGi.Init_Buffer("Reservoir GI", device, reservoirSizeGI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_reservoirBufferPt.Init_Buffer("Reservoir PT", device, reservoirSizePT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, sizeof(ContextSSPoint), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
         m_numReservoirs = 1;
@@ -32,7 +36,6 @@ void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* roo
     m_pipelinesDirty = true;
 
     m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_RESERVOIR_SUB_BUFFERS;
-    m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_CONTEXT_SUB_BUFFERS;
 
     const size_t reservoirSizeDI = config.EnabledArea ? sizeof(ReservoirDI_Area) : sizeof(ReservoirDI);
     const size_t reservoirSizeGI = config.EnabledArea ? sizeof(ReservoirGI_Area) : sizeof(ReservoirGI);
@@ -41,27 +44,36 @@ void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* roo
     const size_t reservoirBufferSizeDI = m_numReservoirs * reservoirSizeDI;
     const size_t reservoirBufferSizeGI = m_numReservoirs * reservoirSizeGI;
     const size_t reservoirBufferSizePT = m_numReservoirs * reservoirSizePT;
-    const size_t contextBufferSize = m_numContexts * sizeof(ContextSSPoint);
 
-    if (!config.EnabledArea && m_contextsPrimaryRay.GetDesc().Width != contextBufferSize)
+    if (!config.EnabledArea)
     {
-        m_contextsPrimaryRay.Reset();
-        m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, contextBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_CONTEXT_SUB_BUFFERS;
+        const size_t contextBufferSize = m_numContexts * sizeof(ContextSSPoint);
+
+        if (m_contextsPrimaryRay.GetDesc().Width != contextBufferSize)
+        {
+            m_contextsPrimaryRay.Reset();
+            m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, contextBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        }
     }
+
     if (config.EnabledDI && m_reservoirBufferDi.GetDesc().Width != reservoirBufferSizeDI)
     {
         m_reservoirBufferDi.Reset();
         m_reservoirBufferDi.Init_Buffer("Reservoir DI", device, reservoirBufferSizeDI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_numReservoirsDI = m_numReservoirs;
     }
     if (config.EnabledGI && m_reservoirBufferGi.GetDesc().Width != reservoirBufferSizeGI)
     {
         m_reservoirBufferGi.Reset();
         m_reservoirBufferGi.Init_Buffer("Reservoir GI", device, reservoirBufferSizeGI, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_numReservoirsGI = m_numReservoirs;
     }
     if (config.EnabledPT && m_reservoirBufferPt.GetDesc().Width != reservoirBufferSizePT)
     {
         m_reservoirBufferPt.Reset();
         m_reservoirBufferPt.Init_Buffer("Reservoir PT", device, reservoirBufferSizePT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_numReservoirsPT = m_numReservoirs;
     }
 }
 

@@ -90,9 +90,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_setPostProcess.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_outputRgba8Unorm, m_outputRgba8Unorm.GetDesc().Format);
     }
 
-    m_gradientManager.Init(d3d);
-    m_restirManager.Init(d3d->GetDevice());
-
     auto featFlagsCore = s_defaultFeatFlagsCORE;
     auto featFlagsAdv = s_defaultFeatFlagsADV;
 
@@ -107,6 +104,9 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         debugInfo.FlagsDebug = s_defaultFeatFlagsDBGQS;
     }
 #endif
+
+    m_gradientManager.Init(d3d);
+    m_restirManager.Init(d3d->GetDevice(), GetFeatFlag(featFlagsAdv, eADV_AreaRestir));
 
     UpdatePipeline(d3d->GetDevice(),
                    featFlagsCore,
@@ -400,6 +400,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             restirConfig.EnabledPT = restirPtEnabled;
             restirConfig.EnabledTemporal = renderInfo.PathTracerConfig->RestirTemporalEnabled;
             restirConfig.EnabledSpatial = renderInfo.PathTracerConfig->RestirSpatialEnabled;
+            restirConfig.EnabledArea = renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_AreaRestir);
+            restirConfig.EnabledAreaRobust = renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_AreaRestirRobust);
 
             m_restirManager.PrePasses(d3d, cmdList, restirConfig);
             m_restirClearScheduled = false;

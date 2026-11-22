@@ -108,6 +108,7 @@ template<typename TCandidate, typename TContext, typename TPreCandidate>
 void WRS(
     inout RngInfo rngInfo,
     inout Reservoir<TCandidate, TPreCandidate> reservoir,
+    uint2 pixelCoord,
     uint M,
     TContext context)
 {
@@ -118,7 +119,7 @@ void WRS(
 
     for (uint i = 0; i < M; i++)
     {
-		TPreCandidate preX_i = GeneratePreCandidate(rngInfo, context);
+		TPreCandidate preX_i = GeneratePreCandidate(rngInfo, pixelCoord, context);
 
 		TCandidate X_i;
 		float pHat;
