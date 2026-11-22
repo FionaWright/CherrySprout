@@ -63,13 +63,7 @@ bool GetFeatFlag(const TFeatFlags state, const TFeatFlags flag)
 }
 
 template <typename TFeatFlags>
-bool GetFeatFlag(const int state, const TFeatFlags flag)
-{
-    return static_cast<bool>(state & flag);
-}
-
-template <typename TFeatFlags>
-inline bool GetFeatFlagAtIdx(const TFeatFlags state, const int index)
+bool GetFeatFlagAtIdx(const TFeatFlags state, const int index)
 {
     const int flag = 1u << index;
     return static_cast<bool>(state & flag);

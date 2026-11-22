@@ -536,9 +536,11 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         }
 
         RestirConfig restirConfig{};
-        restirConfig.EnabledDI = GetFeatFlag(featureFlagsCore, eADV_RestirDI);
-        restirConfig.EnabledGI = GetFeatFlag(featureFlagsCore, eADV_RestirGI);
-        restirConfig.EnabledPT = GetFeatFlag(featureFlagsCore, eADV_RestirPT);
+        restirConfig.EnabledDI = GetFeatFlag(featureFlagsAdv, eADV_RestirDI);
+        restirConfig.EnabledGI = GetFeatFlag(featureFlagsAdv, eADV_RestirGI);
+        restirConfig.EnabledPT = GetFeatFlag(featureFlagsAdv, eADV_RestirPT);
+        restirConfig.EnabledArea = GetFeatFlag(featureFlagsAdv, eADV_AreaRestir);
+        restirConfig.EnabledAreaRobust = GetFeatFlag(featureFlagsAdv, eADV_AreaRestirRobust);
         if (restirConfig.EnabledDI ||
             restirConfig.EnabledGI ||
             restirConfig.EnabledPT)
@@ -547,10 +549,15 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
             if (m_set.GetSRV(0, 6))
             {
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 5, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), sizeof(ReservoirDI));
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), sizeof(ReservoirGI));
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), sizeof(ReservoirPT));
-                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextSSPoint));
+                const size_t reservoirSizeDI = restirConfig.EnabledArea ? sizeof(ReservoirDI_Area) : sizeof(ReservoirDI);
+                const size_t reservoirSizeGI = restirConfig.EnabledArea ? sizeof(ReservoirGI_Area) : sizeof(ReservoirGI);
+                const size_t reservoirSizePT = restirConfig.EnabledArea ? sizeof(ReservoirPT_Area) : sizeof(ReservoirPT);
+
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 5, m_restirManager.GetReservoirBufferDI(), m_restirManager.GetNumReservoirsDI(), reservoirSizeDI);
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 6, m_restirManager.GetReservoirBufferGI(), m_restirManager.GetNumReservoirsGI(), reservoirSizeGI);
+                m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 7, m_restirManager.GetReservoirBufferPT(), m_restirManager.GetNumReservoirsPT(), reservoirSizePT);
+                if (!restirConfig.EnabledArea)
+                    m_set.SetUAV_Buffer(device, SPACE_U_DEFAULT, 8, m_restirManager.GetContextsBuffer(), m_restirManager.GetNumContexts(), sizeof(ContextSSPoint));
             }
         }
     }
