@@ -18,16 +18,7 @@ static constexpr auto s_defaultFeatFlagsCORE = static_cast<FeatFlagsCORE>(
         //eCORE_FireflyThreshold |
         //eCORE_Emission |
         eCORE_Punctuals |
-        //eCORE_GradientDomain |
-        eCORE_GdptShiftRecEnv |
-        eCORE_GdptShiftRec |
-        eCORE_GdptShiftHalf |
         eCORE_AliasTables |
-        eCORE_HybridShift |
-        eCORE_RestirDI |
-        //eCORE_RestirGI |
-        //eCORE_RestirPT |
-        //eCORE_AreaRestir |
         //eCORE_RussianRoulette
         eCORE_AlphaTesting
     );
@@ -35,8 +26,15 @@ static constexpr auto s_defaultFeatFlagsCORE = static_cast<FeatFlagsCORE>(
 static constexpr auto s_defaultFeatFlagsCOREQS = static_cast<FeatFlagsCORE>(~0);
 
 static constexpr auto s_defaultFeatFlagsADV = static_cast<FeatFlagsADV>(
-        //eADV_AreaRestir
-        0
+        //eADV_GradientDomain |
+        eADV_GdptShiftRecEnv |
+        eADV_GdptShiftRec |
+        eADV_GdptShiftHalf |
+        eADV_HybridShift |
+        eADV_RestirDI
+        //eADV_RestirGI |
+        //eADV_RestirPT |
+        //eADV_AreaRestir |
     );
 
 static constexpr auto s_defaultFeatFlagsADVQS = static_cast<FeatFlagsADV>(~0);

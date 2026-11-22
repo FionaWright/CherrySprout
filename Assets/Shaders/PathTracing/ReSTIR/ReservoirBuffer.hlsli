@@ -22,7 +22,7 @@ Spatial (Pong -> Ping)
 
 */
 
-#if FEAT_CORE_D(RestirDI) || FEAT_CORE_D(RestirGI) || FEAT_CORE_D(RestirPT) || FEAT_CORE_D(RestirPG)
+#if FEAT_ADV_D(RestirDI) || FEAT_ADV_D(RestirGI) || FEAT_ADV_D(RestirPT) || FEAT_ADV_D(RestirPG)
 
 uint GetReservoirBufferBase_Ping()
 {

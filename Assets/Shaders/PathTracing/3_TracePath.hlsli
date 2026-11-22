@@ -63,7 +63,7 @@ bool ResolvePathAncillaryVertex(
 
     PathVertexInfo vInfo = INIT0(PathVertexInfo);
 
-    if (PATH_VERTICES_REQUIRED && FEAT_CORE(HybridShift))
+    if (PATH_VERTICES_REQUIRED && FEAT_ADV(HybridShift))
         vInfo.InitialRngAncillaryState = rngInfo.IndependentRngState;
     if (PATH_VERTICES_REQUIRED)
         vInfo.InitialBeta = pathState.Beta;
@@ -118,7 +118,7 @@ bool ResolvePathAncillaryVertex(
         pathState.Beta /= p;
     }
 
-	if (FEAT_CORE(RestirGI) && pathState.GetPathFlag(eIsPrimaryRay))
+	if (FEAT_ADV(RestirGI) && pathState.GetPathFlag(eIsPrimaryRay))
     {
         CandidateGI Y;
         float3 L_gi;
@@ -179,7 +179,7 @@ PathSample TracePath(float3 origin, float3 dir, RngInfo rngInfo, uint2 pixelCoor
             pathSample.VertexList = vertexList;
     }
 
-    if (false && FEAT_CORE(RestirGI))
+    if (false && FEAT_ADV(RestirGI))
     {
         pathSample.Lo *= 0.5f;
     }

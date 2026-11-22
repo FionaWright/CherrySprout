@@ -7,7 +7,7 @@ ShiftResult ShiftRandomReplay(RngValuesAncillary::RngValuesBxDF rng, HitInfo hit
 {
     ShiftResult shiftResult = INIT0(ShiftResult);
 
-    if (!FEAT_CORE(GdptShiftHalf)) // TODO: Use separate feat flag or remove
+    if (!FEAT_ADV(GdptShiftHalf)) // TODO: Use separate feat flag or remove
     {
         shiftResult.IsSuccessful = false;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingHalfVec);

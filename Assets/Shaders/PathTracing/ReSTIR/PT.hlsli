@@ -4,7 +4,7 @@
 #include "BxDFs/GetBxDF.hlsli"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 
-#if FEAT_CORE_D(RestirPT)
+#if FEAT_ADV_D(RestirPT)
 
 #include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/HitInfo/GetHitInfo.hlsli"

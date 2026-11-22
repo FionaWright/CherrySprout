@@ -10,7 +10,7 @@ ShiftResult ShiftReconnect(float3 x1, float3 y1, float3 y1_Ng, float3 x2, float3
 {
     ShiftResult result = INIT0(ShiftResult);
 
-    if (!FEAT_CORE(GdptShiftRec))
+    if (!FEAT_ADV(GdptShiftRec))
     {
         result.IsSuccessful = false;
         return result;
@@ -53,7 +53,7 @@ ShiftResult ShiftReconnectVis(float3 x1, float3 y1, float3 y1_Ng, float3 x2, flo
 {
     ShiftResult result = INIT0(ShiftResult);
 
-    if (!FEAT_CORE(GdptShiftRec))
+    if (!FEAT_ADV(GdptShiftRec))
     {
         result.IsSuccessful = false;
         return result;

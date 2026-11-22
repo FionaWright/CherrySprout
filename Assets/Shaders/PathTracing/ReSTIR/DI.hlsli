@@ -3,7 +3,7 @@
 
 #include "BxDFs/GetBxDF.hlsli"
 
-#if FEAT_CORE_D(RestirDI)
+#if FEAT_ADV_D(RestirDI)
 
 #include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/NEE/SampleLight.hlsli"
@@ -45,7 +45,7 @@ float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
         return 0.0f;
 
     float shadowFactor = 1.0f;
-    if (FEAT_CORE(RestirTargetVisibility))
+    if (FEAT_ADV(RestirTargetVisibility))
     {
         TraceRayShadow(primaryRayInfo.HitInfo.HitPosBiased, X_i.LightEval.Direction, X_i.LightEval.Distance, shadowFactor);
         if (shadowFactor <= 0.0f)

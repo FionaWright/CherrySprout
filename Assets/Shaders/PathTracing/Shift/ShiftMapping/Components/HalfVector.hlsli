@@ -11,7 +11,7 @@ ShiftResult ShiftHalfVector(float3 x1_Ng, float3 y1_Ng, float3 x1_wi, float3 x1_
     ShiftResult result = INIT0(ShiftResult);
 
     // TODO: Can be handled as special case
-    if (!FEAT_CORE(GdptShiftHalf) || etaMain == 1.0f || etaShifted == 1.0f)
+    if (!FEAT_ADV(GdptShiftHalf) || etaMain == 1.0f || etaShifted == 1.0f)
     {
         result.IsSuccessful = false;
         DBG_OUTPUT1(1.0f, GD_RejectionShiftMappingHalfVec);

@@ -462,9 +462,9 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        const bool restirDiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCORE_RestirDI);
-        const bool restirGiEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCORE_RestirGI);
-        const bool restirPtEnabled = m_config.PathTracerConfig.FeatFlagEnabledCore(eCORE_RestirPT);
+        const bool restirDiEnabled = m_config.PathTracerConfig.FeatFlagEnabledAdv(eADV_RestirDI);
+        const bool restirGiEnabled = m_config.PathTracerConfig.FeatFlagEnabledAdv(eADV_RestirGI);
+        const bool restirPtEnabled = m_config.PathTracerConfig.FeatFlagEnabledAdv(eADV_RestirPT);
         if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
         {
             ImGui::Text("ReSTIR:");
@@ -493,7 +493,7 @@ void Greenhouse::renderGuiCore()
             ImGui::Spacing();
         }
 
-        if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCORE_GradientDomain))
+        if (m_config.PathTracerConfig.FeatFlagEnabledAdv(eADV_GradientDomain))
         {
             ImGui::Text("Gradient Domain PT:");
             ImGui::Indent(IM_GUI_INDENTATION);

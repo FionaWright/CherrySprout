@@ -3,7 +3,7 @@
 
 #include "BxDFs/GetBxDF.hlsli"
 
-#if FEAT_CORE_D(RestirGI)
+#if FEAT_ADV_D(RestirGI)
 
 #include "PathTracing/RandomSample.hlsli"
 #include "PathTracing/NEE/SampleNEE.hlsli"
@@ -188,7 +188,7 @@ float Target(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
     if (X_i.BxdfEval.PDF < EPSILON || length(X_i.BxdfEval.Radiance) <= 0.0f || length(X_i.DirectContribution) <= 0.0f)
         return 0.0f;
 
-    if (FEAT_CORE(RestirTargetVisibility))
+    if (FEAT_ADV(RestirTargetVisibility))
     {
         bool occluded;
         if (X_i.IsMiss)

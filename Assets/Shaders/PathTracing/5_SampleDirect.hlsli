@@ -28,7 +28,7 @@ float3 SampleDirectLighting(
     float pdf_bxdf = 1.0f;
     float mis_nee = 1.0f;
 
-    if (FEAT_CORE(RestirDI) && pathState.GetPathFlag(eIsPrimaryRay)) // TODO: PDF
+    if (FEAT_ADV(RestirDI) && pathState.GetPathFlag(eIsPrimaryRay)) // TODO: PDF
     {
         CandidateDI lightSE;
         bool validReservoir = TrySampleReservoirDI(hitInfo, pixelCoord, wo, gSettings.DirectNumSamples, lightSE, lightDistance, radiance);

@@ -196,7 +196,7 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
     uint32_t frameIdx = isMaxFramesReached ? renderInfo.FrameIndex - 1 : renderInfo.FrameIndex;
     m_debugManager.PostUpdate(d3d, renderInfo, frameIdx, &m_outputRgba8Unorm);
 
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirDI))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_RestirDI))
     {
         m_restirManager.PostUpdate(d3d);
     }
@@ -366,9 +366,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     // Main Pass
     if (runPT)
     {
-        const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirDI);
-        const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirGI);
-        const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirPT);
+        const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_RestirDI);
+        const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_RestirGI);
+        const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_RestirPT);
         if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
         {
             {
@@ -416,7 +416,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     m_finalHdrOutput = &m_primal;
 
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_GradientDomain))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledAdv(eADV_GradientDomain))
         m_finalHdrOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
 
     {
@@ -536,9 +536,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         }
 
         RestirConfig restirConfig{};
-        restirConfig.EnabledDI = GetFeatFlag(featureFlagsCore, eCORE_RestirDI);
-        restirConfig.EnabledGI = GetFeatFlag(featureFlagsCore, eCORE_RestirGI);
-        restirConfig.EnabledPT = GetFeatFlag(featureFlagsCore, eCORE_RestirPT);
+        restirConfig.EnabledDI = GetFeatFlag(featureFlagsCore, eADV_RestirDI);
+        restirConfig.EnabledGI = GetFeatFlag(featureFlagsCore, eADV_RestirGI);
+        restirConfig.EnabledPT = GetFeatFlag(featureFlagsCore, eADV_RestirPT);
         if (restirConfig.EnabledDI ||
             restirConfig.EnabledGI ||
             restirConfig.EnabledPT)

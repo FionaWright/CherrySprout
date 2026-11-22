@@ -80,7 +80,7 @@ bool SampleIndirect_S_Unconnected(
 
     BxdfEval bxdfEval;
     ShiftResult shiftResult;
-    if (FEAT_CORE(HybridShift))
+    if (FEAT_ADV(HybridShift))
         shiftResult = ShiftMapHybrid(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);
     else
         shiftResult = ShiftMapHPlusR(pathStateShifted.ReconnectionState, hitInfo, v1, v2, wo, pathState.RaySegmentIdx, bxdfEval);

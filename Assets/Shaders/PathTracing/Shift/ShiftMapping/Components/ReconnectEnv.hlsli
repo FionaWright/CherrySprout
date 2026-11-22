@@ -10,7 +10,7 @@ ShiftResult ShiftReconnectEnvironment(float3 y1_Ng, float3 dirMain)
 {
     ShiftResult result = INIT0(ShiftResult);
 
-    if (!FEAT_CORE(GdptShiftRecEnv))
+    if (!FEAT_ADV(GdptShiftRecEnv))
     {
         result.IsSuccessful = false;
         return result;
@@ -34,7 +34,7 @@ ShiftResult ShiftReconnectEnvironmentVis(float3 x1, float3 y1_Ng, float3 dirMain
 {
     ShiftResult result = INIT0(ShiftResult);
 
-    if (!FEAT_CORE(GdptShiftRecEnv))
+    if (!FEAT_ADV(GdptShiftRecEnv))
     {
         result.IsSuccessful = false;
         return result;

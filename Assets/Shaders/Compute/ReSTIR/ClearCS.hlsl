@@ -21,21 +21,21 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     uint reservoirIdxPong = GetReservoirBufferIndex_Pong(pixelCoord);
     uint reservoirIdxPrev = GetReservoirBufferIndex_Previous(pixelCoord);
 
-    if (FEAT_CORE(RestirDI))
+    if (FEAT_ADV(RestirDI))
     {
         gReservoirBufferDI[reservoirIdxPing] = INIT0(ReservoirDI);
         gReservoirBufferDI[reservoirIdxPong] = INIT0(ReservoirDI);
         gReservoirBufferDI[reservoirIdxPrev] = INIT0(ReservoirDI);
     }
 
-    if (FEAT_CORE(RestirGI))
+    if (FEAT_ADV(RestirGI))
     {
         gReservoirBufferGI[reservoirIdxPing] = INIT0(ReservoirGI);
         gReservoirBufferGI[reservoirIdxPong] = INIT0(ReservoirGI);
         gReservoirBufferGI[reservoirIdxPrev] = INIT0(ReservoirGI);
     }
 
-    if (FEAT_CORE(RestirPT))
+    if (FEAT_ADV(RestirPT))
     {
         gReservoirBufferPT[reservoirIdxPing] = INIT0(ReservoirPT);
         gReservoirBufferPT[reservoirIdxPong] = INIT0(ReservoirPT);

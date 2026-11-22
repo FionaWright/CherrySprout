@@ -33,7 +33,7 @@ void Core(uint2 pixelCoord)
     float3 primalSum = float3(0,0,0);
     Gradients gradientsSum = INIT0(Gradients);
 
-    if (FEAT_CORE(RestirPT))
+    if (FEAT_ADV(RestirPT))
     {
         primalSum = SampleRestirPT(pixelCoord);
     }
@@ -53,7 +53,7 @@ void Core(uint2 pixelCoord)
 
             DBG_OUTPUT3(pathSample.Lo, PathSampleLo);
 
-            if (FEAT_CORE(GradientDomain))
+            if (FEAT_ADV(GradientDomain))
             {
                 Gradients gradients = SampleGradients(pixelCoord, pathSample);
 
@@ -74,7 +74,7 @@ void Core(uint2 pixelCoord)
 
     gTexPrimal[pixelCoord].rgb = average;
 
-    if (FEAT_CORE(GradientDomain))
+    if (FEAT_ADV(GradientDomain))
         SetTexGradients(pixelCoord, gradientsSum);
 
     DBG_OUTPUT_SET_IF_FOUND(gTexPrimal[pixelCoord].rgb);
