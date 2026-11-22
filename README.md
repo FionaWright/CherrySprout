@@ -50,6 +50,7 @@ Using CMAKE, C++, HLSL and Python
 - Modular Feature Flags System
 - ReSTIR DI & GI with Spatio-Temporal Reuse
 - ReSTIR PT using Hybrid Shift Mappings
+- Area ReSTIR (Fast and Robust variants)
 - Gradient Domain Path-Tracing using Jacobi-Iterator Screened Poisson Reconstruction
 
 ### Debug Tools
