@@ -16,16 +16,16 @@ bool TryFindTemporalReservoir(
     uint2 pixelCoord,
     float2 mv,
 
-    out int2 prevPixelCoord,
+    out int2 selectedPixelCoord,
     out TReservoir temporalReservoir)
 {
-    prevPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
+    selectedPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
 
-    bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
+    bool validPrevPixel = all(selectedPixelCoord >= 0) && all(selectedPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
         return false;
 
-    uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
+    uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(selectedPixelCoord);
     temporalReservoir = buffer[reservoirIdxPrevIn];
     return true;
 }

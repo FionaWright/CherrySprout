@@ -9,6 +9,20 @@
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
+template <typename TReservoir>
+void ClearReservoir(RWStructuredBuffer< TReservoir > buffer, uint idx)
+{
+    buffer[idx] = INIT0(TReservoir);
+}
+
+template <typename TReservoir>
+void ClearAllReservoirs(RWStructuredBuffer< TReservoir > buffer, uint idxPing, uint idxPong, uint idxPrev)
+{
+    ClearReservoir(buffer, idxPing);
+    ClearReservoir(buffer, idxPong);
+    ClearReservoir(buffer, idxPrev);
+}
+
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
@@ -23,22 +37,16 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     if (FEAT_ADV(RestirDI))
     {
-        gReservoirBufferDI[reservoirIdxPing] = INIT0(ReservoirDI);
-        gReservoirBufferDI[reservoirIdxPong] = INIT0(ReservoirDI);
-        gReservoirBufferDI[reservoirIdxPrev] = INIT0(ReservoirDI);
+        ClearAllReservoirs(gReservoirBufferDI, reservoirIdxPing, reservoirIdxPong, reservoirIdxPrev);
     }
 
     if (FEAT_ADV(RestirGI))
     {
-        gReservoirBufferGI[reservoirIdxPing] = INIT0(ReservoirGI);
-        gReservoirBufferGI[reservoirIdxPong] = INIT0(ReservoirGI);
-        gReservoirBufferGI[reservoirIdxPrev] = INIT0(ReservoirGI);
+        ClearAllReservoirs(gReservoirBufferGI, reservoirIdxPing, reservoirIdxPong, reservoirIdxPrev);
     }
 
     if (FEAT_ADV(RestirPT))
     {
-        gReservoirBufferPT[reservoirIdxPing] = INIT0(ReservoirPT);
-        gReservoirBufferPT[reservoirIdxPong] = INIT0(ReservoirPT);
-        gReservoirBufferPT[reservoirIdxPrev] = INIT0(ReservoirPT);
+        ClearAllReservoirs(gReservoirBufferPT, reservoirIdxPing, reservoirIdxPong, reservoirIdxPrev);
     }
 }

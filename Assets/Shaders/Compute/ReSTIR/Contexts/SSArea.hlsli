@@ -41,6 +41,8 @@ void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, ui
 
     TReservoir reservoir = buffer[reservoirIdxIn];
 
+    PreCandidateArea preCandidateContext = reservoir.PreCandidate;
+
     float2 mv = gGBufferMv[pixelCoord].xy;
 
     bool prevWasOffscreen = any(mv >= MOTION_VECTOR_OFFSCREEN);
@@ -56,7 +58,7 @@ void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, ui
 
     int2 prevPixelCoord;
     TReservoir reservoirPrev;
-	if (!TryFindTemporalReservoir(rngInfo, buffer, context, reservoir.PreCandidate, pixelCoord, mv, prevPixelCoord, reservoirPrev))
+	if (!TryFindTemporalReservoir(rngInfo, buffer, context, preCandidateContext, pixelCoord, mv, prevPixelCoord, reservoirPrev))
 	{
 		buffer[reservoirIdxOut] = reservoir;
         TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
@@ -76,9 +78,12 @@ void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, ui
 
     if (isValidPrev)
     {
-        Shift(reservoirPrev.Y, reservoir.PreCandidate);
+        PreCandidateArea prevPreCandidateContext = reservoirPrev.PreCandidate;
+        ShiftPreCandidate(pixelCoord, prevPreCandidateContext);
 
-        ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, reservoir.PreCandidate);
+        Shift(reservoirPrev.Y, prevPreCandidateContext);
+
+        ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, prevPreCandidateContext);
 
         SetUCW(reservoir);
     }
@@ -90,13 +95,12 @@ void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, ui
 template <typename TReservoir>
 void SpatialReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
-	ContextSSArea context;
-
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
     TReservoir reservoir = buffer[reservoirIdxIn];
 
-    if (reservoir.PreCandidate.IsMiss)
+    PreCandidateArea preCandidateContext = reservoir.PreCandidate;
+    if (preCandidateContext.IsMiss)
     {
         buffer[reservoirIdxOut] = reservoir;
         return;
@@ -125,8 +129,12 @@ void SpatialReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uin
         if (reservoirNeighbour.W_Y <= 0.0f || reservoirNeighbour.Confidence <= 0.0f)
             continue;
 
-        Shift(reservoirNeighbour.Y, reservoir.PreCandidate);
-        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, reservoir.PreCandidate);
+        // Shifts neighbour precandidate sample to canonical pixel coord
+        PreCandidateArea neighbourPreCandidateContext = reservoirNeighbour.PreCandidate;
+        ShiftPreCandidate(pixelCoord, neighbourPreCandidateContext);
+
+        Shift(reservoirNeighbour.Y, neighbourPreCandidateContext);
+        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, neighbourPreCandidateContext);
     }
 
     SetUCW(reservoir);

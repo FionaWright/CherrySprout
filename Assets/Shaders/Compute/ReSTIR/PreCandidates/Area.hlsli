@@ -61,7 +61,30 @@ PreCandidateArea GeneratePreCandidate(inout RngInfo rngInfo, uint2 pixelCoord, C
     return preCandidate;
 }
 
-// TODO: Shift() should re-trace primary ray with new jitter, possibly with a jacobian
+void ShiftPreCandidate(uint2 pixelCoord, inout PreCandidateArea preCandidate)
+{
+    // Same jitter sample, different pixel coord -> different ray direction / hitinfo / etc
+
+    // TODO: Jacobian?
+
+    float3 rayOrigin;
+    GetPrimaryRay(
+        preCandidate.RngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
+        pixelCoord, gSettings.InvV, gSettings.InvP,
+        gSettings.DofFocalDist, gSettings.DofLensRadius,
+        rayOrigin, preCandidate.CenterRayDirection);
+
+    PathState pathState = CreatePathState(rayOrigin, preCandidate.CenterRayDirection);
+
+    RayQuery<RAY_FLAGS> q;
+    q.TraceRayInline(gTLAS, RAY_FLAGS, 0xFF, pathState.Desc);
+    while (q.Proceed()) {}
+
+    preCandidate.IsMiss = q.CommittedStatus() != COMMITTED_TRIANGLE_HIT;
+
+    if (!preCandidate.IsMiss)
+        GetHitInfo(q, preCandidate.HitInfo);
+}
 
 template <typename TReservoir, typename TPreCandidate>
 bool TryFindTemporalReservoir(
@@ -73,10 +96,10 @@ bool TryFindTemporalReservoir(
     uint2 pixelCoord,
     float2 mv,
 
-    out int2 prevPixelCoord,
+    out int2 selectedPixelCoord,
     out TReservoir temporalReservoir)
 {
-    prevPixelCoord = int2(-1,-1);
+    selectedPixelCoord = int2(-1,-1);
 
     float2 dimensions = gSettings.FrameDimensions;
 
@@ -90,12 +113,9 @@ bool TryFindTemporalReservoir(
 
     float2 pixel2x2Base = floor(supportBase);
 
-    bool validPrevPixel = all(pixel2x2Base >= 0) && all(pixel2x2Base < int2((float2)gSettings.FrameDimensions));
+    bool validPrevPixel = all(pixel2x2Base >= 0) && all(pixel2x2Base+1 < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)
         return false;
-
-    float2 jitterFromCenter = preCandidate.RngPrimary.Jitter - 0.5f;
-    float2 samplePosition = supportCenter + jitterFromCenter;
 
     TReservoir samples[4];
 
@@ -109,6 +129,7 @@ bool TryFindTemporalReservoir(
     if (FEAT_ADV(AreaRestirRobust))
     {
         // TODO
+        // Remember to shift both candidate AND precandidate!
     }
     else
     {
@@ -124,7 +145,8 @@ bool TryFindTemporalReservoir(
 
             bool rejectCandidate =
                 any(candidatePosition < supportBase) ||
-                any(candidatePosition > supportTop);
+                any(candidatePosition > supportTop) ||
+				samples[i].PreCandidate.IsMiss;
             if (rejectCandidate)
             {
                 samples[i].PHat = 0.0f;
@@ -156,10 +178,10 @@ bool TryFindTemporalReservoir(
             r -= w[i] / wSum;
             if (r <= 0.0f)
             {
-                float3 W_Y = wSum / (float(M) * samples[i].PHat); // TODO: Do something with this?
+                float W_Y = wSum / (float(M) * samples[i].PHat); // TODO: Do something with this?
 
-                prevPixelCoord = uint2(pixel2x2Base) + OFFSETS[i];
-                uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
+                selectedPixelCoord = uint2(pixel2x2Base) + OFFSETS[i];
+                uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(selectedPixelCoord);
                 temporalReservoir = buffer[reservoirIdxPrevIn];
                 return true;
             }
