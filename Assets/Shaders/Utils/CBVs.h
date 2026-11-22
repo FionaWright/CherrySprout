@@ -254,8 +254,8 @@ struct CbvPathTracingDebugSettings
     float ScaleRefract;
     int ForcedLightIndex;
 
-    FeatFlagsCore FeatFlagsCoreQS;
-    FeatFlagsDbg FeatFlagsDbgQS;
+    FeatFlagsCORE FeatFlagsCoreQS;
+    FeatFlagsDBG FeatFlagsDbgQS;
     float FixedMisNee;
     float p;
 };

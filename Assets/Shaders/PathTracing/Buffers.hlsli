@@ -71,7 +71,7 @@ RWTexture2D<float4>                                 gTexGradientXB          : re
 RWTexture2D<float4>                                 gTexGradientYF          : register(u3, SPACE_U_DEFAULT);
 RWTexture2D<float4>                                 gTexGradientYB          : register(u4, SPACE_U_DEFAULT);
 
-#if FEAT_CORE_D(AreaRestir)
+#if FEAT_ADV_D(AreaRestir)
 RWStructuredBuffer<ReservoirDI_Area>                gReservoirBufferDI      : register(u5, SPACE_U_DEFAULT);
 RWStructuredBuffer<ReservoirGI_Area>                gReservoirBufferGI      : register(u6, SPACE_U_DEFAULT);
 RWStructuredBuffer<ReservoirPT_Area>                gReservoirBufferPT      : register(u7, SPACE_U_DEFAULT);

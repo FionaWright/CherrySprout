@@ -7,8 +7,10 @@
 
 #if !NDEBUG
 
-#define CONCAT_INNER(a, b) a##b
-#define CONCAT(a, b) CONCAT_INNER(a, b)
+#ifndef CONCAT
+#   define CONCAT_INNER(a, b) a##b
+#   define CONCAT(a, b) CONCAT_INNER(a, b)
+#endif
 
 #define GPU_SCOPE(cmdList, label) GPUEventScoped CONCAT(scope_, __COUNTER__)(cmdList, label)
 

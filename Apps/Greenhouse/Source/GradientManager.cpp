@@ -90,7 +90,7 @@ D12Resource* GradientManager::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdLis
         DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_OutputColor))
+        if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDBG_OutputColor))
         {
             if (renderInfo.PathTracerConfig->DebugInfo.OutputColorIdx == DebugOutputIndex::eDebugOutput_GD_GradientXF)
                 return &m_gradientXFSS;

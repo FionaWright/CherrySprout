@@ -247,7 +247,7 @@ bool TrySampleReservoirPT(
 
 float3 SampleRestirPT(uint2 pixelCoord)
 {
-#if FEAT_CORE_D(AreaRestir)
+#if FEAT_ADV_D(AreaRestir)
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
     if (reservoir.PreCandidate.IsMiss)

@@ -1,46 +1,26 @@
 #ifndef H_FLAGS_FLAGS_H
 #define H_FLAGS_FLAGS_H
 
-// ==================== Feature ====================
+#include "PathTracing/FeatFlags/Internal/Utils.hlsli"
 
-#define FLAGS_PROCESS_AS_INDEX
-#   include "PathTracing/FeatFlags/Internal/Processing.h"
-#undef FLAGS_PROCESS_AS_INDEX
+// ==================== Core ====================
 
-#define FLAGS_PROCESS_AS_FLAG
-#   include "PathTracing/FeatFlags/Internal/Processing.h"
-#undef FLAGS_PROCESS_AS_FLAG
-
-#define FLAGS_PROCESS_AS_IS_QS
-#   include "PathTracing/FeatFlags/Internal/Processing.h"
-#undef FLAGS_PROCESS_AS_IS_QS
-
-#ifdef __cplusplus
-#   define FLAGS_PROCESS_AS_STRING
-#       include "PathTracing/FeatFlags/Internal/Processing.h"
-#   undef FLAGS_PROCESS_AS_STRING
-#endif
+#define FLAG_GROUP CORE
+#include "PathTracing/FeatFlags/Internal/BuildCollection.h"
 
 // ==================== Debug ====================
 
-#define FLAGS_PROCESSING_DEBUG
+#undef FLAG_GROUP
+#define FLAG_GROUP DBG
+#include "PathTracing/FeatFlags/Internal/BuildCollection.h"
 
-#define FLAGS_PROCESS_AS_INDEX
-#   include "PathTracing/FeatFlags/Internal/Processing.h"
-#undef FLAGS_PROCESS_AS_INDEX
+// ==================== Advanced ====================
 
-#define FLAGS_PROCESS_AS_FLAG
-#   include "PathTracing/FeatFlags/Internal/Processing.h"
-#undef FLAGS_PROCESS_AS_FLAG
-
-#define FLAGS_PROCESS_AS_IS_QS
-#   include "PathTracing/FeatFlags/Internal/Processing.h"
-#undef FLAGS_PROCESS_AS_IS_QS
-
-#ifdef __cplusplus
-#   define FLAGS_PROCESS_AS_STRING
-#       include "PathTracing/FeatFlags/Internal/Processing.h"
-#   undef FLAGS_PROCESS_AS_STRING
-#endif
+#undef FLAG_GROUP
+#define FLAG_GROUP ADV
+#include "PathTracing/FeatFlags/Internal/BuildCollection.h"
 
 #endif
+
+
+

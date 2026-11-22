@@ -1,7 +1,7 @@
 #ifndef H_RIS_H
 #define H_RIS_H
 
-#if FEAT_CORE_D(AreaRestir)
+#if FEAT_ADV_D(AreaRestir)
 #    include "Compute/ReSTIR/PreCandidates/Area.hlsli"
 #else
 #    include "Compute/ReSTIR/PreCandidates/Point.hlsli"
@@ -124,7 +124,7 @@ void WRS(
 		float pHat;
 		float pdf;
 
-#if FEAT_CORE_D(AreaRestir)
+#if FEAT_ADV_D(AreaRestir)
 		{
 			Generate(rngInfo, preX_i, X_i);
 			pHat = Target(X_i, preX_i);

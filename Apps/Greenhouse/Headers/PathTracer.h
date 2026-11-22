@@ -35,7 +35,8 @@ public:
     void PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo) override;
     void Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHouseRenderInfo& renderInfo, D12Resource* RTV, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle) override;
     void UnreserveData() override;
-    void UpdatePipeline(ID3D12Device* device, const FeatFlagsCore& featureFlags, const PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode, const MicrofacetModelType& microfacetModelType);
+    void UpdatePipeline(ID3D12Device* device, const FeatFlagsCORE& featureFlagsCore, const FeatFlagsADV& featureFlagsAdv, const
+                        PathTracingDebugInfo& debugInfo, const BxdfMode& bxdfMode, const MicrofacetModelType& microfacetModelType);
     void Reset();
 
     size_t TotalCbvRequiredSize() override

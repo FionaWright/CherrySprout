@@ -7,101 +7,90 @@
 
 #include "Internal/Interpretations.h"
 
-static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
-        //eCore_JitterPerPixel |
-        //eCore_JitterPerFrame |
-        eCore_Accumulation |
-        eCore_NormalMaps |
-        //eCore_EnvironmentMap |
-        //eCore_Transmission |
-        eCore_NEE |
-        //eCore_FireflyThreshold |
-        //eCore_Emission |
-        eCore_Punctuals |
-        //eCore_GradientDomain |
-        eCore_GdptShiftRecEnv |
-        eCore_GdptShiftRec |
-        eCore_GdptShiftHalf |
-        eCore_AliasTables |
-        eCore_HybridShift |
-        eCore_RestirDI |
-        //eCore_RestirGI |
-        //eCore_RestirPT |
-        eCore_AreaRestir |
-        //eCore_RussianRoulette
-        eCore_AlphaTesting
+static constexpr auto s_defaultFeatFlagsCORE = static_cast<FeatFlagsCORE>(
+        //eCORE_JitterPerPixel |
+        //eCORE_JitterPerFrame |
+        eCORE_Accumulation |
+        eCORE_NormalMaps |
+        //eCORE_EnvironmentMap |
+        //eCORE_Transmission |
+        eCORE_NEE |
+        //eCORE_FireflyThreshold |
+        //eCORE_Emission |
+        eCORE_Punctuals |
+        //eCORE_GradientDomain |
+        eCORE_GdptShiftRecEnv |
+        eCORE_GdptShiftRec |
+        eCORE_GdptShiftHalf |
+        eCORE_AliasTables |
+        eCORE_HybridShift |
+        eCORE_RestirDI |
+        //eCORE_RestirGI |
+        //eCORE_RestirPT |
+        //eCORE_AreaRestir |
+        //eCORE_RussianRoulette
+        eCORE_AlphaTesting
     );
 
-static constexpr auto s_defaultFeatFlagsCoreQS = static_cast<FeatFlagsCore>(~0);
+static constexpr auto s_defaultFeatFlagsCOREQS = static_cast<FeatFlagsCORE>(~0);
+
+static constexpr auto s_defaultFeatFlagsADV = static_cast<FeatFlagsADV>(
+        //eADV_AreaRestir
+        0
+    );
+
+static constexpr auto s_defaultFeatFlagsADVQS = static_cast<FeatFlagsADV>(~0);
 
 #if !NDEBUG
-static constexpr auto s_defaultFeatFlagsDbg = static_cast<FeatFlagsDbg>(
-        eDebug_NaNTests |
-        eDebug_Scales |
-        eDebug_ForceLightIndex |
-        //eDebug_GeometricNormalOnly |
-        //eDebug_PathDumper |
-        eDebug_OutputColor |
-        eDebug_Asserts
+static constexpr auto s_defaultFeatFlagsDBG = static_cast<FeatFlagsDBG>(
+        eDBG_NaNTests |
+        eDBG_Scales |
+        eDBG_ForceLightIndex |
+        //eDBG_GeometricNormalOnly |
+        //eDBG_PathDumper |
+        eDBG_OutputColor |
+        eDBG_Asserts
     );
 
-static constexpr auto s_defaultFeatFlagsDbgQS = static_cast<FeatFlagsDbg>(~0);
+static constexpr auto s_defaultFeatFlagsDBGQS = static_cast<FeatFlagsDBG>(~0);
 #else
-static constexpr auto s_defaultFeatFlagsDbg = static_cast<FeatFlagsDbg>(0);
-static constexpr auto s_defaultFeatFlagsDbgQS = static_cast<FeatFlagsDbg>(0);
+static constexpr auto s_defaultFeatFlagsDBG = static_cast<FeatFlagsDBG>(0);
+static constexpr auto s_defaultFeatFlagsDBGQS = static_cast<FeatFlagsDBG>(0);
 #endif
 
-inline bool GetFeatFlagCore(const FeatFlagsCore state, const FeatFlagsCore flag)
+template <typename TFeatFlags>
+bool GetFeatFlag(const TFeatFlags state, const TFeatFlags flag)
 {
     return static_cast<bool>(state & flag);
 }
 
-inline bool GetFeatFlagCore(const int state, const FeatFlagsCore flag)
+template <typename TFeatFlags>
+bool GetFeatFlag(const int state, const TFeatFlags flag)
 {
     return static_cast<bool>(state & flag);
 }
 
-inline bool GetFeatFlagAtIdxCore(const FeatFlagsCore state, const int index)
+template <typename TFeatFlags>
+inline bool GetFeatFlagAtIdx(const TFeatFlags state, const int index)
 {
     const int flag = 1u << index;
     return static_cast<bool>(state & flag);
 }
 
-inline bool GetFeatFlagDebug(const FeatFlagsDbg state, const FeatFlagsDbg flag)
-{
-    return static_cast<bool>(state & flag);
-}
-
-inline bool GetFeatFlagDebug(const int state, const FeatFlagsDbg flag)
-{
-    return static_cast<bool>(state & flag);
-}
-
-inline bool GetFeatFlagAtIdxDebug(const FeatFlagsDbg state, const int index)
-{
-    const int flag = 1u << index;
-    return static_cast<bool>(state & flag);
-}
-
-inline void SetFeatFlagCore(FeatFlagsCore& state, const FeatFlagsCore flag, const bool enabled)
+template <typename TFeatFlags>
+void SetFeatFlag(TFeatFlags& state, const TFeatFlags flag, const bool enabled)
 {
     if (enabled)
-        state = static_cast<FeatFlagsCore>(state | flag);
-    else if (GetFeatFlagCore(state, flag))
-        state = static_cast<FeatFlagsCore>(state ^ flag);
-}
-
-inline void SetFeatFlagDebug(FeatFlagsDbg& state, const FeatFlagsDbg flag, const bool enabled)
-{
-    if (enabled)
-        state = static_cast<FeatFlagsDbg>(state | flag);
-    else if (GetFeatFlagDebug(state, flag))
-        state = static_cast<FeatFlagsDbg>(state ^ flag);
+        state = static_cast<TFeatFlags>(state | flag);
+    else if (GetFeatFlag(state, flag))
+        state = static_cast<TFeatFlags>(state ^ flag);
 }
 
 // HLSL macros:
 #define FEAT_CORE(flag) false
 #define FEAT_CORE_D(flag) false
+#define FEAT_ADV(flag) false
+#define FEAT_ADV_D(flag) false
 #define FEAT_DBG(flag)   false
 #define FEAT_DBG_D(flag)   false
 

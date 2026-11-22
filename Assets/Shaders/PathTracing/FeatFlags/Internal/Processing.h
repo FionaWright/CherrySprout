@@ -1,49 +1,9 @@
 // ReSharper disable once CppMissingIncludeGuard
 #include "Utils/HlslGlue.h"
 
-#define FEAT_FLAG_TYPE_CORE hlsl::uint64
-#define FEAT_FLAG_TYPE_DBG hlsl::uint64
-
-// ====================== Guards ======================
-
-#if defined(FLAGS_PROCESS_AS_INDEX)
-
-#elif defined(FLAGS_PROCESS_AS_FLAG)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       ifndef FLAGS_PROCESS_AS_INDEX_COMPLETED_DEBUG
-#           error You must process this file for indices before processing for flags (Debug)
-#       endif
-#   else
-#       ifndef FLAGS_PROCESS_AS_INDEX_COMPLETED
-#           error You must process this file for indices before processing for flags (Core)
-#       endif
-#   endif
-
-#elif defined(FLAGS_PROCESS_AS_STRING)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED_DEBUG
-#           error You must process this file for flags before processing for strings (Debug)
-#       endif
-#   else
-#       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED
-#           error You must process this file for flags before processing for strings (Core)
-#       endif
-#   endif
-
-#elif defined(FLAGS_PROCESS_AS_IS_QS)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED_DEBUG
-#           error You must process this file for flags before processing for IsQuickSwitchable (Debug)
-#       endif
-#   else
-#       ifndef FLAGS_PROCESS_AS_FLAG_COMPLETED
-#           error You must process this file for flags before processing for IsQuickSwitchable (Core)
-#       endif
-#   endif
-
-#else
-#   error Invalid processing of file
-
+#ifndef FLAG_GROUP
+#error "Flag Group not defined"
+#define FLAG_GROUP CORE // For Linter
 #endif
 
 // ================ FLAG_PROCESS Macro ================
@@ -56,13 +16,7 @@
 #   define FLAG_PROCESS(flag, isQuickSwitchable) Idx_##flag,
 
 #elif defined(FLAGS_PROCESS_AS_FLAG)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       define __IDX_DBG(x) (hlsl::uint)Internal_FeatFlagIndicesDbg::Idx_##x
-#       define FLAG_PROCESS(flag, isQuickSwitchable) eDebug_##flag = (FEAT_FLAG_TYPE_DBG)(1) << __IDX_DBG(flag),
-#   else
-#       define __IDX_CORE(x) (hlsl::uint)Internal_FeatFlagIndicesCore::Idx_##x
-#       define FLAG_PROCESS(flag, isQuickSwitchable) eCore_##flag = (FEAT_FLAG_TYPE_CORE)(1) << __IDX_CORE(flag),
-#   endif
+#   define FLAG_PROCESS(flag, isQuickSwitchable) ENUM_VALUE_NAME(FLAG_GROUP, flag) = (FLAG_TYPE(FLAG_GROUP))(1) << FLAG_INDEX(FLAG_GROUP, flag),
 
 #elif defined(FLAGS_PROCESS_AS_STRING)
 #   define FLAG_PROCESS(flag, isQuickSwitchable) #flag,
@@ -75,96 +29,33 @@
 // ================ Start of Structure ================
 
 #if defined(FLAGS_PROCESS_AS_INDEX)
-#   ifdef FLAGS_PROCESSING_DEBUG
-enum class Internal_FeatFlagIndicesDbg : hlsl::uint
+enum class ENUM_NAME_INDEX(FLAG_GROUP) : hlsl::uint
 {
-#   else
-enum class Internal_FeatFlagIndicesCore : hlsl::uint
-{
-#   endif
 
 #elif defined(FLAGS_PROCESS_AS_FLAG)
-#   ifdef FLAGS_PROCESSING_DEBUG
-enum FeatFlagsDbg : FEAT_FLAG_TYPE_DBG
+enum ENUM_NAME_FLAG(FLAG_GROUP) : CONCAT(FEAT_FLAG_TYPE_, FLAG_GROUP)
 {
-    eDebug_None = 0,
-#   else
-enum FeatFlagsCore : FEAT_FLAG_TYPE_CORE
-{
-    eCore_None = 0,
-#   endif
+    ENUM_VALUE_NONE_NAME(FLAG_GROUP) = 0,
 
 #elif defined(FLAGS_PROCESS_AS_STRING)
-#   ifdef FLAGS_PROCESSING_DEBUG
-static const char* s_featFlagNamesDbg[FEAT_FLAG_COUNT_DBG] = {
-#   else
-static const char* s_featFlagNamesCore[FEAT_FLAG_COUNT_CORE] = {
-#   endif
+static const char* CONCAT(s_featFlagNames, FLAG_GROUP)[CONCAT(FEAT_FLAG_COUNT_, FLAG_GROUP)] = {
 
 #elif defined(FLAGS_PROCESS_AS_IS_QS)
-#   ifdef FLAGS_PROCESSING_DEBUG
-static bool s_featFlagsIsQsDbg[FEAT_FLAG_COUNT_DBG] = {
-#   else
-static bool s_featFlagsIsQsCore[FEAT_FLAG_COUNT_CORE] = {
-#   endif
+static bool CONCAT(s_featFlagsIsQs, FLAG_GROUP)[CONCAT(FEAT_FLAG_COUNT_, FLAG_GROUP)] = {
 
 #endif
 
 // ===================== The List =====================
 
-#ifdef FLAGS_PROCESSING_DEBUG
-#   include "PathTracing/FeatFlags/Internal/ListDebug.h"
-#else
-#include "PathTracing/FeatFlags/Internal/ListCore.h"
-#endif
+#include INCLUDE_FILE(FLAG_GROUP)
 
 // ================= End of Structure =================
 
 #if defined(FLAGS_PROCESS_AS_INDEX)
-#   ifdef FLAGS_PROCESSING_DEBUG
-    __INTERNAL_FEAT_FLAG_COUNT_DBG
-#   else
-    __INTERNAL_FEAT_FLAG_COUNT_CORE
-#   endif
+    CONCAT(__INTERNAL_FEAT_FLAG_COUNT_, FLAG_GROUP)
 
 #elif defined(FLAGS_PROCESS_AS_FLAG)
-#   ifdef FLAGS_PROCESSING_DEBUG
-    FEAT_FLAG_COUNT_DBG = (hlsl::uint)Internal_FeatFlagIndicesDbg::__INTERNAL_FEAT_FLAG_COUNT_DBG
-#   else
-    FEAT_FLAG_COUNT_CORE = (hlsl::uint)Internal_FeatFlagIndicesCore::__INTERNAL_FEAT_FLAG_COUNT_CORE
-#   endif
+    CONCAT(FEAT_FLAG_COUNT_, FLAG_GROUP) = (hlsl::uint) CONCAT(Internal_FeatFlagIndices, FLAG_GROUP) :: CONCAT(__INTERNAL_FEAT_FLAG_COUNT_, FLAG_GROUP)
 
 #endif
 };
-
-// ================== Mark Completed ==================
-
-#if defined(FLAGS_PROCESS_AS_INDEX)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       define FLAGS_PROCESS_AS_INDEX_COMPLETED_DEBUG
-#   else
-#       define FLAGS_PROCESS_AS_INDEX_COMPLETED
-#   endif
-
-#elif defined(FLAGS_PROCESS_AS_FLAG)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       define FLAGS_PROCESS_AS_FLAG_COMPLETED_DEBUG
-#   else
-#       define FLAGS_PROCESS_AS_FLAG_COMPLETED
-#   endif
-
-#elif defined(FLAGS_PROCESS_AS_STRING)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       define FLAGS_PROCESS_AS_STRING_COMPLETED_DEBUG
-#   else
-#       define FLAGS_PROCESS_AS_STRING_COMPLETED
-#   endif
-
-#elif defined(FLAGS_PROCESS_AS_IS_QS)
-#   ifdef FLAGS_PROCESSING_DEBUG
-#       define FLAGS_PROCESS_AS_IS_QS_COMPLETED_DEBUG
-#   else
-#       define FLAGS_PROCESS_AS_IS_QS_COMPLETED
-#   endif
-
-#endif

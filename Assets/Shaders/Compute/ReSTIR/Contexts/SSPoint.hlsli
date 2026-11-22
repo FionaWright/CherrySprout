@@ -12,7 +12,7 @@
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Utils.hlsli"
 
-#if FEAT_CORE_D(AreaRestir)
+#if FEAT_ADV_D(AreaRestir)
 #    include "Compute/ReSTIR/PreCandidates/Area.hlsli"
 #else
 #    include "Compute/ReSTIR/PreCandidates/Point.hlsli"

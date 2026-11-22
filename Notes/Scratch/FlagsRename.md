@@ -42,9 +42,9 @@ FEATURE_VALUE_* / DEBUG_VALUE_*
 
 ## Renamed
 
-FeatFlagsCore - Core features (Jitter, Accumulation, ReSTIR, etc)
+FeatFlagsCORE - Core features (Jitter, Accumulation, ReSTIR, etc)
 
-FeatFlagsDbg - Debug features (PathDumper, OutputColor, FurnaceTest, etc)
+FeatFlagsDBG - Debug features (PathDumper, OutputColor, FurnaceTest, etc)
 
 FeatFlagsQuickSwitchMode - Mode that adds extra flags to CBV, runtime checks, ability to avoid recompilation at cost of compiling shader initially with everything enabled 
 "--ffQuickSwitch" - Cmd line arg
@@ -59,11 +59,11 @@ FeatFlags.h - Runs processing for each type depending on C++/HLSL
 
 FEAT_COUNT_CORE/FEAT_COUNT_DBG - Count of flags
 
-s_defaultFeatFlagsCore{QS}/s_defaultFeatFlagsDbg{QS} - Static list of default flags
+s_defaultFeatFlagsCORE{QS}/s_defaultFeatFlagsDBG{QS} - Static list of default flags
 
-GetFeatFlagCore()   
+GetFeatFlag()   
 GetFeatFlagDbg()   
-SetFeatFlagCore()   
+SetFeatFlag()   
 SetFeatFlagDbg()  
     - Operates on a flags state and flag value
 

@@ -5,7 +5,7 @@
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/GI.hlsli"
 
-#if FEAT_CORE_D(AreaRestir)
+#if FEAT_ADV_D(AreaRestir)
 #	include "Compute/ReSTIR/Contexts/SSArea.hlsli"
 #else
 #	include "Compute/ReSTIR/Contexts/SSPoint.hlsli"

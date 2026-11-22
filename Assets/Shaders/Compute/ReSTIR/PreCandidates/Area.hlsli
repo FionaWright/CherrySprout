@@ -103,7 +103,7 @@ bool TryFindTemporalReservoir(
         uint2(1,1)
     };
 
-    if (FEAT_CORE(AreaRestirRobust)
+    if (FEAT_ADV(AreaRestirRobust)
     {
         // TODO
     }

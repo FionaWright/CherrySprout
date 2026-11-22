@@ -156,7 +156,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
         ImGui::Unindent(IM_GUI_INDENTATION);
     }
 
-    if (config.FeatFlagEnabledDebug(eDebug_PathDumper))
+    if (config.FeatFlagEnabledDebug(eDBG_PathDumper))
     {
         if (ImGui::CollapsingHeader("Path Dump"))
         {
@@ -188,12 +188,12 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
                 m_scheduledRunCameraPosition = m_dumpedPathCameraPosition;
                 m_scheduledRunViewMatrix = m_dumpedPathViewMatrix;
 
-                if (config.FeatFlagEnabledCore(eCore_Accumulation))
+                if (config.FeatFlagEnabledCore(eCORE_Accumulation))
                 {
                     m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
-                    SetFeatFlagCore(config.FlagsCore, eCore_Accumulation, false);
+                    SetFeatFlag(config.FlagsCore, eCORE_Accumulation, false);
 #if CHERRY_DEBUG_FEATURES_ENABLED
-                    SetFeatFlagCore(config.DebugInfo.FeatFlagsCoreQS, eCore_Accumulation, false);
+                    SetFeatFlag(config.DebugInfo.FeatFlagsCoreQS, eCORE_Accumulation, false);
 #endif
                 }
                 else
@@ -433,7 +433,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
     }
 
     std::vector<uint32_t> errors;
-    if (config.FeatFlagEnabledDebug(eDebug_Asserts))
+    if (config.FeatFlagEnabledDebug(eDBG_Asserts))
     {
         for (int i = 0; i < _countof(m_cpuErrorInfo); i++)
         {
@@ -507,14 +507,14 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
 
                     m_scheduledRunViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_cpuErrorInfo[dbgId].InvV));
 
-                    if (config.FeatFlagEnabledCore(eCore_Accumulation) || !config.FeatFlagEnabledDebug(eDebug_PathDumper))
+                    if (config.FeatFlagEnabledCore(eCORE_Accumulation) || !config.FeatFlagEnabledDebug(eDBG_PathDumper))
                     {
                         m_scheduledRunState = ScheduledRunState::eRecompilePipelineAndRunFrame;
-                        SetFeatFlagCore(config.FlagsCore, eCore_Accumulation, false);
+                        SetFeatFlag(config.FlagsCore, eCORE_Accumulation, false);
 #if CHERRY_DEBUG_FEATURES_ENABLED
-                        SetFeatFlagCore(config.DebugInfo.FeatFlagsCoreQS, eCore_Accumulation, false);
-                        SetFeatFlagDebug(config.DebugInfo.FlagsDebug, eDebug_PathDumper, true);
-                        SetFeatFlagDebug(config.DebugInfo.FeatFlagsDebugQS, eDebug_PathDumper, true);
+                        SetFeatFlag(config.DebugInfo.FeatFlagsCoreQS, eCORE_Accumulation, false);
+                        SetFeatFlag(config.DebugInfo.FlagsDebug, eDBG_PathDumper, true);
+                        SetFeatFlag(config.DebugInfo.FeatFlagsDebugQS, eDBG_PathDumper, true);
 #endif
                     }
                     else
@@ -532,7 +532,7 @@ void DebugManager::GUI(PathTracerConfig& config, bool& ptFrameDirty)
     }
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (config.FeatFlagEnabledDebug(eDebug_OutputColor) && ImGui::CollapsingHeader("Debug Output Colors"))
+    if (config.FeatFlagEnabledDebug(eDBG_OutputColor) && ImGui::CollapsingHeader("Debug Output Colors"))
     {
         ImGui::Indent(IM_GUI_INDENTATION);
 

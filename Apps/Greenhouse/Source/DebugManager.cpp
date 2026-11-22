@@ -45,7 +45,7 @@ void DebugManager::Init(const D3D* d3d, Heap* heap)
 void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, uint32_t frameIdx, D12Resource* ptOutput)
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_Asserts))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDBG_Asserts))
     {
         UploadHeap uploadHeapClear;
 
@@ -83,7 +83,7 @@ void DebugManager::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo, 
 
     const bool scheduledRun = m_scheduledRunState == ScheduledRunState::eReadbackPathDump;
     const bool needPathDump = m_isPathDumpAutomatic || scheduledRun;
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDebug_PathDumper) && needPathDump)
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledDebug(eDBG_PathDumper) && needPathDump)
     {
         static int s_pathDumpTimer = m_pathDumpAutoCooldown;
         if (s_pathDumpTimer > 0 && !scheduledRun)

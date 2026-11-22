@@ -93,24 +93,26 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_gradientManager.Init(d3d);
     m_restirManager.Init(d3d->GetDevice());
 
-    auto featureFlags = s_defaultFeatFlagsCore;
+    auto featFlagsCore = s_defaultFeatFlagsCORE;
+    auto featFlagsAdv = s_defaultFeatFlagsADV;
 
     PathTracingDebugInfo debugInfo = PathTracingDebugInfo();
 #if CHERRY_DEBUG_FEATURES_ENABLED
     Config::SetBoolFromArg(&debugInfo.FeatFlagQuickSwitchEnabled, "--cbvFlagMode");
-    debugInfo.FlagsDebug = s_defaultFeatFlagsDbg;
+    debugInfo.FlagsDebug = s_defaultFeatFlagsDBG;
     if (debugInfo.FeatFlagQuickSwitchEnabled)
     {
-        featureFlags = s_defaultFeatFlagsCoreQS;
-        debugInfo.FlagsDebug = s_defaultFeatFlagsDbgQS;
+        featFlagsCore = s_defaultFeatFlagsCOREQS;
+        featFlagsAdv = s_defaultFeatFlagsADVQS;
+        debugInfo.FlagsDebug = s_defaultFeatFlagsDBGQS;
     }
 #endif
 
     UpdatePipeline(d3d->GetDevice(),
-        featureFlags,
-        debugInfo,
-        s_defaultBxdfMode,
-        s_defaultMMType);
+                   featFlagsCore,
+                   featFlagsAdv,
+                   debugInfo,
+                   s_defaultBxdfMode, s_defaultMMType);
 
     m_set.Init         (heap);
     m_set.AddBindlessSrv(SPACE_T_SCENE_TEXTURES);
@@ -194,7 +196,7 @@ void PathTracer::PostUpdate(D3D* d3d, const GreenHouseRenderInfo& renderInfo)
     uint32_t frameIdx = isMaxFramesReached ? renderInfo.FrameIndex - 1 : renderInfo.FrameIndex;
     m_debugManager.PostUpdate(d3d, renderInfo, frameIdx, &m_outputRgba8Unorm);
 
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirDI))
     {
         m_restirManager.PostUpdate(d3d);
     }
@@ -237,10 +239,10 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     {
         d3d->Flush();
         UpdatePipeline(d3d->GetDevice(),
-            renderInfo.PathTracerConfig->FlagsCore,
-            renderInfo.PathTracerConfig->DebugInfo,
-            renderInfo.PathTracerConfig->BxdfMode,
-            renderInfo.PathTracerConfig->MicrofacetModelType);
+                       renderInfo.PathTracerConfig->FlagsCore,
+                       renderInfo.PathTracerConfig->FlagsAdv,
+                       renderInfo.PathTracerConfig->DebugInfo,
+                       renderInfo.PathTracerConfig->BxdfMode, renderInfo.PathTracerConfig->MicrofacetModelType);
 
         m_debugManager.ScheduledRunTransition(ScheduledRunState::eRunFrame);
     }
@@ -291,7 +293,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         settings.NearPlane = Config::GetRender().NearPlane;
         settings.FarPlane = Config::GetRender().FarPlane;
 
-        if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
+        if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_JitterPerFrame))
         {
             RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(0,0), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
             settings.JitterPerFrame = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);
@@ -364,9 +366,9 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
     // Main Pass
     if (runPT)
     {
-        const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirDI);
-        const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirGI);
-        const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_RestirPT);
+        const bool restirDiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirDI);
+        const bool restirGiEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirGI);
+        const bool restirPtEnabled = renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_RestirPT);
         if (restirDiEnabled || restirGiEnabled || restirPtEnabled)
         {
             {
@@ -414,7 +416,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
 
     m_finalHdrOutput = &m_primal;
 
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_GradientDomain))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_GradientDomain))
         m_finalHdrOutput = m_gradientManager.Render(d3d, cmdList, renderInfo, &m_primal);
 
     {
@@ -469,7 +471,8 @@ void PathTracer::UnreserveData()
 }
 
 void PathTracer::UpdatePipeline(ID3D12Device* device,
-    const FeatFlagsCore& featureFlags,
+    const FeatFlagsCORE& featureFlagsCore,
+    const FeatFlagsADV& featureFlagsAdv,
     const PathTracingDebugInfo& debugInfo,
     const BxdfMode& bxdfMode,
     const MicrofacetModelType& microfacetModelType)
@@ -482,15 +485,21 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
     for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
     {
         const FEAT_FLAG_TYPE_CORE flagValue = 1u << i;
-        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_CORE_" + std::string(s_featFlagNamesCore[i]) + "=" + std::to_string(flagValue));
+        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_CORE_" + std::string(s_featFlagNamesCORE[i]) + "=" + std::to_string(flagValue));
+    }
+    for (int i = 0; i < FEAT_FLAG_COUNT_ADV; i++)
+    {
+        const FEAT_FLAG_TYPE_ADV flagValue = 1u << i;
+        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_ADV_" + std::string(s_featFlagNamesADV[i]) + "=" + std::to_string(flagValue));
     }
     for (int i = 0; i < FEAT_FLAG_COUNT_DBG; i++)
     {
         const FEAT_FLAG_TYPE_DBG flagValue = 1u << i;
-        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_DBG_" + std::string(s_featFlagNamesDbg[i]) + "=" + std::to_string(flagValue));
+        compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_DBG_" + std::string(s_featFlagNamesDBG[i]) + "=" + std::to_string(flagValue));
     }
 
-    compileArgsCommon.emplace_back("-DFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlags));
+    compileArgsCommon.emplace_back("-DFEAT_FLAGS_COMP_CORE=" + std::to_string(featureFlagsCore));
+    compileArgsCommon.emplace_back("-DFEAT_FLAGS_COMP_ADV=" + std::to_string(featureFlagsAdv));
 
 #if CHERRY_DEBUG_FEATURES_ENABLED
     if (debugInfo.FeatFlagQuickSwitchEnabled)
@@ -527,9 +536,9 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
         }
 
         RestirConfig restirConfig{};
-        restirConfig.EnabledDI = GetFeatFlagCore(featureFlags, eCore_RestirDI);
-        restirConfig.EnabledGI = GetFeatFlagCore(featureFlags, eCore_RestirGI);
-        restirConfig.EnabledPT = GetFeatFlagCore(featureFlags, eCore_RestirPT);
+        restirConfig.EnabledDI = GetFeatFlag(featureFlagsCore, eCORE_RestirDI);
+        restirConfig.EnabledGI = GetFeatFlag(featureFlagsCore, eCORE_RestirGI);
+        restirConfig.EnabledPT = GetFeatFlag(featureFlagsCore, eCORE_RestirPT);
         if (restirConfig.EnabledDI ||
             restirConfig.EnabledGI ||
             restirConfig.EnabledPT)

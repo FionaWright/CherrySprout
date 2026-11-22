@@ -112,7 +112,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
     GPU_SCOPE(cmdList, "GBuffer Pre-Pass");
 
     XMMATRIX P = renderInfo.P;
-    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCore_JitterPerFrame))
+    if (renderInfo.PathTracerConfig->FeatFlagEnabledCore(eCORE_JitterPerFrame))
     {
         RngInfo rngInfo = InitializeRngInfo(hlsl::uint2(0,0), 0, renderInfo.FrameIndex, renderInfo.PathTracerConfig->Seed);
         const XMFLOAT2 frameJitter = XMFLOAT2(Rand01(rngInfo) - 0.5f, Rand01(rngInfo) - 0.5f);

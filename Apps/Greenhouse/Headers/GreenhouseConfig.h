@@ -14,7 +14,7 @@ constexpr hlsl::uint2 s_defaultChosenPixelIdx = hlsl::uint2(300, 300);
 struct PathTracingDebugInfo
 {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-    FeatFlagsDbg FlagsDebug = s_defaultFeatFlagsDbg;
+    FeatFlagsDBG FlagsDebug = s_defaultFeatFlagsDBG;
     DebugOutputIndex OutputColorIdx = s_defaultOutputIndex;
     DebugOutputColorRemap OutputColorRemap = s_defaultOutputColorRemap;
     int ChosenRayDepth = -1;
@@ -50,37 +50,24 @@ struct PathTracingDebugInfo
     float FixedMisNee = 1.0f;
 
     bool FeatFlagQuickSwitchEnabled = false;
-    FeatFlagsCore FeatFlagsCoreQS = static_cast<FeatFlagsCore>(0);
-    FeatFlagsDbg FeatFlagsDebugQS = static_cast<FeatFlagsDbg>(0);
+    FeatFlagsCORE FeatFlagsCoreQS = static_cast<FeatFlagsCORE>(0);
+    FeatFlagsADV FeatFlagsAdvQS = static_cast<FeatFlagsADV>(0);
+    FeatFlagsDBG FeatFlagsDebugQS = static_cast<FeatFlagsDBG>(0);
 #endif
 };
 
-inline bool FeatFlagEnabledCore(
+template <typename TFeatFlags>
+bool FeatFlagEnabled(
     const bool quickSwitchModeEnabled,
-    const FeatFlagsCore& flags,
-    const FeatFlagsCore& flagsQS,
-    const FeatFlagsCore& flagValue)
+    const TFeatFlags& flags,
+    const TFeatFlags& flagsQS,
+    const TFeatFlags& flagValue)
 {
-    bool result = GetFeatFlagCore(flags, flagValue);
+    bool result = GetFeatFlag(flags, flagValue);
 
     const uint32_t idx = std::countr_zero(static_cast<uint32_t>(flagValue));
-    if (quickSwitchModeEnabled && s_featFlagsIsQsCore[idx])
-        result &= GetFeatFlagCore(flagsQS, flagValue);
-
-    return result;
-}
-
-inline bool FeatFlagEnabledDebug(
-    const bool quickSwitchModeEnabled,
-    const FeatFlagsDbg& flags,
-    const FeatFlagsDbg& flagsQS,
-    const FeatFlagsDbg& flagValue)
-{
-    bool result = GetFeatFlagDebug(flags, flagValue);
-
-    const uint32_t idx = std::countr_zero(static_cast<uint32_t>(flagValue));
-    if (quickSwitchModeEnabled && s_featFlagsIsQsDbg[idx])
-        result &= GetFeatFlagDebug(flagsQS, flagValue);
+    if (quickSwitchModeEnabled && s_featFlagsIsQsCORE[idx])
+        result &= GetFeatFlag(flagsQS, flagValue);
 
     return result;
 }
@@ -137,37 +124,54 @@ struct PathTracerConfig
     bool RestirTemporalEnabled = false;
     bool RestirSpatialEnabled = false;
 
-    FeatFlagsCore              FlagsCore           = s_defaultFeatFlagsCore;
+    FeatFlagsCORE              FlagsCore           = s_defaultFeatFlagsCORE;
+    FeatFlagsADV               FlagsAdv            = s_defaultFeatFlagsADV;
     BxdfMode                   BxdfMode            = s_defaultBxdfMode;
     MicrofacetModelType        MicrofacetModelType = s_defaultMMType;
 
     PathTracingDebugInfo       DebugInfo        = {};
 
-    bool FeatFlagEnabledCore(const FeatFlagsCore flags, const FeatFlagsCore flagValue) const
+    bool FeatFlagEnabledCore(const FeatFlagsCORE flags, const FeatFlagsCORE flagValue) const
     {
         bool quickSwitchModeEnabled = false;
-        FeatFlagsCore flagsQS = static_cast<FeatFlagsCore>(0);
+        FeatFlagsCORE flagsQS = static_cast<FeatFlagsCORE>(0);
 #if CHERRY_DEBUG_FEATURES_ENABLED
         quickSwitchModeEnabled = DebugInfo.FeatFlagQuickSwitchEnabled;
         flagsQS = DebugInfo.FeatFlagsCoreQS;
 #endif
-        return ::FeatFlagEnabledCore(quickSwitchModeEnabled, flags, flagsQS, flagValue);
+        return ::FeatFlagEnabled(quickSwitchModeEnabled, flags, flagsQS, flagValue);
     }
 
-    bool FeatFlagEnabledCore(const FeatFlagsCore flag) const
+    bool FeatFlagEnabledCore(const FeatFlagsCORE flag) const
     {
         return FeatFlagEnabledCore(FlagsCore, flag);
     }
 
-    bool FeatFlagEnabledDebug(const FeatFlagsDbg flags, const FeatFlagsDbg flag) const
+    bool FeatFlagEnabledAdv(const FeatFlagsADV flags, const FeatFlagsADV flagValue) const
+    {
+        bool quickSwitchModeEnabled = false;
+        FeatFlagsADV flagsQS = static_cast<FeatFlagsADV>(0);
+#if CHERRY_DEBUG_FEATURES_ENABLED
+        quickSwitchModeEnabled = DebugInfo.FeatFlagQuickSwitchEnabled;
+        flagsQS = DebugInfo.FeatFlagsAdvQS;
+#endif
+        return ::FeatFlagEnabled(quickSwitchModeEnabled, flags, flagsQS, flagValue);
+    }
+
+    bool FeatFlagEnabledAdv(const FeatFlagsADV flag) const
+    {
+        return FeatFlagEnabledAdv(FlagsAdv, flag);
+    }
+
+    bool FeatFlagEnabledDebug(const FeatFlagsDBG flags, const FeatFlagsDBG flag) const
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
-        return ::FeatFlagEnabledDebug(DebugInfo.FeatFlagQuickSwitchEnabled, flags, DebugInfo.FeatFlagsDebugQS, flag);
+        return ::FeatFlagEnabled(DebugInfo.FeatFlagQuickSwitchEnabled, flags, DebugInfo.FeatFlagsDebugQS, flag);
 #endif
         return false;
     }
 
-    bool FeatFlagEnabledDebug(const FeatFlagsDbg flag) const
+    bool FeatFlagEnabledDebug(const FeatFlagsDBG flag) const
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
         return FeatFlagEnabledDebug(DebugInfo.FlagsDebug, flag);
