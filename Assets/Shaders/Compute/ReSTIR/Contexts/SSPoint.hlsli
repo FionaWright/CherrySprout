@@ -180,7 +180,7 @@ void SpatialReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uin
 
         ContextSSPoint contextOther;
         {
-            uint contextIdxOther = GetContextBufferIndex_Prev(coord);
+            uint contextIdxOther = GetContextBufferIndex(coord);
             contextOther = gContextsPrimaryRay[contextIdxOther];
             if (contextOther.IsMiss)
                 continue;
@@ -196,6 +196,9 @@ void SpatialReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uin
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
         TReservoir reservoirNeighbour = buffer[idx];
+
+        if (reservoirNeighbour.W_Y <= 0.0f || reservoirNeighbour.Confidence <= 0.0f)
+            continue;
 
         Shift(reservoirNeighbour.Y, context);
         ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);

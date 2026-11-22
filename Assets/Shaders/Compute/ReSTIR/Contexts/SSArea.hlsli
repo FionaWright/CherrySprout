@@ -64,6 +64,7 @@ void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, ui
 	{
 		buffer[reservoirIdxOut] = reservoir;
         TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
+        // TODO: If anything in reservoir changes, might need SetUCW()
         return;
 	}
 
@@ -124,6 +125,9 @@ void SpatialReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uin
 
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
         TReservoir reservoirNeighbour = buffer[idx];
+
+        if (reservoirNeighbour.W_Y <= 0.0f || reservoirNeighbour.Confidence <= 0.0f)
+            continue;
 
         Shift(reservoirNeighbour.Y, reservoir.PreCandidate);
         ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, reservoir.PreCandidate);

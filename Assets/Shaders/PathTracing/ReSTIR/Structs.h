@@ -19,14 +19,12 @@ struct ContextSSPoint
 struct ContextSSArea
 {
     // None
-    //bool _;
 };
 
 struct PreCandidatePoint
 {
     // None
     // Implicit pixel position (0.5,0.5)
-    //bool _;
 };
 
 struct PreCandidateArea

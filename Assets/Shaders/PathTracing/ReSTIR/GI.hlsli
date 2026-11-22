@@ -22,14 +22,15 @@
 #define MISS_SAMPLES_VALID 1
 #define NON_MISS_SAMPLES_VALID 1
 
-void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i)
+template <typename TPrimaryRayInfo>
+void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidateGI X_i)
 {
     RngValuesAncillary::RngValuesBxDF rngBxDF = SampleRngBxDF(rngInfo);
 
-    float3 wo = -context.CenterRayDirection;
+    float3 wo = -primaryRayInfo.CenterRayDirection;
 
     BxdfEval bxdfEval;
-    BxdfSample bxdfSample = BxDF::Sample(rngBxDF, context.HitInfo, wo, bxdfEval);
+    BxdfSample bxdfSample = BxDF::Sample(rngBxDF, primaryRayInfo.HitInfo, wo, bxdfEval);
 
     // TODO: Simpler function that doesn't extract everything?
     bool isMiss;
@@ -37,7 +38,7 @@ void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i
     {
         RayQuery<RAY_FLAGS> q;
         RayDesc ray;
-        ray.Origin = context.HitInfo.HitPosBiased;
+        ray.Origin = primaryRayInfo.HitInfo.HitPosBiased;
         ray.Direction = bxdfSample.Wi;
         ray.TMin = TMIN_BIAS_COEF * EPSILON;
         ray.TMax = INF;
@@ -84,7 +85,7 @@ void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i
         E_direct = mis * radiance / max(1e-6f, pdf);
     }
 
-    X_i.SourcePositionBiased = context.HitInfo.HitPosBiased;
+    X_i.SourcePositionBiased = primaryRayInfo.HitInfo.HitPosBiased;
     X_i.DestPosition = isMiss ? bxdfSample.Wi : secondaryHitInfo.HitPos;
     X_i.DestNg = isMiss ? 0 : secondaryHitInfo.Ng;
     X_i.IsMiss = isMiss;
@@ -93,7 +94,8 @@ void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i
     X_i.Jacobian = 1.0f;
 }
 
-void Shift(inout CandidateGI X_i, ContextSSPoint context)
+template <typename TPrimaryRayInfo>
+void Shift(inout CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
 {
 #if !MISS_SAMPLES_VALID
     if (X_i.IsMiss)
@@ -106,14 +108,14 @@ void Shift(inout CandidateGI X_i, ContextSSPoint context)
         return;
     }
 
-    bool primaryOnSecondaryVertex = all(X_i.DestPosition == context.HitInfo.HitPos);
+    bool primaryOnSecondaryVertex = all(X_i.DestPosition == primaryRayInfo.HitInfo.HitPos);
     if (!X_i.IsMiss && primaryOnSecondaryVertex)
     {
         X_i.BxdfEval.Radiance = 0.0f; // TODO: IsValid flag in reservoir?
         return;
     }
 
-    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
+    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - primaryRayInfo.HitInfo.HitPos);
 
     bool swappedSidesOfSurface = dot(X_i.DestNg, wi) >= 0.0f;
     if (!X_i.IsMiss && swappedSidesOfSurface)
@@ -123,12 +125,12 @@ void Shift(inout CandidateGI X_i, ContextSSPoint context)
         return;
     }
 
-    float3 wo = -context.CenterRayDirection;
+    float3 wo = -primaryRayInfo.CenterRayDirection;
 
-    X_i.BxdfEval = BxDF::Evaluate(context.HitInfo, wo, wi, LobeTag::eAll);
+    X_i.BxdfEval = BxDF::Evaluate(primaryRayInfo.HitInfo, wo, wi, LobeTag::eAll);
 
     float3 x1 = X_i.SourcePositionBiased;
-    float3 y1 = context.HitInfo.HitPosBiased;
+    float3 y1 = primaryRayInfo.HitInfo.HitPosBiased;
 
     if (all(x1 == y1))
     {
@@ -136,7 +138,7 @@ void Shift(inout CandidateGI X_i, ContextSSPoint context)
         return;
     }
 
-    float3 y1_Ng = context.HitInfo.Ng_ff;
+    float3 y1_Ng = primaryRayInfo.HitInfo.Ng_ff;
 
     ShiftResult shiftResult;
     if (X_i.IsMiss)
@@ -160,7 +162,8 @@ void Shift(inout CandidateGI X_i, ContextSSPoint context)
     X_i.Jacobian = shiftResult.Jacobian;
 }
 
-float Target(CandidateGI X_i, ContextSSPoint context)
+template <typename TPrimaryRayInfo>
+float Target(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
 {
 #if !MISS_SAMPLES_VALID
     if (X_i.IsMiss)
@@ -173,12 +176,12 @@ float Target(CandidateGI X_i, ContextSSPoint context)
         return 0.0f;
     }
 
-    bool primaryOnSecondaryVertex = all(X_i.DestPosition == context.HitInfo.HitPos);
+    bool primaryOnSecondaryVertex = all(X_i.DestPosition == primaryRayInfo.HitInfo.HitPos);
     if (!X_i.IsMiss && primaryOnSecondaryVertex)
         return 0.0f;
 
-    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - context.HitInfo.HitPos);
-    float NdL = max(0.0f, dot(context.HitInfo.Ns_ff, wi));
+    float3 wi = X_i.IsMiss ? X_i.DestPosition : normalize(X_i.DestPosition - primaryRayInfo.HitInfo.HitPos);
+    float NdL = max(0.0f, dot(primaryRayInfo.HitInfo.Ns_ff, wi));
     if (NdL <= 0 || X_i.Jacobian <= 0.0f)
         return 0.0f;
 
@@ -189,9 +192,9 @@ float Target(CandidateGI X_i, ContextSSPoint context)
     {
         bool occluded;
         if (X_i.IsMiss)
-            TestVisibilityDirection(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
+            TestVisibilityDirection(primaryRayInfo.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
         else
-            TestVisibilityPoints(context.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
+            TestVisibilityPoints(primaryRayInfo.HitInfo.HitPosBiased, X_i.DestPosition, occluded);
         if (occluded)
             return 0.0f;
     }
@@ -208,7 +211,8 @@ float Target(CandidateGI X_i, ContextSSPoint context)
     return Luminance(Lo) * X_i.Jacobian;
 }
 
-float PDF(CandidateGI X_i, ContextSSPoint context)
+template <typename TPrimaryRayInfo>
+float PDF(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
 {
     return X_i.BxdfEval.PDF;
 }
@@ -289,10 +293,10 @@ bool TrySampleReservoirGI(
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidateGI X_i) { X_i = (CandidateGI)0; }
-void Shift(inout CandidateGI X_i, ContextSSPoint context) {}
-float Target(CandidateGI X_i, ContextSSPoint context) { return NAN; }
-float PDF(CandidateGI X_i, ContextSSPoint context) { return NAN; }
+template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidateGI X_i) { X_i = (CandidateGI)0; }
+template <typename TPrimaryRayInfo> void Shift(inout CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) {}
+template <typename TPrimaryRayInfo> float Target(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
+template <typename TPrimaryRayInfo> float PDF(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
 bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,

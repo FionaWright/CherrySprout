@@ -92,10 +92,11 @@ void selectSubPathRIS(inout RngInfo rngInfo, inout CandidatePT X_i)
     }
 }
 
-void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidatePT X_i)
+template <typename TPrimaryRayInfo>
+void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidatePT X_i)
 {
     float3 origin = NAN;
-    PathState pathState = CreatePathState(origin, context.CenterRayDirection);
+    PathState pathState = CreatePathState(origin, primaryRayInfo.CenterRayDirection);
     X_i.VertexList = CreatePathVertexList();
 
     uint2 pixelCoord = uint2(0,0); // TODO: Needed to combine ReSTIR types, ignore for now
@@ -107,7 +108,7 @@ void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidatePT X_i
         pathState.SetPathFlag(eIsPrimaryRay, true);
         pathState.SetPathFlag(eIsTerminalRay, 0 == gSettings.MaxRayDepth - 1);
 
-        proceed = ResolvePathAncillaryVertex(pathState, X_i.VertexList, rngInfo, context.HitInfo, context.IsMiss, pixelCoord);
+        proceed = ResolvePathAncillaryVertex(pathState, X_i.VertexList, rngInfo, primaryRayInfo.HitInfo, primaryRayInfo.IsMiss, pixelCoord);
     }
 
     if (proceed)
@@ -130,12 +131,13 @@ void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidatePT X_i
     selectSubPathRIS(rngInfo, X_i);
 }
 
-void Shift(inout CandidatePT X_i, ContextSSPoint context)
+template <typename TPrimaryRayInfo>
+void Shift(inout CandidatePT X_i, TPrimaryRayInfo primaryRayInfo)
 {
     float3 origin = NAN;
     int2 pixelCoord = int2(0,0);
 
-    PathState pathState = CreatePathState(origin, context.CenterRayDirection);
+    PathState pathState = CreatePathState(origin, primaryRayInfo.CenterRayDirection);
     PathStateShifted pathStateShifted = CreatePathStateShifted();
 
     pathStateShifted.IsUsingNeeMis = false;
@@ -148,7 +150,7 @@ void Shift(inout CandidatePT X_i, ContextSSPoint context)
         pathState.SetPathFlag(eIsPrimaryRay, true);
         pathState.SetPathFlag(eIsTerminalRay, 0 == X_i.VertexList.NumVertices - 1);
 
-        proceed = ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, X_i.VertexList, context.IsMiss, context.HitInfo);
+        proceed = ResolveShiftedPathAncillaryVertex(pathState, pathStateShifted, X_i.VertexList, primaryRayInfo.IsMiss, primaryRayInfo.HitInfo);
     }
 
     if (proceed)
@@ -180,20 +182,20 @@ void Shift(inout CandidatePT X_i, ContextSSPoint context)
     //X_i.W = X_i.PDF <= 0.0f ? 0.0f : 1.0f / X_i.PDF;
 }
 
-float Target(CandidatePT X_i, ContextSSPoint context)
+template <typename TPrimaryRayInfo>
+float Target(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo)
 {
     return Luminance(X_i.Lo) * X_i.Jacobian;
 }
 
-float PDF(CandidatePT X_i, ContextSSPoint context)
+template <typename TPrimaryRayInfo>
+float PDF(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo)
 {
     return X_i.W <= 0.0f ? 0.0f : 1.0f / X_i.W;
 }
 
 bool TrySampleReservoirPT(
-    HitInfo hitInfo,
     uint2 pixelCoord,
-    float3 wo,
     out CandidatePT Y,
     out float3 Lo)
 {
@@ -245,6 +247,20 @@ bool TrySampleReservoirPT(
 
 float3 SampleRestirPT(uint2 pixelCoord)
 {
+#if FEAT_CORE_D(AreaRestir)
+    uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
+    ReservoirPT reservoir = gReservoirBufferPT[reservoirIdx];
+    if (reservoir.PreCandidate.IsMiss)
+    {
+        float mis, _;
+        float3 L_miss = Miss(reservoir.PreCandidate.CenterRayDirection, 1.0f, true, false, mis, _);
+        return mis * L_miss;
+    }
+
+    CandidatePT Y;
+    float3 Lo;
+    bool found = TrySampleReservoirPT(pixelCoord, Y, Lo);
+#else
     uint contextIdx = GetContextBufferIndex(pixelCoord);
     ContextSSPoint context = gContextsPrimaryRay[contextIdx];
     if (context.IsMiss)
@@ -254,11 +270,10 @@ float3 SampleRestirPT(uint2 pixelCoord)
         return mis * L_miss;
     }
 
-    float3 wo = -context.CenterRayDirection;
-
     CandidatePT Y;
     float3 Lo;
-    bool found = TrySampleReservoirPT(context.HitInfo, pixelCoord, wo, Y, Lo);
+    bool found = TrySampleReservoirPT(pixelCoord, Y, Lo);
+#endif
 
     DBG_OUTPUT_DUMP_DISABLE();
     {
@@ -311,10 +326,10 @@ float3 SampleRestirPT(uint2 pixelCoord)
 
 #else
 
-void Generate(inout RngInfo rngInfo, ContextSSPoint context, out CandidatePT X_i) { X_i = (CandidatePT)0; }
-void Shift(inout CandidatePT X_i, ContextSSPoint context) {}
-float Target(CandidatePT X_i, ContextSSPoint context) { return NAN; }
-float PDF(CandidatePT X_i, ContextSSPoint context) { return NAN; }
+template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidatePT X_i) { X_i = (CandidatePT)0; }
+template <typename TPrimaryRayInfo> void Shift(inout CandidatePT X_i, TPrimaryRayInfo primaryRayInfo) {}
+template <typename TPrimaryRayInfo> float Target(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
+template <typename TPrimaryRayInfo> float PDF(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
 bool TrySampleReservoirPT(
     HitInfo hitInfo,
     uint2 pixelCoord,
