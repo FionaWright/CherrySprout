@@ -19,12 +19,16 @@ struct ContextSSPoint
 struct ContextSSArea
 {
     // None
+    hlsl::uint Dummy;
 };
 
 struct PreCandidatePoint
 {
     // None
     // Implicit pixel position (0.5,0.5)
+    hlsl::uint Dummy;
+
+    // TODO: Make specialized reservoirs that either have or don't have pre candidates
 };
 
 struct PreCandidateArea
