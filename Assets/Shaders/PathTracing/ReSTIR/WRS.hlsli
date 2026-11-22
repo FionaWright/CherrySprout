@@ -65,8 +65,8 @@ bool ReservoirMerge(
     float mis2 = 1 / M; // c2 / (c1 + c2)
 
     // Balance:
-    //float pdf1 = max(1e-6f, PDF(reservoir.Y, context));
-    //float pdf2 = max(1e-6f, PDF(other.Y, context));
+    //float pdf1 = max(1e-6f, PDF(reservoir.Y));
+    //float pdf2 = max(1e-6f, PDF(other.Y));
     //float mis1 = pdf1 / (c1 * pdf1 + c2 * pdf2);
     //float mis2 = pdf2 / (c1 * pdf1 + c2 * pdf2);
 
@@ -123,21 +123,20 @@ void WRS(
 
 		TCandidate X_i;
 		float pHat;
-		float pdf;
 
 #if FEAT_ADV_D(AreaRestir)
 		{
 			Generate(rngInfo, preX_i, X_i);
 			pHat = Target(X_i, preX_i);
-        	pdf = PDF(X_i, preX_i);
 		}
 #else
 		{
 			Generate(rngInfo, context, X_i);
 			pHat = Target(X_i, context);
-        	pdf = PDF(X_i, context);
 		}
 #endif
+
+        float pdf = PDF(X_i);
 
         DBG_ASSERT_GE(pHat, 0.0f, RESTIR_PHAT);
         DBG_ASSERT_GE(pdf, 0.0f, RESTIR_PDF);

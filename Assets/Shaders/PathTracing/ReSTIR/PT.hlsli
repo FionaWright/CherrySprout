@@ -188,8 +188,7 @@ float Target(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo)
     return Luminance(X_i.Lo) * X_i.Jacobian;
 }
 
-template <typename TPrimaryRayInfo>
-float PDF(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo)
+float PDF(CandidatePT X_i)
 {
     return X_i.W <= 0.0f ? 0.0f : 1.0f / X_i.W;
 }
@@ -330,7 +329,7 @@ float3 SampleRestirPT(uint2 pixelCoord)
 template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidatePT X_i) { X_i = (CandidatePT)0; }
 template <typename TPrimaryRayInfo> void Shift(inout CandidatePT X_i, TPrimaryRayInfo primaryRayInfo) {}
 template <typename TPrimaryRayInfo> float Target(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
-template <typename TPrimaryRayInfo> float PDF(CandidatePT X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
+float PDF(CandidatePT X_i) { return NAN; }
 bool TrySampleReservoirPT(
     HitInfo hitInfo,
     uint2 pixelCoord,

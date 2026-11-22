@@ -97,17 +97,17 @@ bool TryFindTemporalReservoir(
     float2 mv,
 
     out int2 selectedPixelCoord,
-    out TReservoir temporalReservoir)
+    out TReservoir selectedReservoir)
 {
     selectedPixelCoord = int2(-1,-1);
 
     float2 dimensions = gSettings.FrameDimensions;
 
-    float2 pixelUV = pixelCoord + 0.5f;
-    float2 currUV = pixelUV / dimensions;
-    float2 prevUV = currUV - mv;
+    float2 pixelCenter = pixelCoord + 0.5f;   // [0, WxH]
+    float2 currUV = pixelCenter / dimensions; // [0, 1]
+    float2 prevUV = currUV - mv;              // [0, 1]
 
-    float2 supportCenter = prevUV * dimensions;
+    float2 supportCenter = prevUV * dimensions; // [0, WxH]
     float2 supportBase = supportCenter - 0.5f;
     float2 supportTop = supportBase + 1.0f;
 
@@ -117,7 +117,12 @@ bool TryFindTemporalReservoir(
     if (!validPrevPixel)
         return false;
 
-    TReservoir samples[4];
+    uint2 sourcePixelCoords[4];
+    TReservoir reservoirs[4];
+    float pHats[4];
+    float pdfs[4];
+
+    float pdfSum = 0.0f;
 
     const uint2 OFFSETS[4] = {
         uint2(0,0),
@@ -126,33 +131,80 @@ bool TryFindTemporalReservoir(
         uint2(1,1)
     };
 
-    if (FEAT_ADV(AreaRestirRobust))
+    [unroll]
+    for (uint i = 0; i < 4; i++)
     {
-        // TODO
-        // Remember to shift both candidate AND precandidate!
-    }
-    else
-    {
-        [unroll]
-        for (uint i = 0; i < 4; i++)
+        uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
+        uint reservoirIdx = GetReservoirBufferIndex_Previous(coord);
+        reservoirs[i] = buffer[reservoirIdx];
+
+        sourcePixelCoords[i] = coord;
+
+        float2 candidateJitterFromCenter = reservoirs[i].PreCandidate.RngPrimary.Jitter - 0.5f;
+        float2 candidatePosition = float2(coord) + 0.5f + candidateJitterFromCenter;
+
+        if (FEAT_ADV(AreaRestirRobust))
         {
-            uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
-            uint reservoirIdx = GetReservoirBufferIndex_Previous(coord);
-            samples[i] = buffer[reservoirIdx];
+            int xShiftDirection =
+                candidatePosition.x < supportBase.x ? 1 :
+                candidatePosition.x > supportTop.x ? -1 : 0;
 
-            float2 candidateJitterFromCenter = samples[i].PreCandidate.RngPrimary.Jitter - 0.5f;
-            float2 candidatePosition = float2(coord) + 0.5f + candidateJitterFromCenter;
+            int yShiftDirection =
+                candidatePosition.y < supportBase.y ? 1 :
+                candidatePosition.y > supportTop.y ? -1 : 0;
 
+            // No shift needed
+            if (xShiftDirection == 0 && yShiftDirection == 0)
+            {
+                pHats[i] = reservoirs[i].PHat;
+                continue;
+            }
+
+            // Shift precandidates to be within support
+            int2 shiftedPixelCoord = (int2)coord + int2(xShiftDirection, yShiftDirection);
+            bool validShiftedPixel =
+                all(shiftedPixelCoord >= 0) &&
+                all(shiftedPixelCoord < int2(gSettings.FrameDimensions));
+
+            if (!validShiftedPixel)
+            {
+                pHats[i] = 0.0f;
+                continue;
+            }
+
+            sourcePixelCoords[i] = shiftedPixelCoord;
+
+            ShiftPreCandidate(shiftedPixelCoord, reservoirs[i].PreCandidate);
+
+            // Shift candidate using new precandidate
+            Shift(reservoirs[i].Y, reservoirs[i].PreCandidate);
+
+            // Recalculate pHat
+            pHats[i] = Target(reservoirs[i].Y, reservoirs[i].PreCandidate);
+        }
+        else
+        {
             bool rejectCandidate =
                 any(candidatePosition < supportBase) ||
                 any(candidatePosition > supportTop) ||
-				samples[i].PreCandidate.IsMiss;
+			    reservoirs[i].PreCandidate.IsMiss;
+
             if (rejectCandidate)
-            {
-                samples[i].PHat = 0.0f;
-            }
+                pHats[i] = 0.0f;
+            else
+                pHats[i] = reservoirs[i].PHat;
         }
     }
+
+    [unroll]
+    for (uint i = 0; i < 4; i++)
+    {
+        pdfs[i] = PDF(reservoirs[i].Y);
+        pdfSum += pdfs[i];
+    }
+
+    // TODO: Should this just use reservoir merging instead?
+    // Read source code and try and find where they do this RIS
 
     // RIS
     {
@@ -164,8 +216,9 @@ bool TryFindTemporalReservoir(
         [unroll]
         for (uint i = 0; i < M; i++)
         {
-            float mis = 1.0f;
-            w[i] = mis * samples[i].PHat * samples[i].W_Y; // TODO: Correct to use W_Y?
+            //float mis = 1.0f; // TODO: MIS is balance heuristic of pHats according to paper for robust?
+            float mis = pdfs[i] / pdfSum; // Note: Balance Heuristic
+            w[i] = mis * pHats[i] * reservoirs[i].W_Y; // TODO: Correct to use W_Y?
             wSum += w[i];
         }
 
@@ -178,11 +231,11 @@ bool TryFindTemporalReservoir(
             r -= w[i] / wSum;
             if (r <= 0.0f)
             {
-                float W_Y = wSum / (float(M) * samples[i].PHat); // TODO: Do something with this?
+                float W_Y = wSum / (float(M) * pHats[i]); // TODO: Do something with this?
 
-                selectedPixelCoord = uint2(pixel2x2Base) + OFFSETS[i];
-                uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(selectedPixelCoord);
-                temporalReservoir = buffer[reservoirIdxPrevIn];
+                selectedPixelCoord = sourcePixelCoords[i];
+                selectedReservoir = reservoirs[i];
+                SetUCW(selectedReservoir);
                 return true;
             }
         }

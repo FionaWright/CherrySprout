@@ -436,6 +436,8 @@ bool Greenhouse::GBufferRequired() const
 #   endif
 #endif
 
+    // TODO: Only required if ReSTIR enabled (Without Area ReSTIR)
+
     // PT only for now
     return m_config.RenderBackend == RenderBackendMode::ePathTracer && debugNeeds;
 }

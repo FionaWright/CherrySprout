@@ -75,8 +75,7 @@ float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
     return Luminance(E_direct);
 }
 
-template <typename TPrimaryRayInfo>
-float PDF(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
+float PDF(CandidateDI X_i)
 {
     return X_i.LightEval.PDF;
 }
@@ -156,7 +155,7 @@ bool TrySampleReservoirDI(
 template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidateDI X_i) { X_i = (CandidateDI)0; }
 template <typename TPrimaryRayInfo> void Shift(inout CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) {}
 template <typename TPrimaryRayInfo> float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
-template <typename TPrimaryRayInfo> float PDF(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
+float PDF(CandidateDI X_i) { return NAN; }
 template <typename TReservoir> bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,

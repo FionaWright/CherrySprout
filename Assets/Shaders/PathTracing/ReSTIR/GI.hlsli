@@ -211,8 +211,7 @@ float Target(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
     return Luminance(Lo) * X_i.Jacobian;
 }
 
-template <typename TPrimaryRayInfo>
-float PDF(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo)
+float PDF(CandidateGI X_i)
 {
     return X_i.BxdfEval.PDF;
 }
@@ -297,7 +296,7 @@ bool TrySampleReservoirGI(
 template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidateGI X_i) { X_i = (CandidateGI)0; }
 template <typename TPrimaryRayInfo> void Shift(inout CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) {}
 template <typename TPrimaryRayInfo> float Target(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
-template <typename TPrimaryRayInfo> float PDF(CandidateGI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
+float PDF(CandidateGI X_i) { return NAN; }
 template <typename TReservoir> bool TrySampleReservoirGI(
     HitInfo hitInfo,
     float3 beta,
