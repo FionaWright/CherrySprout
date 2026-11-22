@@ -1,9 +1,11 @@
 #include "Utils/SharedUtils.h"
+#include "Utils/HlslUtils.hlsli"
 #include "Utils/CBVs.h"
 #include "PathTracing/Structs.h"
 
 #include "PathTracing/Buffers.hlsli"
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
+#include "PathTracing/ReSTIR/Structs.h"
 
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 
@@ -21,22 +23,22 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     if (FEAT_CORE(RestirDI))
     {
-        gReservoirBufferDI[reservoirIdxPing] = CreateReservoir<CandidateDI>();
-        gReservoirBufferDI[reservoirIdxPong] = CreateReservoir<CandidateDI>();
-        gReservoirBufferDI[reservoirIdxPrev] = CreateReservoir<CandidateDI>();
+        gReservoirBufferDI[reservoirIdxPing] = INIT0(ReservoirDI);
+        gReservoirBufferDI[reservoirIdxPong] = INIT0(ReservoirDI);
+        gReservoirBufferDI[reservoirIdxPrev] = INIT0(ReservoirDI);
     }
 
     if (FEAT_CORE(RestirGI))
     {
-        gReservoirBufferGI[reservoirIdxPing] = CreateReservoir<CandidateGI>();
-        gReservoirBufferGI[reservoirIdxPong] = CreateReservoir<CandidateGI>();
-        gReservoirBufferGI[reservoirIdxPrev] = CreateReservoir<CandidateGI>();
+        gReservoirBufferGI[reservoirIdxPing] = INIT0(ReservoirGI);
+        gReservoirBufferGI[reservoirIdxPong] = INIT0(ReservoirGI);
+        gReservoirBufferGI[reservoirIdxPrev] = INIT0(ReservoirGI);
     }
 
     if (FEAT_CORE(RestirPT))
     {
-        gReservoirBufferPT[reservoirIdxPing] = CreateReservoir<CandidatePT>();
-        gReservoirBufferPT[reservoirIdxPong] = CreateReservoir<CandidatePT>();
-        gReservoirBufferPT[reservoirIdxPrev] = CreateReservoir<CandidatePT>();
+        gReservoirBufferPT[reservoirIdxPing] = INIT0(ReservoirPT);
+        gReservoirBufferPT[reservoirIdxPong] = INIT0(ReservoirPT);
+        gReservoirBufferPT[reservoirIdxPrev] = INIT0(ReservoirPT);
     }
 }

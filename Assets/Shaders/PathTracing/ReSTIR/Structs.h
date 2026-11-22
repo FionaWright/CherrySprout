@@ -19,14 +19,14 @@ struct ContextSSPoint
 struct ContextSSArea
 {
     // None
-    bool _;
+    //bool _;
 };
 
 struct PreCandidatePoint
 {
     // None
     // Implicit pixel position (0.5,0.5)
-    bool _;
+    //bool _;
 };
 
 struct PreCandidateArea
@@ -40,12 +40,6 @@ struct PreCandidateArea
     hlsl::uint IsMiss;
     float DepthNonLinear;
 };
-
-#if FEAT_CORE_D(AreaRestir)
-#   define PRIMARY_RAY_INFO PreCandidateArea
-#else
-#   define PRIMARY_RAY_INFO ContextSSPoint
-#endif
 
 struct CandidateDI
 {
@@ -97,9 +91,6 @@ struct CandidateGPT
     float PdfRatio;
     float InnerJacobian;
 };
-
-#define ReservoirX Reservoir<TCandidate, PreCandidatePoint>
-#define ReservoirX_Area Reservoir<TCandidate, PreCandidateArea>
 
 typedef Reservoir<CandidateDI, PreCandidatePoint> ReservoirDI;
 typedef Reservoir<CandidateGI, PreCandidatePoint> ReservoirGI;

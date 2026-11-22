@@ -16,7 +16,8 @@
 #include "PathTracing/Debug/Assert.hlsli"
 #include "PathTracing/Debug/SettingGuards.hlsli"
 
-void Generate(inout RngInfo rngInfo, PRIMARY_RAY_INFO primaryRayInfo, out CandidateDI X_i)
+template <typename TPrimaryRayInfo>
+void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidateDI X_i)
 {
     RngValuesAncillary::RngValuesNEE rng = SampleRngNEE(rngInfo);
 
@@ -27,12 +28,14 @@ void Generate(inout RngInfo rngInfo, PRIMARY_RAY_INFO primaryRayInfo, out Candid
     X_i.LightEval = lightEval;
 }
 
-void Shift(inout CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
+template <typename TPrimaryRayInfo>
+void Shift(inout CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
 {
     X_i.LightEval = EvaluateLight(primaryRayInfo.HitInfo.HitPos, X_i.LightSample);
 }
 
-float Target(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
+template <typename TPrimaryRayInfo>
+float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
 {
     float NdL = max(0.0f, dot(primaryRayInfo.HitInfo.Ns_ff, X_i.LightEval.Direction));
     if (NdL <= 0)
@@ -71,7 +74,8 @@ float Target(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
     return Luminance(radiance);
 }
 
-float PDF(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo)
+template <typename TPrimaryRayInfo>
+float PDF(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
 {
     return X_i.LightEval.PDF;
 }
@@ -147,10 +151,10 @@ bool TrySampleReservoirDI(
 
 #else
 
-void Generate(inout RngInfo rngInfo, PRIMARY_RAY_INFO primaryRayInfo, out CandidateDI X_i) { X_i = (CandidateDI)0; }
-void Shift(inout CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo) {}
-float Target(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo) { return NAN; }
-float PDF(CandidateDI X_i, PRIMARY_RAY_INFO primaryRayInfo) { return NAN; }
+template <typename TPrimaryRayInfo> void Generate(inout RngInfo rngInfo, TPrimaryRayInfo primaryRayInfo, out CandidateDI X_i) { X_i = (CandidateDI)0; }
+template <typename TPrimaryRayInfo> void Shift(inout CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) {}
+template <typename TPrimaryRayInfo> float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
+template <typename TPrimaryRayInfo> float PDF(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo) { return NAN; }
 bool TrySampleReservoirDI(
     HitInfo hitInfo,
     uint2 pixelCoord,

@@ -60,18 +60,21 @@ PreCandidateArea GeneratePreCandidate(inout RngInfo rngInfo, ContextScreenSpaceA
 
 // TODO: Shift() should re-trace primary ray with new jitter, possibly with a jacobian
 
-template <typename TCandidate>
+template <typename TReservoir, typename TPreCandidate>
 bool TryFindTemporalReservoir(
     inout RngInfo rngInfo,
 
-    RWStructuredBuffer< ReservoirX_Area > buffer,
+    RWStructuredBuffer< TReservoir > buffer,
     ContextScreenSpaceArea _,
-    PreCandidateArea preCandidate,
+    TPreCandidate preCandidate,
     uint2 pixelCoord,
     float2 mv,
 
-    out ReservoirX_Area temporalReservoir)
+    out int2 prevPixelCoord,
+    out TReservoir temporalReservoir)
 {
+    prevPixelCoord = int2(-1,-1);
+
     float2 dimensions = gSettings.FrameDimensions;
 
     float2 pixelUV = pixelCoord + 0.5f;
@@ -91,7 +94,7 @@ bool TryFindTemporalReservoir(
     float2 jitterFromCenter = preCandidate.RngPrimary.Jitter - 0.5f;
     float2 samplePosition = supportCenter + jitterFromCenter;
 
-    ReservoirX_Area samples[4];
+    TReservoir samples[4];
 
     const uint2 OFFSETS[4] = {
         uint2(0,0),
@@ -110,7 +113,7 @@ bool TryFindTemporalReservoir(
         for (uint i = 0; i < 4; i++)
         {
             uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
-            uint reservoirIdx = GetReservoirBufferIndex_Previous(prevPixelCoord);
+            uint reservoirIdx = GetReservoirBufferIndex_Previous(coord);
             samples[i] = buffer[reservoirIdx];
 
             float2 candidateJitterFromCenter = samples[i].PixelInfo.RngPrimary.Jitter - 0.5f;
@@ -125,8 +128,6 @@ bool TryFindTemporalReservoir(
             }
         }
     }
-
-    uint2 selectedPixelCoord = uint2(UINT_MAX, UINT_MAX);
 
     // RIS
     {
@@ -154,8 +155,8 @@ bool TryFindTemporalReservoir(
             {
                 float3 W_Y = wSum / (float(M) * samples[i].PHat); // TODO: Do something with this?
 
-                uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
-                uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(coord);
+                prevPixelCoord = uint2(pixel2x2Base) + OFFSETS[i];
+                uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
                 temporalReservoir = buffer[reservoirIdxPrevIn];
                 return true;
             }

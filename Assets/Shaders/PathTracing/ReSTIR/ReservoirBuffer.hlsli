@@ -1,6 +1,9 @@
 #ifndef H_RESERVOIR_BUFFER_H
 #define H_RESERVOIR_BUFFER_H
 
+#include "PathTracing/Buffers.hlsli"
+#include "PathTracing/FeatFlags/FeatFlags.hlsli"
+
 /*
 
 Reservoir Buffer:

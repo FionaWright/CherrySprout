@@ -6,19 +6,20 @@ PreCandidatePoint GeneratePreCandidate(inout RngInfo rngInfo, ContextSSPoint con
     return INIT0(PreCandidatePoint);
 }
 
-template <typename TCandidate>
+template <typename TReservoir, typename TPreCandidate>
 bool TryFindTemporalReservoir(
     inout RngInfo rngInfo,
 
-    RWStructuredBuffer< ReservoirX_Area > buffer,
+    RWStructuredBuffer< TReservoir > buffer,
     ContextSSPoint context,
-    PreCandidateArea _,
+    TPreCandidate _,
     uint2 pixelCoord,
     float2 mv,
 
-    out ReservoirX_Area temporalReservoir)
+    out int2 prevPixelCoord,
+    out TReservoir temporalReservoir)
 {
-    int2 prevPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
+    prevPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
 
     bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
     if (!validPrevPixel)

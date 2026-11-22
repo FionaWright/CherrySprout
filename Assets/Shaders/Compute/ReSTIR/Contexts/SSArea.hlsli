@@ -10,88 +10,78 @@
 #include "Compute/ReSTIR/SeedDecorrelators.h"
 #include "Compute/ReSTIR/Utils.hlsli"
 
+#if FEAT_CORE_D(AreaRestir)
+#    include "Compute/ReSTIR/PreCandidates/Area.hlsli"
+#else
+#    include "Compute/ReSTIR/PreCandidates/Point.hlsli"
+#endif
+
 void InitContext(uint2 pixelCoord, out ContextSSArea context)
 {
 }
 
-template <typename TCandidate>
-void GenerateCandidates(RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoord, uint seedDecorrelator)
+template <typename TReservoir>
+void GenerateCandidates(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
     ContextSSArea context;
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, seedDecorrelator);
-    if (seedDecorrelator == 0)
-        SampleRngPrimary(rngInfo);
 
-    ReservoirX_Area reservoir = CreateReservoir<TCandidate, PreCandidateArea>();
+    TReservoir reservoir = INIT0(TReservoir);
     WRS(rngInfo, reservoir, gRestirSettings.GenCandidatesCount, context);
 
     uint reservoirIdxOut = GetReservoirBufferIndex_InitialCandidatesOutput(pixelCoord);
     buffer[reservoirIdxOut] = reservoir;
 }
 
-template <typename TCandidate>
-void TemporalReuse(RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoord, uint seedDecorrelator)
+template <typename TReservoir>
+void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
-    uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextSSArea context = gContextsPrimaryRay[contextIdx];
+    ContextSSArea context;
 
     uint reservoirIdxIn = GetReservoirBufferIndex_TemporalInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_TemporalOutput(pixelCoord);
 
-    ReservoirX_Area reservoir = buffer[reservoirIdxIn];
+    TReservoir reservoir = buffer[reservoirIdxIn];
 
     float2 mv = gGBufferMv[pixelCoord].xy;
 
     bool prevWasOffscreen = any(mv >= MOTION_VECTOR_OFFSCREEN);
-    if (context.IsMiss || prevWasOffscreen)
+    if (reservoir.PreCandidate.IsMiss || prevWasOffscreen)
     {
         buffer[reservoirIdxOut] = reservoir;
         TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
         return;
     }
 
-    int2 prevPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
+	RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
+    DecorrelateRng(rngInfo, seedDecorrelator);
 
-    bool validPrevPixel = all(prevPixelCoord >= 0) && all(prevPixelCoord < int2((float2)gSettings.FrameDimensions));
-    if (!validPrevPixel)
-    {
-        buffer[reservoirIdxOut] = reservoir;
+    int2 prevPixelCoord;
+    TReservoir reservoirPrev;
+	if (!TryFindTemporalReservoir(rngInfo, buffer, context, reservoir.PreCandidate, pixelCoord, mv, prevPixelCoord, reservoirPrev))
+	{
+		buffer[reservoirIdxOut] = reservoir;
         TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
         return;
-    }
+	}
 
-    uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(prevPixelCoord);
-    ReservoirX_Area reservoirPrev = buffer[reservoirIdxPrevIn];
-
-    uint contextIdxOther = GetContextBufferIndex_Prev(prevPixelCoord);
-    ContextSSArea contextOther = gContextsPrimaryRay[contextIdxOther];
-
-    float3 normalMain = context.HitInfo.Ns_ff;
-    float3 normalOther = contextOther.HitInfo.Ns_ff;
-
-    float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
-    float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
+	// Note: Depth/Normal rejections disabled as recommended by paper
 
     bool isValidPrev = true;
-    isValidPrev &= !contextOther.IsMiss;
+    isValidPrev &= !reservoirPrev.PreCandidate.IsMiss;
     isValidPrev &= reservoirPrev.W_Y > 0.0f;
     isValidPrev &= reservoirPrev.PHat > 0.0f;
     isValidPrev &= reservoirPrev.Confidence > 0.0f;
-    isValidPrev &= PassNormalThreshold(normalMain, normalOther, gRestirSettings.TemporalNormalDivThreshold);
-    isValidPrev &= PassDepthThreshold(depthMain, depthOther, gRestirSettings.TemporalDepthDivThreshold);
 
     // TODO: When MVs added, lack of ping-pong could cause memory collision issues
 
     if (isValidPrev)
     {
-        RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
-        DecorrelateRng(rngInfo, seedDecorrelator);
+        Shift(reservoirPrev.Y, reservoir.PreCandidate);
 
-        Shift(reservoirPrev.Y, context);
-
-        ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, context);
+        ReservoirMerge(rngInfo, gRestirSettings.TemporalConfidenceCap, reservoir, reservoirPrev, reservoir.PreCandidate);
 
         SetUCW(reservoir);
     }
@@ -100,23 +90,20 @@ void TemporalReuse(RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoor
     TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);
 }
 
-template <typename TCandidate>
-void SpatialReuse(RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoord, uint seedDecorrelator)
+template <typename TReservoir>
+void SpatialReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {
+	ContextSSArea context;
+
     uint reservoirIdxIn = GetReservoirBufferIndex_SpatialInput(pixelCoord);
     uint reservoirIdxOut = GetReservoirBufferIndex_SpatialOutput(pixelCoord);
-    ReservoirX_Area reservoir = buffer[reservoirIdxIn];
+    TReservoir reservoir = buffer[reservoirIdxIn];
 
-    uint contextIdx = GetContextBufferIndex(pixelCoord);
-    ContextSSArea context = gContextsPrimaryRay[contextIdx];
-    if (context.IsMiss)
+    if (reservoir.PreCandidate.IsMiss)
     {
         buffer[reservoirIdxOut] = reservoir;
         return;
     }
-
-    float3 normalMain = context.HitInfo.Ns_ff;
-    float depthMain = LinearizeDepth(context.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
 
     RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, seedDecorrelator);
@@ -135,27 +122,11 @@ void SpatialReuse(RWStructuredBuffer< ReservoirX_Area > buffer, uint2 pixelCoord
                 continue;
         }
 
-        ContextSSArea contextOther;
-        {
-            uint contextIdxOther = GetContextBufferIndex_Prev(coord);
-            contextOther = gContextsPrimaryRay[contextIdxOther];
-            if (contextOther.IsMiss)
-                continue;
-        }
-
-        float3 normalOther = contextOther.HitInfo.Ns_ff;
-        if (!PassNormalThreshold(normalMain, normalOther, gRestirSettings.SpatialNormalDivThreshold))
-            continue;
-
-        float depthOther = LinearizeDepth(contextOther.DepthNonLinear, gSettings.NearPlane, gSettings.FarPlane);
-        if (!PassDepthThreshold(depthMain, depthOther, gRestirSettings.SpatialDepthDivThreshold))
-            continue;
-
         uint idx = GetReservoirBufferIndex_SpatialInput(coord);
-        ReservoirX_Area reservoirNeighbour = buffer[idx];
+        TReservoir reservoirNeighbour = buffer[idx];
 
-        Shift(reservoirNeighbour.Y, context);
-        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, context);
+        Shift(reservoirNeighbour.Y, reservoir.PreCandidate);
+        ReservoirMerge(rngInfo, gRestirSettings.SpatialConfidenceCap, reservoir, reservoirNeighbour, reservoir.PreCandidate);
     }
 
     SetUCW(reservoir);

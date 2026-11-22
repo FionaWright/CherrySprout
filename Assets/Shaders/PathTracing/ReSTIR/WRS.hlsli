@@ -1,16 +1,23 @@
 #ifndef H_RIS_H
 #define H_RIS_H
 
+#if FEAT_CORE_D(AreaRestir)
+#    include "Compute/ReSTIR/PreCandidates/Area.hlsli"
+#else
+#    include "Compute/ReSTIR/PreCandidates/Point.hlsli"
+#endif
+
 float GetWeight(float mis, float pHat, float c, float W)
 {
     return mis * pHat * c * W;
 }
 
-template<typename TCandidate>
+template<typename TCandidate, typename TPreCandidate>
 bool ReservoirUpdate(
     inout RngInfo rngInfo,
-    inout Reservoir<TCandidate> reservoir,
+    inout Reservoir<TCandidate, TPreCandidate> reservoir,
     TCandidate X_i,
+	TPreCandidate preX_i,
     float w,
     float c,
     float pHat)
@@ -28,17 +35,18 @@ bool ReservoirUpdate(
     {
         reservoir.Y = X_i;
         reservoir.PHat = pHat;
+		reservoir.PreCandidate = preX_i;
         return true;
     }
     return false;
 }
 
-template<typename TCandidate, typename TContext>
+template<typename TReservoir, typename TContext>
 bool ReservoirMerge(
     inout RngInfo rngInfo,
     float ConfidenceCap,
-    inout Reservoir<TCandidate> reservoir,
-    Reservoir<TCandidate> other,
+    inout TReservoir reservoir,
+    TReservoir other,
     TContext context)
 {
     float c1 = reservoir.Confidence;
@@ -77,13 +85,14 @@ bool ReservoirMerge(
     {
         reservoir.Y = other.Y;
         reservoir.PHat = pHat;
+		reservoir.PreCandidate = other.PreCandidate;
         return true;
     }
     return false;
 }
 
-template<typename TCandidate>
-void SetUCW(inout Reservoir<TCandidate> reservoir)
+template<typename TReservoir>
+void SetUCW(inout TReservoir reservoir)
 {
     if (reservoir.Confidence <= 0.0f || reservoir.PHat <= 0.0f)
     {
@@ -109,13 +118,25 @@ void WRS(
 
     for (uint i = 0; i < M; i++)
     {
-        TPreCandidate preX_i = GeneratePreCandidate(rngInfo, context);
+		TPreCandidate preX_i = GeneratePreCandidate(rngInfo, context);
 
-        TCandidate X_i;
-        Generate(rngInfo, context, X_i);
+		TCandidate X_i;
+		float pHat;
+		float pdf;
 
-        float pHat = Target(X_i, context);
-        float pdf = PDF(X_i, context);
+#if FEAT_CORE_D(AreaRestir)
+		{
+			Generate(rngInfo, preX_i, X_i);
+			pHat = Target(X_i, preX_i);
+        	pdf = PDF(X_i, preX_i);
+		}
+#else
+		{
+			Generate(rngInfo, context, X_i);
+			pHat = Target(X_i, context);
+        	pdf = PDF(X_i, context);
+		}
+#endif
 
         DBG_ASSERT_GE(pHat, 0.0f, RESTIR_PHAT);
         DBG_ASSERT_GE(pdf, 0.0f, RESTIR_PDF);
@@ -126,7 +147,7 @@ void WRS(
         float c = 1;
         float w = GetWeight(mis, pHat, c, W_X_i);
 
-        candidateSelected |= ReservoirUpdate<TCandidate>(rngInfo, reservoir, X_i, w, c, pHat);
+        candidateSelected |= ReservoirUpdate(rngInfo, reservoir, X_i, preX_i, w, c, pHat);
     }
 
     if (!candidateSelected)
