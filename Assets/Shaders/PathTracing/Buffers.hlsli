@@ -70,10 +70,17 @@ RWTexture2D<float4>                                 gTexGradientXF          : re
 RWTexture2D<float4>                                 gTexGradientXB          : register(u2, SPACE_U_DEFAULT);
 RWTexture2D<float4>                                 gTexGradientYF          : register(u3, SPACE_U_DEFAULT);
 RWTexture2D<float4>                                 gTexGradientYB          : register(u4, SPACE_U_DEFAULT);
+
+#if FEAT_CORE_D(AreaRestir)
+RWStructuredBuffer<ReservoirDI_Area>                gReservoirBufferDI      : register(u5, SPACE_U_DEFAULT);
+RWStructuredBuffer<ReservoirGI_Area>                gReservoirBufferGI      : register(u6, SPACE_U_DEFAULT);
+RWStructuredBuffer<ReservoirPT_Area>                gReservoirBufferPT      : register(u7, SPACE_U_DEFAULT);
+#else
 RWStructuredBuffer<ReservoirDI>                     gReservoirBufferDI      : register(u5, SPACE_U_DEFAULT);
 RWStructuredBuffer<ReservoirGI>                     gReservoirBufferGI      : register(u6, SPACE_U_DEFAULT);
 RWStructuredBuffer<ReservoirPT>                     gReservoirBufferPT      : register(u7, SPACE_U_DEFAULT);
 RWStructuredBuffer<ContextSSPoint>                  gContextsPrimaryRay     : register(u8, SPACE_U_DEFAULT);
+#endif
 
 // =================== U Registers (Debug) =======================================================================
 #if (FEAT_FLAGS_COMP_DBG != 0)

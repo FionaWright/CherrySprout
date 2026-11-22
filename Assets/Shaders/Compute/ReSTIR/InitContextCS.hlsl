@@ -4,11 +4,7 @@
 
 #include "PathTracing/ReSTIR/ReservoirBuffer.hlsli"
 
-#if FEAT_CORE_D(AreaRestir)
-#	include "Compute/ReSTIR/Contexts/SSArea.hlsli"
-#else
-#	include "Compute/ReSTIR/Contexts/SSPoint.hlsli"
-#endif
+#include "Compute/ReSTIR/Contexts/SSPoint.hlsli"
 
 [numthreads(16,16,1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)

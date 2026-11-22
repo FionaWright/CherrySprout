@@ -16,10 +16,6 @@
 #    include "Compute/ReSTIR/PreCandidates/Point.hlsli"
 #endif
 
-void InitContext(uint2 pixelCoord, out ContextSSArea context)
-{
-}
-
 template <typename TReservoir>
 void GenerateCandidates(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, uint seedDecorrelator)
 {

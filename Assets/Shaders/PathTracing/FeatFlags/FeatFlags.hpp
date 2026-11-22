@@ -27,6 +27,7 @@ static constexpr auto s_defaultFeatFlagsCore = static_cast<FeatFlagsCore>(
         eCore_RestirDI |
         //eCore_RestirGI |
         //eCore_RestirPT |
+        eCore_AreaRestir |
         //eCore_RussianRoulette
         eCore_AlphaTesting
     );

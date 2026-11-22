@@ -19,6 +19,8 @@ struct RestirConfig
     bool EnabledPT;
     bool EnabledTemporal;
     bool EnabledSpatial;
+    bool EnabledArea;
+    bool EnabledAreaRobust;
 };
 
 class RestirManager

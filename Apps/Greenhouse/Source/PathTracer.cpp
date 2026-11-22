@@ -481,12 +481,12 @@ void PathTracer::UpdatePipeline(ID3D12Device* device,
 
     for (int i = 0; i < FEAT_FLAG_COUNT_CORE; i++)
     {
-        const hlsl::uint flagValue = 1u << i;
+        const FEAT_FLAG_TYPE_CORE flagValue = 1u << i;
         compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_CORE_" + std::string(s_featFlagNamesCore[i]) + "=" + std::to_string(flagValue));
     }
     for (int i = 0; i < FEAT_FLAG_COUNT_DBG; i++)
     {
-        const hlsl::uint flagValue = 1u << i;
+        const FEAT_FLAG_TYPE_DBG flagValue = 1u << i;
         compileArgsCommon.emplace_back("-DFEAT_FLAG_VALUE_DBG_" + std::string(s_featFlagNamesDbg[i]) + "=" + std::to_string(flagValue));
     }
 

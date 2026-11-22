@@ -34,12 +34,16 @@ void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* roo
     m_numReservoirs = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_RESERVOIR_SUB_BUFFERS;
     m_numContexts = Config::GetSystem().RtvWidth * Config::GetSystem().RtvHeight * NUM_CONTEXT_SUB_BUFFERS;
 
-    const size_t reservoirBufferSizeDI = m_numReservoirs * sizeof(ReservoirDI);
-    const size_t reservoirBufferSizeGI = m_numReservoirs * sizeof(ReservoirGI);
-    const size_t reservoirBufferSizePT = m_numReservoirs * sizeof(ReservoirPT);
+    const size_t reservoirSizeDI = config.EnabledArea ? sizeof(ReservoirDI_Area) : sizeof(ReservoirDI);
+    const size_t reservoirSizeGI = config.EnabledArea ? sizeof(ReservoirGI_Area) : sizeof(ReservoirGI);
+    const size_t reservoirSizePT = config.EnabledArea ? sizeof(ReservoirPT_Area) : sizeof(ReservoirPT);
+
+    const size_t reservoirBufferSizeDI = m_numReservoirs * reservoirSizeDI;
+    const size_t reservoirBufferSizeGI = m_numReservoirs * reservoirSizeGI;
+    const size_t reservoirBufferSizePT = m_numReservoirs * reservoirSizePT;
     const size_t contextBufferSize = m_numContexts * sizeof(ContextSSPoint);
 
-    if (m_contextsPrimaryRay.GetDesc().Width != contextBufferSize)
+    if (!config.EnabledArea && m_contextsPrimaryRay.GetDesc().Width != contextBufferSize)
     {
         m_contextsPrimaryRay.Reset();
         m_contextsPrimaryRay.Init_Buffer("ReSTIR Contexts", device, contextBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -63,24 +67,14 @@ void RestirManager::UpdateBuffersAndPipelines(ID3D12Device* device, RootSig* roo
 
 void RestirManager::PrePasses(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const RestirConfig& config)
 {
-    GPU_SCOPE(cmdList, "ReSTIR DI: Generate Samples");
+    GPU_SCOPE(cmdList, "ReSTIR Pre-Passes");
 
-    CherryAssert(m_contextsPrimaryRay.IsInitialized());
-
-    m_contextsPrimaryRay.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     if (config.EnabledDI)
         m_reservoirBufferDi.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     if (config.EnabledGI)
         m_reservoirBufferGi.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     if (config.EnabledPT)
         m_reservoirBufferPt.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-    if (!m_pipelineInitContext.GetPSO() || m_pipelinesDirty)
-    {
-        d3d->Flush();
-        V(m_pipelineInitContext.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/InitContextCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-        V(m_pipelineClear.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/ClearCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
-    }
 
     auto dispatchRestirPass = [&](const Pipeline* pipeline, const D12Resource* resource = nullptr)
     {
@@ -95,11 +89,25 @@ void RestirManager::PrePasses(D3D* d3d, ID3D12GraphicsCommandList* cmdList, cons
     if (config.ClearBuffers)
     {
         d3d->Flush();
+        if (!m_pipelineClear.GetPSO() || m_pipelinesDirty)
+        {
+            V(m_pipelineClear.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/ClearCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+        }
         dispatchRestirPass(&m_pipelineClear);
     }
 
     // Init Context
+    if (!config.EnabledArea)
     {
+        CherryAssert(m_contextsPrimaryRay.IsInitialized());
+        m_contextsPrimaryRay.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        if (!m_pipelineInitContext.GetPSO() || m_pipelinesDirty)
+        {
+            d3d->Flush();
+            V(m_pipelineInitContext.InitCompute(d3d->GetDevice(), "Compute/ReSTIR/InitContextCS.hlsl", m_rootSigCached->Get(), m_compileArgsCached));
+        }
+
         dispatchRestirPass(&m_pipelineInitContext, &m_contextsPrimaryRay);
     }
 
