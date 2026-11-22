@@ -52,7 +52,12 @@ float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
             return 0;
     }
 
-    float3 m;
+    float3 wo = -primaryRayInfo.CenterRayDirection;
+    BxdfEval bxdfEval = BxDF::Evaluate(primaryRayInfo.HitInfo, wo, X_i.LightEval.Direction, LobeTag::eAll);
+
+    float3 radiance = bxdfEval.Radiance * X_i.LightEval.Radiance;
+
+    float m;
     if (FEAT_DBG(FixedMisNeeManual))
     {
         m = GetFixedMisNee();
@@ -63,15 +68,11 @@ float Target(CandidateDI X_i, TPrimaryRayInfo primaryRayInfo)
     }
     else
     {
-        // TODO: This is outdated, needs changing
-        float3 wo = -primaryRayInfo.CenterRayDirection;
-        BxdfEval bxdfEval = BxDF::Evaluate(primaryRayInfo.HitInfo, wo, X_i.LightEval.Direction, LobeTag::eAll);
-
-        m = bxdfEval.Radiance * BalanceHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
+        m = BalanceHeuristic(X_i.LightEval.PDF, bxdfEval.PDF, 1, 1);
     }
 
-    float3 radiance = shadowFactor * X_i.LightEval.Radiance * m * NdL; // Note: Don't divide by PDF here
-    return Luminance(radiance);
+    float3 E_direct = shadowFactor * radiance * m * NdL; // Note: Don't divide by PDF here
+    return Luminance(E_direct);
 }
 
 template <typename TPrimaryRayInfo>
@@ -87,9 +88,9 @@ bool TrySampleReservoirDI(
     uint numSamples,
     out CandidateDI Y,
     out float lightDistance,
-    out float3 radiance)
+    out float3 E_direct)
 {
-    radiance = 0.0f;
+    E_direct = 0.0f;
 
     uint reservoirIdx = GetReservoirBufferIndex_Final(pixelCoord);
     ReservoirDI reservoir = gReservoirBufferDI[reservoirIdx];
@@ -129,23 +130,23 @@ bool TrySampleReservoirDI(
     if (shadowFactor <= 0.0f)
         return false;
 
-    float3 m;
+    BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
+    float3 radiance = bxdfEval.Radiance * lightEval.Radiance;
+
+    DBG_OUTPUT3(bxdfEval.Radiance, RESTIRDI_Bxdf);
+    DBG_OUTPUT1(bxdfEval.PDF,      RESTIRDI_PDF);
+
+    float m;
     if (lightEval.IsDelta)
     {
         m = 1.0f;
     }
     else
     {
-        BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
-
-        // TODO: Outdated here too
-        m = bxdfEval.Radiance * BalanceHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
-
-        DBG_OUTPUT3(bxdfEval.Radiance, RESTIRDI_Bxdf);
-        DBG_OUTPUT1(bxdfEval.PDF,      RESTIRDI_PDF);
+        m = BalanceHeuristic(lightEval.PDF, bxdfEval.PDF, numSamples, 1);
     }
 
-    radiance = shadowFactor * lightEval.Radiance * m * NdL * reservoir.W_Y;
+    E_direct = shadowFactor * radiance * m * NdL * reservoir.W_Y;
     return true;
 }
 
