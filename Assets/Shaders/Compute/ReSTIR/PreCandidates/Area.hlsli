@@ -31,9 +31,6 @@
     I think keeping it in a pixel info inside the reservoir is a good idea, and then Area ReSTIR can basically just ignore the context which will be empty
 */
 
-// TODO: Disable normal/depth rejection heuristics
-// TODO: Requires new special shift mappings for first vertex?
-
 PreCandidateArea GeneratePreCandidate(inout RngInfo rngInfo, uint2 pixelCoord, ContextSSArea _)
 {
     PreCandidateArea preCandidate = INIT0(PreCandidateArea);
@@ -65,8 +62,6 @@ void ShiftPreCandidate(uint2 pixelCoord, inout PreCandidateArea preCandidate)
 {
     // Same jitter sample, different pixel coord -> different ray direction / hitinfo / etc
 
-    // TODO: Jacobian?
-
     float3 rayOrigin;
     GetPrimaryRay(
         preCandidate.RngPrimary, gSettings.CameraPositionWorld, gSettings.TexelSize,
@@ -91,6 +86,7 @@ bool TryFindTemporalReservoir(
     inout RngInfo rngInfo,
 
     RWStructuredBuffer< TReservoir > buffer,
+    bool reservoirIsEmpty,
     ContextSSArea _,
     TPreCandidate preCandidate,
     uint2 pixelCoord,
@@ -101,15 +97,30 @@ bool TryFindTemporalReservoir(
 {
     selectedPixelCoord = int2(-1,-1);
 
+    if (reservoirIsEmpty)
+    {
+        selectedPixelCoord = MotionVectorToPixelCoord(pixelCoord, mv, gSettings.FrameDimensions);
+        bool validPrevPixel = all(selectedPixelCoord >= 0) && all(selectedPixelCoord < int2((float2)gSettings.FrameDimensions));
+        if (!validPrevPixel)
+            return false;
+
+        uint reservoirIdxPrevIn = GetReservoirBufferIndex_Previous(selectedPixelCoord);
+        selectedReservoir = buffer[reservoirIdxPrevIn];
+        return true;
+    }
+
     float2 dimensions = gSettings.FrameDimensions;
 
-    float2 pixelCenter = pixelCoord + 0.5f;   // [0, WxH]
+    float2 currJitter = preCandidate.RngPrimary.Jitter - 0.5f;
+    float2 pixelCenter = pixelCoord + 0.5f + currJitter;   // [0, WxH]
     float2 currUV = pixelCenter / dimensions; // [0, 1]
     float2 prevUV = currUV - mv;              // [0, 1]
 
     float2 supportCenter = prevUV * dimensions; // [0, WxH]
     float2 supportBase = supportCenter - 0.5f;
     float2 supportTop = supportBase + 1.0f;
+
+    //DBG_FORCE_OUTPUT2(preCandidate.RngPrimary.Jitter);
 
     float2 pixel2x2Base = floor(supportBase);
 
@@ -131,7 +142,7 @@ bool TryFindTemporalReservoir(
         uint2(1,1)
     };
 
-    [unroll]
+    [loop]
     for (uint i = 0; i < 4; i++)
     {
         uint2 coord = uint2(pixel2x2Base) + OFFSETS[i];
@@ -163,8 +174,8 @@ bool TryFindTemporalReservoir(
             // Shift precandidates to be within support
             int2 shiftedPixelCoord = (int2)coord + int2(xShiftDirection, yShiftDirection);
             bool validShiftedPixel =
-                all(shiftedPixelCoord >= 0) &&
-                all(shiftedPixelCoord < int2(gSettings.FrameDimensions));
+                all(shiftedPixelCoord >= supportBase) &&
+                all(shiftedPixelCoord <= supportTop);
 
             if (!validShiftedPixel)
             {
@@ -204,7 +215,6 @@ bool TryFindTemporalReservoir(
     }
 
     // TODO: Should this just use reservoir merging instead?
-    // Read source code and try and find where they do this RIS
 
     // RIS
     {
@@ -216,8 +226,8 @@ bool TryFindTemporalReservoir(
         [unroll]
         for (uint i = 0; i < M; i++)
         {
-            //float mis = 1.0f; // TODO: MIS is balance heuristic of pHats according to paper for robust?
-            float mis = pdfs[i] / pdfSum; // Note: Balance Heuristic
+            float mis = 1.0f / float(M); // TODO: MIS is balance heuristic of pHats according to paper for robust?
+            //float mis = pdfs[i] / pdfSum; // Note: Balance Heuristic
             w[i] = mis * pHats[i] * reservoirs[i].W_Y; // TODO: Correct to use W_Y?
             wSum += w[i];
         }

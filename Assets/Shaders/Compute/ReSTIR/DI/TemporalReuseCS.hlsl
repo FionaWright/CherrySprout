@@ -19,5 +19,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
+    DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
+
     TemporalReuse(gReservoirBufferDI, pixelCoord, SEED_DECORRELATOR_DI_TEMPORAL);
 }

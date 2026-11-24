@@ -11,6 +11,7 @@ bool TryFindTemporalReservoir(
     inout RngInfo rngInfo,
 
     RWStructuredBuffer< TReservoir > buffer,
+    bool reservoirIsEmpty,
     ContextSSPoint context,
     TPreCandidate _,
     uint2 pixelCoord,

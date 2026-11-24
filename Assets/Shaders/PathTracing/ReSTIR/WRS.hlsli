@@ -156,6 +156,8 @@ void WRS(
         return;
     }
 
+    //DBG_FORCE_OUTPUT1(reservoir.WeightSum);
+
     SetUCW(reservoir);
 }
 

@@ -19,5 +19,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     if (pixelCoord.x >= gSettings.FrameDimensions.x || pixelCoord.y >= gSettings.FrameDimensions.y)
         return;
 
-    GenerateCandidates(gReservoirBufferDI, pixelCoord, SEED_DECORRELATOR_DI_GEN_SAMPLES);
+    DBG_SET_PIXEL_INFO(pixelCoord, gSettings.FrameIdx);
+    DBG_PATH_DUMP_CLEAR();
+
+    GenerateCandidates(gReservoirBufferDI, pixelCoord, SEED_DECORRELATOR_DI_GEN_SAMPLES); 
 }

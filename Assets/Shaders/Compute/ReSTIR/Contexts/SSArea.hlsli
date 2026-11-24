@@ -56,9 +56,11 @@ void TemporalReuse(RWStructuredBuffer< TReservoir > buffer, uint2 pixelCoord, ui
 	RngInfo rngInfo = InitializeRngInfo(pixelCoord, 0, gSettings.FrameIdx, gSettings.Seed);
     DecorrelateRng(rngInfo, seedDecorrelator);
 
+    bool reservoirIsEmpty = reservoir.W_Y <= 0.0f;
+
     int2 prevPixelCoord;
     TReservoir reservoirPrev;
-	if (!TryFindTemporalReservoir(rngInfo, buffer, context, preCandidateContext, pixelCoord, mv, prevPixelCoord, reservoirPrev))
+	if (!TryFindTemporalReservoir(rngInfo, buffer, reservoirIsEmpty, context, preCandidateContext, pixelCoord, mv, prevPixelCoord, reservoirPrev))
 	{
 		buffer[reservoirIdxOut] = reservoir;
         TryPreserveReservoirTemporal(buffer, reservoir, pixelCoord);

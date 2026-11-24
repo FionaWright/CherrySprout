@@ -33,14 +33,15 @@ void Core(uint2 pixelCoord)
     float3 primalSum = float3(0,0,0);
     Gradients gradientsSum = INIT0(Gradients);
 
+    if (!RESTIR_ENABLED)
+        DBG_PATH_DUMP_CLEAR();
+
     if (FEAT_ADV(RestirPT))
     {
         primalSum = SampleRestirPT(pixelCoord);
     }
     else
     {
-        DBG_PATH_DUMP_CLEAR();
-
         float3 origin = gSettings.CameraPositionWorld;
 
         for (uint i = 0; i < gSettings.SPP; i++)
