@@ -7,9 +7,9 @@
 #    include "Compute/ReSTIR/PreCandidates/Point.hlsli"
 #endif
 
-float GetWeight(float mis, float pHat, float c, float W)
+float GetWeight(float mis, float pHat, float W)
 {
-    return mis * pHat * c * W;
+    return mis * pHat * W;
 }
 
 template<typename TCandidate, typename TPreCandidate>
@@ -58,24 +58,25 @@ bool ReservoirMerge(
     if (M <= 0.0f)
         return false;
 
-    float pHat = Target(other.Y, context);
+    float pHat1 = reservoir.PHat;
+    float pHat2 = Target(other.Y, context);
 
     // Naive:
-    float mis1 = 1 / M; // c1 / (c1 + c2)
-    float mis2 = 1 / M; // c2 / (c1 + c2)
+    float mis1 = c1 / M;
+    float mis2 = c2 / M;
 
     // Balance:
-    //float pdf1 = max(1e-6f, PDF(reservoir.Y));
-    //float pdf2 = max(1e-6f, PDF(other.Y));
-    //float mis1 = pdf1 / (c1 * pdf1 + c2 * pdf2);
-    //float mis2 = pdf2 / (c1 * pdf1 + c2 * pdf2);
+    //float mis1 = c1 * pHat1 / (c1 * pHat1 + c2 * pHat2);
+    //float mis2 = c2 * pHat2 / (c1 * pHat1 + c2 * pHat2);
 
-    float w2 = GetWeight(mis2, pHat, c2, other.W_Y);
+    // TODO: Pairwise
 
-    if (w2 <= 0.0f || pHat <= 0.0f)
+    float w2 = GetWeight(mis2, pHat2, other.W_Y);
+
+    if (w2 <= 0.0f || pHat2 <= 0.0f)
         return false;
 
-    float w1 = GetWeight(mis1, 1.0f, c1, reservoir.WeightSum);
+    float w1 = GetWeight(mis1, 1.0f, reservoir.WeightSum);
 
     reservoir.WeightSum = w1 + w2;
 
@@ -84,7 +85,7 @@ bool ReservoirMerge(
     if (r <= norm_w)
     {
         reservoir.Y = other.Y;
-        reservoir.PHat = pHat;
+        reservoir.PHat = pHat2;
 		reservoir.PreCandidate = other.PreCandidate;
         return true;
     }
@@ -143,9 +144,9 @@ void WRS(
 
         float W_X_i = pdf <= 0.0f ? 0.0f : 1.0f / pdf;
 
-        float mis = 1 / (float)M;
         float c = 1;
-        float w = GetWeight(mis, pHat, c, W_X_i);
+        float mis = c / (float)M;
+        float w = GetWeight(mis, pHat, W_X_i);
 
         candidateSelected |= ReservoirUpdate(rngInfo, reservoir, X_i, preX_i, w, c, pHat);
     }
@@ -155,8 +156,6 @@ void WRS(
         reservoir.W_Y = 0.0f;
         return;
     }
-
-    //DBG_FORCE_OUTPUT1(reservoir.WeightSum);
 
     SetUCW(reservoir);
 }

@@ -43,6 +43,9 @@ public:
     [[nodiscard]] size_t GetNumReservoirsDI() const { return m_numReservoirsDI; }
     [[nodiscard]] size_t GetNumReservoirsGI() const { return m_numReservoirsGI; }
     [[nodiscard]] size_t GetNumReservoirsPT() const { return m_numReservoirsPT; }
+    [[nodiscard]] size_t GetReservoirSizeDI() const { return m_reservoirSizeDI; }
+    [[nodiscard]] size_t GetReservoirSizeGI() const { return m_reservoirSizeGI; }
+    [[nodiscard]] size_t GetReservoirSizePT() const { return m_reservoirSizePT; }
     [[nodiscard]] size_t GetNumContexts() const { return m_numContexts; }
 
 private:
@@ -54,6 +57,9 @@ private:
     size_t m_numReservoirsDI = 1;
     size_t m_numReservoirsGI = 1;
     size_t m_numReservoirsPT = 1;
+    size_t m_reservoirSizeDI = 1;
+    size_t m_reservoirSizeGI = 1;
+    size_t m_reservoirSizePT = 1;
     size_t m_numContexts = 1;
 
     Pipeline m_pipelineInitContext;

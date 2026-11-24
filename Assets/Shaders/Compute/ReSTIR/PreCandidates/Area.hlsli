@@ -120,8 +120,6 @@ bool TryFindTemporalReservoir(
     float2 supportBase = supportCenter - 0.5f;
     float2 supportTop = supportBase + 1.0f;
 
-    //DBG_FORCE_OUTPUT2(preCandidate.RngPrimary.Jitter);
-
     float2 pixel2x2Base = floor(supportBase);
 
     bool validPrevPixel = all(pixel2x2Base >= 0) && all(pixel2x2Base+1 < int2((float2)gSettings.FrameDimensions));
@@ -226,8 +224,8 @@ bool TryFindTemporalReservoir(
         [unroll]
         for (uint i = 0; i < M; i++)
         {
-            float mis = 1.0f / float(M); // TODO: MIS is balance heuristic of pHats according to paper for robust?
-            //float mis = pdfs[i] / pdfSum; // Note: Balance Heuristic
+            //float mis = 1.0f / float(M); // TODO: MIS is balance heuristic of pHats according to paper for robust?
+            float mis = pdfs[i] / pdfSum; // Note: Balance Heuristic
             w[i] = mis * pHats[i] * reservoirs[i].W_Y; // TODO: Correct to use W_Y?
             wSum += w[i];
         }
