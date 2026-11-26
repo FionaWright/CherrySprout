@@ -175,4 +175,26 @@ T max3(T a, T b, T c)
 
 #define INIT0(Type) (Type)0
 
+float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
+{
+    if (abs(clipPos.w) < 1e-6f || abs(prevClipPos.w) < 1e-6f)
+    {
+        return float2(MOTION_VECTOR_OFFSCREEN, MOTION_VECTOR_OFFSCREEN);
+    }
+
+    float2 ndc = clipPos.xy / clipPos.w;
+    float2 ndcPrev = prevClipPos.xy / prevClipPos.w;
+
+    ndc.y = -ndc.y;
+    ndcPrev.y = -ndcPrev.y;
+
+    ndc = RemapStoU(ndc);
+    ndcPrev = RemapStoU(ndcPrev);
+
+    if (ndcPrev.x < 0.0f || ndcPrev.x > 1.0f || ndcPrev.y < 0.0f || ndcPrev.y > 1.0f)
+        return float2(MOTION_VECTOR_OFFSCREEN, MOTION_VECTOR_OFFSCREEN);
+
+    return ndc - ndcPrev;
+}
+
 #endif

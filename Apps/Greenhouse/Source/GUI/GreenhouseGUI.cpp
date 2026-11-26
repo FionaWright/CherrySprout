@@ -76,6 +76,7 @@ void Greenhouse::renderGuiCore()
         int c = 0;
         m_renderBackendDirty |= ImGui::RadioButton("Path Tracer", &e, c++);
         m_renderBackendDirty |= ImGui::RadioButton("Forward", &e, c++);
+        m_renderBackendDirty |= ImGui::RadioButton("Deferred", &e, c++);
         m_config.RenderBackend = static_cast<RenderBackendMode>(e);
 
         m_renderBackendSceneDataDirty |= ImGui::Button("Force Reload Render Backend Scene Data");

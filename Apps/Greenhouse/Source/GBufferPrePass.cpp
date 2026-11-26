@@ -55,23 +55,7 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_set.AddBindlessSrv(1);
     m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
 
-    D3D12_INPUT_ELEMENT_DESC ildDesc[] =
-    {
-        {
-            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-    };
-
-    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), {ildDesc, _countof(ildDesc)}, true);
+    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), GetStandardILD(), true);
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     desc.NumRenderTargets = NUM_RENDER_TARGETS;
     desc.RTVFormats[0] = GBUFFER_FORMAT_MAT_IDX;
@@ -80,7 +64,7 @@ void GBufferPrePass::Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GBufferPrePassVS.hlsl", "Raster/GBufferPrePassPS.hlsl", desc));
 }
 
-void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
+void GBufferPrePass::LoadSceneData(const D3D* d3d, Scene* scene)
 {
     CherryPrint("GBufferPrePass: LoadSceneData");
 
@@ -89,22 +73,6 @@ void GBufferPrePass::LoadSceneData(D3D* d3d, Scene* scene)
 
     m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
     m_set.SetSRV_Buffer(d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-}
-
-XMMATRIX ApplyProjectionJitter(const XMMATRIX& projection, const XMFLOAT2& jitterPixels, const float width, const float height)
-{
-    XMMATRIX jitteredProjection = projection;
-
-    const float jitterX =  2.0f * jitterPixels.x / width;
-    const float jitterY = -2.0f * jitterPixels.y / height;
-
-    jitteredProjection.r[2] = XMVectorAdd(
-        jitteredProjection.r[2],
-        XMVectorAdd(
-            XMVectorScale(projection.r[0], jitterX),
-            XMVectorScale(projection.r[1], jitterY)));
-
-    return jitteredProjection;
 }
 
 void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, const GreenHouseRenderInfo& renderInfo)
@@ -191,7 +159,7 @@ void GBufferPrePass::Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, co
         m_rootConstants.Bind_Graphics(cmdList, &perInstance);
 
         cmdList->DrawIndexedInstanced(obj.IndexCount, 1, obj.MegaBufferIndexOffset,
-                                      obj.MegaBufferVertexOffset, 0);
+                                      static_cast<int>(obj.MegaBufferVertexOffset), 0);
     }
 }
 

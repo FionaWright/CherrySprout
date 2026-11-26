@@ -1,5 +1,6 @@
 #include "MicrofacetModels/MicrofacetUtils.hlsli"
 #include "Utils/SharedUtils.h"
+#include "Utils/HlslUtils.hlsli"
 #include "Utils/Math/ShadingFrame.h"
 #include "Utils/CBVs.h"
 #include "Scene/Material.h"
@@ -28,28 +29,6 @@ struct GBufferOut
 };
 
 #define NORMALS_MAPS_ENABLED 1
-
-float2 ComputeMotionVectors(float4 clipPos, float4 prevClipPos)
-{
-    if (abs(clipPos.w) < 1e-6f || abs(prevClipPos.w) < 1e-6f)
-    {
-        return float2(MOTION_VECTOR_OFFSCREEN, MOTION_VECTOR_OFFSCREEN);
-    }
-
-    float2 ndc = clipPos.xy / clipPos.w;
-    float2 ndcPrev = prevClipPos.xy / prevClipPos.w;
-
-    ndc.y = -ndc.y;
-    ndcPrev.y = -ndcPrev.y;
-
-    ndc = RemapStoU(ndc);
-    ndcPrev = RemapStoU(ndcPrev);
-
-    if (ndcPrev.x < 0.0f || ndcPrev.x > 1.0f || ndcPrev.y < 0.0f || ndcPrev.y > 1.0f)
-        return float2(MOTION_VECTOR_OFFSCREEN, MOTION_VECTOR_OFFSCREEN);
-
-    return ndc - ndcPrev;
-}
 
 GBufferOut PSMain(VsOut input)
 {

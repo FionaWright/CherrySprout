@@ -25,15 +25,12 @@ float2 GetPcfOffset(inout RngInfo rngInfo, uint poissonIdx)
     return offset;
 }
 
-float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos[SHADOW_MAP_MAX_CASCADES])
+float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos)
 {
-    uint cascadeIdx = 0; // TODO
+    shadowPos.y = 1 - shadowPos.y;
+    //shadowPos.x = gSettingsShadows.ShadowWidthPercent * (shadowPos.x + cascadeIdx);
 
-    float3 shadowCoords = shadowPos[cascadeIdx];
-    shadowCoords.y = 1 - shadowCoords.y;
-    //shadowCoords.x = gSettingsShadows.ShadowWidthPercent * (shadowCoords.x + cascadeIdx);
-
-    float pixelDepth = shadowCoords.z + gSettingsShadows.BiasDepthDistant;
+    float pixelDepth = shadowPos.z + gSettingsShadows.BiasDepthDistant;
 
     float shadowFactor = 0.0f;
 
@@ -41,7 +38,7 @@ float GetShadowFactorDirectional(inout RngInfo rngInfo, float3 shadowPos[SHADOW_
     {
         float2 offset = GetPcfOffset(rngInfo, i);
 
-        float2 uv_shadow = shadowCoords.xy + (offset * gSettingsShadows.TexelSize);
+        float2 uv_shadow = shadowPos.xy + (offset * gSettingsShadows.TexelSize);
         float shadowMapDepth = gShadowMapDir.Sample(gSamplerPointClamp, uv_shadow).r;
 
         shadowFactor += pixelDepth >= shadowMapDepth;

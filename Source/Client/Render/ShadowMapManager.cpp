@@ -33,23 +33,7 @@ void ShadowMapManager::Init(ID3D12Device* device, Heap* heap, UploadHeap* upload
     m_set.SetHasRootConstants();
     m_set.AddBindlessSrv(1);
 
-    D3D12_INPUT_ELEMENT_DESC ildDesc[] =
-    {
-        {
-            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-    };
-
-    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true, 0);
+    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), GetStandardILD(), true, 0);
     desc.SampleDesc.Count = 1;
 
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;

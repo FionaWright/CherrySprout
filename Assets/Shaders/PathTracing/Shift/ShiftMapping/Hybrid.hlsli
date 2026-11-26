@@ -65,7 +65,7 @@ ShiftResult ShiftMapHybrid(
             rngInfo.IndependentRngState = v1.InitialRngAncillaryState;
 
             SampleRngAncillaryBatch1(rngInfo, rng);
-            SampleRngAncillaryBatch2(rngInfo, rng);
+            SampleRngAncillaryBatch2(rngInfo, rng, gSettings.DirectNumSamples);
         }
 
         return ShiftRandomReplay(rng.BxDF, hitInfo, wo, bxdfEval);

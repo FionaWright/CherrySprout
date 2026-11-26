@@ -48,8 +48,8 @@ public:
             RestirManager::TotalCbvRequiredSize();
     }
 
-    D12Resource* GetTexPrimal() { return &m_primal; }
-    D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
+    [[nodiscard]] D12Resource* GetTexPrimal() { return &m_primal; }
+    [[nodiscard]] D12Resource* GetHdrOutput() const { return m_finalHdrOutput; }
 
     void ScheduleRestirClear() { m_restirClearScheduled = true; }
 

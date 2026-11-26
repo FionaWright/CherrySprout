@@ -131,10 +131,10 @@ struct PathTracerConfig
 
     PathTracingDebugInfo       DebugInfo        = {};
 
-    bool FeatFlagEnabledCore(const FeatFlagsCORE flags, const FeatFlagsCORE flagValue) const
+    [[nodiscard]] bool FeatFlagEnabledCore(const FeatFlagsCORE flags, const FeatFlagsCORE flagValue) const
     {
         bool quickSwitchModeEnabled = false;
-        FeatFlagsCORE flagsQS = static_cast<FeatFlagsCORE>(0);
+        auto flagsQS = static_cast<FeatFlagsCORE>(0);
 #if CHERRY_DEBUG_FEATURES_ENABLED
         quickSwitchModeEnabled = DebugInfo.FeatFlagQuickSwitchEnabled;
         flagsQS = DebugInfo.FeatFlagsCoreQS;
@@ -142,15 +142,15 @@ struct PathTracerConfig
         return ::FeatFlagEnabled(quickSwitchModeEnabled, flags, flagsQS, flagValue);
     }
 
-    bool FeatFlagEnabledCore(const FeatFlagsCORE flag) const
+    [[nodiscard]] bool FeatFlagEnabledCore(const FeatFlagsCORE flag) const
     {
         return FeatFlagEnabledCore(FlagsCore, flag);
     }
 
-    bool FeatFlagEnabledAdv(const FeatFlagsADV flags, const FeatFlagsADV flagValue) const
+    [[nodiscard]] bool FeatFlagEnabledAdv(const FeatFlagsADV flags, const FeatFlagsADV flagValue) const
     {
         bool quickSwitchModeEnabled = false;
-        FeatFlagsADV flagsQS = static_cast<FeatFlagsADV>(0);
+        auto flagsQS = static_cast<FeatFlagsADV>(0);
 #if CHERRY_DEBUG_FEATURES_ENABLED
         quickSwitchModeEnabled = DebugInfo.FeatFlagQuickSwitchEnabled;
         flagsQS = DebugInfo.FeatFlagsAdvQS;
@@ -158,12 +158,12 @@ struct PathTracerConfig
         return ::FeatFlagEnabled(quickSwitchModeEnabled, flags, flagsQS, flagValue);
     }
 
-    bool FeatFlagEnabledAdv(const FeatFlagsADV flag) const
+    [[nodiscard]] bool FeatFlagEnabledAdv(const FeatFlagsADV flag) const
     {
         return FeatFlagEnabledAdv(FlagsAdv, flag);
     }
 
-    bool FeatFlagEnabledDebug(const FeatFlagsDBG flags, const FeatFlagsDBG flag) const
+    [[nodiscard]] bool FeatFlagEnabledDebug(const FeatFlagsDBG flags, const FeatFlagsDBG flag) const
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
         return ::FeatFlagEnabled(DebugInfo.FeatFlagQuickSwitchEnabled, flags, DebugInfo.FeatFlagsDebugQS, flag);
@@ -171,7 +171,7 @@ struct PathTracerConfig
         return false;
     }
 
-    bool FeatFlagEnabledDebug(const FeatFlagsDBG flag) const
+    [[nodiscard]] bool FeatFlagEnabledDebug(const FeatFlagsDBG flag) const
     {
 #if CHERRY_DEBUG_FEATURES_ENABLED
         return FeatFlagEnabledDebug(DebugInfo.FlagsDebug, flag);
@@ -180,7 +180,7 @@ struct PathTracerConfig
     }
 };
 
-struct ForwardConfig
+struct RasterConfig
 {
     uint32_t SmCascadeCount = 1;
     uint32_t SmPcfCount = 16;
@@ -207,6 +207,7 @@ enum class RenderBackendMode : uint32_t
 {
     ePathTracer,
     eForward,
+    eDeferred,
     eCount
 };
 
@@ -227,7 +228,7 @@ struct GreenhouseConfig
 
     RenderBackendConfig RenderBackendConfig{};
     PathTracerConfig PathTracerConfig{};
-    ForwardConfig ForwardConfig{};
+    RasterConfig RasterConfig{};
 };
 
 #endif

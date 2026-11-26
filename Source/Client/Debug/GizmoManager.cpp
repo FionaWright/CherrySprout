@@ -134,22 +134,6 @@ void GizmoManager::initResources(const D3D* d3d, ID3D12GraphicsCommandList* cmdL
     m_rootSig.AddSrvRange(0, 1);
     m_rootSig.Init(d3d->GetDevice(), &sampler, 1);
 
-    D3D12_INPUT_ELEMENT_DESC ildDesc[] =
-    {
-        {
-            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-    };
-
-    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), {ildDesc, _countof(ildDesc)}, true);
+    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), GetStandardILD(), true);
     V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/GizmoVSPS.hlsl", "Raster/GizmoVSPS.hlsl", desc));
 }

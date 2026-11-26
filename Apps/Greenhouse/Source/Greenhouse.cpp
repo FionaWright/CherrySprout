@@ -39,7 +39,8 @@ void Greenhouse::Init(D3D* d3d)
     {
         CherryPrint("Total PT      CBV Size: " << m_pathTracer.TotalCbvRequiredSize());
         CherryPrint("Total Forward CBV Size: " << m_forward.TotalCbvRequiredSize());
-        maxCbvRequiredSize += std::max(m_pathTracer.TotalCbvRequiredSize(), m_forward.TotalCbvRequiredSize());
+        CherryPrint("Total Forward CBV Size: " << m_deferred.TotalCbvRequiredSize());
+        maxCbvRequiredSize += std::max(std::max(m_pathTracer.TotalCbvRequiredSize(), m_forward.TotalCbvRequiredSize()), m_deferred.TotalCbvRequiredSize());
         maxCbvRequiredSize += EnvironmentMap::GetCbvRequiredSize();
     }
 
@@ -66,7 +67,7 @@ void Greenhouse::Init(D3D* d3d)
     m_renderInfo.Camera = &m_cameraController.GetCamera();
     m_renderInfo.BackendConfig = &m_config.RenderBackendConfig;
     m_renderInfo.PathTracerConfig = &m_config.PathTracerConfig;
-    m_renderInfo.ForwardConfig = &m_config.ForwardConfig;
+    m_renderInfo.RasterConfig = &m_config.RasterConfig;
     m_renderInfo.EnvironmentMap = &m_envMap;
     m_renderInfo.LightImportanceSampler = &m_lightImportanceSampler;
 
@@ -76,7 +77,7 @@ void Greenhouse::Init(D3D* d3d)
             m_config.RenderBackend = RenderBackendMode::eForward;
     }
 
-    m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
+    setRenderBackend(m_config.RenderBackend);
     m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);
 
     m_gbufferPrePass.Init(d3d, &m_heap, &m_uploadHeapCBV);
@@ -103,6 +104,24 @@ void Greenhouse::Init(D3D* d3d)
     CherryPrint("Greenhouse Initialized");
 }
 
+void Greenhouse::setRenderBackend(const RenderBackendMode backend)
+{
+    switch (backend)
+    {
+    case RenderBackendMode::ePathTracer:
+        m_currRenderBackend = &m_pathTracer;
+        break;
+    case RenderBackendMode::eForward:
+        m_currRenderBackend = &m_forward;
+        break;
+    case RenderBackendMode::eDeferred:
+        m_currRenderBackend = &m_deferred;
+        break;
+    default:
+        CherryAssert(false);
+    }
+}
+
 void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
 {
     const double deltaTime_s = timeArgs.ElapsedTime_ms / 1000.0f;
@@ -123,7 +142,7 @@ void Greenhouse::Update(D3D* d3d, const TimeArgs timeArgs)
         m_uploadHeapCBV.FreeAssignedData();
         m_currRenderBackend->UnreserveData();
 
-        m_currRenderBackend = m_config.RenderBackend == RenderBackendMode::eForward ? static_cast<IRenderBackend*>(&m_forward) : static_cast<IRenderBackend*>(&m_pathTracer);
+        setRenderBackend(m_config.RenderBackend);
 
         if (!m_currRenderBackend->IsInitialized())
             m_currRenderBackend->Init(d3d, &m_heap, &m_uploadHeapCBV);

@@ -140,6 +140,12 @@ void Heap::BindBindless_Graphics(ID3D12GraphicsCommandList* cmdList, const uint3
     cmdList->SetGraphicsRootDescriptorTable(paramIdx, bindlessHandle);
 }
 
+void Heap::BindBindless_Compute(ID3D12GraphicsCommandList* cmdList, const uint32_t baseHeapIdx, const uint32_t paramIdx) const
+{
+    const CD3DX12_GPU_DESCRIPTOR_HANDLE bindlessHandle(GetGPUHandle(), baseHeapIdx, GetIncrementSize());
+    cmdList->SetComputeRootDescriptorTable(paramIdx, bindlessHandle);
+}
+
 void Heap::PrintHeapInfo() const
 {
     const uint32_t totalRegularDescriptors = m_currentHeapIndex;

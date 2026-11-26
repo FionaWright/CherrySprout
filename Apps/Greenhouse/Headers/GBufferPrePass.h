@@ -24,7 +24,7 @@ class GBufferPrePass
 {
 public:
     void Init(const D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV);
-    void LoadSceneData(D3D* d3d, Scene* scene);
+    void LoadSceneData(const D3D* d3d, Scene* scene);
     void Render(ID3D12GraphicsCommandList* cmdList, Scene* scene, const GreenHouseRenderInfo& renderInfo);
     void UnreserveData();
 

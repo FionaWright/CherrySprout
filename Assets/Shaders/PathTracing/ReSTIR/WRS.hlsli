@@ -69,6 +69,9 @@ bool ReservoirMerge(
     //float mis1 = c1 * pHat1 / (c1 * pHat1 + c2 * pHat2);
     //float mis2 = c2 * pHat2 / (c1 * pHat1 + c2 * pHat2);
 
+    //float mis1 = pHat1 / (pHat1 + pHat2);
+    //float mis2 = pHat2 / (pHat1 + pHat2);
+
     // TODO: Pairwise
 
     float w2 = GetWeight(mis2, pHat2, other.W_Y);

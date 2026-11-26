@@ -145,6 +145,9 @@ inline void ForwardFlagSet(GLUE_INOUT(ForwardFlags) flags, const ForwardFlags fl
 
 struct CbvForward
 {
+    hlsl::float4x4 InvP;
+    hlsl::float4x4 InvV;
+
     hlsl::float3 DirLightDir;
     hlsl::uint MaxCubemapMipMaps;
 
@@ -152,7 +155,12 @@ struct CbvForward
     hlsl::float3 CameraPosition;
 
     ForwardFlags Flags;
-    hlsl::float3 p;
+    hlsl::float2 TexelSize;
+    float NearPlane;
+
+    float FarPlane;
+    hlsl::float2 JitterPerFrame;
+    float p;
 };
 
 struct CbvMipMapCubemap

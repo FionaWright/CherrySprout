@@ -344,7 +344,7 @@ inline bool FormatIsHDR(const DXGI_FORMAT format)
 
 inline void PrintMatrix(const XMMATRIX& matrix)
 {
-    XMFLOAT4X4 m;
+    XMFLOAT4X4 m{};
     XMStoreFloat4x4(&m, matrix);
 
     CherryPrint(m._11 << ' ' << m._12 << ' ' << m._13 << ' ' << m._14 << '\n' << m._21 << ' ' << m._22 << ' ' << m._23 << ' ' << m._24 << '\n' << m._31 << ' ' << m._32 << ' ' << m._33 << ' ' << m._34 << '\n' << m._41 << ' ' << m._42 << ' ' << m._43 << ' ' << m._44 << '\n');
@@ -354,6 +354,43 @@ inline void PrintMatrix(const char* name, const XMMATRIX& matrix)
 {
     CherryPrint(name << ":\n");
     PrintMatrix(matrix);
+}
+
+inline D3D12_INPUT_LAYOUT_DESC GetStandardILD()
+{
+    static constexpr D3D12_INPUT_ELEMENT_DESC ildDesc[] =
+    {
+        {
+            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+    };
+
+    return { ildDesc, _countof(ildDesc) };
+}
+
+inline XMMATRIX ApplyProjectionJitter(const XMMATRIX& projection, const XMFLOAT2& jitterPixels, const float width, const float height)
+{
+    XMMATRIX jitteredProjection = projection;
+
+    const float jitterX =  2.0f * jitterPixels.x / width;
+    const float jitterY = -2.0f * jitterPixels.y / height;
+
+    jitteredProjection.r[2] = XMVectorAdd(
+        jitteredProjection.r[2],
+        XMVectorAdd(
+            XMVectorScale(projection.r[0], jitterX),
+            XMVectorScale(projection.r[1], jitterY)));
+
+    return jitteredProjection;
 }
 
 #endif

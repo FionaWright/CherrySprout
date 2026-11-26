@@ -128,9 +128,11 @@ float4 PSMain(VsOut input) : SV_TARGET
         {
             BxdfEval bxdfEval = BxDF::Evaluate(hitInfo, wo, wi, LobeTag::eAll);
 
+            uint cascadeIdx = 0; // TODO
+
             float shadowFactor = 1.0f;
             if (ForwardFlagGet(gSettings.Flags, ForwardFlags::eShadowMaps))
-                shadowFactor = GetShadowFactorDirectional(rngInfo, input.shadowPos);
+                shadowFactor = GetShadowFactorDirectional(rngInfo, input.shadowPos[cascadeIdx]);
 
             if (bxdfEval.PDF > 0.0f)
                 E_direct += shadowFactor * NdL * dirLightRadiance * bxdfEval.Radiance;

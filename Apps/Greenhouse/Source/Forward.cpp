@@ -40,27 +40,11 @@ void Forward::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvForward), uploadHeapCBV);
     m_set.AddCBV(d3d->GetDevice(), 0, sizeof(CbvShadowMapSample), uploadHeapCBV);
 
-    D3D12_INPUT_ELEMENT_DESC ildDesc[] =
-    {
-        {
-            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-        {
-            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-        },
-    };
-
     std::vector<std::string> compileArgs;
     if (Config::GetRender().DepthBufferType == DepthBufferType::eReversed)
         compileArgs.emplace_back("-DUSING_REVERSED_Z");
 
-    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), { ildDesc, _countof(ildDesc) }, true);
+    auto desc = CreateGraphicsPipelineDesc(m_rootSig.Get(), GetStandardILD(), true);
     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     V(m_pipeline.InitGraphics(d3d->GetDevice(), "Raster/Forward.hlsl", "Raster/Forward.hlsl", desc, compileArgs));
 
@@ -135,12 +119,12 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     // Shadow Map
     {
         ShadowMapConfig config;
-        config.Width = renderInfo.ForwardConfig->SmWidth;
-        config.Height = renderInfo.ForwardConfig->SmHeight;
-        config.CascadeCount = renderInfo.ForwardConfig->SmCascadeCount;
-        config.Near = renderInfo.ForwardConfig->SmNear;
-        config.Far = renderInfo.ForwardConfig->SmFar;
-        config.DirDist = renderInfo.ForwardConfig->SmDirDist;
+        config.Width = renderInfo.RasterConfig->SmWidth;
+        config.Height = renderInfo.RasterConfig->SmHeight;
+        config.CascadeCount = renderInfo.RasterConfig->SmCascadeCount;
+        config.Near = renderInfo.RasterConfig->SmNear;
+        config.Far = renderInfo.RasterConfig->SmFar;
+        config.DirDist = renderInfo.RasterConfig->SmDirDist;
         config.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
         config.IsAnimationEnabled = renderInfo.IsAnimationEnabled;
         m_shadowMapManager.Render(d3d, cmdList, heap, scene, config);
@@ -160,7 +144,7 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
 
     heap->Bind(cmdList);
 
-    if (renderInfo.ForwardConfig->FlagEnabledEnvironmentMap)
+    if (renderInfo.RasterConfig->FlagEnabledEnvironmentMap)
     {
         GPU_SCOPE(cmdList, "Skybox Pass");
         m_skybox.RenderForward(cmdList, &renderInfo.V, &renderInfo.P);
@@ -211,24 +195,24 @@ void Forward::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenHo
     cbvForward.DirLightDir = renderInfo.BackendConfig->DirLightDirection;
     cbvForward.MaxCubemapMipMaps = renderInfo.EnvironmentMap->GetCubemap()->GetDesc().MipLevels;
     cbvForward.Flags = ForwardFlags::eNone;
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, renderInfo.ForwardConfig->FlagEnabledEnvironmentMap);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::ePunctualLights, renderInfo.ForwardConfig->FlagEnabledPunctualLights);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, renderInfo.ForwardConfig->FlagEnabledDirectionalLight);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eShadowMaps, renderInfo.ForwardConfig->FlagEnabledShadowMaps);
-    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, renderInfo.ForwardConfig->FlagEnabledAmbient);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eEnvironmentMap, renderInfo.RasterConfig->FlagEnabledEnvironmentMap);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::ePunctualLights, renderInfo.RasterConfig->FlagEnabledPunctualLights);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eDirectionalLight, renderInfo.RasterConfig->FlagEnabledDirectionalLight);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eShadowMaps, renderInfo.RasterConfig->FlagEnabledShadowMaps);
+    ForwardFlagSet(cbvForward.Flags, ForwardFlags::eAmbient, renderInfo.RasterConfig->FlagEnabledAmbient);
     m_set.UpdateCBV(0, 1, &cbvForward);
 
     CbvShadowMapSample cbvShadow{};
     XMStoreFloat4x4(&cbvShadow.ShadowMatrices[0], m_shadowMapManager.GetShadowMatrix(0));
     XMFLOAT2 dim = m_shadowMapManager.GetShadowDimensions(0);
     cbvShadow.TexelSize = XMFLOAT2(1.0f / dim.x, 1.0f / dim.y);
-    cbvShadow.BiasDepthDistant = renderInfo.ForwardConfig->SmBiasDepthDistant;
-    cbvShadow.BiasDepthPoint = renderInfo.ForwardConfig->SmBiasDepthPoint;
-    cbvShadow.CascadeCount = renderInfo.ForwardConfig->SmCascadeCount;
-    cbvShadow.NormalBiasDistant = renderInfo.ForwardConfig->SmBiasNormalDistant;
-    cbvShadow.NormalBiasPoint = renderInfo.ForwardConfig->SmBiasNormalPoint;
-    cbvShadow.PcfSampleCount = renderInfo.ForwardConfig->SmPcfCount;
-    cbvShadow.PcfRadius = renderInfo.ForwardConfig->SmPcfRadius;
+    cbvShadow.BiasDepthDistant = renderInfo.RasterConfig->SmBiasDepthDistant;
+    cbvShadow.BiasDepthPoint = renderInfo.RasterConfig->SmBiasDepthPoint;
+    cbvShadow.CascadeCount = renderInfo.RasterConfig->SmCascadeCount;
+    cbvShadow.NormalBiasDistant = renderInfo.RasterConfig->SmBiasNormalDistant;
+    cbvShadow.NormalBiasPoint = renderInfo.RasterConfig->SmBiasNormalPoint;
+    cbvShadow.PcfSampleCount = renderInfo.RasterConfig->SmPcfCount;
+    cbvShadow.PcfRadius = renderInfo.RasterConfig->SmPcfRadius;
     auto poissonDisc = m_shadowMapManager.GetPoissonSamples();
     for (uint32_t i = 0; i < POISSON_DISC_COUNT; i++)
     {

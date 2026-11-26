@@ -69,11 +69,11 @@ void SampleRngAncillaryBatch1(inout RngInfo rngInfo, inout RngValuesAncillary r)
     }
 }
 
-void SampleRngAncillaryBatch2(inout RngInfo rngInfo, inout RngValuesAncillary r)
+void SampleRngAncillaryBatch2(inout RngInfo rngInfo, inout RngValuesAncillary r, uint directNumSamples)
 {
     if (FEAT_CORE(NEE))
     {
-        for (uint i = 0; i < gSettings.DirectNumSamples; i++)
+        for (uint i = 0; i < directNumSamples; i++)
         {
             r.NEE[i] = SampleRngNEE(rngInfo);
         }

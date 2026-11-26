@@ -30,7 +30,6 @@ void PathTracer::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 
     CherryPrint("Initializing Path-Tracer...");
 
-    // TODO: Is primal and accum doing the exact same job now? Can be combined maybe
     {
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -436,7 +435,7 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
             m_setPostProcess.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, m_finalHdrOutput, m_finalHdrOutput->GetDesc().Format);
         }
 
-        CbvPostProcessing cbv;
+        CbvPostProcessing cbv{};
         cbv.ToneMapWhitePoint = renderInfo.PathTracerConfig->PostProcessWhitePoint;
         cbv.Exposure = renderInfo.PathTracerConfig->PostProcessExposure;
         m_setPostProcess.UpdateCBV(0, 0, &cbv);

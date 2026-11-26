@@ -1,6 +1,7 @@
 #ifndef H_GREENHOUSE_H
 #define H_GREENHOUSE_H
 
+#include "Deferred.h"
 #include "Forward.h"
 #include "GreenhouseConfig.h"
 #include "PathTracer.h"
@@ -34,7 +35,7 @@ struct GreenHouseRenderInfo
 
     RenderBackendConfig* BackendConfig;
     PathTracerConfig* PathTracerConfig;
-    ForwardConfig* ForwardConfig;
+    RasterConfig* RasterConfig;
 
     uint32_t LsdBasePunctuals = 0;
     uint32_t LsdBaseEmissives = 0;
@@ -58,6 +59,7 @@ public:
     [[nodiscard]] bool GBufferRequired() const;
 
 private:
+    void setRenderBackend(RenderBackendMode backend);
     void renderGuiCore();
     void renderGuiSceneData();
 
@@ -93,6 +95,7 @@ private:
 
     PathTracer m_pathTracer = {};
     Forward m_forward;
+    Deferred m_deferred;
 
     IRenderBackend* m_currRenderBackend = nullptr;
     GreenHouseRenderInfo m_renderInfo = {};
@@ -101,7 +104,7 @@ private:
     UploadHeap m_uploadHeapCBV;
 
 #if !NDEBUG
-    std::string m_scheduledSnapshotPT = "";
+    std::string m_scheduledSnapshotPT;
     bool m_isSnapshotPtLDR = false;
 
     int m_scheduledTransientRenderFrameIdx = -1;

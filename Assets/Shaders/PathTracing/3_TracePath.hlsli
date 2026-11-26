@@ -83,7 +83,7 @@ bool ResolvePathAncillaryVertex(
         }
     }
 
-    SampleRngAncillaryBatch2(rngInfo, rng);
+    SampleRngAncillaryBatch2(rngInfo, rng, gSettings.DirectNumSamples);
 
     if (FEAT_CORE(Transient))
         pathState.RollingPathDistance += hitInfo.RayT;

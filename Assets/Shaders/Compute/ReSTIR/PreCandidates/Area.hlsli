@@ -131,7 +131,7 @@ bool TryFindTemporalReservoir(
     float pHats[4];
     float pdfs[4];
 
-    float pdfSum = 0.0f;
+    float pHatSum = 0.0f;
 
     const uint2 OFFSETS[4] = {
         uint2(0,0),
@@ -166,6 +166,7 @@ bool TryFindTemporalReservoir(
             if (xShiftDirection == 0 && yShiftDirection == 0)
             {
                 pHats[i] = reservoirs[i].PHat;
+                pHatSum += pHats[i];
                 continue;
             }
 
@@ -190,6 +191,7 @@ bool TryFindTemporalReservoir(
 
             // Recalculate pHat
             pHats[i] = Target(reservoirs[i].Y, reservoirs[i].PreCandidate);
+            pHatSum += pHats[i];
         }
         else
         {
@@ -202,14 +204,8 @@ bool TryFindTemporalReservoir(
                 pHats[i] = 0.0f;
             else
                 pHats[i] = reservoirs[i].PHat;
+            pHatSum += pHats[i];
         }
-    }
-
-    [unroll]
-    for (uint i = 0; i < 4; i++)
-    {
-        pdfs[i] = PDF(reservoirs[i].Y);
-        pdfSum += pdfs[i];
     }
 
     // TODO: Should this just use reservoir merging instead?
@@ -225,7 +221,7 @@ bool TryFindTemporalReservoir(
         for (uint i = 0; i < M; i++)
         {
             //float mis = 1.0f / float(M); // TODO: MIS is balance heuristic of pHats according to paper for robust?
-            float mis = pdfs[i] / pdfSum; // Note: Balance Heuristic
+            float mis = pHats[i] / pHatSum; // Note: Balance Heuristic
             w[i] = mis * pHats[i] * reservoirs[i].W_Y; // TODO: Correct to use W_Y?
             wSum += w[i];
         }
