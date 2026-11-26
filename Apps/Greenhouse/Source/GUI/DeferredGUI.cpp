@@ -9,6 +9,10 @@ void Deferred::GUI(GreenhouseConfig* config, bool& frameDirty)
 {
     bool shadowMatricesDirty = false;
 
+    GuiUtils::FwInputInt("Bloom Radius", &config->RasterConfig.BloomRadius);
+    GuiUtils::FwInputFloat("Bloom Threshold", &config->RasterConfig.BloomLumThreshold);
+    GuiUtils::FwInputUInt("Bloom Downsample Count", &config->RasterConfig.BloomDownsampleCount);
+
     ImGui::SeparatorText("Flags");
     ImGui::Indent(IM_GUI_INDENTATION);
     {

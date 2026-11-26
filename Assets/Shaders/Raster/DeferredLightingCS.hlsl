@@ -31,7 +31,6 @@ Texture2D<uint> gGBufferMaterialIdx                           : register(t6, spa
 Texture2D<float4> gGBufferNormalsUv                           : register(t7, space0);
 Texture2D<float> gGBufferDepth                                : register(t8, space0);
 Texture2D<float4> gGBufferMv                                  : register(t9, space0);
-Texture2D<float4> gTexBloom                                   : register(t10, space0);
 
 Texture2D<float4> gSceneTextures[]                            : register(t0, space1);
 TextureCube<float> gShadowMapsPoint[]                         : register(t0, space2);
@@ -154,14 +153,6 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     //float3 E = E_direct + E_ambient;
     //float3 E = E_direct;
     //float3 E = E_ibl;
-
-    // Post-Processing
-    {
-        TMO_Reinhard tmo;
-        ToneMapJodie(E, tmo);
-
-        E = LRGB_to_SRGB_Exact(E);
-    }
 
     gTexPrimal[pixelCoord] = float4(E, hitInfo.Mat.Albedo.a);
 }

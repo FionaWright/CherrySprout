@@ -26,3 +26,20 @@ Run shadow map passes to compute shadow buffers
 Execute ReSTIR GI as well for reflections/etc
 
 Compute final lighting 
+
+Denoise using mild A-Trous filter, try and have some semblance of temporal accumulation
+
+## TODO
+
+- [x] Set up deferred rendering
+- [ ] Sorting objects
+- [ ] Frustum Culling
+- [ ] Bloom
+- [ ] SSAO
+- [ ] Update MVs for animation
+- [ ] ReSTIR DI
+- [ ] ReSTIR GI
+
+## Possible optimizations if required
+
+Hardcode weights in gaussian filter or do that clever trick where you use the bilinear sampler

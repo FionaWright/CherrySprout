@@ -1,15 +1,9 @@
-#include "CBV.h"
+#include "Utils/CBVs.h"
 
-struct VsOut
-{
-    float4 position : SV_POSITION;
-    float2 uv : TEXCOORD0;
-};
+ConstantBuffer<CbvFilterBoxAndGauss> gCBV : register(b0);
 
-ConstantBuffer<CbvFilterBoxAndGauss> c_box : register(b0);
-
-Texture2D    gTex  : register(t0);
-SamplerState gSampler : register(s0);
+Texture2D<float4> gSource : register(t0);
+RWTexture2D<float4> gDest : register(u0);
 
 #define MAX_RADIUS 7
 
@@ -18,32 +12,41 @@ float Gaussian(float x, float sigma)
     return exp(-(x*x) / (2.0 * sigma * sigma));
 }
 
-// Obvious optimization here to hardcode the weights or pass them in through CBV but I'm not too bothered as this filter isn't important (yet)
-
-float4 PSMain(VsOut input) : SV_Target
+[numthreads(16, 16, 1)]
+void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
+    uint2 pixelCoord = DTid.xy;
+
     float weights[MAX_RADIUS + 1];
 
-    float sigma = c_box.Radius / 3.0f;
+    float sigma = gCBV.Radius / 3.0f;
     float weightSum = 0.0f;
-    for (int i = 0; i <= c_box.Radius; i++)
+
+    for (int i = 0; i <= gCBV.Radius; i++)
     {
         weights[i] = Gaussian(i, sigma);
         weightSum += (i == 0) ? weights[i] : weights[i] * 2.0f; // *2 due to +x and -x
     }
 
+    uint2 dim;
+    gSource.GetDimensions(dim.x, dim.y);
+
     float3 sum = 0.0;
 
-    for (float x = -c_box.Radius; x <= c_box.Radius; ++x)
+    for (int x = -gCBV.Radius; x <= gCBV.Radius; ++x)
     {
 #ifdef HORIZONTAL
-        float2 offset = float2(x, 0) * c_box.TexelSize;
+        int2 offset = int2(x, 0);
 #else
-        float2 offset = float2(0, x) * c_box.TexelSize;
+        int2 offset = int2(0, x);
 #endif
-        float3 sample = gTex.Sample(gSampler, input.uv + offset).rgb;
-        sum += sample * weights[abs(x)];
+        int2 coord = int2(pixelCoord) + offset;
+
+        if (any(coord < 0) || any(coord >= dim))
+            continue;
+
+        sum += gSource[coord].rgb * weights[abs(x)];
     }
 
-    return float4(sum / weightSum, 1);
+    gDest[pixelCoord].rgb = sum / weightSum;
 }

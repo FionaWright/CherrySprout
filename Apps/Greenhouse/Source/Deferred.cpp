@@ -16,71 +16,20 @@
 #include "Utils/D3DUtils.h"
 #include "Utils/Random.h"
 
-#define NUM_RENDER_TARGETS 4
-
 void Deferred::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
 {
     IRenderBackend::Init(d3d, heap, uploadHeapCBV);
 
-    // GBuffer Resources
-    {
-        const size_t w = Config::GetSystem().RtvWidth;
-        const size_t h = Config::GetSystem().RtvHeight;
+    m_texPrimal.Init_Tex2D("Tex Primal", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_texPing.Init_Tex2D("Tex Ping", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_texPong.Init_Tex2D("Tex Pong", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_texOutputRgba8Unorm.Init_Tex2D("Tex Output", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-        m_rtvClearValues = {
-            XMFLOAT4(0, 0, 0, 0),
-            XMFLOAT4(1, 1, 1, 1),
-            XMFLOAT4(1, 1, 0, 0),
-            XMFLOAT4(0, 0, 0, 0),
-        };
-        m_gbufferTexMaterialIdx.Init_Tex2D("GBuffer Material Idx", d3d->GetDevice(), w, h, 1, DEFERRED_GBUFFER_FORMAT_MAT_IDX, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[0]);
-        m_gbufferTexNormalsUv.Init_Tex2D("GBuffer Normals + UV", d3d->GetDevice(), w, h, 1, DEFERRED_GBUFFER_FORMAT_NORMALS_UV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[1]);
-        m_gbufferTexMv.Init_Tex2D("GBuffer MV", d3d->GetDevice(), w, h, 1, DEFERRED_GBUFFER_FORMAT_MV, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[2]);
-        m_gbufferTexEmission.Init_Tex2D("GBuffer Emission", d3d->GetDevice(), w, h, 1, DEFERRED_GBUFFER_FORMAT_EMISSION, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET, &m_rtvClearValues[3]);
-        m_gbufferTexDepth.Init_Depth2D("GBuffer Depth", d3d->GetDevice(), w, h, 1, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
-        m_heapRTV.Init("GBuffer Heap RTV", d3d->GetDevice(), NUM_RENDER_TARGETS, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-        m_heapIdxMatIdx = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexMaterialIdx);
-        m_heapIdxNormalsUv = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexNormalsUv);
-        m_heapIdxMv = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexMv);
-        m_heapIdxEmission = CreateRTV(d3d->GetDevice(), &m_heapRTV, &m_gbufferTexEmission);
-
-        m_heapDSV.Init("GBuffer Heap DSV", d3d->GetDevice(), 1, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-        m_heapIdxDepth = CreateDSV(d3d->GetDevice(), &m_heapDSV, &m_gbufferTexDepth, DEFERRED_GBUFFER_FORMAT_DEPTH);
-    }
+    m_gbufferPrePass.Init(d3d, heap, uploadHeapCBV);
 
     std::vector<std::string> compileArgs;
     if (Config::GetRender().DepthBufferType == DepthBufferType::eReversed)
         compileArgs.emplace_back("-DUSING_REVERSED_Z");
-
-    // GBuffer Pass
-    {
-        D3D12_STATIC_SAMPLER_DESC samplers[1] = {};
-        InitializeSamplerLinearWrap(&samplers[0], 0);
-
-        m_rootConstantsGBuffer.Init(0, 0, sizeof(CbvGBufferPrePass_PerInstance));
-
-        m_rootSigGBuffer.AddRootConstants(&m_rootConstantsGBuffer);
-        m_rootSigGBuffer.AddCbvRange(0, 1);
-        m_rootSigGBuffer.AddSrvRange(0, 2);
-        m_rootSigGBuffer.AddSrvRangeBindless(1);
-        m_rootSigGBuffer.Init(d3d->GetDevice(), samplers, _countof(samplers));
-
-        m_setGBuffer.Init(heap);
-        m_setGBuffer.SetHasRootConstants();
-        m_setGBuffer.AddBindlessSrv(1);
-        m_setGBuffer.AddCBV(d3d->GetDevice(), 0, sizeof(CbvMatrices_VP), uploadHeapCBV);
-
-        auto desc = CreateGraphicsPipelineDesc(m_rootSigGBuffer.Get(), GetStandardILD(), true);
-        desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-        desc.NumRenderTargets = NUM_RENDER_TARGETS;
-        desc.RTVFormats[0] = DEFERRED_GBUFFER_FORMAT_MAT_IDX;
-        desc.RTVFormats[1] = DEFERRED_GBUFFER_FORMAT_NORMALS_UV;
-        desc.RTVFormats[2] = DEFERRED_GBUFFER_FORMAT_MV;
-        desc.RTVFormats[3] = DEFERRED_GBUFFER_FORMAT_EMISSION;
-
-        V(m_pipelineGBuffer.InitGraphics(d3d->GetDevice(), "Raster/DeferredGBuffer.hlsl", "Raster/DeferredGBuffer.hlsl", desc, compileArgs));
-    }
 
     // Lighting Pass
     {
@@ -89,7 +38,7 @@ void Deferred::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         InitializeSamplerPointClamp(&samplers[1], 1);
 
         m_rootSigLighting.AddCbvRange(0, 2);
-        m_rootSigLighting.AddSrvRange(0, 11);
+        m_rootSigLighting.AddSrvRange(0, 10);
         m_rootSigLighting.AddUavRange(0, 1);
         m_rootSigLighting.AddSrvRangeBindless(1);
         m_rootSigLighting.AddSrvRangeBindless(2);
@@ -102,6 +51,60 @@ void Deferred::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
         m_setLighting.AddCBV(d3d->GetDevice(), 0, sizeof(CbvShadowMapSample), uploadHeapCBV);
 
         V(m_pipelineLighting.InitCompute(d3d->GetDevice(), "Raster/DeferredLightingCS.hlsl", m_rootSigLighting.Get(), compileArgs));
+    }
+
+    // Bloom
+    {
+        D3D12_STATIC_SAMPLER_DESC samplers[1] = {};
+        InitializeSamplerLinearWrap(&samplers[0], 0);
+
+        m_rootConstantsBloom.Init(0, 0, sizeof(CbvFilterBloom));
+        m_rootSigBloom.AddRootConstants(&m_rootConstantsBloom);
+        m_rootSigBloom.AddSrvRange(0, 1);
+        m_rootSigBloom.AddUavRange(0, 1);
+        m_rootSigBloom.Init(d3d->GetDevice(), samplers, _countof(samplers));
+
+        m_setBloomH.Init(heap);
+        m_setBloomH.SetHasRootConstants();
+        m_setBloomV.Init(heap);
+        m_setBloomV.SetHasRootConstants();
+        m_setBloomExtract.Init(heap);
+        m_setBloomExtract.SetHasRootConstants();
+
+        uint32_t width = Config::GetSystem().RtvWidth;
+        uint32_t height = Config::GetSystem().RtvHeight;
+        for (uint32_t i = 0; i < MAX_BLOOM_DEPTH; i++)
+        {
+            m_texBloom[i].Init_Tex2D("Tex Bloom", d3d->GetDevice(), width, height, 1, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+            m_setBloomDown[i].Init(heap);
+            m_setBloomDown[i].SetHasRootConstants();
+            m_setBloomUp[i].Init(heap);
+            m_setBloomUp[i].SetHasRootConstants();
+
+            width /= 2;
+            height /= 2;
+        }
+
+        V(m_pipelineBloomExtract.InitCompute(d3d->GetDevice(), "Filters/BloomExtractCS.hlsl", m_rootSigBloom.Get(), compileArgs));
+        V(m_pipelineBloomDownsample.InitCompute(d3d->GetDevice(), "Filters/BloomDownsampleCS.hlsl", m_rootSigBloom.Get(), compileArgs));
+        V(m_pipelineBloomUpsample.InitCompute(d3d->GetDevice(), "Filters/BloomUpsampleCS.hlsl", m_rootSigBloom.Get(), compileArgs));
+        V(m_pipelineBloomH.InitCompute(d3d->GetDevice(), "Filters/BloomHCS.hlsl", m_rootSigBloom.Get(), compileArgs));
+        V(m_pipelineBloomV.InitCompute(d3d->GetDevice(), "Filters/BloomVCS.hlsl", m_rootSigBloom.Get(), compileArgs));
+    }
+
+    // Post-Processing
+    {
+        m_rootSigPostProcess.AddCbvRange(0, 1);
+        m_rootSigPostProcess.AddSrvRange(0, 2);
+        m_rootSigPostProcess.AddUavRange(0, 1);
+        m_rootSigPostProcess.Init(d3d->GetDevice());
+
+        m_setPostProcess.Init(heap);
+        m_setPostProcess.AddCBV(d3d->GetDevice(), 0, sizeof(CbvPostProcessing), uploadHeapCBV);
+        m_setPostProcess.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_texOutputRgba8Unorm, m_texOutputRgba8Unorm.GetDesc().Format);
+
+        V(m_pipelinePostProcess.InitCompute(d3d->GetDevice(), "Raster/PostProcessCS.hlsl", m_rootSigPostProcess.Get(), compileArgs));
     }
 
     UploadHeap uploadHeap;
@@ -120,9 +123,6 @@ void Deferred::Init(D3D* d3d, Heap* heap, UploadHeap* uploadHeapCBV)
     V(cmdList->Close());
     d3d->ExecuteCommandList(cmdList);
     d3d->Flush();
-
-    m_texPrimal.Init_Tex2D("Tex Primal", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    m_texBloom.Init_Tex2D("Tex Bloom", d3d->GetDevice(), Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     m_shadowMapManager.Init(d3d->GetDevice(), heap, uploadHeapCBV);
     m_shadowMapManager.GeneratePoissonSamples(16);
@@ -150,21 +150,19 @@ void Deferred::LoadSceneData(D3D* d3d, Scene* scene, Heap* heap, UploadHeap* upl
     srvDesc.TextureCube.MipLevels = envMap->GetCubemap()->GetDesc().MipLevels;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    m_setGBuffer.SetSRV_Buffer  (d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferInstanceData, scene->CPU.ObjectCount, sizeof(InstanceData));
-    m_setGBuffer.SetSRV_Buffer  (d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
-
     m_setLighting.SetSRV_Buffer (d3d->GetDevice(), 0, 0, &scene->GPU.MegaBufferMaterials, scene->CPU.MegaBufferMaterialsCount, sizeof(Material));
     m_setLighting.SetSRV_Buffer (d3d->GetDevice(), 0, 1, &scene->GPU.MegaBufferPunctualLights, scene->CPU.MegaBufferPunctualLightsCount, sizeof(PunctualLight));
     m_setLighting.SetSRV_Buffer (d3d->GetDevice(), 0, 2, m_shadowMapManager.GetShadowMapPuncInfo(), scene->CPU.MegaBufferPunctualLightsCount, sizeof(ShadowMapPuncInfo));
     m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 3, &m_brdfIntMap, m_brdfIntMap.GetDesc().Format);
     m_setLighting.SetSRV        (d3d->GetDevice(), 0, 4, envMap->GetCubemap(), srvDesc);
     m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 5, m_shadowMapManager.GetShadowMapDir(), SHADOW_MAP_FORMAT_DEPTH_SRV);
-    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 6, &m_gbufferTexMaterialIdx, DEFERRED_GBUFFER_FORMAT_MAT_IDX);
-    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 7, &m_gbufferTexNormalsUv, DEFERRED_GBUFFER_FORMAT_NORMALS_UV);
-    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 8, &m_gbufferTexDepth, DEFERRED_GBUFFER_FORMAT_DEPTH_SRV);
-    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 9, &m_gbufferTexMv, DEFERRED_GBUFFER_FORMAT_MV);
-    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 10, &m_texBloom, m_texBloom.GetDesc().Format);
+    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 6, m_gbufferPrePass.GetGBufferMaterialIdx(), GBUFFER_FORMAT_MAT_IDX);
+    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 7, m_gbufferPrePass.GetGBufferNormalsUv(), GBUFFER_FORMAT_NORMALS_UV);
+    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 8, m_gbufferPrePass.GetGBufferDepth(), GBUFFER_FORMAT_DEPTH_SRV);
+    m_setLighting.SetSRV_Tex2D  (d3d->GetDevice(), 0, 9, m_gbufferPrePass.GetGBufferMv(), GBUFFER_FORMAT_MV);
     m_setLighting.SetUAV_Tex2D  (d3d->GetDevice(), 0, 0, &m_texPrimal, m_texPrimal.GetDesc().Format);
+
+    m_gbufferPrePass.LoadSceneData(d3d, scene);
 }
 
 void Deferred::Update(D3D* d3d, Heap* heap, TimeArgs timeArgs)
@@ -231,73 +229,7 @@ void Deferred::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenH
         m_shadowMapManager.Render(d3d, cmdList, heap, scene, config);
     }
 
-    // Clear gbuffers and prepare as render target
-    {
-        CD3DX12_RECT scissorRect = SetViewportScissor(cmdList, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
-
-        m_gbufferTexMaterialIdx.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_gbufferTexNormalsUv.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_gbufferTexMv.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_gbufferTexEmission.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_gbufferTexDepth.Transition(cmdList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {
-            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxMatIdx),
-            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxNormalsUv),
-            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxMv),
-            m_heapRTV.GetDescriptorHandleAtIndex(m_heapIdxEmission),
-        };
-
-        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth);
-        cmdList->OMSetRenderTargets(_countof(rtvs), rtvs, FALSE, &dsvHandle);
-
-        for (int i = 0; i < _countof(rtvs); i++)
-        {
-            cmdList->ClearRenderTargetView(rtvs[i], reinterpret_cast<FLOAT*>(&m_rtvClearValues[i]), 1, &scissorRect);
-        }
-
-        const float depthClearValue = Config::GetRender().DepthBufferType == DepthBufferType::eForward ? 1.0f : 0.0f;
-        cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, depthClearValue, 0, 0, nullptr);
-    }
-
-    // GBuffer Pass
-    {
-        {
-            m_setGBuffer.TransitionAllSRVToShaderResource(cmdList);
-
-            cmdList->SetGraphicsRootSignature(m_rootSigGBuffer.Get());
-            cmdList->SetPipelineState(m_pipelineGBuffer.GetPSO());
-            renderInfo.Heap->Bind(cmdList);
-            renderInfo.Heap->BindSceneTextures_Graphics(cmdList, m_rootSigGBuffer.GetParamIndexSrvBindless(0));
-            m_setGBuffer.SetDescriptorTables_Graphics(cmdList);
-        }
-
-        CbvMatrices_VP matricesVP = {};
-        XMStoreFloat4x4(&matricesVP.V, renderInfo.V);
-        XMStoreFloat4x4(&matricesVP.P, P);
-        XMStoreFloat4x4(&matricesVP.PrevV, m_prevV);
-        m_setGBuffer.UpdateCBV(0, 0, &matricesVP);
-
-        m_prevV = renderInfo.V;
-
-        CbvGBufferPrePass_PerInstance perInstance{};
-
-        for (int i = 0; i < scene->CPU.ObjectCount; ++i)
-        {
-            const Object& obj = scene->CPU.Objects[i];
-
-            perInstance.InstanceIdx = i;
-            m_rootConstantsGBuffer.Bind_Graphics(cmdList, &perInstance);
-
-            cmdList->DrawIndexedInstanced(obj.IndexCount, 1, obj.MegaBufferIndexOffset,
-                                          static_cast<int>(obj.MegaBufferVertexOffset), 0);
-        }
-    }
-
-    // Bloom Pass
-    {
-
-    }
+    m_gbufferPrePass.Render(cmdList, scene, renderInfo);
 
     // SSAO Pass
     {
@@ -369,20 +301,134 @@ void Deferred::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenH
         DispatchOverRegion(cmdList, 16, m_texPrimal.GetDesc().Width, m_texPrimal.GetDesc().Height);
     }
 
-    //if (renderInfo.ForwardConfig->FlagEnabledEnvironmentMap)
-    //{
-    //    GPU_SCOPE(cmdList, "Skybox Pass");
-    //    m_skybox.RenderForward(cmdList, &renderInfo.V, &renderInfo.P);
-    //}
-    //else
-    //{
-    //    D3D12_RECT rect;
-    //    rect.top = 0;
-    //    rect.left = Config::GetSystem().WindowAppGuiWidth;
-    //    rect.bottom = Config::GetSystem().RtvHeight;
-    //    rect.right = Config::GetSystem().WindowAppGuiWidth + Config::GetSystem().RtvWidth;
-    //    cmdList->ClearRenderTargetView(rtvHandle, Config::GetRender().RtvClearColor, 1, &rect);
-    //}
+    D12Resource* finalHdrOutput = &m_texPrimal;
+
+    // Bloom Pass
+    if (renderInfo.RasterConfig->BloomRadius > 0 && renderInfo.RasterConfig->BloomRadius < 8)
+    {
+        cmdList->SetComputeRootSignature(m_rootSigBloom.Get());
+
+        CbvFilterBloom cbv{};
+        cbv.Radius = renderInfo.RasterConfig->BloomRadius;
+        cbv.LuminanceThreshold = renderInfo.RasterConfig->BloomLumThreshold;
+
+        // Extract
+        {
+            cbv.DestDimensions = hlsl::uint2(m_texBloom[0].GetDesc().Width, m_texBloom[0].GetDesc().Height);
+            m_rootConstantsBloom.Bind_Compute(cmdList, &cbv);
+
+            m_setBloomExtract.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &m_texPrimal, m_texPrimal.GetDesc().Format);
+            m_setBloomExtract.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &m_texBloom[0], m_texBloom[0].GetDesc().Format);
+
+            cmdList->SetPipelineState(m_pipelineBloomExtract.GetPSO());
+            m_texBloom[0].Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_setBloomExtract.TransitionAllSRVToShaderResource(cmdList);
+            m_setBloomExtract.SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverRegion(cmdList, 16, m_texBloom[0].GetDesc().Width, m_texBloom[0].GetDesc().Height);
+        }
+
+        for (int i = 0; i < renderInfo.RasterConfig->BloomDownsampleCount - 1; i++)
+        {
+            D12Resource& src = m_texBloom[i];
+            D12Resource& dst = m_texBloom[i+1];
+
+            cbv.DestDimensions = hlsl::uint2(dst.GetDesc().Width, dst.GetDesc().Height);
+            m_rootConstantsBloom.Bind_Compute(cmdList, &cbv);
+
+            m_setBloomDown[i].SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &src, src.GetDesc().Format);
+            m_setBloomDown[i].SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &dst, dst.GetDesc().Format);
+
+            cmdList->SetPipelineState(m_pipelineBloomDownsample.GetPSO());
+            dst.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_setBloomDown[i].TransitionAllSRVToShaderResource(cmdList);
+            m_setBloomDown[i].SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverRegion(cmdList, 16, dst.GetDesc().Width, dst.GetDesc().Height);
+        }
+
+        // Horizontal
+        {
+            D12Resource& src = m_texBloom[renderInfo.RasterConfig->BloomDownsampleCount - 1];
+            D12Resource& dst = m_texPing;
+
+            cmdList->SetPipelineState(m_pipelineBloomH.GetPSO());
+
+            dst.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+            m_setBloomH.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &src, src.GetDesc().Format);
+            m_setBloomH.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &dst, dst.GetDesc().Format);
+
+            m_setBloomH.TransitionAllSRVToShaderResource(cmdList);
+            m_setBloomH.SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverRegion(cmdList, 16, dst.GetDesc().Width, dst.GetDesc().Height);
+        }
+
+        // Vertical
+        {
+            D12Resource& src = m_texPing;
+            D12Resource& dst = m_texBloom[renderInfo.RasterConfig->BloomDownsampleCount - 1];
+
+            cmdList->SetPipelineState(m_pipelineBloomV.GetPSO());
+
+            dst.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+            m_setBloomV.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &src, src.GetDesc().Format);
+            m_setBloomV.SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &dst, dst.GetDesc().Format);
+
+            m_setBloomV.TransitionAllSRVToShaderResource(cmdList);
+            m_setBloomV.SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverRegion(cmdList, 16, dst.GetDesc().Width, dst.GetDesc().Height);
+        }
+
+        for (int i = renderInfo.RasterConfig->BloomDownsampleCount - 1; i > 0; i--)
+        {
+            D12Resource& src = m_texBloom[i];
+            D12Resource& dst = m_texBloom[i-1];
+
+            cbv.DestDimensions = hlsl::uint2(dst.GetDesc().Width, dst.GetDesc().Height);
+            m_rootConstantsBloom.Bind_Compute(cmdList, &cbv);
+
+            m_setBloomUp[i].SetSRV_Tex2D(d3d->GetDevice(), 0, 0, &src, src.GetDesc().Format);
+            m_setBloomUp[i].SetUAV_Tex2D(d3d->GetDevice(), 0, 0, &dst, dst.GetDesc().Format);
+
+            cmdList->SetPipelineState(m_pipelineBloomUpsample.GetPSO());
+            dst.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_setBloomUp[i].TransitionAllSRVToShaderResource(cmdList);
+            m_setBloomUp[i].SetDescriptorTables_Compute(cmdList);
+
+            DispatchOverRegion(cmdList, 16, dst.GetDesc().Width, dst.GetDesc().Height);
+        }
+    }
+
+    // Post-Process
+    {
+        GPU_SCOPE(cmdList, "Post Process");
+
+        m_texOutputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        cmdList->SetPipelineState(m_pipelinePostProcess.GetPSO());
+        cmdList->SetComputeRootSignature(m_rootSigPostProcess.Get());
+
+        if (m_setPostProcess.GetSRV(0, 0) != finalHdrOutput)
+        {
+            d3d->Flush();
+            m_setPostProcess.SetSRV_Tex2D(d3d->GetDevice(), 0, 0, finalHdrOutput, finalHdrOutput->GetDesc().Format);
+            m_setPostProcess.SetSRV_Tex2D(d3d->GetDevice(), 0, 1, &m_texBloom[0], m_texBloom[0].GetDesc().Format);
+        }
+
+        CbvPostProcessing cbv{};
+        cbv.ToneMapWhitePoint = renderInfo.BackendConfig->PostProcessWhitePoint;
+        cbv.Exposure = renderInfo.BackendConfig->PostProcessExposure;
+        m_setPostProcess.UpdateCBV(0, 0, &cbv);
+
+        m_setPostProcess.TransitionAllSRVToShaderResource(cmdList);
+        m_setPostProcess.SetDescriptorTables_Compute(cmdList);
+
+        DispatchOverRegion(cmdList, 16, Config::GetSystem().RtvWidth, Config::GetSystem().RtvHeight);
+    }
 
     // Copy to RTV
     {
@@ -391,10 +437,10 @@ void Deferred::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const GreenH
         {
             GPU_SCOPE(cmdList, "Copy to RTV");
 
-            m_texPrimal.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            m_texOutputRgba8Unorm.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
             RTV->Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-            RTV->CopyTextureInto(cmdList, m_texPrimal.GetResource(), Config::GetSystem().WindowAppGuiWidth);
+            RTV->CopyTextureInto(cmdList, m_texOutputRgba8Unorm.GetResource(), Config::GetSystem().WindowAppGuiWidth);
         }
     }
 }

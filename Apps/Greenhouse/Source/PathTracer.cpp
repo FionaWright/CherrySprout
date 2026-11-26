@@ -436,8 +436,8 @@ void PathTracer::Render(D3D* d3d, ID3D12GraphicsCommandList* cmdList, const Gree
         }
 
         CbvPostProcessing cbv{};
-        cbv.ToneMapWhitePoint = renderInfo.PathTracerConfig->PostProcessWhitePoint;
-        cbv.Exposure = renderInfo.PathTracerConfig->PostProcessExposure;
+        cbv.ToneMapWhitePoint = renderInfo.BackendConfig->PostProcessWhitePoint;
+        cbv.Exposure = renderInfo.BackendConfig->PostProcessExposure;
         m_setPostProcess.UpdateCBV(0, 0, &cbv);
 
         m_setPostProcess.SetDescriptorTables_Compute(cmdList);

@@ -454,10 +454,8 @@ void Greenhouse::renderGuiCore()
             ImGui::Text("Post Processing:");
             ImGui::Indent(IM_GUI_INDENTATION);
             {
-                if (m_config.PathTracerConfig.FeatFlagEnabledCore(eCORE_ToneMapping))
-                    GuiUtils::FwInputFloat("White Point", &m_config.PathTracerConfig.PostProcessWhitePoint);
-
-                GuiUtils::FwInputFloat("Exposure##PP", &m_config.PathTracerConfig.PostProcessExposure);
+                GuiUtils::FwInputFloat("White Point", &m_config.RenderBackendConfig.PostProcessWhitePoint);
+                GuiUtils::FwInputFloat("Exposure##PP", &m_config.RenderBackendConfig.PostProcessExposure);
             }
             ImGui::Unindent(IM_GUI_INDENTATION);
             ImGui::Spacing();

@@ -95,9 +95,6 @@ struct PathTracerConfig
 
     int TransientLightIndex = -1;
 
-    float PostProcessExposure = 1.0f;
-    float PostProcessWhitePoint = 1.0f;
-
     float TransientTimeSinceStart = 0.0f;
     float TransientPulseDuration = 1.0f;
     float TransientSpeedOfLight = 1.0f;
@@ -185,8 +182,12 @@ struct RasterConfig
     uint32_t SmCascadeCount = 1;
     uint32_t SmPcfCount = 16;
 
-    float SmWidth = 2.0f;
-    float SmHeight = 2.0f;
+    int BloomRadius = 5;
+    uint32_t BloomDownsampleCount = 4;
+    float BloomLumThreshold = 3.0f;
+
+    float SmWidth = 100.0f;
+    float SmHeight = 100.0f;
     float SmNear = 0.01f;
     float SmFar = 100.0f;
     float SmDirDist = 50.0f;
@@ -217,6 +218,9 @@ struct RenderBackendConfig
     XMFLOAT3 DirLightColor = { 1, 1, 1 };
     float DirLightIntensity = 1.0f;
     float DirLightCosAngularRadius = 0.00465f;
+
+    float PostProcessExposure = 1.0f;
+    float PostProcessWhitePoint = 1.0f;
 };
 
 struct GreenhouseConfig

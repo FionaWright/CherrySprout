@@ -309,4 +309,31 @@ struct CbvSkinning
     hlsl::uint MegaBufferBonesOffset;
 };
 
+struct CbvFilterBoxAndGauss
+{
+    hlsl::float2 TexelSize;
+    int Radius;      // box radius (e.g. 1 = 3x3, 2 = 5x5)
+    float p;
+};
+
+struct CbvFilterATrous
+{
+    hlsl::float4x4 InvVP;
+
+    hlsl::uint StepWidth;
+    hlsl::float2 TexelSize;
+    float phiC;
+
+    float phiN;
+    float phiP;
+    hlsl::float2 p;
+};
+
+struct CbvFilterBloom
+{
+    hlsl::uint2 DestDimensions;
+    int Radius;
+    float LuminanceThreshold;
+};
+
 #endif

@@ -1,6 +1,6 @@
 #include "Utils/CBVs.h"
 #include "PathTracing/Utils.hlsli"
-#include "PostProcessing/ToneMapping.hlsli"
+#include "PostProcessing/PostProcess.hlsli"
 
 Texture2D<float4> gSource : register(t0);
 RWTexture2D<float4> gDest : register(u0);
@@ -20,26 +20,7 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     float3 v = gSource[pixelCoord].rgb;
 
-    // Exposure
-    {
-        v *= gCBV.Exposure;
-    }
-
-    // Tone-Mapping
-    if (FEAT_CORE(ToneMapping))
-    {
-        TMO_ReinhardExt tmo;
-        tmo.MaxWhite = gCBV.ToneMapWhitePoint;
-        v = ToneMapJodie(v, tmo);
-
-        //TMO_Aces tmo;
-        //v = ToneMap(v, tmo);
-    }
-
-    // Gamma-Correct
-    {
-        v = LRGB_to_SRGB(v);
-    }
+    v = PostProcess(v, gCBV.Exposure, gCBV.ToneMapWhitePoint, FEAT_CORE(ToneMapping));
 
     gDest[pixelCoord].rgb = v;
 }

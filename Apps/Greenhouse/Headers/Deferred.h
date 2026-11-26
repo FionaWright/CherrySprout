@@ -5,6 +5,7 @@
 #ifndef CHERRYSPROUT_DEFERRED_H
 #define CHERRYSPROUT_DEFERRED_H
 
+#include "GBufferPrePass.h"
 #include "IRenderBackend.h"
 #include "HWI/DescriptorSet.h"
 #include "HWI/RootSig.h"
@@ -13,18 +14,12 @@
 #include "Render/RestirManager.h"
 #include "Render/ShadowMapManager.h"
 #include "Render/Skybox.h"
-#include "Scene/Material.h"
 #include "Utils/CBVs.h"
-
-#define DEFERRED_GBUFFER_FORMAT_MAT_IDX      DXGI_FORMAT_R8_UINT
-#define DEFERRED_GBUFFER_FORMAT_NORMALS_UV   DXGI_FORMAT_R16G16B16A16_FLOAT
-#define DEFERRED_GBUFFER_FORMAT_MV           DXGI_FORMAT_R16G16B16A16_FLOAT
-#define DEFERRED_GBUFFER_FORMAT_EMISSION     DXGI_FORMAT_R16G16B16A16_FLOAT
-#define DEFERRED_GBUFFER_FORMAT_DEPTH        DXGI_FORMAT_D32_FLOAT
-#define DEFERRED_GBUFFER_FORMAT_DEPTH_SRV    DXGI_FORMAT_R32_FLOAT
 
 struct Scene;
 struct TimeArgs;
+
+#define MAX_BLOOM_DEPTH 10
 
 class Deferred final : public IRenderBackend
 {
@@ -42,45 +37,45 @@ public:
 
     size_t TotalCbvRequiredSize() override
     {
-        return  Align(sizeof(CbvMatrices_VP), 256) +
-                Align(sizeof(CbvForward), 256) +
+        return  Align(sizeof(CbvForward), 256) +
                 Align(sizeof(CbvShadowMapSample), 256) +
+                Align(sizeof(CbvPostProcessing), 256) +
                 Skybox::GetCbvRequiredSize() +
+                GBufferPrePass::GetCbvRequiredSize() +
                 ShadowMapManager::GetCbvRequiredSize();
     }
 
 private:
-    Pipeline m_pipelineGBuffer;
-    RootSig m_rootSigGBuffer;
-    DescriptorSet m_setGBuffer;
-    RootConstants m_rootConstantsGBuffer;
-
     Pipeline m_pipelineLighting;
     RootSig m_rootSigLighting;
     DescriptorSet m_setLighting;
 
-    Heap m_heapRTV;
-    Heap m_heapDSV;
-    uint32_t m_heapIdxMatIdx = 0;
-    uint32_t m_heapIdxNormalsUv = 0;
-    uint32_t m_heapIdxMv = 0;
-    uint32_t m_heapIdxEmission = 0;
-    uint32_t m_heapIdxDepth = 0;
-    std::vector<DirectX::XMFLOAT4> m_rtvClearValues;
+    Pipeline m_pipelineBloomH;
+    Pipeline m_pipelineBloomV;
+    Pipeline m_pipelineBloomExtract;
+    Pipeline m_pipelineBloomDownsample;
+    Pipeline m_pipelineBloomUpsample;
+    RootSig m_rootSigBloom;
+    DescriptorSet m_setBloomExtract;
+    DescriptorSet m_setBloomH;
+    DescriptorSet m_setBloomV;
+    DescriptorSet m_setBloomDown[MAX_BLOOM_DEPTH];
+    DescriptorSet m_setBloomUp[MAX_BLOOM_DEPTH];
+    RootConstants m_rootConstantsBloom;
 
-    DirectX::XMMATRIX m_prevV{};
-
-    D12Resource m_gbufferTexMaterialIdx;
-    D12Resource m_gbufferTexNormalsUv;
-    D12Resource m_gbufferTexDepth;
-    D12Resource m_gbufferTexMv;
-    D12Resource m_gbufferTexEmission;
+    Pipeline m_pipelinePostProcess;
+    RootSig m_rootSigPostProcess;
+    DescriptorSet m_setPostProcess;
 
     D12Resource m_texPrimal;
-    D12Resource m_texBloom;
+    D12Resource m_texPing;
+    D12Resource m_texPong;
+    D12Resource m_texBloom[MAX_BLOOM_DEPTH];
+    D12Resource m_texOutputRgba8Unorm;
 
     RtasBuilder m_rtasBuilder;
     RestirManager m_restirManager;
+    GBufferPrePass m_gbufferPrePass;
 
     Skybox m_skybox;
     std::wstring m_currentPanoFilepath;

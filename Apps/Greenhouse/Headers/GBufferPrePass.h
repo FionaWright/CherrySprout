@@ -8,6 +8,8 @@
 #include "HWI/Heap.h"
 #include "HWI/Pipeline.h"
 #include "HWI/RootSig.h"
+#include "Utils/CBVs.h"
+#include "Utils/D3DUtils.h"
 
 struct GreenHouseRenderInfo;
 struct Scene;
@@ -34,6 +36,11 @@ public:
     [[nodiscard]] D12Resource* GetGBufferMv() { return &m_gbufferTexMv; }
 
     [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const { return m_heapDSV.GetDescriptorHandleAtIndex(m_heapIdxDepth); }
+
+    static size_t GetCbvRequiredSize()
+    {
+        return Align(sizeof(CbvMatrices_VP), 256);
+    }
 
 private:
     Heap m_heapRTV;
