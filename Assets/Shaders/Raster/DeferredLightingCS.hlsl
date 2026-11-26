@@ -109,13 +109,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
                 uint cascadeIdx = 0; // TODO
 
                 float3 normalBias = hitInfo.Ns_ff * gSettingsShadows.NormalBiasDistant;
-                float4 biasedPos = float4(hitInfo.HitPos.xyz + normalBias, 1); // TODO: w = 1 ?
+                float4 biasedPos = float4(hitInfo.HitPos.xyz + normalBias, 1);
 
                 float4 shadowPos = mul(gSettingsShadows.ShadowMatrices[cascadeIdx], biasedPos);
                 shadowPos.xyz = shadowPos.xyz / shadowPos.w;
                 shadowPos.xy = RemapStoU(shadowPos.xy);
 
-                shadowFactor = GetShadowFactorDirectional(rngInfo, shadowPos[cascadeIdx]);
+                shadowFactor = GetShadowFactorDirectional(rngInfo, shadowPos.xyz);
             }
 
             if (bxdfEval.PDF > 0.0f)
